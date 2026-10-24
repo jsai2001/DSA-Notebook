@@ -6,10 +6,25 @@
     <!-- Unlisted page: keep it out of search results. Not linked from the main site. -->
     <meta name="robots" content="noindex, nofollow" />
     <title>Coding Solutions | Jeevan Sai Kanaparthi</title>
+    <!-- Apply the saved theme before the page paints, so dark mode doesn't flash white.
+         Default is light; only switches to dark if the user chose it before. -->
+    <script>
+      try {
+        if (localStorage.getItem("solutions-theme") === "dark") {
+          document.documentElement.dataset.theme = "dark";
+        }
+      } catch (e) {
+        /* storage unavailable; stay light */
+      }
+    </script>
     <link rel="stylesheet" href="./solutions.css" />
   </head>
   <body>
     <header class="page-header">
+      <button type="button" id="theme-toggle" class="theme-toggle">
+        <span class="theme-icon" aria-hidden="true">☾</span>
+        <span class="theme-label">Dark mode</span>
+      </button>
       <h1 class="title">Coding Solutions</h1>
       <p class="subtitle">My notes and solutions. Click a question to expand it.</p>
       <label for="search" class="visually-hidden">Search questions</label>
@@ -32,7 +47,7 @@
           Key idea       -> one or two lines you want to remember when revising
           Problem        -> LeetCode link (update href), statement + constraints
           Approach cards -> one <div class="approach"> per approach:
-                              title, optional "My solution" label,
+                              title (name the technique), optional "Optimal" label,
                               intuition, complexity, code tabs
           Comparison     -> summary table of all approaches
 
@@ -90,7 +105,6 @@
           <section class="approach">
             <h2>
               Approach 1: Brute Force
-              <span class="label">My solution</span>
             </h2>
             <p class="intuition">
               Check every possible pair <code>(i, j)</code> with
@@ -328,7 +342,6 @@
           <section class="approach">
             <h2>
               Approach 1: Three Loops with Trailing Node
-              <span class="label">My solution</span>
             </h2>
             <p class="intuition">
               Handle the lists in three phases, writing the result digit by
@@ -782,7 +795,6 @@
           <section class="approach">
             <h2>
               Approach 1: Brute Force from Every Start
-              <span class="label">My solution</span>
             </h2>
             <p class="intuition">
               Try every starting index <code>j</code>. From there, extend
@@ -1139,6 +1151,55 @@
           if (match) visible++;
         });
         noResults.hidden = visible !== 0;
+      });
+
+      // ---------- Accordion: only one question open at a time ----------
+      questions.forEach((q) => {
+        q.addEventListener("toggle", () => {
+          if (!q.open) return;
+          questions.forEach((other) => {
+            if (other !== q) other.open = false;
+          });
+          // Closing a long question above can push this one off-screen.
+          // Bring its header back into view if that happened.
+          const top = q.getBoundingClientRect().top;
+          if (top < 0) q.scrollIntoView({ block: "start" });
+        });
+      });
+
+      // ---------- Light / dark theme toggle (default: light) ----------
+      const THEME_KEY = "solutions-theme";
+      const themeToggle = document.getElementById("theme-toggle");
+      const themeIcon = themeToggle.querySelector(".theme-icon");
+      const themeLabel = themeToggle.querySelector(".theme-label");
+
+      // The button names the mode it switches TO.
+      function applyTheme(theme) {
+        const dark = theme === "dark";
+        if (dark) {
+          document.documentElement.dataset.theme = "dark";
+        } else {
+          delete document.documentElement.dataset.theme;
+        }
+        themeIcon.textContent = dark ? "☀" : "☾";
+        themeLabel.textContent = dark ? "Light mode" : "Dark mode";
+        themeToggle.setAttribute(
+          "aria-label",
+          dark ? "Switch to light mode" : "Switch to dark mode"
+        );
+      }
+
+      applyTheme(document.documentElement.dataset.theme === "dark" ? "dark" : "light");
+
+      themeToggle.addEventListener("click", () => {
+        const next =
+          document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+        applyTheme(next);
+        try {
+          localStorage.setItem(THEME_KEY, next);
+        } catch (e) {
+          /* storage unavailable; theme still applies for this visit */
+        }
       });
 
       // ---------- Code tabs ----------
