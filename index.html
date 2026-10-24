@@ -1145,6 +1145,462 @@
         </div>
       </details>
       <!-- === END 3. LONGEST SUBSTRING WITHOUT REPEATING CHARACTERS === -->
+
+      <!-- ===================== 4. MEDIAN OF TWO SORTED ARRAYS ===================== -->
+      <details class="question" data-tags="array binary-search divide-and-conquer two-pointers">
+        <summary>
+          <span class="q-title">4. Median of Two Sorted Arrays</span>
+          <span class="q-meta">
+            <span class="badge hard">Hard</span>
+            <span class="tag">Array</span>
+            <span class="tag">Binary Search</span>
+            <span class="tag">Divide and Conquer</span>
+          </span>
+        </summary>
+
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> You don't need to merge. Binary search a
+            cut in the shorter array so the left halves of both arrays hold
+            exactly half of all elements, and every left value is
+            &lt;= every right value. The median then comes from the four
+            values around the cut. O(log(min(m, n))).
+          </div>
+
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/median-of-two-sorted-arrays/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              Given two sorted arrays <code>nums1</code> (size m) and
+              <code>nums2</code> (size n), return the median of the two arrays
+              combined. The overall run time should be
+              <code>O(log(m + n))</code>.
+            </p>
+            <ul>
+              <li><code>0 &lt;= m, n &lt;= 1000</code> and <code>1 &lt;= m + n &lt;= 2000</code></li>
+              <li><code>-10^6 &lt;= nums1[i], nums2[i] &lt;= 10^6</code></li>
+              <li>
+                Median: the middle value if the total count is odd, otherwise
+                the average of the two middle values.
+              </li>
+            </ul>
+            <p class="note">
+              Examples: <code>[1,3]</code> and <code>[2]</code> → 2.0 (merged
+              <code>[1,2,3]</code>); <code>[1,2]</code> and <code>[3,4]</code> →
+              2.5 (merged <code>[1,2,3,4]</code>).
+            </p>
+          </section>
+
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Merge, Then Pick the Middle</h2>
+            <p class="intuition">
+              Merge the two sorted arrays with two pointers (the merge step of
+              merge sort), then read the median from the middle of the merged
+              list.
+            </p>
+            <ul>
+              <li>
+                While both arrays have elements left, append the smaller one.
+                On a tie, both are appended.
+              </li>
+              <li>
+                When one array runs out, append the rest of the other one.
+              </li>
+              <li>
+                Odd length: <code>result[mid]</code>. Even length: the average of
+                <code>result[mid - 1]</code> and <code>result[mid]</code>.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(m + n)</span>
+              <span><strong>Space</strong> O(m + n)</span>
+            </div>
+            <p class="note">
+              Simple and correct, but it misses the required
+              <code>O(log(m + n))</code>. A few small cleanups: the size-1 and
+              size-0 special cases aren't needed (the general code already
+              handles size 1, and the constraints guarantee at least one
+              element). The size-1 shortcut also returns an <code>int</code>
+              instead of a <code>float</code>; the value is still right. Also, <code>import math</code> is unused, and a conditional
+              expression used only for its side effect
+              (<code>a.extend(x) if c else a.extend(y)</code>) reads better as a
+              plain <code>if / else</code>, which is how it's written below.
+            </p>
+
+            <div class="code-tabs">
+              <script type="text/plain" data-lang="Python">
+                class Solution(object):
+                    def findMedianSortedArrays(self, nums1, nums2):
+                        nums1_len = len(nums1)
+                        nums2_len = len(nums2)
+                        i = 0
+                        j = 0
+                        if nums1_len + nums2_len == 1:
+                            return nums1[0] if nums1_len else nums2[0]
+                        elif nums1_len + nums2_len == 0:
+                            return 0
+
+                        result = list()
+                        while i < nums1_len or j < nums2_len:
+                            if i < nums1_len and j < nums2_len:
+                                if nums1[i] < nums2[j]:
+                                    result.append(nums1[i])
+                                    i += 1
+                                elif nums1[i] == nums2[j]:
+                                    result.append(nums1[i])
+                                    result.append(nums2[j])
+                                    i += 1
+                                    j += 1
+                                else:
+                                    result.append(nums2[j])
+                                    j += 1
+                            else:
+                                if i < nums1_len:
+                                    result.extend(nums1[i:])
+                                else:
+                                    result.extend(nums2[j:])
+                                break
+
+                        result_len = len(result)
+                        mid = result_len // 2
+                        if result_len % 2 == 0:
+                            return (result[mid - 1] + result[mid]) / 2.0
+                        else:
+                            return float(result[mid])
+              </script>
+              <script type="text/plain" data-lang="C++">
+                #include <vector>
+
+                class Solution {
+                public:
+                    double findMedianSortedArrays(std::vector<int>& nums1, std::vector<int>& nums2) {
+                        int m = nums1.size(), n = nums2.size();
+                        std::vector<int> result;
+                        result.reserve(m + n);
+                        int i = 0, j = 0;
+
+                        while (i < m && j < n) {
+                            if (nums1[i] <= nums2[j]) result.push_back(nums1[i++]);
+                            else result.push_back(nums2[j++]);
+                        }
+                        while (i < m) result.push_back(nums1[i++]);
+                        while (j < n) result.push_back(nums2[j++]);
+
+                        int total = result.size();
+                        int mid = total / 2;
+                        if (total % 2 == 0) {
+                            return (result[mid - 1] + result[mid]) / 2.0;
+                        }
+                        return result[mid];
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java">
+                class Solution {
+                    public double findMedianSortedArrays(int[] nums1, int[] nums2) {
+                        int m = nums1.length, n = nums2.length;
+                        int[] result = new int[m + n];
+                        int i = 0, j = 0, k = 0;
+
+                        while (i < m && j < n) {
+                            if (nums1[i] <= nums2[j]) result[k++] = nums1[i++];
+                            else result[k++] = nums2[j++];
+                        }
+                        while (i < m) result[k++] = nums1[i++];
+                        while (j < n) result[k++] = nums2[j++];
+
+                        int mid = (m + n) / 2;
+                        if ((m + n) % 2 == 0) {
+                            return (result[mid - 1] + result[mid]) / 2.0;
+                        }
+                        return result[mid];
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>Approach 2: Two Pointers Without Storing</h2>
+            <p class="intuition">
+              The median only depends on the elements at positions
+              <code>(m + n) / 2 - 1</code> and <code>(m + n) / 2</code> of the
+              merged order. So walk the merge without building the list, and
+              just remember the last two values seen.
+            </p>
+            <ul>
+              <li>
+                Step <code>(m + n) / 2 + 1</code> times, each time taking the
+                smaller front element (or whichever array still has elements).
+              </li>
+              <li>
+                Keep <code>prev</code> and <code>curr</code>. At the end,
+                <code>curr</code> is the middle element; for even totals the
+                median is <code>(prev + curr) / 2</code>.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(m + n)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              Same time as merging (about half the steps), but no extra array.
+              A good stepping stone, and a fine answer if the interviewer doesn't
+              insist on logarithmic time.
+            </p>
+
+            <div class="code-tabs">
+              <script type="text/plain" data-lang="Python">
+                class Solution(object):
+                    def findMedianSortedArrays(self, nums1, nums2):
+                        m, n = len(nums1), len(nums2)
+                        total = m + n
+                        i = j = 0
+                        prev = curr = 0
+                        for _ in range(total // 2 + 1):
+                            prev = curr
+                            if i < m and (j >= n or nums1[i] <= nums2[j]):
+                                curr = nums1[i]
+                                i += 1
+                            else:
+                                curr = nums2[j]
+                                j += 1
+                        if total % 2 == 0:
+                            return (prev + curr) / 2.0
+                        return float(curr)
+              </script>
+              <script type="text/plain" data-lang="C++">
+                #include <vector>
+
+                class Solution {
+                public:
+                    double findMedianSortedArrays(std::vector<int>& nums1, std::vector<int>& nums2) {
+                        int m = nums1.size(), n = nums2.size();
+                        int total = m + n;
+                        int i = 0, j = 0, prev = 0, curr = 0;
+                        for (int step = 0; step <= total / 2; ++step) {
+                            prev = curr;
+                            if (i < m && (j >= n || nums1[i] <= nums2[j])) curr = nums1[i++];
+                            else curr = nums2[j++];
+                        }
+                        if (total % 2 == 0) return (prev + curr) / 2.0;
+                        return curr;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java">
+                class Solution {
+                    public double findMedianSortedArrays(int[] nums1, int[] nums2) {
+                        int m = nums1.length, n = nums2.length;
+                        int total = m + n;
+                        int i = 0, j = 0, prev = 0, curr = 0;
+                        for (int step = 0; step <= total / 2; step++) {
+                            prev = curr;
+                            if (i < m && (j >= n || nums1[i] <= nums2[j])) curr = nums1[i++];
+                            else curr = nums2[j++];
+                        }
+                        if (total % 2 == 0) return (prev + curr) / 2.0;
+                        return curr;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>
+              Approach 3: Binary Search on the Partition
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              Cut <code>nums1</code> at <code>i</code> and <code>nums2</code> at
+              <code>j</code> so the left side has
+              <code>half = (m + n + 1) / 2</code> elements in total, which forces
+              <code>j = half - i</code>. The cut is correct when every left value
+              is &lt;= every right value.
+            </p>
+            <ul>
+              <li>
+                Binary search <code>i</code> over the shorter array (swap so
+                <code>nums1</code> is shorter). This keeps <code>j</code> in range.
+              </li>
+              <li>
+                Let <code>L1 = nums1[i-1]</code>, <code>R1 = nums1[i]</code>,
+                <code>L2 = nums2[j-1]</code>, <code>R2 = nums2[j]</code>. Use
+                −∞ / +∞ when a cut is at an edge.
+              </li>
+              <li>
+                If <code>L1 &gt; R2</code>, the cut in <code>nums1</code> is too far
+                right: move <code>hi = i - 1</code>. If <code>L2 &gt; R1</code>, it's
+                too far left: move <code>lo = i + 1</code>.
+              </li>
+              <li>
+                Once valid: odd total → <code>max(L1, L2)</code>; even total →
+                <code>(max(L1, L2) + min(R1, R2)) / 2</code>.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(log(min(m, n)))</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              Meets the required <code>O(log(m + n))</code>, and is even better
+              because it only searches the shorter array. The tricky parts are
+              the edge sentinels and remembering to swap the arrays first.
+            </p>
+
+            <div class="code-tabs">
+              <script type="text/plain" data-lang="Python">
+                class Solution(object):
+                    def findMedianSortedArrays(self, nums1, nums2):
+                        if len(nums1) > len(nums2):
+                            nums1, nums2 = nums2, nums1  # binary search the shorter one
+                        m, n = len(nums1), len(nums2)
+                        half = (m + n + 1) // 2
+                        lo, hi = 0, m
+
+                        while lo <= hi:
+                            i = (lo + hi) // 2      # elements taken from nums1
+                            j = half - i            # elements taken from nums2
+
+                            L1 = nums1[i - 1] if i > 0 else float("-inf")
+                            R1 = nums1[i] if i < m else float("inf")
+                            L2 = nums2[j - 1] if j > 0 else float("-inf")
+                            R2 = nums2[j] if j < n else float("inf")
+
+                            if L1 > R2:
+                                hi = i - 1          # took too many from nums1
+                            elif L2 > R1:
+                                lo = i + 1          # took too few from nums1
+                            else:
+                                if (m + n) % 2:
+                                    return float(max(L1, L2))
+                                return (max(L1, L2) + min(R1, R2)) / 2.0
+              </script>
+              <script type="text/plain" data-lang="C++">
+                #include <vector>
+                #include <climits>
+                #include <algorithm>
+
+                class Solution {
+                public:
+                    double findMedianSortedArrays(std::vector<int>& nums1, std::vector<int>& nums2) {
+                        if (nums1.size() > nums2.size()) return findMedianSortedArrays(nums2, nums1);
+                        int m = nums1.size(), n = nums2.size();
+                        int half = (m + n + 1) / 2;
+                        int lo = 0, hi = m;
+
+                        while (lo <= hi) {
+                            int i = lo + (hi - lo) / 2;
+                            int j = half - i;
+
+                            int L1 = (i > 0) ? nums1[i - 1] : INT_MIN;
+                            int R1 = (i < m) ? nums1[i] : INT_MAX;
+                            int L2 = (j > 0) ? nums2[j - 1] : INT_MIN;
+                            int R2 = (j < n) ? nums2[j] : INT_MAX;
+
+                            if (L1 > R2) {
+                                hi = i - 1;
+                            } else if (L2 > R1) {
+                                lo = i + 1;
+                            } else {
+                                if ((m + n) % 2) return std::max(L1, L2);
+                                return (std::max(L1, L2) + (double)std::min(R1, R2)) / 2.0;
+                            }
+                        }
+                        return 0.0; // unreachable for valid input
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java">
+                class Solution {
+                    public double findMedianSortedArrays(int[] nums1, int[] nums2) {
+                        if (nums1.length > nums2.length) return findMedianSortedArrays(nums2, nums1);
+                        int m = nums1.length, n = nums2.length;
+                        int half = (m + n + 1) / 2;
+                        int lo = 0, hi = m;
+
+                        while (lo <= hi) {
+                            int i = lo + (hi - lo) / 2;
+                            int j = half - i;
+
+                            int L1 = (i > 0) ? nums1[i - 1] : Integer.MIN_VALUE;
+                            int R1 = (i < m) ? nums1[i] : Integer.MAX_VALUE;
+                            int L2 = (j > 0) ? nums2[j - 1] : Integer.MIN_VALUE;
+                            int R2 = (j < n) ? nums2[j] : Integer.MAX_VALUE;
+
+                            if (L1 > R2) {
+                                hi = i - 1;
+                            } else if (L2 > R1) {
+                                lo = i + 1;
+                            } else {
+                                if ((m + n) % 2 == 1) return Math.max(L1, L2);
+                                return (Math.max(L1, L2) + (double) Math.min(R1, R2)) / 2.0;
+                            }
+                        }
+                        return 0.0; // unreachable for valid input
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Merge, Then Pick the Middle</th>
+                    <td>Merge step of merge sort</td>
+                    <td>O(m + n)</td>
+                    <td>O(m + n)</td>
+                    <td>Accepted, but misses the O(log) requirement</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Two Pointers Without Storing</th>
+                    <td>Walk the merge to the middle only</td>
+                    <td>O(m + n)</td>
+                    <td>O(1)</td>
+                    <td>No extra array; good stepping stone</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Binary Search on the Partition</th>
+                    <td>Binary search a cut in the shorter array</td>
+                    <td>O(log(min(m, n)))</td>
+                    <td>O(1)</td>
+                    <td>Meets the requirement; expected answer</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+      <!-- =================== END 4. MEDIAN OF TWO SORTED ARRAYS =================== -->
     </main>
 
     <script>
