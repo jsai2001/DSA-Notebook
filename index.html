@@ -269,6 +269,458 @@
         </div>
       </details>
       <!-- =================== END 1. TWO SUM =================== -->
+
+      <!-- ===================== 2. ADD TWO NUMBERS ===================== -->
+      <details class="question" data-tags="linked-list math recursion">
+        <summary>
+          <span class="q-title">2. Add Two Numbers</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">Linked List</span>
+            <span class="tag">Math</span>
+            <span class="tag">Recursion</span>
+          </span>
+        </summary>
+
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> Digits are stored in reverse order, so the
+            heads are the ones place. Walk both lists together like column
+            addition: <code>sum = a + b + carry</code>, keep
+            <code>sum % 10</code>, carry <code>sum // 10</code>. Use a dummy head
+            node and keep looping while either list or the carry is left.
+          </div>
+
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/add-two-numbers/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              You are given two non-empty linked lists representing two
+              non-negative integers. The digits are stored in reverse order, and
+              each node holds a single digit. Add the two numbers and return the
+              sum as a linked list in the same format.
+            </p>
+            <ul>
+              <li>Each list has between 1 and 100 nodes.</li>
+              <li>Each node value is between 0 and 9.</li>
+              <li>
+                No leading zeros, except for the number 0 itself.
+              </li>
+            </ul>
+            <p class="note">
+              Example: <code>[2,4,3] + [5,6,4]</code> is
+              <code>342 + 465 = 807</code>, so the answer is
+              <code>[7,0,8]</code>.
+            </p>
+          </section>
+
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>
+              Approach 1: Three Loops with Trailing Node
+              <span class="label">My solution</span>
+            </h2>
+            <p class="intuition">
+              Handle the lists in three phases, writing the result digit by
+              digit into a pre-allocated node.
+            </p>
+            <ul>
+              <li>
+                Loop 1: while both lists have nodes, add
+                <code>l1.val + l2.val + carry</code>.
+              </li>
+              <li>
+                Loop 2 and 3: whichever list is longer, keep going with
+                <code>val + carry</code>.
+              </li>
+              <li>
+                If a carry of 1 is left, write it into one more node.
+              </li>
+              <li>
+                After every digit a new empty node is created, so the list ends
+                with one extra node. Track <code>prev</code> and set
+                <code>prev.next = None</code> at the end to cut it off.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(max(m, n))</span>
+              <span><strong>Space</strong> O(max(m, n))</span>
+            </div>
+            <p class="note">
+              Each node is visited once. The space is the output list itself, so
+              there are no extra data structures. The downside is the repeated
+              code across the three loops and the extra trailing node that has to
+              be trimmed.
+            </p>
+
+            <div class="code-tabs">
+              <script type="text/plain" data-lang="Python">
+                # Definition for singly-linked list.
+                # class ListNode(object):
+                #     def __init__(self, val=0, next=None):
+                #         self.val = val
+                #         self.next = next
+                class Solution(object):
+                    def addTwoNumbers(self, l1, l2):
+                        output = ListNode()
+                        prev = ListNode()
+                        head = output
+                        carry = 0
+
+                        while l1 is not None and l2 is not None:
+                            result = l1.val + l2.val + carry
+                            output.val = result % 10
+                            carry = result // 10
+                            prev = output
+                            output.next = ListNode()
+                            output = output.next
+                            l1 = l1.next
+                            l2 = l2.next
+
+                        while l1 is not None:
+                            result = l1.val + carry
+                            output.val = result % 10
+                            carry = result // 10
+                            prev = output
+                            output.next = ListNode()
+                            output = output.next
+                            l1 = l1.next
+
+                        while l2 is not None:
+                            result = l2.val + carry
+                            output.val = result % 10
+                            carry = result // 10
+                            prev = output
+                            output.next = ListNode()
+                            output = output.next
+                            l2 = l2.next
+
+                        if carry == 1:
+                            output.val = 1
+                            prev = output
+                            output.next = ListNode()
+
+                        prev.next = None  # cut off the extra trailing node
+                        return head
+              </script>
+              <script type="text/plain" data-lang="C++">
+                /**
+                 * Definition for singly-linked list.
+                 * struct ListNode {
+                 *     int val;
+                 *     ListNode *next;
+                 *     ListNode() : val(0), next(nullptr) {}
+                 *     ListNode(int x) : val(x), next(nullptr) {}
+                 *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+                 * };
+                 */
+                class Solution {
+                public:
+                    ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
+                        ListNode* head = new ListNode();
+                        ListNode* output = head;
+                        ListNode* prev = nullptr;
+                        int carry = 0;
+
+                        while (l1 != nullptr && l2 != nullptr) {
+                            int result = l1->val + l2->val + carry;
+                            output->val = result % 10;
+                            carry = result / 10;
+                            prev = output;
+                            output->next = new ListNode();
+                            output = output->next;
+                            l1 = l1->next;
+                            l2 = l2->next;
+                        }
+
+                        while (l1 != nullptr) {
+                            int result = l1->val + carry;
+                            output->val = result % 10;
+                            carry = result / 10;
+                            prev = output;
+                            output->next = new ListNode();
+                            output = output->next;
+                            l1 = l1->next;
+                        }
+
+                        while (l2 != nullptr) {
+                            int result = l2->val + carry;
+                            output->val = result % 10;
+                            carry = result / 10;
+                            prev = output;
+                            output->next = new ListNode();
+                            output = output->next;
+                            l2 = l2->next;
+                        }
+
+                        if (carry == 1) {
+                            output->val = 1;
+                            prev = output;
+                            output->next = new ListNode();
+                        }
+
+                        delete prev->next;     // free the extra trailing node
+                        prev->next = nullptr;
+                        return head;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java">
+                /**
+                 * Definition for singly-linked list.
+                 * public class ListNode {
+                 *     int val;
+                 *     ListNode next;
+                 *     ListNode() {}
+                 *     ListNode(int val) { this.val = val; }
+                 *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+                 * }
+                 */
+                class Solution {
+                    public ListNode addTwoNumbers(ListNode l1, ListNode l2) {
+                        ListNode head = new ListNode();
+                        ListNode output = head;
+                        ListNode prev = null;
+                        int carry = 0;
+
+                        while (l1 != null && l2 != null) {
+                            int result = l1.val + l2.val + carry;
+                            output.val = result % 10;
+                            carry = result / 10;
+                            prev = output;
+                            output.next = new ListNode();
+                            output = output.next;
+                            l1 = l1.next;
+                            l2 = l2.next;
+                        }
+
+                        while (l1 != null) {
+                            int result = l1.val + carry;
+                            output.val = result % 10;
+                            carry = result / 10;
+                            prev = output;
+                            output.next = new ListNode();
+                            output = output.next;
+                            l1 = l1.next;
+                        }
+
+                        while (l2 != null) {
+                            int result = l2.val + carry;
+                            output.val = result % 10;
+                            carry = result / 10;
+                            prev = output;
+                            output.next = new ListNode();
+                            output = output.next;
+                            l2 = l2.next;
+                        }
+
+                        if (carry == 1) {
+                            output.val = 1;
+                            prev = output;
+                            output.next = new ListNode();
+                        }
+
+                        prev.next = null; // cut off the extra trailing node
+                        return head;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>
+              Approach 2: Single Loop with Dummy Head
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              Same column addition, but merge the three loops into one. Keep
+              looping while <code>l1</code>, <code>l2</code> or
+              <code>carry</code> is still present, and treat a missing node as
+              the digit 0.
+            </p>
+            <ul>
+              <li>
+                Start with a <code>dummy</code> node and a
+                <code>tail</code> pointer. Return <code>dummy.next</code>.
+              </li>
+              <li>
+                Each step: <code>total = carry + (l1 digit) + (l2 digit)</code>,
+                append a node with <code>total % 10</code>, set
+                <code>carry = total // 10</code>.
+              </li>
+              <li>
+                Including <code>carry</code> in the loop condition handles the
+                final carry (like 5 + 5 = 10) without a special case.
+              </li>
+              <li>
+                Nodes are only created when needed, so there's no trailing node
+                to trim.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(max(m, n))</span>
+              <span><strong>Space</strong> O(max(m, n))</span>
+            </div>
+            <p class="note">
+              Same complexity as Approach 1 (the output list is the only space
+              used, extra space is O(1)), but shorter, with no duplicated loops
+              and no <code>prev</code> bookkeeping.
+            </p>
+
+            <div class="code-tabs">
+              <script type="text/plain" data-lang="Python">
+                # Definition for singly-linked list.
+                # class ListNode(object):
+                #     def __init__(self, val=0, next=None):
+                #         self.val = val
+                #         self.next = next
+                class Solution(object):
+                    def addTwoNumbers(self, l1, l2):
+                        dummy = ListNode()
+                        tail = dummy
+                        carry = 0
+
+                        while l1 or l2 or carry:
+                            total = carry
+                            if l1:
+                                total += l1.val
+                                l1 = l1.next
+                            if l2:
+                                total += l2.val
+                                l2 = l2.next
+
+                            tail.next = ListNode(total % 10)
+                            tail = tail.next
+                            carry = total // 10
+
+                        return dummy.next
+              </script>
+              <script type="text/plain" data-lang="C++">
+                /**
+                 * Definition for singly-linked list.
+                 * struct ListNode {
+                 *     int val;
+                 *     ListNode *next;
+                 *     ListNode() : val(0), next(nullptr) {}
+                 *     ListNode(int x) : val(x), next(nullptr) {}
+                 *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+                 * };
+                 */
+                class Solution {
+                public:
+                    ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {
+                        ListNode dummy;
+                        ListNode* tail = &dummy;
+                        int carry = 0;
+
+                        while (l1 != nullptr || l2 != nullptr || carry != 0) {
+                            int total = carry;
+                            if (l1 != nullptr) {
+                                total += l1->val;
+                                l1 = l1->next;
+                            }
+                            if (l2 != nullptr) {
+                                total += l2->val;
+                                l2 = l2->next;
+                            }
+
+                            tail->next = new ListNode(total % 10);
+                            tail = tail->next;
+                            carry = total / 10;
+                        }
+
+                        return dummy.next;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java">
+                /**
+                 * Definition for singly-linked list.
+                 * public class ListNode {
+                 *     int val;
+                 *     ListNode next;
+                 *     ListNode() {}
+                 *     ListNode(int val) { this.val = val; }
+                 *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+                 * }
+                 */
+                class Solution {
+                    public ListNode addTwoNumbers(ListNode l1, ListNode l2) {
+                        ListNode dummy = new ListNode();
+                        ListNode tail = dummy;
+                        int carry = 0;
+
+                        while (l1 != null || l2 != null || carry != 0) {
+                            int total = carry;
+                            if (l1 != null) {
+                                total += l1.val;
+                                l1 = l1.next;
+                            }
+                            if (l2 != null) {
+                                total += l2.val;
+                                l2 = l2.next;
+                            }
+
+                            tail.next = new ListNode(total % 10);
+                            tail = tail.next;
+                            carry = total / 10;
+                        }
+
+                        return dummy.next;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Three Loops with Trailing Node</th>
+                    <td>Both lists, then leftovers, then carry</td>
+                    <td>O(max(m, n))</td>
+                    <td>O(max(m, n))</td>
+                    <td>Works, but repeated code and a trailing node to trim</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Single Loop with Dummy Head</th>
+                    <td>One loop; missing node or carry counts as 0</td>
+                    <td>O(max(m, n))</td>
+                    <td>O(max(m, n))</td>
+                    <td>Cleaner, handles the final carry naturally</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+      <!-- =================== END 2. ADD TWO NUMBERS =================== -->
     </main>
 
     <script>
