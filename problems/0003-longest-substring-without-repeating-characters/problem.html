@@ -1,0 +1,209 @@
+<details class="question" data-tags="string hash-map sliding-window">
+  <summary>
+    <span class="q-title">3. Longest Substring Without Repeating Characters</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">String</span>
+      <span class="tag">Hash Map</span>
+      <span class="tag">Sliding Window</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Sliding window. Move <code>right</code>
+      one step at a time, and remember the last index of every character.
+      If <code>s[right]</code> was seen inside the window, jump
+      <code>left</code> to just past that index. The answer is the largest
+      <code>right - left + 1</code>. One pass, O(n).
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/longest-substring-without-repeating-characters/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given a string <code>s</code>, find the length of the longest
+        substring that has no repeating characters.
+      </p>
+      <ul>
+        <li><code>0 &lt;= s.length &lt;= 5 * 10^4</code></li>
+        <li>
+          <code>s</code> is made of English letters, digits, symbols and
+          spaces.
+        </li>
+        <li>
+          A substring is contiguous. In <code>"pwwkew"</code> the answer is
+          3 (<code>"wke"</code>), not 4 (<code>"pwke"</code> is a
+          subsequence, not a substring).
+        </li>
+      </ul>
+      <p class="note">
+        Examples: <code>"abcabcbb"</code> → 3 (<code>"abc"</code>),
+        <code>"bbbbb"</code> → 1, <code>""</code> → 0.
+      </p>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>
+        Approach 1: Brute Force from Every Start
+      </h2>
+      <p class="intuition">
+        Try every starting index <code>j</code>. From there, extend
+        <code>i</code> to the right while each new character hasn't been
+        seen in this run, and stop at the first repeat.
+      </p>
+      <ul>
+        <li>
+          A fresh hash map per start tracks characters in the current run.
+        </li>
+        <li>
+          <code>tracker[i][j]</code> holds the length of the run starting at
+          <code>j</code> and ending at <code>i</code>, built from
+          <code>tracker[i-1][j] + 1</code>. When <code>i == j</code> that
+          cell is still 0, so it correctly starts at 1.
+        </li>
+        <li>
+          Keep the largest value seen in <code>max_sub_len</code>.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(n²)</span>
+      </div>
+      <p class="note">
+        The loops break at the first repeat, so each start only scans at
+        most (charset size + 1) characters. But creating the n × n
+        <code>tracker</code> table already costs O(n²) time and memory: for
+        n = 5 × 10^4 that's 2.5 billion cells, which can hit Memory or Time
+        Limit Exceeded. <code>tracker[i][j]</code> is always just
+        <code>i - j + 1</code>, so the table can be dropped and replaced by
+        that expression for O(1) extra memory. Also, naming a variable
+        <code>hash</code> shadows Python's built-in <code>hash()</code>.
+      </p>
+
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Sliding Window with a Set</h2>
+      <p class="intuition">
+        Restarting from every index throws away work. Instead, keep one
+        window <code>s[left..right]</code> with no repeats and a set of its
+        characters.
+      </p>
+      <ul>
+        <li>Move <code>right</code> forward one character at a time.</li>
+        <li>
+          While <code>s[right]</code> is already in the set, remove
+          <code>s[left]</code> and move <code>left</code> forward.
+        </li>
+        <li>
+          Add <code>s[right]</code> and update the best length
+          <code>right - left + 1</code>.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(min(n, m))</span>
+      </div>
+      <p class="note">
+        Each character enters and leaves the window at most once, so it's
+        at most 2n steps. m is the charset size (the set never holds more
+        distinct characters than that).
+      </p>
+
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Sliding Window with Last-Seen Index
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Rather than shrinking the window one step at a time, jump straight
+        past the duplicate. Store <code>{char: last index}</code>.
+      </p>
+      <ul>
+        <li>
+          If <code>s[right]</code> was last seen at index
+          <code>k &gt;= left</code>, set <code>left = k + 1</code>.
+        </li>
+        <li>
+          The <code>k &gt;= left</code> check matters: an index from before
+          the window is stale and must not move <code>left</code> backwards
+          (for example <code>"abba"</code>).
+        </li>
+        <li>
+          Record <code>last[s[right]] = right</code> and update the best
+          length.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(min(n, m))</span>
+      </div>
+      <p class="note">
+        Exactly one pass with O(1) work per character. In C++ and Java a
+        fixed array of 128 slots works as the map, since the input is
+        ASCII.
+      </p>
+
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Brute Force from Every Start</th>
+              <td>Extend from each start until a repeat</td>
+              <td>O(n²)</td>
+              <td>O(n²)</td>
+              <td>n × n table can exceed memory limits</td>
+            </tr>
+            <tr>
+              <th scope="row">Sliding Window with a Set</th>
+              <td>Shrink from the left until no duplicate</td>
+              <td>O(n)</td>
+              <td>O(min(n, m))</td>
+              <td>Up to 2n steps; easy to reason about</td>
+            </tr>
+            <tr>
+              <th scope="row">Sliding Window with Last-Seen Index</th>
+              <td>Jump <code>left</code> past the duplicate</td>
+              <td>O(n)</td>
+              <td>O(min(n, m))</td>
+              <td>Single pass; expected answer in interviews</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
