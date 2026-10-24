@@ -16,10 +16,12 @@
 // (a string, an array of names, or omitted). `view` is a list of widgets:
 //
 //   { type: "array", label, values, pointers: { i: 0, j: 2 }, marks: { 0: "active" } }
+//   { type: "list",  label, nodes: [{ value, mark, caption }], pointers: { l1: 0 } }  (index = nodes.length → null)
 //   { type: "map",   label, columns: ["value", "index"], entries: [[k, v], ...], marks: { [k]: "new" } }
 //   { type: "vars",  items: [{ name, value, mark }] }
 //
-// Marks: "active", "compare", "match", "visited", "new".
+// Marks: "active", "compare", "match", "visited", "new"; list nodes also "ghost" and "cut".
+// int[] inputs accept minLength/maxLength and minValue/maxValue.
 // The page script (app.js) calls DSAViz.mount() for each code block with data-viz.
 
 (function () {
@@ -81,8 +83,10 @@
           `${name} needs between ${minLength} and ${maxLength} numbers (kept small so the steps stay readable).`
         );
       }
-      if (values.some((v) => Math.abs(v) > 1e6)) {
-        throw new InputError(`Numbers in ${name} must be between -1000000 and 1000000.`);
+      const minValue = spec.minValue ?? -1e6;
+      const maxValue = spec.maxValue ?? 1e6;
+      if (values.some((v) => v < minValue || v > maxValue)) {
+        throw new InputError(`Numbers in ${name} must be between ${minValue} and ${maxValue}.`);
       }
       return values;
     }
@@ -104,6 +108,16 @@
     return mark ? " is-" + mark : "";
   }
 
+  // Pointer names under a cell, one per line. The slot is always rendered so
+  // rows don't jump in height when pointers move.
+  function pointerSlot(pointers, index) {
+    const slot = el("span", "viz-pointer");
+    pointers
+      .filter(([, idx]) => idx === index)
+      .forEach(([name]) => slot.append(el("span", "", "↑ " + name)));
+    return slot;
+  }
+
   const widgets = {
     array(w) {
       const block = el("div", "viz-block");
@@ -114,12 +128,33 @@
         const cell = el("div", "viz-cell" + markClass(w.marks && w.marks[i]));
         cell.append(el("span", "viz-value", String(value)));
         cell.append(el("span", "viz-index", String(i)));
-        const here = pointers.filter(([, idx]) => idx === i).map(([name]) => name);
-        // Always render the pointer slot so rows don't jump in height.
-        cell.append(el("span", "viz-pointer", here.length ? "↑ " + here.join(", ") : ""));
+        cell.append(pointerSlot(pointers, i));
         row.append(cell);
       });
       if (!w.values.length) row.append(el("span", "viz-empty", "empty"));
+      block.append(row);
+      return block;
+    },
+
+    // Linked list: nodes joined by arrows, ending in null.
+    // nodes: [{ value, mark, caption }]; a pointer equal to nodes.length points at null.
+    list(w) {
+      const block = el("div", "viz-block");
+      if (w.label) block.append(el("div", "viz-label", w.label));
+      const row = el("div", "viz-list");
+      const pointers = Object.entries(w.pointers || {});
+      const nodes = w.nodes || [];
+      nodes.forEach((node, i) => {
+        const cell = el("div", "viz-cell viz-node" + markClass(node.mark));
+        cell.append(el("span", "viz-value", String(node.value)));
+        cell.append(el("span", "viz-index", node.caption || ""));
+        cell.append(pointerSlot(pointers, i));
+        row.append(cell, el("span", "viz-arrow", "→"));
+      });
+      const end = el("div", "viz-cell viz-node is-null");
+      end.append(el("span", "viz-value", "null"), el("span", "viz-index", ""));
+      end.append(pointerSlot(pointers, nodes.length));
+      row.append(end);
       block.append(row);
       return block;
     },
