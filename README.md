@@ -14,10 +14,12 @@ problems/
     approach1.cpp
     approach1.java
     approach2.py ...
+    approach2.visual.js optional step-by-step visualizer for approach 2
   0002-add-two-numbers/
   ...
 template.html           page shell (header, search, theme toggle, Surprise me)
 app.js                  search, code tabs, accordion, theme, Surprise me
+viz.js                  visualizer engine (widgets, controls, line highlighting)
 solutions.css           styles (light and dark themes)
 build.py                stitches template.html + problems/ into index.html
 index.html              GENERATED. Don't edit by hand.
@@ -38,6 +40,41 @@ index.html              GENERATED. Don't edit by hand.
    ```
    python3 build.py
    ```
+
+## Adding a visualizer (optional)
+
+Any approach can have a step-by-step visualizer. It shows up as a **Visualize** switch next to the code; **Code** stays the default, so quick revision is unchanged.
+
+1. Name the lines you want highlighted by ending them with a marker comment, in every language:
+   ```python
+   seen[num] = i  # @viz store
+   ```
+   ```java
+   seen.put(nums[i], i); // @viz store
+   ```
+   The build removes the markers from the code shown on the page. A line can have several names (`# @viz check, found`).
+2. Add `approachN.visual.js` next to the code. It registers the inputs and a `trace()` function that runs the algorithm and returns the steps:
+   ```js
+   DSAViz.register("0001-two-sum/approach2", {
+     inputs: [
+       { name: "nums", type: "int[]", value: "[3, 2, 4]", minLength: 2, maxLength: 10 },
+       { name: "target", type: "int", value: "6" },
+     ],
+     trace({ nums, target }) {
+       return [
+         { line: "store", note: "What this step does", view: [
+           { type: "array", label: "nums", values: nums, pointers: { i: 1 }, marks: { 1: "active" } },
+           { type: "map", label: "seen", columns: ["value", "index"], entries: [[3, 0]], marks: { 3: "new" } },
+           { type: "vars", items: [{ name: "target", value: target }] },
+         ] },
+       ];
+     },
+   });
+   ```
+   Input types: `int`, `int[]`, `string`. Marks: `active`, `compare`, `match`, `visited`, `new`. See `problems/0001-two-sum/` for complete examples and `viz.js` for the engine.
+3. Run `python3 build.py`.
+
+## Checking the build
 
 `python3 build.py --check` exits with an error if `index.html` is out of date, without changing anything. The build also stops with a clear message if a placeholder has no code files, a code file isn't used by any placeholder, a folder is misnamed, or code contains `</script`.
 

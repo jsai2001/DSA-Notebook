@@ -193,10 +193,22 @@ document.querySelectorAll(".code-tabs").forEach((container, gi) => {
     next.focus();
   });
 
+  // Code + highlight markers for the visualizer (read before clearing).
+  const vizSources = Array.from(sources).map((src) => ({
+    lang: src.dataset.lang,
+    code: dedent(src.textContent),
+    lines: src.dataset.vizLines ? JSON.parse(src.dataset.vizLines) : {},
+  }));
+
   container.innerHTML = "";
   container.appendChild(tablist);
   group.panels.forEach((p) => container.appendChild(p));
   allTabGroups.push(group);
+
+  // Approaches with a visualizer get a Code | Visualize switch (Code stays the default).
+  if (container.dataset.viz && window.DSAViz) {
+    window.DSAViz.mount(container, container.dataset.viz, vizSources);
+  }
 });
 
 let saved = null;

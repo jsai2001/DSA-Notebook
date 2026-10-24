@@ -119,8 +119,8 @@
               extra data structures.
             </p>
 
-            <div class="code-tabs">
-              <script type="text/plain" data-lang="Python">
+            <div class="code-tabs" data-viz="0001-two-sum/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"outer":[3],"check":[5],"found":[6]}'>
                 class Solution(object):
                     def twoSum(self, nums, target):
                         for i in range(len(nums)):
@@ -128,7 +128,7 @@
                                 if nums[i] + nums[j] == target:
                                     return [i, j]
               </script>
-              <script type="text/plain" data-lang="C++">
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"outer":[7],"check":[9],"found":[10],"notfound":[14]}'>
                 #include <vector>
 
                 class Solution {
@@ -146,7 +146,7 @@
                     }
                 };
               </script>
-              <script type="text/plain" data-lang="Java">
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"outer":[3],"check":[5],"found":[6],"notfound":[10]}'>
                 class Solution {
                     public int[] twoSum(int[] nums, int target) {
                         for (int i = 0; i < nums.length; i++) {
@@ -194,8 +194,8 @@
               elements.
             </p>
 
-            <div class="code-tabs">
-              <script type="text/plain" data-lang="Python">
+            <div class="code-tabs" data-viz="0001-two-sum/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"complement":[5],"check":[6],"found":[7],"store":[8]}'>
                 class Solution(object):
                     def twoSum(self, nums, target):
                         seen = {}  # {value: index}
@@ -205,7 +205,7 @@
                                 return [seen[complement], i]
                             seen[num] = i
               </script>
-              <script type="text/plain" data-lang="C++">
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7],"complement":[9],"check":[10],"found":[11],"store":[13],"notfound":[15]}'>
                 #include <vector>
                 #include <unordered_map>
 
@@ -224,7 +224,7 @@
                     }
                 };
               </script>
-              <script type="text/plain" data-lang="Java">
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[6],"complement":[8],"check":[9],"found":[10],"store":[12],"notfound":[14]}'>
                 import java.util.HashMap;
                 import java.util.Map;
 
@@ -1581,6 +1581,180 @@
       </details>
     </main>
 
+    <!-- Visualizer engine, then each approach's visualizer, then the page script -->
+    <script src="./viz.js"></script>
+    <!-- problems/0001-two-sum/approach1.visual.js -->
+    <script>
+      // Brute force: try every pair (i, j) with j > i.
+      DSAViz.register("0001-two-sum/approach1", {
+        inputs: [
+          { name: "nums", type: "int[]", value: "[3, 2, 4]", minLength: 2, maxLength: 10 },
+          { name: "target", type: "int", value: "6" },
+        ],
+
+        trace({ nums, target }) {
+          const n = nums.length;
+          const steps = [];
+          let pairs = 0;
+
+          const view = (pointers, marks, vars) => [
+            { type: "array", label: "nums", values: nums, pointers, marks },
+            { type: "vars", items: [{ name: "target", value: target }, ...vars] },
+          ];
+
+          steps.push({
+            note: `Check every pair (i, j) with j > i until one adds up to ${target}.`,
+            view: view({}, {}, []),
+          });
+
+          for (let i = 0; i < n; i++) {
+            if (i + 1 >= n) {
+              steps.push({
+                line: "outer",
+                note: `i = ${i} is the last element, so there's nothing after it to pair with.`,
+                view: view({ i }, { [i]: "active" }, [{ name: "i", value: i }]),
+              });
+              break;
+            }
+            steps.push({
+              line: "outer",
+              note: `i = ${i}: fix nums[${i}] = ${nums[i]} and try it with every element after it.`,
+              view: view({ i }, { [i]: "active" }, [{ name: "i", value: i }]),
+            });
+
+            for (let j = i + 1; j < n; j++) {
+              pairs++;
+              const sum = nums[i] + nums[j];
+              const vars = [
+                { name: "i", value: i },
+                { name: "j", value: j },
+                { name: "sum", value: sum, mark: sum === target ? "match" : "compare" },
+              ];
+              if (sum === target) {
+                steps.push({
+                  line: "check",
+                  note: `j = ${j}: ${nums[i]} + ${nums[j]} = ${sum}, which equals the target.`,
+                  view: view({ i, j }, { [i]: "match", [j]: "match" }, vars),
+                });
+                steps.push({
+                  line: "found",
+                  note: `Return [${i}, ${j}]. That took ${pairs} pair check${pairs === 1 ? "" : "s"}; in the worst case it's about n²/2.`,
+                  view: view({ i, j }, { [i]: "match", [j]: "match" }, vars),
+                });
+                return steps;
+              }
+              steps.push({
+                line: "check",
+                note: `j = ${j}: ${nums[i]} + ${nums[j]} = ${sum} ≠ ${target}, keep going.`,
+                view: view({ i, j }, { [i]: "active", [j]: "compare" }, vars),
+              });
+            }
+          }
+
+          steps.push({
+            line: "notfound",
+            note: `Checked all ${pairs} pair${pairs === 1 ? "" : "s"} and none add up to ${target}. (LeetCode guarantees one exists.)`,
+            view: view({}, {}, []),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0001-two-sum/approach2.visual.js -->
+    <script>
+      // One-pass hash map: for each number, look up target - num among the values seen so far.
+      DSAViz.register("0001-two-sum/approach2", {
+        inputs: [
+          { name: "nums", type: "int[]", value: "[3, 2, 4]", minLength: 2, maxLength: 10 },
+          { name: "target", type: "int", value: "6" },
+        ],
+
+        trace({ nums, target }) {
+          const steps = [];
+          const seen = new Map(); // value -> index, in insertion order
+
+          // Elements before i are "visited" (already in the map).
+          const arrayMarks = (i, extra) => {
+            const marks = {};
+            for (let k = 0; k < i; k++) marks[k] = "visited";
+            if (i < nums.length) marks[i] = "active";
+            return Object.assign(marks, extra);
+          };
+          const view = (i, marks, mapMarks, vars) => [
+            { type: "array", label: "nums", values: nums, pointers: i < nums.length ? { i } : {}, marks },
+            {
+              type: "map",
+              label: "seen {value: index}",
+              columns: ["value", "index"],
+              entries: Array.from(seen.entries()),
+              marks: mapMarks,
+            },
+            { type: "vars", items: [{ name: "target", value: target }, ...vars] },
+          ];
+
+          steps.push({
+            line: "init",
+            note: "Start with an empty map. It will remember each value we pass and its index.",
+            view: view(nums.length, {}, {}, []),
+          });
+
+          for (let i = 0; i < nums.length; i++) {
+            const num = nums[i];
+            const complement = target - num;
+            const vars = [
+              { name: "i", value: i },
+              { name: "num", value: num },
+              { name: "complement", value: complement, mark: "compare" },
+            ];
+
+            steps.push({
+              line: "complement",
+              note: `i = ${i}: num = ${num}, so we need complement = ${target} - ${num} = ${complement}.`,
+              view: view(i, arrayMarks(i), {}, vars),
+            });
+
+            if (seen.has(complement)) {
+              const j = seen.get(complement);
+              const matchVars = vars.map((v) => (v.name === "complement" ? { ...v, mark: "match" } : v));
+              steps.push({
+                line: "check",
+                note: `${complement} is in seen at index ${j}. nums[${j}] + nums[${i}] = ${complement} + ${num} = ${target}.`,
+                view: view(i, arrayMarks(i, { [j]: "match", [i]: "match" }), { [complement]: "match" }, matchVars),
+              });
+              steps.push({
+                line: "found",
+                note: `Return [${j}, ${i}]. One pass: we looked at ${i + 1} of ${nums.length} elements, each lookup O(1).`,
+                view: view(i, arrayMarks(i, { [j]: "match", [i]: "match" }), { [complement]: "match" }, matchVars),
+              });
+              return steps;
+            }
+
+            steps.push({
+              line: "check",
+              note: `${complement} is not in seen yet, so no pair ends at index ${i}.`,
+              view: view(i, arrayMarks(i), {}, vars),
+            });
+
+            const updating = seen.has(num);
+            seen.set(num, i);
+            steps.push({
+              line: "store",
+              note: updating
+                ? `${num} was already in seen; update it to the newer index ${i}.`
+                : `Store ${num} → ${i}, so a later number that needs ${num} can find it.`,
+              view: view(i, arrayMarks(i), { [num]: "new" }, vars),
+            });
+          }
+
+          steps.push({
+            line: "notfound",
+            note: `Reached the end without finding a pair that adds up to ${target}. (LeetCode guarantees one exists.)`,
+            view: view(nums.length, arrayMarks(nums.length), {}, []),
+          });
+          return steps;
+        },
+      });
+    </script>
     <script src="./app.js"></script>
   </body>
 </html>
