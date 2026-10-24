@@ -27,14 +27,21 @@
       </button>
       <h1 class="title">Coding Solutions</h1>
       <p class="subtitle">My notes and solutions. Click a question to expand it.</p>
-      <label for="search" class="visually-hidden">Search questions</label>
-      <input
-        id="search"
-        type="search"
-        placeholder="Search by name or tag..."
-        autocomplete="off"
-      />
+      <div class="controls">
+        <label for="search" class="visually-hidden">Search questions</label>
+        <input
+          id="search"
+          type="search"
+          placeholder="Search by name or tag..."
+          autocomplete="off"
+        />
+        <button type="button" id="surprise" class="surprise-btn">
+          <span aria-hidden="true">🎲</span> Surprise me
+        </button>
+      </div>
       <p id="no-results" hidden>No questions match your search.</p>
+      <!-- Announces the picked question to screen readers -->
+      <p id="surprise-status" class="visually-hidden" aria-live="polite"></p>
     </header>
 
     <main id="question-list">
@@ -1165,6 +1172,42 @@
           const top = q.getBoundingClientRect().top;
           if (top < 0) q.scrollIntoView({ block: "start" });
         });
+      });
+
+      // ---------- Surprise me: open a random question ----------
+      const surpriseBtn = document.getElementById("surprise");
+      const surpriseStatus = document.getElementById("surprise-status");
+
+      surpriseBtn.addEventListener("click", () => {
+        // Pick from ALL questions, so clear any active search first.
+        if (search.value) {
+          search.value = "";
+          search.dispatchEvent(new Event("input"));
+        }
+
+        // Avoid re-picking the question that's already open.
+        const all = Array.from(questions);
+        const pool = all.length > 1 ? all.filter((q) => !q.open) : all;
+        const pick = pool[Math.floor(Math.random() * pool.length)];
+
+        // Collapse the others BEFORE scrolling, so the layout doesn't shift
+        // under the scroll and leave the picked question off-screen.
+        all.forEach((q) => {
+          q.open = q === pick;
+        });
+        // Wait one frame so the collapsed layout is in place, then scroll.
+        requestAnimationFrame(() => {
+          pick.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+        pick.querySelector("summary").focus({ preventScroll: true });
+
+        // Brief highlight so it's clear which one was picked.
+        pick.classList.remove("picked");
+        void pick.offsetWidth; // restart the animation
+        pick.classList.add("picked");
+
+        surpriseStatus.textContent =
+          "Opened " + pick.querySelector(".q-title").textContent.trim();
       });
 
       // ---------- Light / dark theme toggle (default: light) ----------
