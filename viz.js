@@ -18,10 +18,12 @@
 //   { type: "array", label, values, pointers: { i: 0, j: 2 }, marks: { 0: "active" } }
 //   { type: "list",  label, nodes: [{ value, mark, caption }], pointers: { l1: 0 } }  (index = nodes.length → null)
 //   { type: "map",   label, columns: ["value", "index"], entries: [[k, v], ...], marks: { [k]: "new" } }
+//   { type: "set",   label, items: ["a", "b"], marks: { a: "new" } }
 //   { type: "vars",  items: [{ name, value, mark }] }
 //
-// Marks: "active", "compare", "match", "visited", "new"; list nodes also "ghost" and "cut".
-// int[] inputs accept minLength/maxLength and minValue/maxValue.
+// Marks: "active", "compare", "match", "visited", "new", "window", "ghost", "cut".
+// int[] inputs accept minLength/maxLength and minValue/maxValue; string inputs accept
+// maxLength and ascii: true.
 // The page script (app.js) calls DSAViz.mount() for each code block with data-viz.
 
 (function () {
@@ -92,10 +94,14 @@
     }
 
     if (spec.type === "string") {
+      // Quotes are optional; use them to keep leading/trailing spaces.
       const unquoted = text.replace(/^(["'])(.*)\1$/, "$2");
       const maxLength = spec.maxLength ?? 16;
       if (unquoted.length > maxLength) {
         throw new InputError(`${name} can be at most ${maxLength} characters here.`);
+      }
+      if (spec.ascii && /[^\x20-\x7e]/.test(unquoted)) {
+        throw new InputError(`${name} can only use letters, digits, symbols and spaces (ASCII).`);
       }
       return unquoted;
     }
@@ -186,6 +192,21 @@
       }
       table.append(thead, tbody);
       block.append(table);
+      return block;
+    },
+
+    // Set of values shown as chips in braces; marks keyed by String(item).
+    set(w) {
+      const block = el("div", "viz-block");
+      if (w.label) block.append(el("div", "viz-label", w.label));
+      const row = el("div", "viz-set");
+      row.append(el("span", "viz-brace", "{"));
+      (w.items || []).forEach((item) => {
+        row.append(el("span", "viz-var" + markClass(w.marks && w.marks[String(item)]), String(item)));
+      });
+      if (!(w.items || []).length) row.append(el("span", "viz-empty", "empty"));
+      row.append(el("span", "viz-brace", "}"));
+      block.append(row);
       return block;
     },
 

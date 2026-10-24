@@ -826,8 +826,8 @@
               <code>hash</code> shadows Python's built-in <code>hash()</code>.
             </p>
 
-            <div class="code-tabs">
-              <script type="text/plain" data-lang="Python">
+            <div class="code-tabs" data-viz="0003-longest-substring-without-repeating-characters/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"empty":[4,5],"init":[6,7],"outer":[8,9],"extend":[11,12,13,14],"repeat":[11,15,16],"return":[17]}'>
                 class Solution(object):
                     def lengthOfLongestSubstring(self, s):
                         len_str = len(s)
@@ -846,7 +846,7 @@
                                     break
                         return max_sub_len
               </script>
-              <script type="text/plain" data-lang="C++">
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"empty":[9],"init":[10,11],"outer":[12,13],"extend":[15,16,17,18],"repeat":[15],"return":[21]}'>
                 #include <string>
                 #include <vector>
                 #include <unordered_set>
@@ -871,7 +871,7 @@
                     }
                 };
               </script>
-              <script type="text/plain" data-lang="Java">
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"empty":[7],"init":[8,9],"outer":[10,11],"extend":[13,14,15,16,17],"repeat":[13,14],"return":[20]}'>
                 import java.util.HashSet;
                 import java.util.Set;
 
@@ -927,8 +927,8 @@
               distinct characters than that).
             </p>
 
-            <div class="code-tabs">
-              <script type="text/plain" data-lang="Python">
+            <div class="code-tabs" data-viz="0003-longest-substring-without-repeating-characters/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"loop":[6],"dup":[7],"shrink":[8,9],"add":[10,11],"return":[12]}'>
                 class Solution(object):
                     def lengthOfLongestSubstring(self, s):
                         window = set()
@@ -942,7 +942,7 @@
                             best = max(best, right - left + 1)
                         return best
               </script>
-              <script type="text/plain" data-lang="C++">
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[8,9],"loop":[10],"dup":[11],"shrink":[12,13],"add":[15,16],"return":[18]}'>
                 #include <string>
                 #include <unordered_set>
                 #include <algorithm>
@@ -964,7 +964,7 @@
                     }
                 };
               </script>
-              <script type="text/plain" data-lang="Java">
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[6,7],"loop":[8,9],"dup":[10],"shrink":[11,12],"add":[14,15],"return":[17]}'>
                 import java.util.HashSet;
                 import java.util.Set;
 
@@ -1023,8 +1023,8 @@
               ASCII.
             </p>
 
-            <div class="code-tabs">
-              <script type="text/plain" data-lang="Python">
+            <div class="code-tabs" data-viz="0003-longest-substring-without-repeating-characters/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"loop":[6],"check":[7],"jump":[8],"record":[9,10],"return":[11]}'>
                 class Solution(object):
                     def lengthOfLongestSubstring(self, s):
                         last = {}  # {char: last index seen}
@@ -1037,7 +1037,7 @@
                             best = max(best, right - left + 1)
                         return best
               </script>
-              <script type="text/plain" data-lang="C++">
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[8,9],"loop":[10,11],"check":[12],"jump":[13],"record":[15,16],"return":[18]}'>
                 #include <string>
                 #include <vector>
                 #include <algorithm>
@@ -1059,7 +1059,7 @@
                     }
                 };
               </script>
-              <script type="text/plain" data-lang="Java">
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6,7],"loop":[8,9],"check":[10],"jump":[11],"record":[13,14],"return":[16]}'>
                 import java.util.Arrays;
 
                 class Solution {
@@ -2017,6 +2017,315 @@
             line: "return",
             note: `Return dummy.next, skipping the placeholder: [${result.join(", ")}] = ${answer}. Check: ${asNumber(l1)} + ${asNumber(l2)} = ${Number(asNumber(l1)) + Number(asNumber(l2))}.`,
             view: view({ returning: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0003-longest-substring-without-repeating-characters/approach1.visual.js -->
+    <script>
+      // Brute force: from every start j, extend i until the first repeated character.
+      DSAViz.register("0003-longest-substring-without-repeating-characters/approach1", {
+        inputs: [{ name: "s", type: "string", value: "pwwkew", maxLength: 10, ascii: true }],
+
+        trace({ s }) {
+          const n = s.length;
+          const show = (c) => (c === " " ? "␣" : c);
+          const chars = Array.from(s, show);
+          const steps = [];
+
+          if (n === 0) {
+            return [{ line: "empty", note: "The string is empty, so the answer is 0.", view: [{ type: "array", label: "s", values: [] }] }];
+          }
+
+          let best = 1;
+          let bestRange = [0, 0];
+          const view = (j, i, run, opts = {}) => {
+            const marks = {};
+            for (let k = j; k < j + run.length; k++) marks[k] = "window";
+            if (i < n) marks[i] = opts.repeat ? "compare" : "active";
+            const pointers = { j };
+            if (i < n) pointers.i = i;
+            return [
+              { type: "array", label: "s", values: chars, pointers, marks },
+              { type: "set", label: "hash (chars in this run)", items: run.map(show), marks: opts.setMarks || {} },
+              {
+                type: "vars",
+                items: [
+                  { name: "run length", value: run.length },
+                  {
+                    name: "max_sub_len",
+                    value: `${best} ("${chars.slice(bestRange[0], bestRange[1] + 1).join("")}")`,
+                    mark: opts.newBest ? "match" : "",
+                  },
+                ],
+              },
+            ];
+          };
+
+          steps.push({
+            line: "init",
+            note: `Allocate tracker, an n × n = ${n} × ${n} = ${n * n} cell table. Only one value per run is ever needed, so this is the O(n²) memory cost.`,
+            view: [{ type: "array", label: "s", values: chars }],
+          });
+
+          let checks = 0;
+          for (let j = 0; j < n; j++) {
+            const run = [];
+            steps.push({
+              line: "outer",
+              note: `Start a new run at j = ${j} with an empty hash.`,
+              view: view(j, j, run),
+            });
+            let i = j;
+            for (; i < n; i++) {
+              checks++;
+              const c = s[i];
+              if (run.includes(c)) {
+                steps.push({
+                  line: "repeat",
+                  note: `'${show(c)}' is already in this run, so stop. The run from j = ${j} has length ${run.length}.`,
+                  view: view(j, i, run, { repeat: true, setMarks: { [show(c)]: "compare" } }),
+                });
+                break;
+              }
+              run.push(c);
+              const len = i - j + 1;
+              const newBest = len > best;
+              if (newBest) {
+                best = len;
+                bestRange = [j, i];
+              }
+              steps.push({
+                line: "extend",
+                note:
+                  `'${show(c)}' is new in this run: tracker[${i}][${j}] = ${len}.` +
+                  (newBest ? ` That's a new best, max_sub_len = ${len}.` : ""),
+                view: view(j, i, run, { setMarks: { [show(c)]: "new" }, newBest }),
+              });
+            }
+            if (i === n) {
+              steps.push({
+                line: "outer",
+                note: `Reached the end of the string; the run from j = ${j} has length ${run.length}.`,
+                view: view(j, n, run),
+              });
+            }
+          }
+
+          steps.push({
+            line: "return",
+            note: `Return ${best} ("${chars.slice(bestRange[0], bestRange[1] + 1).join("")}"). Every start re-scans its run from scratch: ${checks} character checks for n = ${n}.`,
+            view: view(bestRange[0], n, Array.from(s.slice(bestRange[0], bestRange[1] + 1))),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0003-longest-substring-without-repeating-characters/approach2.visual.js -->
+    <script>
+      // Sliding window with a set: grow on the right, shrink from the left while there's a duplicate.
+      DSAViz.register("0003-longest-substring-without-repeating-characters/approach2", {
+        inputs: [{ name: "s", type: "string", value: "abcabcbb", maxLength: 12, ascii: true }],
+
+        trace({ s }) {
+          const n = s.length;
+          const show = (c) => (c === " " ? "␣" : c);
+          const chars = Array.from(s, show);
+          const steps = [];
+          const window = []; // chars in s[left..right-1], in order
+          let left = 0;
+          let best = 0;
+          let bestRange = null;
+
+          const bestText = () => (bestRange ? `"${chars.slice(bestRange[0], bestRange[1] + 1).join("")}"` : '""');
+          const view = (right, opts = {}) => {
+            const marks = {};
+            for (let k = left; k < Math.min(right + (opts.included ? 1 : 0), n); k++) marks[k] = "window";
+            if (opts.leaving !== undefined) marks[opts.leaving] = "cut";
+            if (right < n && !opts.included) marks[right] = opts.dup ? "compare" : "active";
+            if (opts.final && bestRange) for (let k = bestRange[0]; k <= bestRange[1]; k++) marks[k] = "match";
+            const pointers = opts.final ? {} : { left };
+            if (right < n && !opts.final) pointers.right = right;
+            return [
+              { type: "array", label: "s", values: chars, pointers, marks },
+              { type: "set", label: "window", items: window.map(show), marks: opts.setMarks || {} },
+              {
+                type: "vars",
+                items: [{ name: "best", value: `${best} (${bestText()})`, mark: opts.newBest ? "match" : "" }],
+              },
+            ];
+          };
+
+          steps.push({
+            line: "init",
+            note: "Keep one window s[left..right] with no repeats, plus a set of its characters.",
+            view: view(n === 0 ? 0 : -1),
+          });
+
+          for (let right = 0; right < n; right++) {
+            const c = s[right];
+            steps.push({
+              line: "loop",
+              note: `right = ${right}: next character is '${show(c)}'.`,
+              view: view(right),
+            });
+            while (window.includes(c)) {
+              steps.push({
+                line: "dup",
+                note: `'${show(c)}' is already in the window, so shrink it from the left.`,
+                view: view(right, { dup: true, setMarks: { [show(c)]: "compare" } }),
+              });
+              const out = s[left];
+              steps.push({
+                line: "shrink",
+                note: `Remove s[${left}] = '${show(out)}' and move left to ${left + 1}.`,
+                view: view(right, { dup: true, leaving: left, setMarks: { [show(out)]: "cut" } }),
+              });
+              window.splice(window.indexOf(out), 1);
+              left++;
+            }
+            window.push(c);
+            const len = right - left + 1;
+            const newBest = len > best;
+            if (newBest) {
+              best = len;
+              bestRange = [left, right];
+            }
+            steps.push({
+              line: "add",
+              note:
+                `Add '${show(c)}'. The window "${chars.slice(left, right + 1).join("")}" has length ${len}.` +
+                (newBest ? " New best." : ` best stays ${best}.`),
+              view: view(right, { included: true, setMarks: { [show(c)]: "new" }, newBest }),
+            });
+          }
+
+          steps.push({
+            line: "return",
+            note:
+              n === 0
+                ? "The string is empty, so the answer is 0."
+                : `Return ${best} (${bestText()}). Each character entered and left the window at most once, so it's O(n).`,
+            view: view(n, { final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0003-longest-substring-without-repeating-characters/approach3.visual.js -->
+    <script>
+      // Sliding window with last-seen index: jump left straight past the previous copy.
+      DSAViz.register("0003-longest-substring-without-repeating-characters/approach3", {
+        // "tmmzuxt" shows why the last[ch] >= left check matters (the second 't').
+        inputs: [{ name: "s", type: "string", value: "tmmzuxt", maxLength: 12, ascii: true }],
+
+        trace({ s }) {
+          const n = s.length;
+          const show = (c) => (c === " " ? "␣" : c);
+          const chars = Array.from(s, show);
+          const steps = [];
+          const last = new Map(); // char -> last index, in first-seen order
+          let left = 0;
+          let best = 0;
+          let bestRange = null;
+
+          const bestText = () => (bestRange ? `"${chars.slice(bestRange[0], bestRange[1] + 1).join("")}"` : '""');
+          const view = (right, opts = {}) => {
+            const marks = {};
+            const end = opts.included ? right : right - 1;
+            for (let k = left; k <= Math.min(end, n - 1); k++) marks[k] = "window";
+            if (opts.prev !== undefined) marks[opts.prev] = opts.stale ? "visited" : "compare";
+            if (right < n && !opts.included && !opts.final) marks[right] = "active";
+            if (opts.final && bestRange) for (let k = bestRange[0]; k <= bestRange[1]; k++) marks[k] = "match";
+            const pointers = opts.final ? {} : { left };
+            if (right < n && !opts.final) pointers.right = right;
+            return [
+              { type: "array", label: "s", values: chars, pointers, marks },
+              {
+                type: "map",
+                label: "last {char: last index}",
+                columns: ["char", "index"],
+                entries: Array.from(last.entries()).map(([c, i]) => [show(c), i]),
+                marks: opts.mapMarks || {},
+              },
+              {
+                type: "vars",
+                items: [
+                  { name: "left", value: left, mark: opts.jumped ? "new" : "" },
+                  { name: "best", value: `${best} (${bestText()})`, mark: opts.newBest ? "match" : "" },
+                ],
+              },
+            ];
+          };
+
+          steps.push({
+            line: "init",
+            note: "Remember the last index of every character. The window is s[left..right].",
+            view: view(-1),
+          });
+
+          for (let right = 0; right < n; right++) {
+            const c = s[right];
+            const k = show(c);
+            steps.push({
+              line: "loop",
+              note: `right = ${right}: next character is '${k}'.`,
+              view: view(right),
+            });
+
+            if (last.has(c)) {
+              const prev = last.get(c);
+              if (prev >= left) {
+                steps.push({
+                  line: "check",
+                  note: `'${k}' was last seen at ${prev}, which is inside the window (>= left = ${left}).`,
+                  view: view(right, { prev, mapMarks: { [k]: "match" } }),
+                });
+                left = prev + 1;
+                steps.push({
+                  line: "jump",
+                  note: `Jump left straight to ${prev} + 1 = ${left}, past the old '${k}'. No step-by-step shrinking.`,
+                  view: view(right, { jumped: true }),
+                });
+              } else {
+                steps.push({
+                  line: "check",
+                  note: `'${k}' was last seen at ${prev}, but that's before left = ${left}, so it's stale. Don't move left (moving it back would break the window).`,
+                  view: view(right, { prev, stale: true, mapMarks: { [k]: "new" } }),
+                });
+              }
+            } else {
+              steps.push({
+                line: "check",
+                note: `'${k}' hasn't been seen before, so the window can just grow.`,
+                view: view(right),
+              });
+            }
+
+            last.set(c, right);
+            const len = right - left + 1;
+            const newBest = len > best;
+            if (newBest) {
+              best = len;
+              bestRange = [left, right];
+            }
+            steps.push({
+              line: "record",
+              note:
+                `Record last['${k}'] = ${right}. Window "${chars.slice(left, right + 1).join("")}" has length ${len}.` +
+                (newBest ? " New best." : ` best stays ${best}.`),
+              view: view(right, { included: true, mapMarks: { [k]: "new" }, newBest }),
+            });
+          }
+
+          steps.push({
+            line: "return",
+            note:
+              n === 0
+                ? "The string is empty, so the answer is 0."
+                : `Return ${best} (${bestText()}). One pass with O(1) work per character.`,
+            view: view(n, { final: true }),
           });
           return steps;
         },
