@@ -15,7 +15,8 @@
 // A step's `line` names a code line marked with `# @viz name` / `// @viz name`
 // (a string, an array of names, or omitted). `view` is a list of widgets:
 //
-//   { type: "array", label, values, pointers: { i: 0, j: 2 }, marks: { 0: "active" } }
+//   { type: "array", label, values, pointers: { i: 0, j: 2 }, marks: { 0: "active" }, cut: 2 }
+//     (cut: optional partition line before that index)
 //   { type: "list",  label, nodes: [{ value, mark, caption }], pointers: { l1: 0 } }  (index = nodes.length → null)
 //   { type: "map",   label, columns: ["value", "index"], entries: [[k, v], ...], marks: { [k]: "new" } }
 //   { type: "set",   label, items: ["a", "b"], marks: { a: "new" } }
@@ -130,7 +131,10 @@
       if (w.label) block.append(el("div", "viz-label", w.label));
       const row = el("div", "viz-array");
       const pointers = Object.entries(w.pointers || {});
+      // Optional partition line drawn just before cell `cut` (cut = length → after the last cell).
+      const cutLine = () => el("span", "viz-cutline");
       w.values.forEach((value, i) => {
+        if (w.cut === i) row.append(cutLine());
         const cell = el("div", "viz-cell" + markClass(w.marks && w.marks[i]));
         cell.append(el("span", "viz-value", String(value)));
         cell.append(el("span", "viz-index", String(i)));
@@ -138,6 +142,7 @@
         row.append(cell);
       });
       if (!w.values.length) row.append(el("span", "viz-empty", "empty"));
+      if (w.cut === w.values.length) row.append(cutLine());
       block.append(row);
       return block;
     },
