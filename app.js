@@ -220,3 +220,70 @@ try {
 if (allTabGroups.length) {
   selectLang(saved || allTabGroups[0].langs[0]);
 }
+
+// ---------- Phones: shrink code to fit the screen width ----------
+// On narrow screens each code block's font is reduced until its longest line
+// fits, but never below CODE_MIN_PX. Blocks that still don't fit scroll
+// sideways, with a faded right edge (.has-more) as a hint. Desktop is untouched.
+const CODE_MOBILE = window.matchMedia("(max-width: 600px)");
+const CODE_MIN_PX = 9;
+const codeWidths = new WeakMap();
+
+function updateHasMore(pre) {
+  const more = pre.scrollLeft + pre.clientWidth < pre.scrollWidth - 1;
+  pre.classList.toggle("has-more", more);
+}
+
+function fitCode(pre) {
+  pre.style.fontSize = "";
+  pre.classList.remove("has-more");
+  const code = pre.querySelector("code");
+  if (!CODE_MOBILE.matches || !code || !pre.clientWidth) return;
+
+  const cs = getComputedStyle(pre);
+  const available =
+    pre.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  // An inline <code>'s box spans its longest line; the visualizer's is max-content.
+  const contentWidth = () => code.getBoundingClientRect().width;
+
+  let size = parseFloat(cs.fontSize);
+  if (contentWidth() <= available) return;
+
+  // Monospace text scales linearly with font size; then nudge for rounding
+  // and for padding that doesn't scale.
+  size = Math.max(CODE_MIN_PX, Math.floor(((size * available) / contentWidth()) * 4) / 4);
+  pre.style.fontSize = size + "px";
+  while (size > CODE_MIN_PX && contentWidth() > available) {
+    size = Math.max(CODE_MIN_PX, size - 0.25);
+    pre.style.fontSize = size + "px";
+  }
+  updateHasMore(pre);
+}
+
+// Refit whenever a block's width changes: first shown (tab, accordion,
+// Code/Visualize switch), rotated, or resized. Font changes only alter its
+// height, so they don't retrigger this.
+const codeObserver = new ResizeObserver((entries) => {
+  entries.forEach(({ target, contentRect }) => {
+    const width = Math.round(contentRect.width);
+    if (codeWidths.get(target) === width) return;
+    codeWidths.set(target, width);
+    fitCode(target);
+  });
+});
+
+function observeCode(pre) {
+  codeObserver.observe(pre);
+  pre.addEventListener("scroll", () => {
+    if (pre.style.fontSize) updateHasMore(pre);
+  }, { passive: true });
+}
+
+document.querySelectorAll(".code-tabs pre").forEach(observeCode);
+CODE_MOBILE.addEventListener("change", () =>
+  document.querySelectorAll(".code-tabs pre").forEach(fitCode)
+);
+
+// The visualizer creates its code pane later and swaps its contents on
+// language change, so it calls these directly.
+window.DSACode = { observe: observeCode, fit: fitCode };

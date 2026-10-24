@@ -312,6 +312,7 @@
     const code = el("code");
     pre.append(code);
     codePane.append(langBar, pre);
+    if (window.DSACode) window.DSACode.observe(pre);
     main.append(stage, codePane);
 
     // --- explanation + controls ---
@@ -358,6 +359,8 @@
         row.append(el("span", "viz-linetext", line || " "));
         code.append(row);
       });
+      // New language = new line lengths; refit the font on phones (app.js).
+      if (window.DSACode) window.DSACode.fit(pre);
       highlight();
     }
 
