@@ -1,0 +1,249 @@
+<details class="question" data-tags="string dynamic-programming two-pointers palindrome expand-around-center manacher">
+  <summary>
+    <span class="q-title">5. Longest Palindromic Substring</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">String</span>
+      <span class="tag">Dynamic Programming</span>
+      <span class="tag">Two Pointers</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Every palindrome mirrors around a center,
+      and there are only <code>2n - 1</code> centers: each character (odd
+      length) and each gap between two characters (even length). Expand
+      outward from each one while both ends match. O(n²) time, O(1) space.
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/longest-palindromic-substring/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given a string <code>s</code>, return the longest substring of
+        <code>s</code> that reads the same forwards and backwards.
+      </p>
+      <ul>
+        <li><code>1 &lt;= s.length &lt;= 1000</code></li>
+        <li><code>s</code> is made of digits and English letters.</li>
+        <li>If several have the same longest length, any one is accepted.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>"babad"</code> → <code>"bab"</code>
+        (<code>"aba"</code> is also fine); <code>"cbbd"</code> →
+        <code>"bb"</code>.
+      </p>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Brute Force by Length</h2>
+      <p class="intuition">
+        Try every length from 1 to n. For each length, slide a window across
+        the string and check it with <code>s == s[::-1]</code>. The first hit
+        is recorded and the scan moves on to the next length, so the last
+        length that had any palindrome wins.
+      </p>
+      <ul>
+        <li>
+          It has to keep going after a length with no palindrome: in
+          <code>"aba"</code> there's none of length 2 but there is one of
+          length 3.
+        </li>
+        <li>
+          The <code>break</code> means a length stops at its first
+          palindrome, so strings with lots of palindromes finish quickly.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n³)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Worst case (few palindromes) checks every window of every length:
+        about n³/6 character comparisons, ~1.7 × 10⁸ at n = 1000. It still
+        passes because slicing and reversing run in C; a random 1000-character
+        string took about 0.2 s in Python here. Two small notes:
+        <code>min_len</code> never limits the loop (it's always &lt;=
+        <code>str_len</code>), so it can be dropped, and despite its name it
+        holds the longest length found. Scanning lengths from longest to
+        shortest and returning the first hit would stop much sooner.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Dynamic Programming Table</h2>
+      <p class="intuition">
+        A substring is a palindrome when its two ends match and the part
+        inside is a palindrome. Store that in a table so the inside is never
+        checked twice.
+      </p>
+      <ul>
+        <li>
+          <code>dp[i][j]</code> = <code>s[i] == s[j]</code> and
+          (<code>j - i &lt; 2</code> or <code>dp[i + 1][j - 1]</code>).
+        </li>
+        <li>
+          Fill by increasing length, so <code>dp[i + 1][j - 1]</code> is
+          always ready. Track the longest true cell.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(n²)</span>
+      </div>
+      <p class="note">
+        About n²/2 cells, each O(1). The table is 10⁶ booleans at n = 1000,
+        which is fine, but it's memory that Approach 3 doesn't need.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Expand Around Center</h2>
+      <p class="intuition">
+        Instead of checking substrings, grow palindromes from their middle.
+        Try each of the <code>2n - 1</code> centers and expand
+        <code>left</code> and <code>right</code> while
+        <code>s[left] == s[right]</code>.
+      </p>
+      <ul>
+        <li>
+          Odd lengths center on a character (<code>left = right = i</code>);
+          even lengths center on a gap (<code>left = i</code>,
+          <code>right = i + 1</code>).
+        </li>
+        <li>
+          When it stops, the palindrome is
+          <code>s[left + 1 .. right - 1]</code>, length
+          <code>right - left - 1</code>.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Same time as the table, no extra memory, and short to write. This is
+        the answer most interviews expect.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- APPROACH 4 -->
+    <section class="approach">
+      <h2>
+        Approach 4: Manacher's Algorithm
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Expand around center, but reuse work. Inside a palindrome, the right
+        side mirrors the left side, so a center's radius is at least its
+        mirror's (up to the palindrome's edge).
+      </p>
+      <ul>
+        <li>
+          Put <code>#</code> between characters (and sentinels
+          <code>^</code>, <code>$</code> at the ends) so every palindrome has
+          odd length. <code>p[i]</code> is the radius at <code>t[i]</code>,
+          which equals the palindrome's length in <code>s</code>.
+        </li>
+        <li>
+          Keep the palindrome reaching furthest right
+          (<code>center</code>, <code>right</code>). For
+          <code>i &lt; right</code>, start from
+          <code>min(right - i, p[2 * center - i])</code>, then expand.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        <code>right</code> only moves forward, so all the expansions together
+        take O(n). It's the fastest, but it's rarely asked for: knowing the
+        idea is usually enough.
+      </p>
+      <div class="code-tabs" data-src="approach4"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        The standard libraries can check a palindrome
+        (<code>s == s[::-1]</code> in Python,
+        <code>std::equal(s.begin(), s.end(), s.rbegin())</code> in C++,
+        <code>new StringBuilder(s).reverse()</code> in Java), but none can
+        find the longest one. Using that check on every substring is
+        Approach 1.
+      </p>
+      <p class="note">
+        Expand around center (Approach 3) is what you'd write in real code:
+        short, O(n²), and no extra memory.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Brute Force by Length</th>
+              <td>Check every window of every length</td>
+              <td>O(n³)</td>
+              <td>O(n)</td>
+              <td>Passes thanks to fast slicing, but slowest</td>
+            </tr>
+            <tr>
+              <th scope="row">Dynamic Programming Table</th>
+              <td>Ends match + inside is a palindrome</td>
+              <td>O(n²)</td>
+              <td>O(n²)</td>
+              <td>Classic DP; uses an n × n table</td>
+            </tr>
+            <tr>
+              <th scope="row">Expand Around Center</th>
+              <td>Grow from each of 2n - 1 centers</td>
+              <td>O(n²)</td>
+              <td>O(1)</td>
+              <td>Expected answer in interviews</td>
+            </tr>
+            <tr>
+              <th scope="row">Manacher's Algorithm</th>
+              <td>Reuse mirror radii in a padded string</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Fastest; rarely required</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

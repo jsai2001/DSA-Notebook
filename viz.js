@@ -16,7 +16,9 @@
 // (a string, an array of names, or omitted). `view` is a list of widgets:
 //
 //   { type: "array", label, values, pointers: { i: 0, j: 2 }, marks: { 0: "active" }, cut: 2 }
-//     (cut: optional partition line before that index)
+//     (cut: optional partition line before that index; sub: [..] second caption per
+//      cell; compact: true for smaller cells)
+//   { type: "grid",  label, rows: [...], cols: [...], cells: [[...]], marks: { "r,c": "active" }, corner }
 //   { type: "list",  label, nodes: [{ value, mark, caption }], pointers: { l1: 0 } }  (index = nodes.length → null)
 //   { type: "map",   label, columns: ["value", "index"], entries: [[k, v], ...], marks: { [k]: "new" } }
 //   { type: "set",   label, items: ["a", "b"], marks: { a: "new" } }
@@ -133,11 +135,14 @@
       const pointers = Object.entries(w.pointers || {});
       // Optional partition line drawn just before cell `cut` (cut = length → after the last cell).
       const cutLine = () => el("span", "viz-cutline");
+      if (w.compact) row.classList.add("is-compact");
       w.values.forEach((value, i) => {
         if (w.cut === i) row.append(cutLine());
         const cell = el("div", "viz-cell" + markClass(w.marks && w.marks[i]));
         cell.append(el("span", "viz-value", String(value)));
         cell.append(el("span", "viz-index", String(i)));
+        // Optional second caption per cell (e.g. Manacher's p[i]).
+        if (w.sub) cell.append(el("span", "viz-sub", w.sub[i] === undefined ? "" : String(w.sub[i])));
         cell.append(pointerSlot(pointers, i));
         row.append(cell);
       });
@@ -197,6 +202,39 @@
       }
       table.append(thead, tbody);
       block.append(table);
+      return block;
+    },
+
+    // 2D table, e.g. a DP table. cells[r][c] is shown as-is ("" for empty);
+    // marks are keyed "r,c".
+    grid(w) {
+      const block = el("div", "viz-block");
+      if (w.label) block.append(el("div", "viz-label", w.label));
+      const wrap = el("div", "viz-grid-wrap");
+      const table = el("table", "viz-grid");
+      const head = el("tr");
+      head.append(el("th", "viz-grid-corner", w.corner || ""));
+      (w.cols || []).forEach((c) => {
+        const th = el("th", "", String(c));
+        th.scope = "col";
+        head.append(th);
+      });
+      const thead = el("thead");
+      thead.append(head);
+      const tbody = el("tbody");
+      (w.cells || []).forEach((row, r) => {
+        const tr = el("tr");
+        const th = el("th", "", String((w.rows || [])[r] ?? r));
+        th.scope = "row";
+        tr.append(th);
+        row.forEach((value, c) => {
+          tr.append(el("td", markClass(w.marks && w.marks[`${r},${c}`]).trim(), String(value)));
+        });
+        tbody.append(tr);
+      });
+      table.append(thead, tbody);
+      wrap.append(table);
+      block.append(wrap);
       return block;
     },
 
