@@ -30,7 +30,8 @@ index.html              GENERATED. Don't edit by hand.
 ## Adding a problem
 
 1. Create a folder in `problems/` named `NNNN-slug`, using the LeetCode number (4 digits) and the slug from the problem URL, e.g. `problems/0005-longest-palindromic-substring/`. Problems are listed in folder-name order.
-2. Copy `problem.html` from an existing problem and fill in the title, difficulty (`easy` / `medium` / `hard`), tags, `data-tags` (used by search), key idea, LeetCode link, problem statement, approaches and comparison table.
+2. Copy `problem.html` from an existing problem and fill in the title, difficulty (`easy` / `medium` / `hard`), tags, `data-tags` (used by search), key idea, LeetCode link, problem statement, approaches, the **In practice** section and the comparison table.
+   - **In practice** is what you'd write day to day with standard-library built-ins (`builtin.py` / `.cpp` / `.java` behind a `data-src="builtin"` placeholder), with its hidden cost and whether it passes LeetCode. If there's no useful built-in, say so in a line or two and point to the approach you'd actually use. It isn't a numbered approach and isn't in the comparison table.
 3. In each approach, keep the code placeholder and give it a name:
    ```html
    <div class="code-tabs" data-src="approach1"></div>

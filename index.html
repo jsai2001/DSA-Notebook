@@ -245,6 +245,22 @@
             </div>
           </section>
 
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">No shortcut</span></h2>
+            <p>
+              No language has a built-in for "find two numbers that add up to a
+              target". The closest is Python's
+              <code>itertools.combinations(range(len(nums)), 2)</code>, but that's
+              just the brute force in disguise: up to about 5 × 10⁷ pairs at
+              n = 10⁴, so it can time out.
+            </p>
+            <p class="note">
+              The one-pass hash map (Approach 2) is already what you'd write day to
+              day: a dict and a loop.
+            </p>
+          </section>
+
           <!-- COMPARISON -->
           <section class="q-section">
             <h2>Comparison</h2>
@@ -695,6 +711,83 @@
             </div>
           </section>
 
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">Built-ins</span></h2>
+            <p>
+              Skip the column addition: turn each list into a real number, add them,
+              and turn the sum back into a list. Python's <code>int</code> and Java's
+              <code>BigInteger</code> handle numbers of any size, so 100-digit inputs
+              are fine.
+            </p>
+            <div class="code-tabs">
+              <script type="text/plain" data-lang="Python">
+                # Definition for singly-linked list.
+                # class ListNode(object):
+                #     def __init__(self, val=0, next=None):
+                #         self.val = val
+                #         self.next = next
+                class Solution(object):
+                    def addTwoNumbers(self, l1, l2):
+                        def to_int(node):
+                            digits = []
+                            while node:
+                                digits.append(str(node.val))
+                                node = node.next
+                            return int("".join(reversed(digits)))  # digits are stored ones-first
+
+                        total = str(to_int(l1) + to_int(l2))  # Python ints have no size limit
+                        dummy = tail = ListNode()
+                        for d in reversed(total):
+                            tail.next = ListNode(int(d))
+                            tail = tail.next
+                        return dummy.next
+              </script>
+              <script type="text/plain" data-lang="Java">
+                import java.math.BigInteger;
+
+                /**
+                 * Definition for singly-linked list.
+                 * public class ListNode {
+                 *     int val;
+                 *     ListNode next;
+                 *     ListNode() {}
+                 *     ListNode(int val) { this.val = val; }
+                 *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+                 * }
+                 */
+                class Solution {
+                    public ListNode addTwoNumbers(ListNode l1, ListNode l2) {
+                        String sum = toNumber(l1).add(toNumber(l2)).toString();
+                        ListNode dummy = new ListNode(), tail = dummy;
+                        for (int k = sum.length() - 1; k >= 0; k--) {
+                            tail.next = new ListNode(sum.charAt(k) - '0');
+                            tail = tail.next;
+                        }
+                        return dummy.next;
+                    }
+
+                    // Digits are stored ones-first, so reverse them before parsing.
+                    private BigInteger toNumber(ListNode node) {
+                        StringBuilder digits = new StringBuilder();
+                        for (; node != null; node = node.next) digits.append(node.val);
+                        return new BigInteger(digits.reverse().toString());
+                    }
+                }
+              </script>
+            </div>
+            <div class="complexity">
+              <span><strong>Time</strong> O(m + n)</span>
+              <span><strong>Space</strong> O(m + n)</span>
+            </div>
+            <p class="note">
+              Should pass on LeetCode. C++ has no built-in big integer (a
+              <code>long long</code> overflows past 19 digits), so use Approach 2
+              there. The hidden cost is the string ↔ number conversions, which is
+              fine at this size.
+            </p>
+          </section>
+
           <!-- COMPARISON -->
           <section class="q-section">
             <h2>Comparison</h2>
@@ -1080,6 +1173,21 @@
                 }
               </script>
             </div>
+          </section>
+
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">No shortcut</span></h2>
+            <p>
+              There's no built-in for "longest substring without repeats". You can
+              lean on <code>set()</code> and check every slice with
+              <code>len(set(s[i:j])) == j - i</code>, but that's O(n³) and times out
+              well before n = 5 × 10⁴.
+            </p>
+            <p class="note">
+              The sliding window with last-seen index (Approach 3) is about eight
+              lines and is what you'd use in real code too.
+            </p>
           </section>
 
           <!-- COMPARISON -->
@@ -1535,6 +1643,66 @@
                 }
               </script>
             </div>
+          </section>
+
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">Built-ins</span></h2>
+            <p>
+              Combine the arrays and let the standard library find the middle:
+              <code>statistics.median</code> in Python, a sorted
+              <code>IntStream</code> in Java, and <code>std::merge</code> in C++.
+            </p>
+            <div class="code-tabs">
+              <script type="text/plain" data-lang="Python">
+                import statistics
+
+                class Solution(object):
+                    def findMedianSortedArrays(self, nums1, nums2):
+                        return float(statistics.median(nums1 + nums2))
+              </script>
+              <script type="text/plain" data-lang="C++">
+                #include <vector>
+                #include <algorithm>
+                #include <iterator>
+
+                class Solution {
+                public:
+                    double findMedianSortedArrays(std::vector<int>& nums1, std::vector<int>& nums2) {
+                        std::vector<int> all;
+                        // std::merge combines two sorted ranges in one linear pass.
+                        std::merge(nums1.begin(), nums1.end(), nums2.begin(), nums2.end(),
+                                   std::back_inserter(all));
+                        int mid = all.size() / 2;
+                        return all.size() % 2 ? all[mid] : (all[mid - 1] + all[mid]) / 2.0;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java">
+                import java.util.stream.IntStream;
+
+                class Solution {
+                    public double findMedianSortedArrays(int[] nums1, int[] nums2) {
+                        int[] all = IntStream.concat(IntStream.of(nums1), IntStream.of(nums2))
+                                .sorted()
+                                .toArray();
+                        int mid = all.length / 2;
+                        return all.length % 2 == 1 ? all[mid] : (all[mid - 1] + all[mid]) / 2.0;
+                    }
+                }
+              </script>
+            </div>
+            <div class="complexity">
+              <span><strong>Time</strong> O((m + n) log(m + n))</span>
+              <span><strong>Space</strong> O(m + n)</span>
+            </div>
+            <p class="note">
+              Should pass on LeetCode (at most 2000 elements), but none of these meet
+              the required <code>O(log(m + n))</code>. Python and Java sort the
+              combined array, which hides an O(n log n) cost. C++'s
+              <code>std::merge</code> uses the fact that both inputs are already
+              sorted, so it's O(m + n): the same linear merge as Approach 1.
+            </p>
           </section>
 
           <!-- COMPARISON -->
