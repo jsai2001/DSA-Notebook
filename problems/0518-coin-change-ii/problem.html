@@ -1,0 +1,218 @@
+<details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
+  <summary>
+    <span class="q-title">518. Coin Change II</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Dynamic Programming</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> <code>dp[a]</code> = ways to make
+      <code>a</code>, starting from <code>dp[0] = 1</code>. Loop over
+      <strong>coins outside</strong> and amounts inside:
+      <code>dp[a] += dp[a - coin]</code>. Adding coins one at a time counts
+      each combination once (<code>1+2</code> and <code>2+1</code> are the
+      same). Swap the loops and you count orderings instead (that's
+      Combination Sum IV, LeetCode 377). O(n · amount) time, O(amount) space.
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/coin-change-ii/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given coins of different values <code>coins</code> and a total
+        <code>amount</code>, return the number of combinations of coins that
+        add up to <code>amount</code>. You have an unlimited number of each
+        coin. If the amount can't be made, return <code>0</code>.
+      </p>
+      <ul>
+        <li><code>1 &lt;= coins.length &lt;= 300</code></li>
+        <li><code>1 &lt;= coins[i] &lt;= 5000</code>, and all values are different.</li>
+        <li><code>0 &lt;= amount &lt;= 5000</code></li>
+        <li>The answer fits in a signed 32-bit integer.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>amount = 5, coins = [1, 2, 5]</code> →
+        <code>4</code> (5, 2+2+1, 2+1+1+1, 1+1+1+1+1);
+        <code>amount = 3, coins = [2]</code> → <code>0</code>;
+        <code>amount = 10, coins = [10]</code> → <code>1</code>.
+        <code>amount = 0</code> → <code>1</code> (take nothing).
+      </p>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Recursion with Memo</h2>
+      <p class="intuition">
+        Stand at coin <code>i</code> with <code>rem</code> left to make. Either
+        take <code>coins[i]</code> and stay on it (you can take it again), or
+        skip to <code>coins[i + 1]</code> for good. Never going back to an
+        earlier coin is what stops <code>1+2</code> and <code>2+1</code> from
+        both being counted.
+      </p>
+      <ul>
+        <li>
+          <code>ways(i, rem) = ways(i, rem - coins[i]) + ways(i + 1, rem)</code>.
+          <code>rem == 0</code> is 1 way; <code>rem &lt; 0</code> or no coins
+          left is 0.
+        </li>
+        <li>
+          The same <code>(i, rem)</code> comes up again and again, so save
+          each answer. Without the memo this is exponential.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · amount)</span>
+        <span><strong>Space</strong> O(n · amount)</span>
+      </div>
+      <p class="note">
+        Up to 300 × 5001 ≈ 1.5 million states. The recursion goes as deep as
+        <code>amount + n</code> (about 5,300 calls), which is past Python's
+        default limit of 1,000, hence <code>setrecursionlimit</code>. It's the
+        slowest version in Python: about 1.2 s at the largest inputs here,
+        against 0.1 s for Approach 3.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: 2D DP Table</h2>
+      <p class="intuition">
+        The same choice, built bottom-up. Row <code>i</code> allows only the
+        first <code>i</code> coins; column <code>a</code> is the amount.
+      </p>
+      <ul>
+        <li>
+          <code>dp[i][a] = dp[i - 1][a]</code> (skip coin <code>i</code>)
+          <code>+ dp[i][a - coin]</code> (use it at least once; the same row,
+          so it may be used again).
+        </li>
+        <li>
+          Start from <code>dp[0][0] = 1</code>: with no coins, only 0 can be
+          made, in one way.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · amount)</span>
+        <span><strong>Space</strong> O(n · amount)</span>
+      </div>
+      <p class="note">
+        No recursion, and the table makes the choice easy to see. Each row
+        only reads itself and the row above, so one row is enough
+        (Approach 3).
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: 1D DP (Coins Outside)
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Keep one row and add coins to it one at a time. After coin
+        <code>c</code>, <code>dp[a]</code> counts the ways to make
+        <code>a</code> using the coins seen so far.
+      </p>
+      <ul>
+        <li>
+          Walk <code>a</code> upward from <code>coin</code>:
+          <code>dp[a] += dp[a - coin]</code>. Going upward means
+          <code>dp[a - coin]</code> already includes this coin, so it can be
+          used many times. (Walking downward would allow each coin once: the
+          0/1 knapsack.)
+        </li>
+        <li>
+          Coins outside, amounts inside: combinations. Amounts outside, coins
+          inside: orderings (LeetCode 377).
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · amount)</span>
+        <span><strong>Space</strong> O(amount)</span>
+      </div>
+      <p class="note">
+        Watch the integer type in C++. Only the final answer is guaranteed to
+        fit: with coins <code>[2, 4, …, 100]</code> and
+        <code>amount = 4999</code> the answer is 0, but some cells reach 146
+        bits, so even <code>long long</code> overflows. Signed overflow is a
+        runtime error on LeetCode (checked here: a plain <code>int</code>
+        table fails). <code>unsigned</code> wraps safely, and since the true
+        answer fits in 32 bits, <code>dp[amount]</code> still comes out
+        right. Java's <code>int</code> wraps safely too, and Python's ints
+        never overflow.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No standard library counts coin combinations. Python's
+        <code>functools.cache</code> can replace the memo dictionary in
+        Approach 1, but it's the same recursion with the same depth.
+      </p>
+      <p class="note">
+        Approach 3 is what you'd write in real code: five lines, no
+        recursion, and memory that only depends on <code>amount</code>.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Recursion with Memo</th>
+              <td>Take coin i or skip it, top-down</td>
+              <td>O(n · amount)</td>
+              <td>O(n · amount)</td>
+              <td>Deep recursion; slowest in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">2D DP Table</th>
+              <td>Rows = coins allowed, columns = amount</td>
+              <td>O(n · amount)</td>
+              <td>O(n · amount)</td>
+              <td>Easiest to picture</td>
+            </tr>
+            <tr>
+              <th scope="row">1D DP (Coins Outside)</th>
+              <td>One row, dp[a] += dp[a - coin]</td>
+              <td>O(n · amount)</td>
+              <td>O(amount)</td>
+              <td>Expected answer; mind overflow in C++</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

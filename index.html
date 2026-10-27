@@ -2272,6 +2272,396 @@
           </section>
         </div>
       </details>
+
+      <!-- ===== problems/0518-coin-change-ii ===== -->
+      <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
+        <summary>
+          <span class="q-title">518. Coin Change II</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">Array</span>
+            <span class="tag">Dynamic Programming</span>
+          </span>
+        </summary>
+
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> <code>dp[a]</code> = ways to make
+            <code>a</code>, starting from <code>dp[0] = 1</code>. Loop over
+            <strong>coins outside</strong> and amounts inside:
+            <code>dp[a] += dp[a - coin]</code>. Adding coins one at a time counts
+            each combination once (<code>1+2</code> and <code>2+1</code> are the
+            same). Swap the loops and you count orderings instead (that's
+            Combination Sum IV, LeetCode 377). O(n · amount) time, O(amount) space.
+          </div>
+
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/coin-change-ii/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              Given coins of different values <code>coins</code> and a total
+              <code>amount</code>, return the number of combinations of coins that
+              add up to <code>amount</code>. You have an unlimited number of each
+              coin. If the amount can't be made, return <code>0</code>.
+            </p>
+            <ul>
+              <li><code>1 &lt;= coins.length &lt;= 300</code></li>
+              <li><code>1 &lt;= coins[i] &lt;= 5000</code>, and all values are different.</li>
+              <li><code>0 &lt;= amount &lt;= 5000</code></li>
+              <li>The answer fits in a signed 32-bit integer.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>amount = 5, coins = [1, 2, 5]</code> →
+              <code>4</code> (5, 2+2+1, 2+1+1+1, 1+1+1+1+1);
+              <code>amount = 3, coins = [2]</code> → <code>0</code>;
+              <code>amount = 10, coins = [10]</code> → <code>1</code>.
+              <code>amount = 0</code> → <code>1</code> (take nothing).
+            </p>
+          </section>
+
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Recursion with Memo</h2>
+            <p class="intuition">
+              Stand at coin <code>i</code> with <code>rem</code> left to make. Either
+              take <code>coins[i]</code> and stay on it (you can take it again), or
+              skip to <code>coins[i + 1]</code> for good. Never going back to an
+              earlier coin is what stops <code>1+2</code> and <code>2+1</code> from
+              both being counted.
+            </p>
+            <ul>
+              <li>
+                <code>ways(i, rem) = ways(i, rem - coins[i]) + ways(i + 1, rem)</code>.
+                <code>rem == 0</code> is 1 way; <code>rem &lt; 0</code> or no coins
+                left is 0.
+              </li>
+              <li>
+                The same <code>(i, rem)</code> comes up again and again, so save
+                each answer. Without the memo this is exponential.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n · amount)</span>
+              <span><strong>Space</strong> O(n · amount)</span>
+            </div>
+            <p class="note">
+              Up to 300 × 5001 ≈ 1.5 million states. The recursion goes as deep as
+              <code>amount + n</code> (about 5,300 calls), which is past Python's
+              default limit of 1,000, hence <code>setrecursionlimit</code>. It's the
+              slowest version in Python: about 1.2 s at the largest inputs here,
+              against 0.1 s for Approach 3.
+            </p>
+            <div class="code-tabs" data-viz="0518-coin-change-ii/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[7],"call":[9],"done":[10,11],"dead":[12,13],"hit":[14,15],"split":[17],"store":[18],"return":[20]}'>
+                import sys
+
+
+                class Solution(object):
+                    def change(self, amount, coins):
+                        sys.setrecursionlimit(20000)  # depth can reach amount + len(coins)
+                        memo = {}  # (i, rem) -> ways
+
+                        def ways(i, rem):  # ways to make rem using coins[i:]
+                            if rem == 0:
+                                return 1
+                            if rem < 0 or i == len(coins):
+                                return 0
+                            if (i, rem) in memo:
+                                return memo[(i, rem)]
+                            # take coins[i] (and stay on it), or skip to the next coin
+                            memo[(i, rem)] = ways(i, rem - coins[i]) + ways(i + 1, rem)
+                            return memo[(i, rem)]
+
+                        return ways(0, amount)
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7],"return":[8],"call":[15],"done":[16],"dead":[17],"hit":[18],"split":[20],"store":[21,22]}'>
+                #include <vector>
+                class Solution {
+                public:
+                    int change(int amount, std::vector<int>& coins) {
+                        // memo[i][rem] = ways to make rem using coins[i..]
+                        memo.assign(coins.size(), std::vector<unsigned>(amount + 1, 0));
+                        known.assign(coins.size(), std::vector<bool>(amount + 1, false));
+                        return ways(0, amount, coins);
+                    }
+                private:
+                    // unsigned: some sub-results overflow even when the answer fits;
+                    // unsigned wraps safely and the final sum is still right.
+                    std::vector<std::vector<unsigned>> memo;
+                    std::vector<std::vector<bool>> known;
+                    unsigned ways(int i, int rem, std::vector<int>& coins) {
+                        if (rem == 0) return 1;
+                        if (rem < 0 || i == (int)coins.size()) return 0;
+                        if (known[i][rem]) return memo[i][rem];
+                        // take coins[i] (and stay on it), or skip to the next coin
+                        memo[i][rem] = ways(i, rem - coins[i], coins) + ways(i + 1, rem, coins);
+                        known[i][rem] = true;
+                        return memo[i][rem];
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5],"return":[6],"call":[9],"done":[10],"dead":[11],"hit":[12],"split":[14],"store":[15]}'>
+                class Solution {
+                    private Integer[][] memo; // memo[i][rem] = ways to make rem using coins[i..]; null = not yet
+
+                    public int change(int amount, int[] coins) {
+                        memo = new Integer[coins.length][amount + 1];
+                        return ways(0, amount, coins);
+                    }
+
+                    private int ways(int i, int rem, int[] coins) {
+                        if (rem == 0) return 1;
+                        if (rem < 0 || i == coins.length) return 0;
+                        if (memo[i][rem] != null) return memo[i][rem];
+                        // take coins[i] (and stay on it), or skip to the next coin
+                        memo[i][rem] = ways(i, rem - coins[i], coins) + ways(i + 1, rem, coins);
+                        return memo[i][rem];
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>Approach 2: 2D DP Table</h2>
+            <p class="intuition">
+              The same choice, built bottom-up. Row <code>i</code> allows only the
+              first <code>i</code> coins; column <code>a</code> is the amount.
+            </p>
+            <ul>
+              <li>
+                <code>dp[i][a] = dp[i - 1][a]</code> (skip coin <code>i</code>)
+                <code>+ dp[i][a - coin]</code> (use it at least once; the same row,
+                so it may be used again).
+              </li>
+              <li>
+                Start from <code>dp[0][0] = 1</code>: with no coins, only 0 can be
+                made, in one way.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n · amount)</span>
+              <span><strong>Space</strong> O(n · amount)</span>
+            </div>
+            <p class="note">
+              No recursion, and the table makes the choice easy to see. Each row
+              only reads itself and the row above, so one row is enough
+              (Approach 3).
+            </p>
+            <div class="code-tabs" data-viz="0518-coin-change-ii/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,5,6],"row":[7,8],"cell":[9],"skip":[10],"take":[11,12],"return":[13]}'>
+                class Solution(object):
+                    def change(self, amount, coins):
+                        n = len(coins)
+                        # dp[i][a] = ways to make a using only the first i coins
+                        dp = [[0] * (amount + 1) for _ in range(n + 1)]
+                        dp[0][0] = 1  # one way to make 0: use nothing
+                        for i in range(1, n + 1):
+                            coin = coins[i - 1]
+                            for a in range(amount + 1):
+                                dp[i][a] = dp[i - 1][a]  # skip this coin
+                                if a >= coin:
+                                    dp[i][a] += dp[i][a - coin]  # use it at least once
+                        return dp[n][amount]
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,8,9],"row":[10,11],"cell":[12],"skip":[13],"take":[14,15],"return":[19]}'>
+                #include <vector>
+                class Solution {
+                public:
+                    int change(int amount, std::vector<int>& coins) {
+                        int n = coins.size();
+                        // dp[i][a] = ways to make a using only the first i coins.
+                        // unsigned: some cells overflow even when the answer fits; it wraps safely.
+                        std::vector<std::vector<unsigned>> dp(n + 1, std::vector<unsigned>(amount + 1, 0));
+                        dp[0][0] = 1; // one way to make 0: use nothing
+                        for (int i = 1; i <= n; ++i) {
+                            int coin = coins[i - 1];
+                            for (int a = 0; a <= amount; ++a) {
+                                dp[i][a] = dp[i - 1][a]; // skip this coin
+                                if (a >= coin) {
+                                    dp[i][a] += dp[i][a - coin]; // use it at least once
+                                }
+                            }
+                        }
+                        return dp[n][amount];
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,5,6],"row":[7,8],"cell":[9],"skip":[10],"take":[11,12],"return":[16]}'>
+                class Solution {
+                    public int change(int amount, int[] coins) {
+                        int n = coins.length;
+                        // dp[i][a] = ways to make a using only the first i coins
+                        int[][] dp = new int[n + 1][amount + 1];
+                        dp[0][0] = 1; // one way to make 0: use nothing
+                        for (int i = 1; i <= n; i++) {
+                            int coin = coins[i - 1];
+                            for (int a = 0; a <= amount; a++) {
+                                dp[i][a] = dp[i - 1][a]; // skip this coin
+                                if (a >= coin) {
+                                    dp[i][a] += dp[i][a - coin]; // use it at least once
+                                }
+                            }
+                        }
+                        return dp[n][amount];
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>
+              Approach 3: 1D DP (Coins Outside)
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              Keep one row and add coins to it one at a time. After coin
+              <code>c</code>, <code>dp[a]</code> counts the ways to make
+              <code>a</code> using the coins seen so far.
+            </p>
+            <ul>
+              <li>
+                Walk <code>a</code> upward from <code>coin</code>:
+                <code>dp[a] += dp[a - coin]</code>. Going upward means
+                <code>dp[a - coin]</code> already includes this coin, so it can be
+                used many times. (Walking downward would allow each coin once: the
+                0/1 knapsack.)
+              </li>
+              <li>
+                Coins outside, amounts inside: combinations. Amounts outside, coins
+                inside: orderings (LeetCode 377).
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n · amount)</span>
+              <span><strong>Space</strong> O(amount)</span>
+            </div>
+            <p class="note">
+              Watch the integer type in C++. Only the final answer is guaranteed to
+              fit: with coins <code>[2, 4, …, 100]</code> and
+              <code>amount = 4999</code> the answer is 0, but some cells reach 146
+              bits, so even <code>long long</code> overflows. Signed overflow is a
+              runtime error on LeetCode (checked here: a plain <code>int</code>
+              table fails). <code>unsigned</code> wraps safely, and since the true
+              answer fits in 32 bits, <code>dp[amount]</code> still comes out
+              right. Java's <code>int</code> wraps safely too, and Python's ints
+              never overflow.
+            </p>
+            <div class="code-tabs" data-viz="0518-coin-change-ii/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"coin":[5],"cell":[6],"add":[7],"return":[8]}'>
+                class Solution(object):
+                    def change(self, amount, coins):
+                        dp = [0] * (amount + 1)  # dp[a] = ways to make a
+                        dp[0] = 1  # one way to make 0: use nothing
+                        for coin in coins:  # coins outside, so each combination is counted once
+                            for a in range(coin, amount + 1):
+                                dp[a] += dp[a - coin]  # add the ways that end with this coin
+                        return dp[amount]
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8],"coin":[9],"cell":[10],"add":[11],"return":[14]}'>
+                #include <vector>
+                class Solution {
+                public:
+                    int change(int amount, std::vector<int>& coins) {
+                        // dp[a] = ways to make a. unsigned: some cells overflow even when
+                        // the answer fits; unsigned wraps safely and dp[amount] is still right.
+                        std::vector<unsigned> dp(amount + 1, 0);
+                        dp[0] = 1; // one way to make 0: use nothing
+                        for (int coin : coins) { // coins outside, so each combination is counted once
+                            for (int a = coin; a <= amount; ++a) {
+                                dp[a] += dp[a - coin]; // add the ways that end with this coin
+                            }
+                        }
+                        return dp[amount];
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4],"coin":[5],"cell":[6],"add":[7],"return":[10]}'>
+                class Solution {
+                    public int change(int amount, int[] coins) {
+                        int[] dp = new int[amount + 1]; // dp[a] = ways to make a
+                        dp[0] = 1; // one way to make 0: use nothing
+                        for (int coin : coins) { // coins outside, so each combination is counted once
+                            for (int a = coin; a <= amount; a++) {
+                                dp[a] += dp[a - coin]; // add the ways that end with this coin
+                            }
+                        }
+                        return dp[amount];
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">No shortcut</span></h2>
+            <p>
+              No standard library counts coin combinations. Python's
+              <code>functools.cache</code> can replace the memo dictionary in
+              Approach 1, but it's the same recursion with the same depth.
+            </p>
+            <p class="note">
+              Approach 3 is what you'd write in real code: five lines, no
+              recursion, and memory that only depends on <code>amount</code>.
+            </p>
+          </section>
+
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Recursion with Memo</th>
+                    <td>Take coin i or skip it, top-down</td>
+                    <td>O(n · amount)</td>
+                    <td>O(n · amount)</td>
+                    <td>Deep recursion; slowest in Python</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">2D DP Table</th>
+                    <td>Rows = coins allowed, columns = amount</td>
+                    <td>O(n · amount)</td>
+                    <td>O(n · amount)</td>
+                    <td>Easiest to picture</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">1D DP (Coins Outside)</th>
+                    <td>One row, dp[a] += dp[a - coin]</td>
+                    <td>O(n · amount)</td>
+                    <td>O(amount)</td>
+                    <td>Expected answer; mind overflow in C++</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
     </main>
 
     <!-- Visualizer engine, then each approach's visualizer, then the page script -->
@@ -3801,6 +4191,267 @@
             line: "answer",
             note: `The largest radius is p[${mid}] = ${p[mid]}, so the answer starts at (${mid} - ${p[mid]}) // 2 = ${startIdx} in s: "${s.slice(startIdx, startIdx + p[mid])}". ${comparisons} character comparisons in total, ${saved} skipped thanks to mirrors: O(n).`,
             view: view(undefined, { final: true, mid }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0518-coin-change-ii/approach1.visual.js -->
+    <script>
+      // Top-down recursion with memo: ways(i, rem) = take coins[i] + skip to coins[i + 1].
+      DSAViz.register("0518-coin-change-ii/approach1", {
+        inputs: [
+          { name: "coins", type: "int[]", value: "[1, 2, 5]", minLength: 1, maxLength: 3, minValue: 1, maxValue: 10 },
+          { name: "amount", type: "int", value: "5", min: 0, max: 8 },
+        ],
+        trace({ coins, amount }) {
+          if (new Set(coins).size !== coins.length) {
+            throw new DSAViz.InputError("coins must all be different (LeetCode guarantees this).");
+          }
+          const n = coins.length;
+          const memo = Array.from({ length: n }, () => Array(amount + 1).fill(null));
+          const stack = [];
+          const steps = [];
+          let hits = 0;
+          const label = (i, rem) => `ways(${i}, ${rem})`;
+          const view = (opts = {}) => {
+            const marks = {};
+            for (let r = 0; r < n; r++) {
+              for (let c = 0; c <= amount; c++) if (memo[r][c] !== null) marks[`${r},${c}`] = "visited";
+            }
+            const inGrid = opts.i !== undefined && opts.i < n && opts.rem >= 0;
+            if (inGrid) marks[`${opts.i},${opts.rem}`] = opts.mark || "active";
+            const smarks = {};
+            if (stack.length) smarks[stack.length - 1] = "active";
+            return [
+              { type: "array", label: "call stack (bottom → top)", values: stack.slice(), marks: smarks, compact: true },
+              {
+                type: "grid",
+                label: "memo[i][rem] = ways to make rem using coins[i:]",
+                rows: coins.map((c, k) => `${k}: ${c}`),
+                cols: Array.from({ length: amount + 1 }, (_, a) => a),
+                corner: "i \\ rem",
+                cells: memo.map((row) => row.map((v) => (v === null ? "" : v))),
+                marks,
+              },
+              { type: "vars", items: [{ name: "memo hits", value: hits, mark: opts.mark === "compare" ? "match" : "" }] },
+            ];
+          };
+
+          steps.push({
+            line: "init",
+            note: `ways(i, rem) counts the ways to make rem using coins[i], coins[i + 1], …. Each call either takes coins[i] (and may take it again) or skips to the next coin. The memo stores each answer so it's computed once.`,
+            view: view(),
+          });
+
+          function ways(i, rem) {
+            stack.push(label(i, rem));
+            steps.push({ line: "call", note: `Call ${label(i, rem)}: make ${rem} using coins from index ${i}.`, view: view({ i, rem }) });
+            let result;
+            if (rem === 0) {
+              result = 1;
+              steps.push({ line: "done", note: `rem is 0: the coins picked so far add up exactly. That's 1 way.`, view: view({ i, rem }) });
+            } else if (rem < 0 || i === n) {
+              result = 0;
+              const why = rem < 0 ? `rem is ${rem}: the last coin overshot` : `no coins left but ${rem} still to make`;
+              steps.push({ line: "dead", note: `${why}. 0 ways.`, view: view({ i, rem }) });
+            } else if (memo[i][rem] !== null) {
+              result = memo[i][rem];
+              hits++;
+              steps.push({
+                line: "hit",
+                note: `Already solved: memo[${i}][${rem}] = ${result}. Reuse it instead of recursing again.`,
+                view: view({ i, rem, mark: "compare" }),
+              });
+            } else {
+              steps.push({
+                line: "split",
+                note: `Two choices: take ${coins[i]} → ${label(i, rem - coins[i])}, or skip it → ${label(i + 1, rem)}. Add both.`,
+                view: view({ i, rem }),
+              });
+              const take = ways(i, rem - coins[i]);
+              const skip = ways(i + 1, rem);
+              memo[i][rem] = take + skip;
+              result = memo[i][rem];
+              steps.push({
+                line: "store",
+                note: `${label(i, rem)} = ${take} (take ${coins[i]}) + ${skip} (skip) = ${result}. Save it in memo[${i}][${rem}].`,
+                view: view({ i, rem, mark: "new" }),
+              });
+            }
+            stack.pop();
+            return result;
+          }
+
+          const answer = ways(0, amount);
+          steps.push({
+            line: "return",
+            note: `Return ways(0, ${amount}) = ${answer}. The memo reused ${hits} answer${hits === 1 ? "" : "s"}; without it the same calls would repeat many times (exponential time).`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0518-coin-change-ii/approach2.visual.js -->
+    <script>
+      // 2D DP: dp[i][a] = ways to make a using only the first i coins.
+      DSAViz.register("0518-coin-change-ii/approach2", {
+        inputs: [
+          { name: "coins", type: "int[]", value: "[1, 2, 5]", minLength: 1, maxLength: 4, minValue: 1, maxValue: 20 },
+          { name: "amount", type: "int", value: "5", min: 0, max: 12 },
+        ],
+        trace({ coins, amount }) {
+          if (new Set(coins).size !== coins.length) {
+            throw new DSAViz.InputError("coins must all be different (LeetCode guarantees this).");
+          }
+          const n = coins.length;
+          const dp = Array.from({ length: n + 1 }, () => Array(amount + 1).fill(null)); // null = not filled
+          for (let a = 0; a <= amount; a++) dp[0][a] = a === 0 ? 1 : 0;
+          const steps = [];
+          const rows = ["none", ...coins.map((c, k) => `+ ${c}`)];
+          const cols = Array.from({ length: amount + 1 }, (_, a) => a);
+          const view = (opts = {}) => {
+            const marks = {};
+            for (let r = 0; r <= n; r++) {
+              for (let c = 0; c <= amount; c++) if (dp[r][c] === null) marks[`${r},${c}`] = "ghost";
+            }
+            if (opts.up) marks[`${opts.i - 1},${opts.a}`] = "compare";
+            if (opts.left !== undefined) marks[`${opts.i},${opts.left}`] = "compare";
+            if (opts.i !== undefined && opts.a !== undefined) marks[`${opts.i},${opts.a}`] = "active";
+            if (opts.final) marks[`${n},${amount}`] = "match";
+            return [
+              {
+                type: "grid",
+                label: "dp[i][a]: rows = coins allowed (first i), columns = amount a",
+                rows, cols, corner: "i \\ a",
+                cells: dp.map((row) => row.map((v) => (v === null ? "" : v))),
+                marks,
+              },
+              {
+                type: "vars",
+                items: [
+                  { name: "coin", value: opts.i ? coins[opts.i - 1] : "–", mark: opts.i ? "active" : "" },
+                  { name: "a", value: opts.a === undefined ? "–" : opts.a },
+                ],
+              },
+            ];
+          };
+
+          steps.push({
+            line: "init",
+            note: `Row "none" uses no coins: there's 1 way to make 0 (take nothing) and 0 ways to make anything else. Each next row allows one more coin.`,
+            view: view(),
+          });
+
+          for (let i = 1; i <= n; i++) {
+            const coin = coins[i - 1];
+            steps.push({
+              line: "row",
+              note: `Row ${i} also allows coin ${coin}. Each cell = ways that skip ${coin} (the cell above) + ways that use it at least once (the cell ${coin} to the left in this row).`,
+              view: view({ i }),
+            });
+            for (let a = 0; a <= amount; a++) {
+              const skip = dp[i - 1][a];
+              const take = a >= coin ? dp[i][a - coin] : null;
+              dp[i][a] = skip + (take || 0);
+              const note =
+                take === null
+                  ? `a = ${a} < ${coin}: coin ${coin} doesn't fit, so copy the cell above: ${skip}.`
+                  : `a = ${a}: skip ${coin} → ${skip} (above), use ${coin} → ${take} (dp[${i}][${a - coin}]). Total ${dp[i][a]}.`;
+              steps.push({
+                line: take === null ? ["cell", "skip"] : ["cell", "skip", "take"],
+                note,
+                view: view({ i, a, up: true, left: take === null ? undefined : a - coin }),
+              });
+            }
+          }
+
+          steps.push({
+            line: "return",
+            note: `Return dp[${n}][${amount}] = ${dp[n][amount]}: ways to make ${amount} with all coins allowed. Each row only reads itself and the row above, which is why Approach 3 can keep a single row.`,
+            view: view({ final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0518-coin-change-ii/approach3.visual.js -->
+    <script>
+      // 1D DP: dp[a] = ways to make a. Coins in the outer loop, so each combination counts once.
+      DSAViz.register("0518-coin-change-ii/approach3", {
+        inputs: [
+          { name: "coins", type: "int[]", value: "[1, 2, 5]", minLength: 1, maxLength: 5, minValue: 1, maxValue: 20 },
+          { name: "amount", type: "int", value: "5", min: 0, max: 15 },
+        ],
+        trace({ coins, amount }) {
+          if (new Set(coins).size !== coins.length) {
+            throw new DSAViz.InputError("coins must all be different (LeetCode guarantees this).");
+          }
+          const dp = Array(amount + 1).fill(0);
+          dp[0] = 1;
+          const used = []; // coins allowed so far
+          const steps = [];
+          const view = (opts = {}) => {
+            const marks = {};
+            if (opts.from !== undefined) marks[opts.from] = "compare";
+            if (opts.a !== undefined) marks[opts.a] = opts.changed ? "new" : "active";
+            if (opts.final) marks[amount] = "match";
+            const pointers = {};
+            if (opts.a !== undefined) pointers.a = opts.a;
+            if (opts.from !== undefined) pointers["a - coin"] = opts.from;
+            return [
+              { type: "array", label: "dp[a] = ways to make a (index = a)", values: dp.slice(), marks, pointers },
+              { type: "set", label: "coins allowed so far", items: used.slice(), marks: opts.coin !== undefined ? { [opts.coin]: "new" } : {} },
+              {
+                type: "vars",
+                items: [
+                  { name: "coin", value: opts.coin === undefined ? "–" : opts.coin, mark: opts.coin !== undefined ? "active" : "" },
+                  { name: "amount", value: amount },
+                ],
+              },
+            ];
+          };
+
+          steps.push({
+            line: "init",
+            note: `dp[a] counts the ways to make a. Start with dp[0] = 1 (the empty combination) and everything else 0: with no coins, nothing else can be made.`,
+            view: view(),
+          });
+
+          for (const coin of coins) {
+            used.push(coin);
+            if (coin > amount) {
+              steps.push({
+                line: "coin",
+                note: `Coin ${coin} is bigger than ${amount}, so it can't be part of any combination. dp doesn't change.`,
+                view: view({ coin }),
+              });
+              continue;
+            }
+            steps.push({
+              line: "coin",
+              note: `Allow coin ${coin}. Walk a upward from ${coin}: every combination for a that uses a ${coin} is "a combination for a - ${coin}, plus one ${coin}". Going upward lets dp[a - ${coin}] already include ${coin}s, so the coin can be used many times.`,
+              view: view({ coin }),
+            });
+            for (let a = coin; a <= amount; a++) {
+              const before = dp[a];
+              const add = dp[a - coin];
+              dp[a] += add;
+              steps.push({
+                line: ["cell", "add"],
+                note: add
+                  ? `dp[${a}] += dp[${a - coin}]: ${before} + ${add} = ${dp[a]}. The ${add} way${add === 1 ? "" : "s"} to make ${a - coin}, each plus one ${coin}.`
+                  : `dp[${a - coin}] is 0 (${a - coin} can't be made yet), so dp[${a}] stays ${before}.`,
+                view: view({ coin, a, from: a - coin, changed: add > 0 }),
+              });
+            }
+          }
+
+          steps.push({
+            line: "return",
+            note: `Return dp[${amount}] = ${dp[amount]}. Because coins were added one at a time, each combination is counted once, in coin order (1+2+2 and 2+1+2 are the same).`,
+            view: view({ final: true }),
           });
           return steps;
         },
