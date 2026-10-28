@@ -1,0 +1,258 @@
+<details class="question" data-tags="math integer overflow digits reverse">
+  <summary>
+    <span class="q-title">7. Reverse Integer</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Math</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Pop the last digit with <code>x % 10</code>
+      and push it onto the result with <code>rev = rev * 10 + digit</code>.
+      The catch is overflow: check <em>before</em> each push that
+      <code>rev</code> isn't past <code>INT_MAX / 10</code>, so the too-big
+      number is never built. O(log |x|) time, O(1) space.
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/reverse-integer/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given a signed 32-bit integer <code>x</code>, return <code>x</code>
+        with its digits reversed. If the reversed number falls outside the
+        signed 32-bit range <code>[-2³¹, 2³¹ - 1]</code>, return
+        <code>0</code>.
+      </p>
+      <ul>
+        <li><code>-2³¹ &lt;= x &lt;= 2³¹ - 1</code></li>
+        <li>
+          Assume the environment can't store 64-bit integers (signed or
+          unsigned).
+        </li>
+      </ul>
+      <p class="note">
+        Examples: <code>123</code> → <code>321</code>; <code>-123</code> →
+        <code>-321</code>; <code>120</code> → <code>21</code> (the leading
+        zero disappears); <code>1534236469</code> → <code>0</code>
+        (9646324351 doesn't fit).
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>x = 0</code></td>
+              <td><code>0</code></td>
+              <td>Zero stays zero.</td>
+            </tr>
+            <tr>
+              <td><code>x = 7</code></td>
+              <td><code>7</code></td>
+              <td>One digit.</td>
+            </tr>
+            <tr>
+              <td><code>x = 1200</code></td>
+              <td><code>21</code></td>
+              <td>Trailing zeros become leading zeros and disappear.</td>
+            </tr>
+            <tr>
+              <td><code>x = -123</code></td>
+              <td><code>-321</code></td>
+              <td>Negative: keep the sign. In Python, <code>-123 % 10</code> is 7, not -3.</td>
+            </tr>
+            <tr>
+              <td><code>x = 1534236469</code></td>
+              <td><code>0</code></td>
+              <td>9646324351 doesn't fit in 32 bits.</td>
+            </tr>
+            <tr>
+              <td><code>x = 1000000003</code></td>
+              <td><code>0</code></td>
+              <td>A valid input whose reverse (3000000001) overflows.</td>
+            </tr>
+            <tr>
+              <td><code>x = 2147483647 (INT_MAX)</code></td>
+              <td><code>0</code></td>
+              <td>Reverses to 7463847412: overflow.</td>
+            </tr>
+            <tr>
+              <td><code>x = -2147483648 (INT_MIN)</code></td>
+              <td><code>0</code></td>
+              <td><code>abs(x)</code> itself doesn't fit in an <code>int</code> (2147483648), and the reverse overflows too.</td>
+            </tr>
+            <tr>
+              <td><code>x = 1463847412</code></td>
+              <td><code>2147483641</code></td>
+              <td>Reverses to 2147483641, just under INT_MAX: it fits.</td>
+            </tr>
+            <tr>
+              <td><code>x = -2147483412</code></td>
+              <td><code>-2143847412</code></td>
+              <td>Fits just inside the negative limit.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Build by Place Value</h2>
+      <p class="intuition">
+        Count the digits first, so you know where each one lands. The last
+        digit of <code>x</code> becomes the first digit of the answer, at
+        place <code>10^(digits - 1)</code>; the next one goes one place lower,
+        and so on. Build the whole number, put the sign back, then check the
+        range once.
+      </p>
+      <ul>
+        <li>
+          Working on <code>abs(x)</code> avoids negative remainders, and the
+          sign is restored at the end.
+        </li>
+        <li>
+          The loop runs while <code>decimal</code> is non-zero, so the last
+          digit (the ones place) is added after it. That also covers
+          <code>x = 0</code>, where the loop never runs.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log |x|)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Correct, and it passes: at most 10 digits. It only works because the
+        full reversed number is built <em>before</em> the range check. Python
+        ints have no size limit, so that's fine there, but C++ and Java need
+        <code>long long</code> / <code>long</code> for it (as written below),
+        which the problem asks you to avoid. In Java,
+        <code>Math.abs(Integer.MIN_VALUE)</code> is still negative as an
+        <code>int</code>, another reason to widen first. The unused
+        <code>from math import ceil</code> is dropped here.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Pop and Push with an Overflow Check
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        No digit counting: pop the last digit of <code>x</code> and push it
+        onto <code>rev</code> (<code>rev * 10 + digit</code>). Before each
+        push, ask whether the result would pass the limit, using only numbers
+        that already fit.
+      </p>
+      <ul>
+        <li>
+          <code>rev * 10 + digit</code> overflows exactly when
+          <code>rev &gt; INT_MAX / 10</code>, or
+          <code>rev == INT_MAX / 10</code> and <code>digit &gt; 7</code>
+          (the last digit of 2147483647). The negative side uses
+          <code>INT_MIN / 10</code> and <code>-8</code>.
+        </li>
+        <li>
+          In C++ and Java, <code>%</code> keeps the sign
+          (<code>-123 % 10 == -3</code>), so negatives work with no special
+          case. Python's <code>%</code> doesn't (<code>-123 % 10 == 7</code>),
+          so the Python version works on <code>abs(x)</code> with a limit of
+          2³¹ - 1 or 2³¹.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log |x|)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Stays within 32-bit ints, as the problem requires. A detail: the
+        <code>digit &gt; 7</code> half never actually triggers. When
+        <code>rev</code> reaches 214748364, the only digit left is the first
+        digit of <code>x</code>, which is 1 or 2. It's kept because it makes
+        the check obviously correct.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Turn the number into a string, reverse it, and parse it back:
+        <code>str(abs(x))[::-1]</code> in Python, <code>std::reverse</code>
+        in C++, <code>StringBuilder.reverse()</code> in Java. Parsing ignores
+        the leading zeros, so <code>"021"</code> becomes 21.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log |x|)</span>
+        <span><strong>Space</strong> O(log |x|)</span>
+      </div>
+      <p class="note">
+        Passes on LeetCode, but like Approach 1 it builds the full number
+        first, so C++ and Java parse into 64 bits (<code>stoll</code>,
+        <code>Long.parseLong</code>), against the problem's rule. Fine for
+        everyday code; in an interview, expect to be asked for Approach 2.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Build by Place Value</th>
+              <td>Count digits, place each at 10^k, check range at the end</td>
+              <td>O(log |x|)</td>
+              <td>O(1)</td>
+              <td>Needs 64-bit numbers outside Python</td>
+            </tr>
+            <tr>
+              <th scope="row">Pop and Push with an Overflow Check</th>
+              <td>rev * 10 + digit, checked against INT_MAX / 10 first</td>
+              <td>O(log |x|)</td>
+              <td>O(1)</td>
+              <td>Expected answer; 32-bit only</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
