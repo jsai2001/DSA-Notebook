@@ -23,33 +23,13 @@
   </head>
   <body>
     <header class="page-header">
-      <button type="button" id="theme-toggle" class="theme-toggle">
+      <!-- Light/dark toggle: icon only, fixed at the top right so it's always reachable -->
+      <button type="button" id="theme-toggle" class="theme-toggle" title="Switch theme">
         <span class="theme-icon" aria-hidden="true">☾</span>
-        <span class="theme-label">Dark mode</span>
+        <span class="theme-label visually-hidden">Dark mode</span>
       </button>
       <h1 class="title">Coding Solutions</h1>
       <p class="subtitle">My notes and solutions. Click a question to expand it.</p>
-      <div class="controls">
-        <label for="search" class="visually-hidden">Search questions</label>
-        <input
-          id="search"
-          type="search"
-          placeholder="Search by name or tag..."
-          autocomplete="off"
-        />
-        <button type="button" id="surprise" class="surprise-btn">
-          <!-- Shuffle icon; uses currentColor so it follows the theme -->
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
-            <polyline points="16 3 21 3 21 8" />
-            <line x1="4" y1="20" x2="21" y2="3" />
-            <polyline points="21 16 21 21 16 21" />
-            <line x1="15" y1="15" x2="21" y2="21" />
-            <line x1="4" y1="4" x2="9" y2="9" />
-          </svg>
-          <span>Surprise me</span>
-        </button>
-      </div>
       <p id="no-results" hidden>No questions match your search.</p>
       <!-- Announces the picked question to screen readers -->
       <p id="surprise-status" class="visually-hidden" aria-live="polite"></p>
@@ -3426,7 +3406,595 @@
           </section>
         </div>
       </details>
+
+      <!-- ===== problems/1448-count-good-nodes-in-binary-tree ===== -->
+      <details class="question" data-tags="tree binary-tree dfs bfs depth-first-search breadth-first-search recursion stack queue path-maximum">
+        <summary>
+          <span class="q-title">1448. Count Good Nodes in Binary Tree</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">Tree</span>
+            <span class="tag">DFS</span>
+            <span class="tag">BFS</span>
+          </span>
+        </summary>
+
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> Walk down from the root carrying the
+            <strong>largest value seen on the path so far</strong>. A node is good
+            when <code>node.val &gt;= best</code>; then pass
+            <code>max(best, node.val)</code> to its children. Each path has its own
+            maximum, so it's a parameter, not a global. O(n) time, O(h) space.
+          </div>
+
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/count-good-nodes-in-binary-tree/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              Given the <code>root</code> of a binary tree, a node <code>X</code> is
+              <strong>good</strong> if no node on the path from the root to
+              <code>X</code> has a value greater than <code>X</code>. Return the
+              number of good nodes.
+            </p>
+            <ul>
+              <li>The number of nodes is between <code>1</code> and <code>10⁵</code>.</li>
+              <li>Each value is between <code>-10⁴</code> and <code>10⁴</code>.</li>
+            </ul>
+            <p class="note">
+              Examples (level order, <code>null</code> = no child):
+              <code>[3, 1, 4, 3, null, 1, 5]</code> → <code>4</code> (3, 4, 5 and
+              the lower 3); <code>[3, 3, null, 4, 2]</code> → <code>3</code>;
+              <code>[1]</code> → <code>1</code>.
+            </p>
+          </section>
+
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[1]</code></td>
+                    <td><code>1</code></td>
+                    <td>One node: the root is always good.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[3, 3, null, 4, 2]</code></td>
+                    <td><code>3</code></td>
+                    <td>Equal counts as good: the second 3 is good. Use <code>&gt;=</code>, not <code>&gt;</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2, 2, 2, 2, 2]</code></td>
+                    <td><code>5</code></td>
+                    <td>All equal: every node is good.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[5, 1, null, 3]</code></td>
+                    <td><code>1</code></td>
+                    <td>3 is bigger than its parent 1, but not than 5 at the top. Compare with the largest value on the whole path, not just the parent.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2, null, 4, 10, 8, null, null, 4]</code></td>
+                    <td><code>4</code></td>
+                    <td>Each path has its own maximum: 8 is good even though its sibling 10 is bigger. A single global maximum gets this wrong.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[-3, -2, -1]</code></td>
+                    <td><code>3</code></td>
+                    <td>Negative values: start <code>best</code> at <code>root.val</code> (or −∞). Starting at 0 counts nothing here.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[5, 4, null, 3, null, 2, null, 1]</code></td>
+                    <td><code>1</code></td>
+                    <td>A one-sided chain that only decreases: only the root is good.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[-10⁴, 10⁴, -10⁴]</code></td>
+                    <td><code>3</code></td>
+                    <td>Both limits: the root −10⁴ is good, and each child is ≥ it.</td>
+                  </tr>
+                  <tr>
+                    <td>A chain <code>0 → 1 → … → 99999</code>, each a left child</td>
+                    <td><code>100000</code></td>
+                    <td>10⁵ levels deep: recursion goes past Python's default limit of 1,000, and overflowed Java's default stack here. Raise the limit, or use a stack or queue.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Recursive DFS</h2>
+            <p class="intuition">
+              The only thing a node needs from above is the largest value on its
+              path. Pass it down as a parameter: each call checks its own node, then
+              hands <code>max(best, node.val)</code> to both children.
+            </p>
+            <ul>
+              <li>
+                <code>dfs(node, best)</code> returns the number of good nodes in that
+                subtree: 1 if <code>node.val &gt;= best</code>, plus the counts from
+                the left and right subtrees.
+              </li>
+              <li>
+                Starting with <code>best = root.val</code> makes the root good and
+                handles negative values. A starting value of 0 would not.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n)</span>
+              <span><strong>Space</strong> O(h)</span>
+            </div>
+            <p class="note">
+              h is the tree's height: about log n when balanced, up to n = 10⁵ when
+              it's a single chain. Python raises its recursion limit here (default
+              1,000); with that, a 10⁵-deep chain passed in testing. C++ handled it
+              too with a normal build. Java's recursive version threw <code>StackOverflowError</code> on
+              that chain with the default JVM stack on this machine. LeetCode's JVM
+              settings may differ, but Approach 2 avoids the question.
+            </p>
+            <div class="code-tabs" data-viz="1448-count-good-nodes-in-binary-tree/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"call":[14],"empty":[15,16],"check":[17],"update":[18],"left":[19],"right":[20],"done":[21],"start":[23]}'>
+                # Definition for a binary tree node.
+                # class TreeNode(object):
+                #     def __init__(self, val=0, left=None, right=None):
+                #         self.val = val
+                #         self.left = left
+                #         self.right = right
+                import sys
+
+
+                class Solution(object):
+                    def goodNodes(self, root):
+                        sys.setrecursionlimit(200000)  # a one-sided tree can be 10^5 levels deep
+
+                        def dfs(node, best):  # best = largest value from the root down to node's parent
+                            if not node:
+                                return 0
+                            count = 1 if node.val >= best else 0  # good: nothing above it is bigger
+                            best = max(best, node.val)
+                            count += dfs(node.left, best)
+                            count += dfs(node.right, best)
+                            return count
+
+                        return dfs(root, root.val)
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"start":[16],"call":[20],"empty":[21],"check":[22],"update":[23],"left":[24],"right":[25],"done":[26]}'>
+                /**
+                 * Definition for a binary tree node.
+                 * struct TreeNode {
+                 *     int val;
+                 *     TreeNode *left;
+                 *     TreeNode *right;
+                 *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                 *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                 *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                 * };
+                 */
+                #include <algorithm>
+                class Solution {
+                public:
+                    int goodNodes(TreeNode* root) {
+                        return dfs(root, root->val);
+                    }
+                private:
+                    // best = largest value from the root down to node's parent
+                    int dfs(TreeNode* node, int best) {
+                        if (!node) return 0;
+                        int count = node->val >= best ? 1 : 0; // good: nothing above it is bigger
+                        best = std::max(best, node->val);
+                        count += dfs(node->left, best);
+                        count += dfs(node->right, best);
+                        return count;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"start":[18],"call":[22],"empty":[23],"check":[24],"update":[25],"left":[26],"right":[27],"done":[28]}'>
+                /**
+                 * Definition for a binary tree node.
+                 * public class TreeNode {
+                 *     int val;
+                 *     TreeNode left;
+                 *     TreeNode right;
+                 *     TreeNode() {}
+                 *     TreeNode(int val) { this.val = val; }
+                 *     TreeNode(int val, TreeNode left, TreeNode right) {
+                 *         this.val = val;
+                 *         this.left = left;
+                 *         this.right = right;
+                 *     }
+                 * }
+                 */
+                class Solution {
+                    public int goodNodes(TreeNode root) {
+                        return dfs(root, root.val);
+                    }
+
+                    // best = largest value from the root down to node's parent
+                    private int dfs(TreeNode node, int best) {
+                        if (node == null) return 0;
+                        int count = node.val >= best ? 1 : 0; // good: nothing above it is bigger
+                        best = Math.max(best, node.val);
+                        count += dfs(node.left, best);
+                        count += dfs(node.right, best);
+                        return count;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>Approach 2: Iterative DFS with a Stack</h2>
+            <p class="intuition">
+              The same walk, with your own stack instead of the call stack. Each
+              entry is a pair: a node and the largest value above it. That pair is
+              exactly what the recursive call had in its parameters.
+            </p>
+            <ul>
+              <li>
+                Pop a pair, count the node if it's good, then push its children with
+                <code>max(best, node.val)</code>.
+              </li>
+              <li>
+                Pushing right before left makes left come out first, the same order
+                as the recursion. For counting, any order works.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n)</span>
+              <span><strong>Space</strong> O(h)</span>
+            </div>
+            <p class="note">
+              The stack lives on the heap, so a 10⁵-deep tree is fine in every
+              language. In Java, two stacks kept in step avoid creating a pair object
+              per node.
+            </p>
+            <div class="code-tabs" data-viz="1448-count-good-nodes-in-binary-tree/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[9,10],"loop":[11],"pop":[12],"check":[13],"good":[14],"update":[15],"push":[17,18,19,20],"return":[21]}'>
+                # Definition for a binary tree node.
+                # class TreeNode(object):
+                #     def __init__(self, val=0, left=None, right=None):
+                #         self.val = val
+                #         self.left = left
+                #         self.right = right
+                class Solution(object):
+                    def goodNodes(self, root):
+                        count = 0
+                        stack = [(root, root.val)]  # (node, largest value above it)
+                        while stack:
+                            node, best = stack.pop()
+                            if node.val >= best:
+                                count += 1
+                            best = max(best, node.val)
+                            # push right first so the left child is popped (visited) first
+                            if node.right:
+                                stack.append((node.right, best))
+                            if node.left:
+                                stack.append((node.left, best))
+                        return count
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[18,19,20],"loop":[21],"pop":[22,23],"check":[24],"good":[25],"update":[27],"push":[29,30],"return":[32]}'>
+                /**
+                 * Definition for a binary tree node.
+                 * struct TreeNode {
+                 *     int val;
+                 *     TreeNode *left;
+                 *     TreeNode *right;
+                 *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                 *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                 *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                 * };
+                 */
+                #include <algorithm>
+                #include <stack>
+                #include <utility>
+                class Solution {
+                public:
+                    int goodNodes(TreeNode* root) {
+                        int count = 0;
+                        std::stack<std::pair<TreeNode*, int>> st; // (node, largest value above it)
+                        st.push({root, root->val});
+                        while (!st.empty()) {
+                            auto [node, best] = st.top();
+                            st.pop();
+                            if (node->val >= best) {
+                                count++;
+                            }
+                            best = std::max(best, node->val);
+                            // push right first so the left child is popped (visited) first
+                            if (node->right) st.push({node->right, best});
+                            if (node->left) st.push({node->left, best});
+                        }
+                        return count;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[21,23,24,25,26],"loop":[27],"pop":[28,29],"check":[30],"good":[31],"update":[33],"push":[35,36],"return":[38]}'>
+                /**
+                 * Definition for a binary tree node.
+                 * public class TreeNode {
+                 *     int val;
+                 *     TreeNode left;
+                 *     TreeNode right;
+                 *     TreeNode() {}
+                 *     TreeNode(int val) { this.val = val; }
+                 *     TreeNode(int val, TreeNode left, TreeNode right) {
+                 *         this.val = val;
+                 *         this.left = left;
+                 *         this.right = right;
+                 *     }
+                 * }
+                 */
+                import java.util.ArrayDeque;
+                import java.util.Deque;
+
+                class Solution {
+                    public int goodNodes(TreeNode root) {
+                        int count = 0;
+                        // Two stacks kept in step: a node and the largest value above it.
+                        Deque<TreeNode> nodes = new ArrayDeque<>();
+                        Deque<Integer> bests = new ArrayDeque<>();
+                        nodes.push(root);
+                        bests.push(root.val);
+                        while (!nodes.isEmpty()) {
+                            TreeNode node = nodes.pop();
+                            int best = bests.pop();
+                            if (node.val >= best) {
+                                count++;
+                            }
+                            best = Math.max(best, node.val);
+                            // push right first so the left child is popped (visited) first
+                            if (node.right != null) { nodes.push(node.right); bests.push(best); }
+                            if (node.left != null) { nodes.push(node.left); bests.push(best); }
+                        }
+                        return count;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>Approach 3: BFS with a Queue</h2>
+            <p class="intuition">
+              Visit level by level with a queue of (node, largest value above it).
+              Because every entry carries its own path's maximum, it doesn't matter
+              that nodes from different branches are mixed together.
+            </p>
+            <ul>
+              <li>
+                Same check and same <code>max(best, node.val)</code> for the
+                children; only the order of visits changes.
+              </li>
+              <li>
+                The queue holds about one level at a time, so memory follows the
+                tree's width instead of its height.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n)</span>
+              <span><strong>Space</strong> O(w)</span>
+            </div>
+            <p class="note">
+              w is the widest level: up to about n / 2 for a full tree, 1 for a
+              chain. Choose BFS when the tree is likely deep and narrow, DFS when
+              it's wide and shallow; for this problem both pass easily.
+            </p>
+            <div class="code-tabs" data-viz="1448-count-good-nodes-in-binary-tree/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[12,13],"loop":[14],"pop":[15],"check":[16],"good":[17],"update":[18],"push":[19,20,21],"return":[22]}'>
+                # Definition for a binary tree node.
+                # class TreeNode(object):
+                #     def __init__(self, val=0, left=None, right=None):
+                #         self.val = val
+                #         self.left = left
+                #         self.right = right
+                from collections import deque
+
+
+                class Solution(object):
+                    def goodNodes(self, root):
+                        count = 0
+                        queue = deque([(root, root.val)])  # (node, largest value above it)
+                        while queue:
+                            node, best = queue.popleft()
+                            if node.val >= best:
+                                count += 1
+                            best = max(best, node.val)
+                            for child in (node.left, node.right):
+                                if child:
+                                    queue.append((child, best))
+                        return count
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[19,20,21],"loop":[22],"pop":[23,24],"check":[25],"good":[26],"update":[28],"push":[29,30],"return":[33]}'>
+                /**
+                 * Definition for a binary tree node.
+                 * struct TreeNode {
+                 *     int val;
+                 *     TreeNode *left;
+                 *     TreeNode *right;
+                 *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                 *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                 *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                 * };
+                 */
+                #include <algorithm>
+                #include <initializer_list>
+                #include <queue>
+                #include <utility>
+                class Solution {
+                public:
+                    int goodNodes(TreeNode* root) {
+                        int count = 0;
+                        std::queue<std::pair<TreeNode*, int>> q; // (node, largest value above it)
+                        q.push({root, root->val});
+                        while (!q.empty()) {
+                            auto [node, best] = q.front();
+                            q.pop();
+                            if (node->val >= best) {
+                                count++;
+                            }
+                            best = std::max(best, node->val);
+                            for (TreeNode* child : {node->left, node->right}) {
+                                if (child) q.push({child, best});
+                            }
+                        }
+                        return count;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[21,23,24,25,26],"loop":[27],"pop":[28,29],"check":[30],"good":[31],"update":[33],"push":[34,35],"return":[38]}'>
+                /**
+                 * Definition for a binary tree node.
+                 * public class TreeNode {
+                 *     int val;
+                 *     TreeNode left;
+                 *     TreeNode right;
+                 *     TreeNode() {}
+                 *     TreeNode(int val) { this.val = val; }
+                 *     TreeNode(int val, TreeNode left, TreeNode right) {
+                 *         this.val = val;
+                 *         this.left = left;
+                 *         this.right = right;
+                 *     }
+                 * }
+                 */
+                import java.util.ArrayDeque;
+                import java.util.Queue;
+
+                class Solution {
+                    public int goodNodes(TreeNode root) {
+                        int count = 0;
+                        // Two queues kept in step: a node and the largest value above it.
+                        Queue<TreeNode> nodes = new ArrayDeque<>();
+                        Queue<Integer> bests = new ArrayDeque<>();
+                        nodes.add(root);
+                        bests.add(root.val);
+                        while (!nodes.isEmpty()) {
+                            TreeNode node = nodes.poll();
+                            int best = bests.poll();
+                            if (node.val >= best) {
+                                count++;
+                            }
+                            best = Math.max(best, node.val);
+                            for (TreeNode child : new TreeNode[] {node.left, node.right}) {
+                                if (child != null) { nodes.add(child); bests.add(best); }
+                            }
+                        }
+                        return count;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">No shortcut</span></h2>
+            <p>
+              None of the standard libraries have a binary tree type with a traversal
+              built in, and LeetCode's <code>TreeNode</code> is a bare class. A
+              traversal is the shortest correct answer.
+            </p>
+            <p class="note">
+              Approach 1 is the one to write: about six lines and the clearest. If
+              the tree can be very deep (or in Java), use Approach 2.
+            </p>
+          </section>
+
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Recursive DFS</th>
+                    <td>Pass the path maximum down as a parameter</td>
+                    <td>O(n)</td>
+                    <td>O(h)</td>
+                    <td>Shortest; deep trees can overflow the call stack</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Iterative DFS with a Stack</th>
+                    <td>Stack of (node, max above it)</td>
+                    <td>O(n)</td>
+                    <td>O(h)</td>
+                    <td>Safe for 10⁵-deep trees in any language</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">BFS with a Queue</th>
+                    <td>Queue of (node, max above it), level by level</td>
+                    <td>O(n)</td>
+                    <td>O(w)</td>
+                    <td>Memory follows the width, not the height</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
     </main>
+
+    <!-- Floating bar, bottom center: search and Surprise me, reachable while reading.
+         The search box opens inside the bar when the magnifier is pressed. -->
+    <div class="dock" id="dock" role="toolbar" aria-label="Search and Surprise me">
+      <button type="button" id="search-toggle" class="dock-btn" title="Search by name or tag"
+        aria-label="Search questions" aria-expanded="false" aria-controls="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <circle cx="11" cy="11" r="7" />
+          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+      </button>
+      <label for="search" class="visually-hidden">Search questions</label>
+      <input id="search" type="search" placeholder="Search by name or tag..." autocomplete="off" hidden />
+      <button type="button" id="surprise" class="dock-btn" title="Surprise me"
+        aria-label="Surprise me: open a random question">
+        <!-- Shuffle icon; uses currentColor so it follows the theme -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <polyline points="16 3 21 3 21 8" />
+          <line x1="4" y1="20" x2="21" y2="3" />
+          <polyline points="21 16 21 21 16 21" />
+          <line x1="15" y1="15" x2="21" y2="21" />
+          <line x1="4" y1="4" x2="9" y2="9" />
+        </svg>
+      </button>
+    </div>
 
     <!-- Visualizer engine, then each approach's visualizer, then the page script -->
     <script src="./viz.js"></script>
@@ -5411,6 +5979,237 @@
             line: "return",
             note: `Return dp[${amount}] = ${dp[amount]}. Because coins were added one at a time, each combination is counted once, in coin order (1+2+2 and 2+1+2 are the same).`,
             view: view({ final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/1448-count-good-nodes-in-binary-tree/approach1.visual.js -->
+    <script>
+      // Recursive DFS: carry the largest value on the path down; a node is good if it's >= that value.
+      DSAViz.register("1448-count-good-nodes-in-binary-tree/approach1", {
+        inputs: [{ name: "root", type: "tree", value: "[3, 1, 4, 3, null, 1, 5]", maxLength: 15 }],
+        trace({ root: values }) {
+          const { root, nodes } = DSAViz.buildTree(values);
+          const steps = [];
+          const marks = {}; // id -> "match" (good) / "visited" (not good)
+          const captions = {}; // id -> "max X" passed into that call
+          const stack = [];
+          let total = 0;
+          const view = (current, opts = {}) => {
+            const m = { ...marks };
+            if (current !== undefined) m[current] = opts.mark || "active";
+            return [
+              { type: "tree", label: "tree (green = good; caption = largest value above the node)", values, marks: m, captions },
+              { type: "array", label: "call stack (bottom → top)", values: stack.slice(), marks: stack.length ? { [stack.length - 1]: "active" } : {}, wide: true },
+              { type: "vars", items: [{ name: "good so far", value: total, mark: opts.counted ? "match" : "" }] },
+            ];
+          };
+
+          steps.push({
+            line: "start",
+            note: `Start at the root with best = root.val = ${nodes[root].val}. The root has nothing above it, so it's always good.`,
+            view: view(),
+          });
+
+          function dfs(id, best) {
+            const node = nodes[id];
+            stack.push(`dfs(${node.val}, max ${best})`);
+            captions[id] = `max ${best}`;
+            steps.push({
+              line: "call",
+              note: `Visit ${node.val}. The largest value on the path above it is ${best}.`,
+              view: view(id),
+            });
+            const good = node.val >= best;
+            let count = good ? 1 : 0;
+            if (good) total++;
+            marks[id] = good ? "match" : "visited";
+            const newBest = Math.max(best, node.val);
+            steps.push({
+              line: ["check", "update"],
+              note: good
+                ? `${node.val} ≥ ${best}: nothing above it is bigger, so ${node.val} is good. Children now compare against max(${best}, ${node.val}) = ${newBest}.`
+                : `${node.val} < ${best}: a bigger value is above it, so it's not good. Children still compare against ${newBest}.`,
+              view: view(id, { mark: good ? "match" : "compare", counted: good }),
+            });
+            for (const side of ["left", "right"]) {
+              const child = node[side];
+              if (child < 0) {
+                steps.push({
+                  line: [side, "empty"],
+                  note: `${node.val} has no ${side} child: dfs(None) returns 0.`,
+                  view: view(id),
+                });
+              } else {
+                steps.push({ line: side, note: `Go ${side} to ${nodes[child].val}, passing max ${newBest}.`, view: view(id) });
+                count += dfs(child, newBest);
+              }
+            }
+            steps.push({
+              line: "done",
+              note: `The subtree under ${node.val} has ${count} good node${count === 1 ? "" : "s"}. Return ${count} to the caller.`,
+              view: view(id),
+            });
+            stack.pop();
+            return count;
+          }
+
+          const answer = dfs(root, nodes[root].val);
+          steps.push({
+            line: "start",
+            note: `Return ${answer}. Every node was visited once (O(n)), and the call stack was at most as deep as the tree.`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/1448-count-good-nodes-in-binary-tree/approach2.visual.js -->
+    <script>
+      // Iterative DFS: a stack of (node, largest value above it) replaces the call stack.
+      DSAViz.register("1448-count-good-nodes-in-binary-tree/approach2", {
+        inputs: [{ name: "root", type: "tree", value: "[3, 1, 4, 3, null, 1, 5]", maxLength: 15 }],
+        trace({ root: values }) {
+          const { root, nodes } = DSAViz.buildTree(values);
+          const steps = [];
+          const marks = {};
+          const captions = {};
+          const stack = [[root, nodes[root].val]];
+          captions[root] = `max ${nodes[root].val}`;
+          let count = 0;
+          const view = (current, opts = {}) => {
+            const m = { ...marks };
+            stack.forEach(([id]) => {
+              if (m[id] === undefined) m[id] = "new";
+            });
+            if (current !== undefined) m[current] = opts.mark || "active";
+            return [
+              { type: "tree", label: "tree (green = good, yellow = waiting on the stack)", values, marks: m, captions },
+              {
+                type: "array", label: "stack (bottom → top): node (max above it)",
+                values: stack.map(([id, b]) => `${nodes[id].val} (${b})`),
+                marks: stack.length ? { [stack.length - 1]: "active" } : {}, wide: true,
+              },
+              { type: "vars", items: [{ name: "count", value: count, mark: opts.counted ? "match" : "" }] },
+            ];
+          };
+
+          steps.push({
+            line: "init",
+            note: `Push (root ${nodes[root].val}, max ${nodes[root].val}). Each stack entry remembers the largest value on its own path, which is what the recursion kept in its parameters.`,
+            view: view(),
+          });
+
+          while (stack.length) {
+            const [id, best] = stack.pop();
+            const node = nodes[id];
+            steps.push({
+              line: ["loop", "pop"],
+              note: `Pop ${node.val}. The largest value above it is ${best}.`,
+              view: view(id),
+            });
+            const good = node.val >= best;
+            if (good) count++;
+            marks[id] = good ? "match" : "visited";
+            const newBest = Math.max(best, node.val);
+            const pushed = [];
+            for (const side of ["right", "left"]) {
+              const child = node[side];
+              if (child >= 0) {
+                stack.push([child, newBest]);
+                captions[child] = `max ${newBest}`;
+                pushed.push(nodes[child].val);
+              }
+            }
+            steps.push({
+              line: good ? ["check", "good", "update", "push"] : ["check", "update", "push"],
+              note:
+                (good ? `${node.val} ≥ ${best}: good. count = ${count}. ` : `${node.val} < ${best}: not good. `) +
+                (pushed.length
+                  ? `Push ${pushed.join(" then ")} with max ${newBest} (right first, so left is popped next).`
+                  : `No children to push.`),
+              view: view(id, { mark: good ? "match" : "compare", counted: good }),
+            });
+          }
+
+          steps.push({
+            line: "return",
+            note: `The stack is empty. Return ${count}. Same visiting order as the recursion, but a deep tree can't overflow the call stack.`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/1448-count-good-nodes-in-binary-tree/approach3.visual.js -->
+    <script>
+      // BFS: a queue of (node, largest value above it), visited level by level.
+      DSAViz.register("1448-count-good-nodes-in-binary-tree/approach3", {
+        inputs: [{ name: "root", type: "tree", value: "[3, 1, 4, 3, null, 1, 5]", maxLength: 15 }],
+        trace({ root: values }) {
+          const { root, nodes } = DSAViz.buildTree(values);
+          const steps = [];
+          const marks = {};
+          const captions = {};
+          const queue = [[root, nodes[root].val]];
+          captions[root] = `max ${nodes[root].val}`;
+          let count = 0;
+          const view = (current, opts = {}) => {
+            const m = { ...marks };
+            queue.forEach(([id]) => {
+              if (m[id] === undefined) m[id] = "new";
+            });
+            if (current !== undefined) m[current] = opts.mark || "active";
+            return [
+              { type: "tree", label: "tree (green = good, yellow = waiting in the queue)", values, marks: m, captions },
+              {
+                type: "array", label: "queue (front → back): node (max above it)",
+                values: queue.map(([id, b]) => `${nodes[id].val} (${b})`),
+                marks: queue.length ? { 0: "active" } : {}, wide: true,
+              },
+              { type: "vars", items: [{ name: "count", value: count, mark: opts.counted ? "match" : "" }] },
+            ];
+          };
+
+          steps.push({
+            line: "init",
+            note: `Put (root ${nodes[root].val}, max ${nodes[root].val}) in the queue. Each entry carries the largest value on its own path, so levels can be mixed freely.`,
+            view: view(),
+          });
+
+          while (queue.length) {
+            const [id, best] = queue.shift();
+            const node = nodes[id];
+            steps.push({
+              line: ["loop", "pop"],
+              note: `Take ${node.val} from the front. The largest value above it is ${best}.`,
+              view: view(id),
+            });
+            const good = node.val >= best;
+            if (good) count++;
+            marks[id] = good ? "match" : "visited";
+            const newBest = Math.max(best, node.val);
+            const kids = ["left", "right"].map((s) => node[s]).filter((c) => c >= 0);
+            kids.forEach((c) => {
+              queue.push([c, newBest]);
+              captions[c] = `max ${newBest}`;
+            });
+            steps.push({
+              line: good ? ["check", "good", "update", "push"] : ["check", "update", "push"],
+              note:
+                (good ? `${node.val} ≥ ${best}: good. count = ${count}. ` : `${node.val} < ${best}: not good. `) +
+                (kids.length
+                  ? `Add ${kids.map((c) => nodes[c].val).join(" and ")} to the back with max ${newBest}.`
+                  : `It has no children.`),
+              view: view(id, { mark: good ? "match" : "compare", counted: good }),
+            });
+          }
+
+          steps.push({
+            line: "return",
+            note: `The queue is empty. Return ${count}. The queue held at most one level at a time: O(width) memory, and no recursion.`,
+            view: view(),
           });
           return steps;
         },

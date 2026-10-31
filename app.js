@@ -17,6 +17,37 @@ search.addEventListener("input", () => {
     if (match) visible++;
   });
   noResults.hidden = visible !== 0;
+  // Searching from the dock while scrolled down: bring the results into view.
+  if (term && document.getElementById("question-list").getBoundingClientRect().top < 0) {
+    window.scrollTo({ top: 0 });
+  }
+});
+
+// ---------- Dock: the magnifier opens and closes the search box ----------
+const dock = document.getElementById("dock");
+const searchToggle = document.getElementById("search-toggle");
+
+function setSearchOpen(open) {
+  search.hidden = !open;
+  dock.classList.toggle("is-searching", open);
+  searchToggle.setAttribute("aria-expanded", String(open));
+  searchToggle.setAttribute("aria-label", open ? "Close search" : "Search questions");
+  searchToggle.title = open ? "Close search" : "Search by name or tag";
+  if (open) {
+    search.focus();
+  } else if (search.value) {
+    // Closing clears the filter so every question shows again.
+    search.value = "";
+    search.dispatchEvent(new Event("input"));
+  }
+}
+
+searchToggle.addEventListener("click", () => setSearchOpen(search.hidden));
+search.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    setSearchOpen(false);
+    searchToggle.focus();
+  }
 });
 
 // ---------- Accordion: only one question open at a time ----------
@@ -85,10 +116,9 @@ function applyTheme(theme) {
   }
   themeIcon.textContent = dark ? "☀" : "☾";
   themeLabel.textContent = dark ? "Light mode" : "Dark mode";
-  themeToggle.setAttribute(
-    "aria-label",
-    dark ? "Switch to light mode" : "Switch to dark mode"
-  );
+  const label = dark ? "Switch to light mode" : "Switch to dark mode";
+  themeToggle.setAttribute("aria-label", label);
+  themeToggle.title = label;
 }
 
 applyTheme(document.documentElement.dataset.theme === "dark" ? "dark" : "light");

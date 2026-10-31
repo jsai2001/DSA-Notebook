@@ -17,7 +17,8 @@ problems/
     approach2.visual.js optional step-by-step visualizer for approach 2
   0002-add-two-numbers/
   ...
-template.html           page shell (header, search, theme toggle, Surprise me)
+template.html           page shell (header, theme toggle fixed at the top right, and a
+                        bottom dock with search and Surprise me that stays on screen)
 app.js                  search, code tabs, accordion, theme, Surprise me
 viz.js                  visualizer engine (widgets, controls, line highlighting)
 solutions.css           styles (light and dark themes)
@@ -73,7 +74,7 @@ Any approach can have a step-by-step visualizer. It shows up as a **Visualize** 
      },
    });
    ```
-   Widgets: `array` (with optional `cut` partition line), `list` (linked list), `map`, `set`, `vars`. Input types: `int`, `int[]`, `string`. Marks: `active`, `compare`, `match`, `visited`, `new`, `window`, `ghost`, `cut`. Every problem in `problems/` has complete examples; `viz.js` documents the engine.
+   Widgets: `array` (with optional `cut` partition line, `wide` cells for short text), `list` (linked list), `tree` (binary tree from a level-order list), `grid` (2D table), `map`, `set`, `vars`. Input types: `int`, `int[]`, `string`, `tree` (level order with `null`, like LeetCode). Marks: `active`, `compare`, `match`, `visited`, `new`, `window`, `ghost`, `cut`. Every problem in `problems/` has complete examples; `viz.js` documents the engine.
 3. Run `python3 build.py`.
 
 ## Checking the build

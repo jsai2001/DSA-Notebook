@@ -17,16 +17,20 @@
 //
 //   { type: "array", label, values, pointers: { i: 0, j: 2 }, marks: { 0: "active" }, cut: 2 }
 //     (cut: optional partition line before that index; sub: [..] second caption per
-//      cell; compact: true for smaller cells)
+//      cell; compact: true for smaller cells; wide: true for cells that grow to fit text)
 //   { type: "grid",  label, rows: [...], cols: [...], cells: [[...]], marks: { "r,c": "active" }, corner }
 //   { type: "list",  label, nodes: [{ value, mark, caption }], pointers: { l1: 0 } }  (index = nodes.length → null)
 //   { type: "map",   label, columns: ["value", "index"], entries: [[k, v], ...], marks: { [k]: "new" } }
+//   { type: "tree",  label, values: [3, 1, 4, null, 5], marks: { 0: "active" }, captions: { 0: "max 3" } }
+//     (level-order like LeetCode; node id = index in values; DSAViz.buildTree(values)
+//      gives { root, nodes: { id: { val, left, right, depth } } } for traces)
 //   { type: "set",   label, items: ["a", "b"], marks: { a: "new" } }
 //   { type: "vars",  items: [{ name, value, mark }] }
 //
 // Marks: "active", "compare", "match", "visited", "new", "window", "ghost", "cut".
 // int[] inputs accept minLength/maxLength and minValue/maxValue; string inputs accept
-// maxLength and ascii: true.
+// maxLength and ascii: true; tree inputs (level-order with null) accept maxLength and
+// minValue/maxValue.
 // The page script (app.js) calls DSAViz.mount() for each code block with data-viz.
 
 (function () {
@@ -96,6 +100,29 @@
       return values;
     }
 
+    // Binary tree in LeetCode's level-order form: [3, 1, 4, 3, null, 1, 5].
+    // Returns the list with null for missing children.
+    if (spec.type === "tree") {
+      const inner = text.replace(/^\[/, "").replace(/\]$/, "").trim();
+      const parts = inner ? inner.split(/[\s,]+/).filter(Boolean) : [];
+      if (!parts.length || !parts.every((p) => INT.test(p) || p === "null")) {
+        throw new InputError(`${name} must be a level-order list like ${spec.value} (use null for a missing child).`);
+      }
+      if (parts[0] === "null") throw new InputError(`The first value in ${name} is the root node, so it can't be null.`);
+      const values = parts.map((p) => (p === "null" ? null : Number(p)));
+      const maxLength = spec.maxLength ?? 15;
+      if (values.length > maxLength) {
+        throw new InputError(`${name} can have at most ${maxLength} entries here (kept small so the tree stays readable).`);
+      }
+      const minValue = spec.minValue ?? -99;
+      const maxValue = spec.maxValue ?? 99;
+      if (values.some((v) => v !== null && (v < minValue || v > maxValue))) {
+        throw new InputError(`Values in ${name} must be between ${minValue} and ${maxValue}.`);
+      }
+      buildTree(values); // throws if some values have no parent
+      return values;
+    }
+
     if (spec.type === "string") {
       // Quotes are optional; use them to keep leading/trailing spaces.
       const unquoted = text.replace(/^(["'])(.*)\1$/, "$2");
@@ -110,6 +137,33 @@
     }
 
     throw new InputError(`Unknown input type "${spec.type}".`);
+  }
+
+  // ---------- binary trees ----------
+  // Link a level-order list into nodes, the way LeetCode reads it. Node ids are
+  // indexes into `values`. Returns { root, nodes: { id: { val, left, right, depth } } }.
+  function buildTree(values) {
+    const nodes = {};
+    if (!values.length || values[0] === null) return { root: -1, nodes };
+    nodes[0] = { val: values[0], left: -1, right: -1, depth: 0 };
+    const queue = [0];
+    let i = 1;
+    while (queue.length && i < values.length) {
+      const parent = queue.shift();
+      for (const side of ["left", "right"]) {
+        if (i >= values.length) break;
+        if (values[i] !== null) {
+          nodes[i] = { val: values[i], left: -1, right: -1, depth: nodes[parent].depth + 1 };
+          nodes[parent][side] = i;
+          queue.push(i);
+        }
+        i++;
+      }
+    }
+    if (i < values.length && values.slice(i).some((v) => v !== null)) {
+      throw new InputError("Some values have no parent: every non-null value needs a node above it.");
+    }
+    return { root: 0, nodes };
   }
 
   // ---------- widgets ----------
@@ -136,6 +190,7 @@
       // Optional partition line drawn just before cell `cut` (cut = length → after the last cell).
       const cutLine = () => el("span", "viz-cutline");
       if (w.compact) row.classList.add("is-compact");
+      if (w.wide) row.classList.add("is-wide");
       w.values.forEach((value, i) => {
         if (w.cut === i) row.append(cutLine());
         const cell = el("div", "viz-cell" + markClass(w.marks && w.marks[i]));
@@ -234,6 +289,70 @@
       });
       table.append(thead, tbody);
       wrap.append(table);
+      block.append(wrap);
+      return block;
+    },
+
+    // Binary tree drawn as SVG. values: level-order list (null = no node);
+    // marks and captions are keyed by node id (index in values). Each node
+    // sits in its own column (in-order position), so nothing overlaps.
+    tree(w) {
+      const block = el("div", "viz-block");
+      if (w.label) block.append(el("div", "viz-label", w.label));
+      const { root, nodes } = buildTree(w.values || []);
+      const wrap = el("div", "viz-tree-wrap");
+      if (root < 0) {
+        wrap.append(el("span", "viz-empty", "empty tree"));
+        block.append(wrap);
+        return block;
+      }
+      const order = [];
+      (function inorder(id) {
+        if (id < 0) return;
+        inorder(nodes[id].left);
+        order.push(id);
+        inorder(nodes[id].right);
+      })(root);
+      const COL = 46, ROW = 62, R = 17, TOP = R + 4;
+      const x = {};
+      order.forEach((id, k) => (x[id] = k * COL + COL / 2));
+      const y = (id) => TOP + nodes[id].depth * ROW;
+      const depth = Math.max(...order.map((id) => nodes[id].depth));
+      const width = order.length * COL;
+      const height = TOP + depth * ROW + R + 18;
+      const NS = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(NS, "svg");
+      svg.setAttribute("class", "viz-tree");
+      svg.setAttribute("width", width);
+      svg.setAttribute("height", height);
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      svg.setAttribute("role", "img");
+      svg.setAttribute("aria-label", "Tree: " + order.map((id) => nodes[id].val).join(", "));
+      const make = (tag, attrs, text) => {
+        const node = document.createElementNS(NS, tag);
+        Object.entries(attrs).forEach(([k, v]) => node.setAttribute(k, v));
+        if (text !== undefined) node.textContent = text;
+        return node;
+      };
+      order.forEach((id) => {
+        ["left", "right"].forEach((side) => {
+          const child = nodes[id][side];
+          if (child >= 0) {
+            svg.append(make("line", { class: "viz-tree-edge", x1: x[id], y1: y(id), x2: x[child], y2: y(child) }));
+          }
+        });
+      });
+      order.forEach((id) => {
+        const g = make("g", { class: "viz-tree-node" + markClass(w.marks && w.marks[id]) });
+        g.append(make("circle", { cx: x[id], cy: y(id), r: R }));
+        g.append(make("text", { x: x[id], y: y(id), class: "viz-tree-value" }, String(nodes[id].val)));
+        const caption = w.captions && w.captions[id];
+        if (caption !== undefined && caption !== "") {
+          g.append(make("text", { x: x[id], y: y(id) + R + 12, class: "viz-tree-caption" }, String(caption)));
+        }
+        svg.append(g);
+      });
+      wrap.append(svg);
       block.append(wrap);
       return block;
     },
@@ -511,5 +630,5 @@
     return { pause };
   }
 
-  window.DSAViz = { register, mount, InputError };
+  window.DSAViz = { register, mount, InputError, buildTree };
 })();

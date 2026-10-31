@@ -115,71 +115,105 @@ li {
   margin: 0.5rem 0 1.5rem;
 }
 
+/* FLOATING CONTROLS
+   Stay on screen while reading: the theme toggle at the top right, and a dock
+   at the bottom center with search and Surprise me. */
+
+/* Round icon buttons, outlined like the other controls; fill on hover. */
+.theme-toggle,
+.dock-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0.1rem solid var(--border);
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--text-strong);
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.theme-toggle:hover,
+.dock-btn:hover,
+.dock-btn[aria-expanded="true"] {
+  background: var(--active-bg);
+  border-color: var(--active-bg);
+  color: var(--active-text);
+}
+
+.theme-toggle:active,
+.dock-btn:active {
+  transform: scale(0.94);
+}
+
+.theme-toggle:focus-visible,
+.dock-btn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.dock-btn svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+/* Light/dark toggle, fixed at the top right */
+.theme-toggle {
+  position: fixed;
+  top: max(1rem, env(safe-area-inset-top));
+  right: max(1rem, env(safe-area-inset-right));
+  z-index: 20;
+  font-size: 1.15rem;
+  line-height: 1;
+  box-shadow: 0 0.2rem 0.8rem rgba(0, 0, 0, 0.12);
+}
+
+/* Dock: bottom center. The search box opens between the two buttons. */
+.dock {
+  position: fixed;
+  left: 50%;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: calc(100vw - 2rem);
+  padding: 0.4rem;
+  border: 0.1rem solid var(--border-card);
+  border-radius: 2rem;
+  background: var(--bg);
+  box-shadow: 0 0.3rem 1.2rem rgba(0, 0, 0, 0.15);
+}
+
 #search {
+  width: 18rem;
+  min-width: 0;
+  flex: 1 1 auto;
   font-family: inherit;
-  font-size: 1rem;
-  width: 100%;
-  max-width: 28rem;
-  padding: 0.75rem 1.25rem;
+  font-size: 1rem; /* 16px+ stops iOS from zooming in on focus */
+  padding: 0.6rem 1rem;
   border: 0.1rem solid var(--border);
   border-radius: 2rem;
   background: var(--bg);
   color: var(--text);
 }
 
+#search[hidden] {
+  display: none;
+}
+
 #search::placeholder {
   color: var(--text-muted);
 }
 
-/* Search box + Surprise me button on one row */
-.controls {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.controls #search {
-  flex: 1 1 18rem;
-}
-
-/* Outlined like the other controls; fills only on hover. */
-.surprise-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: inherit;
-  font-size: 0.95rem;
-  font-weight: 500;
-  padding: 0 1.25rem;
-  border: 0.1rem solid var(--border);
-  border-radius: 2rem;
-  background: var(--bg);
-  color: var(--text-strong);
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-
-.surprise-btn svg {
-  width: 1.1rem;
-  height: 1.1rem;
-  flex-shrink: 0;
-}
-
-.surprise-btn:hover {
-  background: var(--active-bg);
-  border-color: var(--active-bg);
-  color: var(--active-text);
-}
-
-.surprise-btn:active {
-  transform: scale(0.97);
-}
-
-.surprise-btn:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
+/* Room at the bottom so the dock never covers the last card */
+body {
+  padding-bottom: 6rem;
 }
 
 /* Short highlight on the question Surprise me picked */
@@ -209,36 +243,6 @@ li {
 
 #no-results {
   margin-top: 1rem;
-}
-
-/* Light/dark toggle, top-right of the header */
-.theme-toggle {
-  position: absolute;
-  top: 0;
-  right: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-family: inherit;
-  font-size: 0.85rem;
-  font-weight: 500;
-  padding: 0.4rem 0.9rem;
-  border: 0.1rem solid var(--border);
-  border-radius: 2rem;
-  background: var(--bg);
-  color: var(--text-strong);
-  cursor: pointer;
-}
-
-.theme-toggle:hover {
-  background: var(--active-bg);
-  border-color: var(--active-bg);
-  color: var(--active-text);
-}
-
-.theme-toggle:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
 }
 
 /* QUESTION CARDS */
@@ -589,19 +593,21 @@ pre {
 
   .title {
     font-size: 2rem;
+    /* keep the centered title clear of the fixed theme button */
+    padding: 0 2.75rem;
   }
 
-  /* Full-width second row under the search box */
-  .surprise-btn {
-    flex: 1 1 100%;
-    justify-content: center;
-    padding: 0.7rem 1.25rem;
+  body {
+    padding-bottom: 5.5rem;
   }
 
-  /* Put the toggle in normal flow so it doesn't overlap the title */
-  .theme-toggle {
-    position: static;
-    margin-bottom: 1rem;
+  #search {
+    width: 100%;
+  }
+
+  /* With the search box open, the dock spans the screen width */
+  .dock.is-searching {
+    width: calc(100vw - 2rem);
   }
 }
 
@@ -918,6 +924,98 @@ pre {
 
 .viz-array.is-compact {
   gap: 0.2rem;
+}
+
+/* Array cells that hold a few words, e.g. "dfs(3, max 3)": grow to fit. */
+.viz-array.is-wide .viz-cell {
+  width: auto;
+  min-width: 2.9rem;
+}
+
+.viz-array.is-wide .viz-value {
+  width: auto;
+  min-width: 2.9rem;
+  padding: 0 0.55rem;
+  white-space: nowrap;
+  font-size: 0.85rem;
+}
+
+/* Binary tree (SVG). Shrinks to fit narrow screens (viewBox keeps the shape). */
+.viz-tree-wrap {
+  max-width: 100%;
+}
+
+.viz-tree {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.viz-tree-edge {
+  stroke: var(--border);
+  stroke-width: 1.5;
+}
+
+.viz-tree-node circle {
+  fill: var(--card-bg);
+  stroke: var(--border);
+  stroke-width: 1.5;
+}
+
+.viz-tree-value,
+.viz-tree-caption {
+  text-anchor: middle;
+  dominant-baseline: central;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+.viz-tree-value {
+  fill: var(--text-strong);
+  font-size: 13px;
+}
+
+.viz-tree-caption {
+  fill: var(--text-muted);
+  font-size: 10px;
+}
+
+.viz-tree-node.is-active circle {
+  fill: var(--active-bg);
+  stroke: var(--active-bg);
+}
+
+.viz-tree-node.is-active .viz-tree-value {
+  fill: var(--active-text);
+}
+
+.viz-tree-node.is-match circle {
+  fill: var(--easy-bg);
+  stroke: var(--easy-text);
+}
+
+.viz-tree-node.is-match .viz-tree-value {
+  fill: var(--easy-text);
+  font-weight: 600;
+}
+
+.viz-tree-node.is-compare circle,
+.viz-tree-node.is-new circle {
+  fill: var(--medium-bg);
+  stroke: var(--medium-text);
+}
+
+.viz-tree-node.is-compare .viz-tree-value,
+.viz-tree-node.is-new .viz-tree-value {
+  fill: var(--medium-text);
+}
+
+.viz-tree-node.is-visited circle {
+  fill: var(--surface-alt);
+  stroke-dasharray: 3 3;
+}
+
+.viz-tree-node.is-visited .viz-tree-value {
+  fill: var(--text-muted);
 }
 
 /* 2D table (DP) */
