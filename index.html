@@ -6120,6 +6120,452 @@
         </div>
       </details>
 
+      <!-- ===== problems/0022-generate-parentheses ===== -->
+      <details class="question" data-tags="string backtracking dynamic-programming recursion parentheses catalan">
+        <summary>
+          <span class="q-title">22. Generate Parentheses</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">String</span>
+            <span class="tag">Backtracking</span>
+            <span class="tag">Dynamic Programming</span>
+          </span>
+        </summary>
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> Build the string one bracket at a time and
+            only make moves that can still lead to a valid answer: add
+            <code>'('</code> while <code>opened &lt; n</code>, and add
+            <code>')'</code> only while <code>closed &lt; opened</code>. Every string
+            that reaches length <code>2n</code> is valid, so nothing is ever thrown
+            away.
+          </div>
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/generate-parentheses/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              Given <code>n</code> pairs of parentheses, return every combination of
+              well-formed (balanced) parentheses.
+            </p>
+            <ul>
+              <li><code>1 &lt;= n &lt;= 8</code>.</li>
+              <li>The answer can be in any order.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>n = 3</code> →
+              <code>["((()))","(()())","(())()","()(())","()()()"]</code>;
+              <code>n = 1</code> → <code>["()"]</code>.
+            </p>
+          </section>
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>n = 1</code></td>
+                    <td><code>["()"]</code></td>
+                    <td>The smallest input: a list with one string, not the string itself.</td>
+                  </tr>
+                  <tr>
+                    <td><code>n = 2</code></td>
+                    <td><code>["(())","()()"]</code></td>
+                    <td>The two basic shapes: nested and side by side. Code that only nests, or only repeats <code>"()"</code>, misses one.</td>
+                  </tr>
+                  <tr>
+                    <td><code>n = 3</code></td>
+                    <td>5 strings</td>
+                    <td><code>"(()())"</code> is the one most often missed: a pair inside, next to another pair inside.</td>
+                  </tr>
+                  <tr>
+                    <td><code>"())(()"</code> (n = 3)</td>
+                    <td>Not in the answer</td>
+                    <td>Three of each bracket but invalid: the balance goes below 0 at the second <code>')'</code>. Counting totals isn't enough.</td>
+                  </tr>
+                  <tr>
+                    <td><code>"((())("</code> (n = 3)</td>
+                    <td>Not in the answer</td>
+                    <td>The balance never goes below 0, but it ends at 2: it must also end at exactly 0.</td>
+                  </tr>
+                  <tr>
+                    <td><code>n = 2</code> by inserting <code>"()"</code> into <code>"()"</code></td>
+                    <td><code>"()()"</code> only once</td>
+                    <td>Inserting at the front or the back both give <code>"()()"</code>. Build methods like this need a set to remove duplicates.</td>
+                  </tr>
+                  <tr>
+                    <td><code>n = 8</code></td>
+                    <td>1,430 strings</td>
+                    <td>The largest input. Brute force checks 2¹⁶ = 65,536 strings, which still passes; backtracking only builds the 1,430 valid ones.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Brute Force (Every String, Then Check)</h2>
+            <p class="intuition">
+              Each of the <code>2n</code> positions is <code>'('</code> or
+              <code>')'</code>, so there are <code>2²ⁿ</code> strings. Make every one
+              of them and keep the balanced ones.
+            </p>
+            <ul>
+              <li>
+                A counter <code>mask</code> from <code>0</code> to
+                <code>2²ⁿ - 1</code> covers every string: bit <code>k</code> decides
+                position <code>k</code>.
+              </li>
+              <li>
+                A string is valid when its running balance (<code>+1</code> for
+                <code>'('</code>, <code>-1</code> for <code>')'</code>) never goes
+                below 0 and ends at 0. That's the check from Valid Parentheses with
+                only one bracket type.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(4ⁿ · n)</span>
+              <span><strong>Space</strong> O(n) besides the answer</span>
+            </div>
+            <p class="note">
+              Passes for <code>n ≤ 8</code>, but nearly all the work is wasted: for
+              n = 8, only 1,430 of the 65,536 strings are valid (about 2%).
+            </p>
+            <div class="code-tabs" data-viz="0022-generate-parentheses/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"loop":[4],"build":[5],"check":[6,7,8,9,10],"keep":[11,12],"return":[13]}'>
+                class Solution(object):
+                    def generateParenthesis(self, n):
+                        result = []
+                        for mask in range(1 << (2 * n)):  # every string of 2n brackets: bit k set = '(' at position k
+                            s = "".join("(" if mask >> k & 1 else ")" for k in range(2 * n))
+                            balance = 0
+                            for ch in s:
+                                balance += 1 if ch == "(" else -1
+                                if balance < 0:  # a ')' with no '(' before it to close
+                                    break
+                            if balance == 0:  # never went below 0 and ended at 0: valid
+                                result.append(s)
+                        return result
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"loop":[7],"build":[8,9],"check":[10,11,12,13],"keep":[15],"return":[17]}'>
+                #include <string>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::string> generateParenthesis(int n) {
+                        std::vector<std::string> result;
+                        for (int mask = 0; mask < (1 << (2 * n)); ++mask) { // every string of 2n brackets: bit k set = '(' at position k
+                            std::string s;
+                            for (int k = 0; k < 2 * n; ++k) s += (mask >> k & 1) ? '(' : ')';
+                            int balance = 0;
+                            for (char ch : s) {
+                                balance += ch == '(' ? 1 : -1;
+                                if (balance < 0) break; // a ')' with no '(' before it to close
+                            }
+                            if (balance == 0) result.push_back(s); // never went below 0 and ended at 0: valid
+                        }
+                        return result;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5],"loop":[6],"build":[7,8],"check":[9,10,11,12],"keep":[14],"return":[16]}'>
+                import java.util.ArrayList;
+                import java.util.List;
+                class Solution {
+                    public List<String> generateParenthesis(int n) {
+                        List<String> result = new ArrayList<>();
+                        for (int mask = 0; mask < (1 << (2 * n)); mask++) { // every string of 2n brackets: bit k set = '(' at position k
+                            StringBuilder s = new StringBuilder();
+                            for (int k = 0; k < 2 * n; k++) s.append((mask >> k & 1) == 1 ? '(' : ')');
+                            int balance = 0;
+                            for (int k = 0; k < s.length(); k++) {
+                                balance += s.charAt(k) == '(' ? 1 : -1;
+                                if (balance < 0) break; // a ')' with no '(' before it to close
+                            }
+                            if (balance == 0) result.add(s.toString()); // never went below 0 and ended at 0: valid
+                        }
+                        return result;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>
+              Approach 2: Backtracking with Counts
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              Instead of checking a finished string, never build an invalid one. A
+              prefix can still become valid exactly when it hasn't used more than
+              <code>n</code> opens and has never closed more than it opened.
+            </p>
+            <ul>
+              <li>Add <code>'('</code> if <code>opened &lt; n</code>.</li>
+              <li>Add <code>')'</code> if <code>closed &lt; opened</code>: there's an unmatched <code>'('</code> for it to close.</li>
+              <li>When the path has <code>2n</code> characters, it's valid by construction: add it.</li>
+              <li>After each choice, undo it (<code>pop</code>) so the other choice can be tried from the same prefix.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(4ⁿ / √n)</span>
+              <span><strong>Space</strong> O(n) besides the answer</span>
+            </div>
+            <p class="note">
+              Every branch ends in a valid answer, so the work is proportional to
+              the output: the number of answers is the n-th Catalan number,
+              about 4ⁿ / (n√n), and each one takes O(n) to copy. This is the answer
+              interviewers expect.
+            </p>
+            <div class="code-tabs" data-viz="0022-generate-parentheses/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"call":[4],"done":[5,6,7],"open":[8,9,10],"undo-open":[11],"close":[12,13,14],"undo-close":[15],"start":[16],"return":[17]}'>
+                class Solution(object):
+                    def generateParenthesis(self, n):
+                        result, path = [], []
+                        def backtrack(opened, closed):  # opened / closed: how many '(' and ')' are in path
+                            if len(path) == 2 * n:  # all n pairs placed
+                                result.append("".join(path))
+                                return
+                            if opened < n:  # an '(' is still left to place
+                                path.append("(")
+                                backtrack(opened + 1, closed)
+                                path.pop()  # undo, so ')' can be tried here
+                            if closed < opened:  # ')' only when some '(' is still unmatched
+                                path.append(")")
+                                backtrack(opened, closed + 1)
+                                path.pop()
+                        backtrack(0, 0)
+                        return result
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7],"start":[8],"return":[9],"call":[14],"done":[15,16,17],"open":[19,20,21],"undo-open":[22],"close":[24,25,26],"undo-close":[27]}'>
+                #include <string>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::string> generateParenthesis(int n) {
+                        result.clear();
+                        path.clear();
+                        backtrack(n, 0, 0);
+                        return result;
+                    }
+                private:
+                    std::vector<std::string> result;
+                    std::string path;
+                    void backtrack(int n, int opened, int closed) { // opened / closed: how many '(' and ')' are in path
+                        if ((int)path.size() == 2 * n) { // all n pairs placed
+                            result.push_back(path);
+                            return;
+                        }
+                        if (opened < n) { // an '(' is still left to place
+                            path.push_back('(');
+                            backtrack(n, opened + 1, closed);
+                            path.pop_back(); // undo, so ')' can be tried here
+                        }
+                        if (closed < opened) { // ')' only when some '(' is still unmatched
+                            path.push_back(')');
+                            backtrack(n, opened, closed + 1);
+                            path.pop_back();
+                        }
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[7,8],"start":[9],"return":[10],"call":[12],"done":[13,14,15],"open":[17,18,19],"undo-open":[20],"close":[22,23,24],"undo-close":[25]}'>
+                import java.util.ArrayList;
+                import java.util.List;
+                class Solution {
+                    private List<String> result;
+                    private StringBuilder path;
+                    public List<String> generateParenthesis(int n) {
+                        result = new ArrayList<>();
+                        path = new StringBuilder();
+                        backtrack(n, 0, 0);
+                        return result;
+                    }
+                    private void backtrack(int n, int opened, int closed) { // opened / closed: how many '(' and ')' are in path
+                        if (path.length() == 2 * n) { // all n pairs placed
+                            result.add(path.toString());
+                            return;
+                        }
+                        if (opened < n) { // an '(' is still left to place
+                            path.append('(');
+                            backtrack(n, opened + 1, closed);
+                            path.deleteCharAt(path.length() - 1); // undo, so ')' can be tried here
+                        }
+                        if (closed < opened) { // ')' only when some '(' is still unmatched
+                            path.append(')');
+                            backtrack(n, opened, closed + 1);
+                            path.deleteCharAt(path.length() - 1);
+                        }
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>Approach 3: Build from Smaller Answers (by the First Pair)</h2>
+            <p class="intuition">
+              Every valid string starts with <code>'('</code>. Its matching
+              <code>')'</code> splits the rest into two smaller valid strings:
+              <code>"(" + inside + ")" + after</code>, where <code>inside</code> has
+              <code>c</code> pairs and <code>after</code> has
+              <code>n - 1 - c</code>.
+            </p>
+            <ul>
+              <li>
+                <code>dp[k]</code> holds every answer for <code>k</code> pairs, with
+                <code>dp[0] = [""]</code>. Build <code>dp[1]</code>, then
+                <code>dp[2]</code>, up to <code>dp[n]</code>.
+              </li>
+              <li>
+                For each <code>c</code> from <code>0</code> to <code>k - 1</code>,
+                combine every string in <code>dp[c]</code> with every string in
+                <code>dp[k - 1 - c]</code>.
+              </li>
+              <li>
+                No duplicates: the first pair is fixed for any given string, so
+                it's made by exactly one <code>(c, inside, after)</code>.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(4ⁿ / √n)</span>
+              <span><strong>Space</strong> O(4ⁿ / √n) for all the smaller tables</span>
+            </div>
+            <p class="note">
+              Same time as backtracking, but it keeps every smaller answer in
+              memory. Worth knowing because the same split gives the Catalan
+              recurrence <code>C(k) = Σ C(c) · C(k - 1 - c)</code>, which also counts
+              binary trees (Unique Binary Search Trees).
+            </p>
+            <div class="code-tabs" data-viz="0022-generate-parentheses/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"size":[4,5],"split":[6],"combine":[7,8,9],"return":[10]}'>
+                class Solution(object):
+                    def generateParenthesis(self, n):
+                        dp = [[""]]  # dp[k]: every valid string with k pairs; 0 pairs -> just ""
+                        for k in range(1, n + 1):
+                            dp.append([])
+                            for c in range(k):  # c pairs inside the first "( )", the other k - 1 - c after it
+                                for inside in dp[c]:
+                                    for after in dp[k - 1 - c]:
+                                        dp[k].append("(" + inside + ")" + after)
+                        return dp[n]
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7],"size":[8],"split":[9],"combine":[10,11,12],"return":[15]}'>
+                #include <string>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::string> generateParenthesis(int n) {
+                        std::vector<std::vector<std::string>> dp(n + 1); // dp[k]: every valid string with k pairs
+                        dp[0] = {""}; // 0 pairs -> just ""
+                        for (int k = 1; k <= n; ++k) {
+                            for (int c = 0; c < k; ++c) { // c pairs inside the first "( )", the other k - 1 - c after it
+                                for (const std::string& inside : dp[c])
+                                    for (const std::string& after : dp[k - 1 - c])
+                                        dp[k].push_back("(" + inside + ")" + after);
+                            }
+                        }
+                        return dp[n];
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6],"size":[7,8,14],"split":[9],"combine":[10,11,12],"return":[16]}'>
+                import java.util.ArrayList;
+                import java.util.List;
+                class Solution {
+                    public List<String> generateParenthesis(int n) {
+                        List<List<String>> dp = new ArrayList<>(); // dp.get(k): every valid string with k pairs
+                        dp.add(List.of("")); // 0 pairs -> just ""
+                        for (int k = 1; k <= n; k++) {
+                            List<String> cur = new ArrayList<>();
+                            for (int c = 0; c < k; c++) { // c pairs inside the first "( )", the other k - 1 - c after it
+                                for (String inside : dp.get(c))
+                                    for (String after : dp.get(k - 1 - c))
+                                        cur.add("(" + inside + ")" + after);
+                            }
+                            dp.add(cur);
+                        }
+                        return dp.get(n);
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">No shortcut</span></h2>
+            <p>
+              No standard library generates balanced strings. Python's
+              <code>itertools.product("()", repeat=2 * n)</code> lists every string,
+              but that's just Approach 1 with a filter on top.
+            </p>
+            <p class="note">
+              Write Approach 2. The pattern, "only make a choice if the partial
+              answer can still be completed", is what makes backtracking fast in
+              N-Queens, Sudoku and Combination Sum too.
+            </p>
+          </section>
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Brute Force</th>
+                    <td>Every bit pattern, then a balance check</td>
+                    <td>O(4ⁿ · n)</td>
+                    <td>O(n)</td>
+                    <td>About 98% of the strings are thrown away at n = 8</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Backtracking with Counts</th>
+                    <td>'(' while opened &lt; n, ')' while closed &lt; opened</td>
+                    <td>O(4ⁿ / √n)</td>
+                    <td>O(n)</td>
+                    <td>Expected answer; work matches the output size</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Build from Smaller Answers</th>
+                    <td>"(" + dp[c] + ")" + dp[k - 1 - c]</td>
+                    <td>O(4ⁿ / √n)</td>
+                    <td>O(4ⁿ / √n)</td>
+                    <td>Shows the Catalan structure; keeps every smaller table</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -10839,6 +11285,238 @@
           steps.push({
             line: "return",
             note: `Return dummy.next: ${fmt(mergedValues())}. Each node was linked once: O(m + n) time, O(1) extra space.`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0022-generate-parentheses/approach1.visual.js -->
+    <script>
+      // Brute force: build every string of 2n brackets from the bits of a counter and keep the balanced ones.
+      DSAViz.register("0022-generate-parentheses/approach1", {
+        inputs: [{ name: "n", type: "int", value: "2", min: 1, max: 3 }],
+        trace({ n }) {
+          const steps = [];
+          const result = [];
+          const total = 1 << (2 * n);
+          const view = (s, opts = {}) => {
+            const widgets = [];
+            if (s !== undefined) {
+              const marks = {};
+              const sub = [];
+              let balance = 0;
+              for (let k = 0; k < s.length; k++) {
+                if (opts.stop !== undefined && k > opts.stop) {
+                  sub.push("");
+                  marks[k] = "ghost";
+                  continue;
+                }
+                balance += s[k] === "(" ? 1 : -1;
+                sub.push(String(balance));
+                if (opts.valid) marks[k] = "match";
+                else if (k === opts.stop) marks[k] = "cut";
+              }
+              widgets.push({ type: "array", label: "s (running balance underneath)", values: s.split(""), sub, marks });
+              widgets.push({ type: "vars", items: [{ name: "mask", value: `${opts.mask} = ${opts.mask.toString(2).padStart(2 * n, "0")}₂` }] });
+            }
+            widgets.push({
+              type: "array",
+              label: `result (${result.length})`,
+              values: result.slice(),
+              wide: true,
+              marks: opts.kept ? { [result.length - 1]: "new" } : {},
+            });
+            return widgets;
+          };
+
+          steps.push({
+            line: "init",
+            note: `Try all ${total} strings of ${2 * n} brackets. Bit k of mask (bit 0 is the rightmost binary digit) says what goes at position k: 1 = '(', 0 = ')'.`,
+            view: view(),
+          });
+          for (let mask = 0; mask < total; mask++) {
+            let s = "";
+            for (let k = 0; k < 2 * n; k++) s += (mask >> k) & 1 ? "(" : ")";
+            let balance = 0;
+            let stop;
+            for (let k = 0; k < s.length; k++) {
+              balance += s[k] === "(" ? 1 : -1;
+              if (balance < 0) {
+                stop = k;
+                break;
+              }
+            }
+            const ok = balance === 0;
+            let note;
+            if (stop !== undefined) note = `mask ${mask} → "${s}". The balance drops to -1 at position ${stop}: a ')' with nothing to close. Stop checking.`;
+            else if (!ok) note = `mask ${mask} → "${s}". It never goes below 0 but ends at ${balance}: ${balance} '(' left open.`;
+            else note = `mask ${mask} → "${s}". The balance never goes below 0 and ends at 0: valid.`;
+            steps.push({ line: ["loop", "build", "check"], note, view: view(s, { mask, stop, valid: ok }) });
+            if (ok) {
+              result.push(s);
+              steps.push({ line: "keep", note: `Keep "${s}".`, view: view(s, { mask, valid: true, kept: true }) });
+            }
+          }
+          steps.push({
+            line: "return",
+            note: `Return ${result.length} out of ${total} strings checked. The total doubles twice for every extra pair, so most of the work is wasted on invalid strings: O(4ⁿ · n).`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0022-generate-parentheses/approach2.visual.js -->
+    <script>
+      // Backtracking: add '(' while some are left, add ')' only when it closes something, undo and try the other.
+      DSAViz.register("0022-generate-parentheses/approach2", {
+        inputs: [{ name: "n", type: "int", value: "2", min: 1, max: 3 }],
+        trace({ n }) {
+          const steps = [];
+          const result = [];
+          const path = [];
+          const view = (opened, closed, opts = {}) => {
+            const marks = {};
+            if (opts.done) path.forEach((_, k) => (marks[k] = "match"));
+            else if (opts.added) marks[path.length - 1] = "new";
+            const widgets = [
+              { type: "array", label: `path (length ${path.length} of ${2 * n})`, values: path.slice(), marks },
+            ];
+            if (opened !== undefined) {
+              widgets.push({
+                type: "vars",
+                items: [
+                  { name: "opened", value: `${opened} of ${n}` },
+                  { name: "closed", value: `${closed}` },
+                ],
+              });
+            }
+            widgets.push({
+              type: "array",
+              label: `result (${result.length})`,
+              values: result.slice(),
+              wide: true,
+              marks: opts.done ? { [result.length - 1]: "new" } : {},
+            });
+            return widgets;
+          };
+
+          steps.push({
+            line: ["init", "start"],
+            note: `Build the string one bracket at a time. Two rules keep every path valid: '(' while opened < ${n}, and ')' only while closed < opened.`,
+            view: view(0, 0),
+          });
+          function backtrack(opened, closed) {
+            const p = `"${path.join("")}"`;
+            if (path.length === 2 * n) {
+              steps.push({ line: "call", note: `backtrack(${opened}, ${closed}): path ${p} has all ${n} pairs.`, view: view(opened, closed) });
+              result.push(path.join(""));
+              steps.push({ line: "done", note: `${p} is complete and valid by construction: add it to result.`, view: view(opened, closed, { done: true }) });
+              return;
+            }
+            const canOpen = opened < n;
+            const canClose = closed < opened;
+            const options = [];
+            options.push(canOpen ? `'(' is allowed (${opened} < ${n})` : `no '(' left (${opened} = ${n})`);
+            options.push(canClose ? `')' is allowed (${closed} < ${opened})` : `')' isn't (nothing open to close)`);
+            steps.push({ line: "call", note: `backtrack(${opened}, ${closed}), path ${path.length ? p : "empty"}: ${options.join(", ")}.`, view: view(opened, closed) });
+            if (canOpen) {
+              path.push("(");
+              steps.push({ line: "open", note: `Add '(': path = "${path.join("")}". Go deeper.`, view: view(opened + 1, closed, { added: true }) });
+              backtrack(opened + 1, closed);
+              path.pop();
+              steps.push({
+                line: "undo-open",
+                note: `Back: remove that '(' so path = ${path.length ? `"${path.join("")}"` : "empty"} again${canClose ? ", and try ')' here" : ""}.`,
+                view: view(opened, closed),
+              });
+            }
+            if (canClose) {
+              path.push(")");
+              steps.push({ line: "close", note: `Add ')': path = "${path.join("")}". Go deeper.`, view: view(opened, closed + 1, { added: true }) });
+              backtrack(opened, closed + 1);
+              path.pop();
+              steps.push({ line: "undo-close", note: `Back: remove that ')' so path = "${path.join("")}" again. Both choices here are done.`, view: view(opened, closed) });
+            }
+          }
+          backtrack(0, 0);
+          steps.push({
+            line: "return",
+            note: `Return all ${result.length}. Nothing invalid was ever built, so there's nothing to throw away, and only one path (length ≤ ${2 * n}) is kept besides the answer.`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0022-generate-parentheses/approach3.visual.js -->
+    <script>
+      // Build from smaller answers: every valid string is "(" + inside + ")" + after, split by its first pair.
+      DSAViz.register("0022-generate-parentheses/approach3", {
+        inputs: [{ name: "n", type: "int", value: "3", min: 1, max: 4 }],
+        trace({ n }) {
+          const steps = [];
+          const dp = [[""]];
+          const show = (s) => (s === "" ? '""' : s);
+          // opts.k: row being built; opts.c: split; opts.ia / opts.ib: inside / after cells in use
+          const view = (opts = {}) =>
+            dp.map((row, k) => {
+              const marks = {};
+              let label = `dp[${k}]: ${k} pair${k === 1 ? "" : "s"}`;
+              if (opts.k !== undefined && opts.c !== undefined) {
+                const inside = opts.c;
+                const after = opts.k - 1 - opts.c;
+                const roles = [];
+                if (k === inside) roles.push("inside");
+                if (k === after) roles.push("after");
+                if (roles.length) label += ` (${roles.join(" and ")})`;
+                if (k === inside) row.forEach((_, i) => (marks[i] = opts.ia === undefined || opts.ia === i ? "active" : ""));
+                if (k === after) row.forEach((_, i) => (marks[i] = marks[i] || (opts.ib === undefined || opts.ib === i ? "compare" : "")));
+              }
+              if (k === opts.k) {
+                label += " (building)";
+                if (opts.fresh) marks[row.length - 1] = "new";
+              }
+              return { type: "array", label, values: row.map(show), wide: true, marks };
+            });
+
+          steps.push({
+            line: "init",
+            note: `dp[k] will hold every valid string with k pairs. With 0 pairs there's exactly one: the empty string.`,
+            view: view(),
+          });
+          for (let k = 1; k <= n; k++) {
+            dp.push([]);
+            steps.push({
+              line: "size",
+              note: `Build dp[${k}]. Every valid string starts with '(', and its matching ')' splits the rest: c pairs inside, ${k} - 1 - c after.`,
+              view: view({ k }),
+            });
+            for (let c = 0; c < k; c++) {
+              const a = k - 1 - c;
+              const count = dp[c].length * dp[a].length;
+              steps.push({
+                line: "split",
+                note: `c = ${c}: ${c} pair${c === 1 ? "" : "s"} inside (dp[${c}]) and ${a} after (dp[${a}]): ${dp[c].length} × ${dp[a].length} = ${count} string${count === 1 ? "" : "s"}.`,
+                view: view({ k, c }),
+              });
+              dp[c].forEach((inside, ia) =>
+                dp[a].forEach((after, ib) => {
+                  const s = "(" + inside + ")" + after;
+                  dp[k].push(s);
+                  steps.push({
+                    line: "combine",
+                    note: `"(" + "${inside}" + ")" + "${after}" = "${s}".`,
+                    view: view({ k, c, ia, ib, fresh: true }),
+                  });
+                })
+              );
+            }
+          }
+          steps.push({
+            line: "return",
+            note: `Return dp[${n}]: ${dp[n].length} string${dp[n].length === 1 ? "" : "s"}. No duplicates: a string's first '(' and its matching ')' fix c, inside and after, so it's made exactly once.`,
             view: view(),
           });
           return steps;

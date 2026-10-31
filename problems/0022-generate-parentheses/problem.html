@@ -1,0 +1,253 @@
+<details class="question" data-tags="string backtracking dynamic-programming recursion parentheses catalan">
+  <summary>
+    <span class="q-title">22. Generate Parentheses</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">String</span>
+      <span class="tag">Backtracking</span>
+      <span class="tag">Dynamic Programming</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Build the string one bracket at a time and
+      only make moves that can still lead to a valid answer: add
+      <code>'('</code> while <code>opened &lt; n</code>, and add
+      <code>')'</code> only while <code>closed &lt; opened</code>. Every string
+      that reaches length <code>2n</code> is valid, so nothing is ever thrown
+      away.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/generate-parentheses/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given <code>n</code> pairs of parentheses, return every combination of
+        well-formed (balanced) parentheses.
+      </p>
+      <ul>
+        <li><code>1 &lt;= n &lt;= 8</code>.</li>
+        <li>The answer can be in any order.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>n = 3</code> →
+        <code>["((()))","(()())","(())()","()(())","()()()"]</code>;
+        <code>n = 1</code> → <code>["()"]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>n = 1</code></td>
+              <td><code>["()"]</code></td>
+              <td>The smallest input: a list with one string, not the string itself.</td>
+            </tr>
+            <tr>
+              <td><code>n = 2</code></td>
+              <td><code>["(())","()()"]</code></td>
+              <td>The two basic shapes: nested and side by side. Code that only nests, or only repeats <code>"()"</code>, misses one.</td>
+            </tr>
+            <tr>
+              <td><code>n = 3</code></td>
+              <td>5 strings</td>
+              <td><code>"(()())"</code> is the one most often missed: a pair inside, next to another pair inside.</td>
+            </tr>
+            <tr>
+              <td><code>"())(()"</code> (n = 3)</td>
+              <td>Not in the answer</td>
+              <td>Three of each bracket but invalid: the balance goes below 0 at the second <code>')'</code>. Counting totals isn't enough.</td>
+            </tr>
+            <tr>
+              <td><code>"((())("</code> (n = 3)</td>
+              <td>Not in the answer</td>
+              <td>The balance never goes below 0, but it ends at 2: it must also end at exactly 0.</td>
+            </tr>
+            <tr>
+              <td><code>n = 2</code> by inserting <code>"()"</code> into <code>"()"</code></td>
+              <td><code>"()()"</code> only once</td>
+              <td>Inserting at the front or the back both give <code>"()()"</code>. Build methods like this need a set to remove duplicates.</td>
+            </tr>
+            <tr>
+              <td><code>n = 8</code></td>
+              <td>1,430 strings</td>
+              <td>The largest input. Brute force checks 2¹⁶ = 65,536 strings, which still passes; backtracking only builds the 1,430 valid ones.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Brute Force (Every String, Then Check)</h2>
+      <p class="intuition">
+        Each of the <code>2n</code> positions is <code>'('</code> or
+        <code>')'</code>, so there are <code>2²ⁿ</code> strings. Make every one
+        of them and keep the balanced ones.
+      </p>
+      <ul>
+        <li>
+          A counter <code>mask</code> from <code>0</code> to
+          <code>2²ⁿ - 1</code> covers every string: bit <code>k</code> decides
+          position <code>k</code>.
+        </li>
+        <li>
+          A string is valid when its running balance (<code>+1</code> for
+          <code>'('</code>, <code>-1</code> for <code>')'</code>) never goes
+          below 0 and ends at 0. That's the check from Valid Parentheses with
+          only one bracket type.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(4ⁿ · n)</span>
+        <span><strong>Space</strong> O(n) besides the answer</span>
+      </div>
+      <p class="note">
+        Passes for <code>n ≤ 8</code>, but nearly all the work is wasted: for
+        n = 8, only 1,430 of the 65,536 strings are valid (about 2%).
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Backtracking with Counts
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Instead of checking a finished string, never build an invalid one. A
+        prefix can still become valid exactly when it hasn't used more than
+        <code>n</code> opens and has never closed more than it opened.
+      </p>
+      <ul>
+        <li>Add <code>'('</code> if <code>opened &lt; n</code>.</li>
+        <li>Add <code>')'</code> if <code>closed &lt; opened</code>: there's an unmatched <code>'('</code> for it to close.</li>
+        <li>When the path has <code>2n</code> characters, it's valid by construction: add it.</li>
+        <li>After each choice, undo it (<code>pop</code>) so the other choice can be tried from the same prefix.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(4ⁿ / √n)</span>
+        <span><strong>Space</strong> O(n) besides the answer</span>
+      </div>
+      <p class="note">
+        Every branch ends in a valid answer, so the work is proportional to
+        the output: the number of answers is the n-th Catalan number,
+        about 4ⁿ / (n√n), and each one takes O(n) to copy. This is the answer
+        interviewers expect.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Build from Smaller Answers (by the First Pair)</h2>
+      <p class="intuition">
+        Every valid string starts with <code>'('</code>. Its matching
+        <code>')'</code> splits the rest into two smaller valid strings:
+        <code>"(" + inside + ")" + after</code>, where <code>inside</code> has
+        <code>c</code> pairs and <code>after</code> has
+        <code>n - 1 - c</code>.
+      </p>
+      <ul>
+        <li>
+          <code>dp[k]</code> holds every answer for <code>k</code> pairs, with
+          <code>dp[0] = [""]</code>. Build <code>dp[1]</code>, then
+          <code>dp[2]</code>, up to <code>dp[n]</code>.
+        </li>
+        <li>
+          For each <code>c</code> from <code>0</code> to <code>k - 1</code>,
+          combine every string in <code>dp[c]</code> with every string in
+          <code>dp[k - 1 - c]</code>.
+        </li>
+        <li>
+          No duplicates: the first pair is fixed for any given string, so
+          it's made by exactly one <code>(c, inside, after)</code>.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(4ⁿ / √n)</span>
+        <span><strong>Space</strong> O(4ⁿ / √n) for all the smaller tables</span>
+      </div>
+      <p class="note">
+        Same time as backtracking, but it keeps every smaller answer in
+        memory. Worth knowing because the same split gives the Catalan
+        recurrence <code>C(k) = Σ C(c) · C(k - 1 - c)</code>, which also counts
+        binary trees (Unique Binary Search Trees).
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No standard library generates balanced strings. Python's
+        <code>itertools.product("()", repeat=2 * n)</code> lists every string,
+        but that's just Approach 1 with a filter on top.
+      </p>
+      <p class="note">
+        Write Approach 2. The pattern, "only make a choice if the partial
+        answer can still be completed", is what makes backtracking fast in
+        N-Queens, Sudoku and Combination Sum too.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Brute Force</th>
+              <td>Every bit pattern, then a balance check</td>
+              <td>O(4ⁿ · n)</td>
+              <td>O(n)</td>
+              <td>About 98% of the strings are thrown away at n = 8</td>
+            </tr>
+            <tr>
+              <th scope="row">Backtracking with Counts</th>
+              <td>'(' while opened &lt; n, ')' while closed &lt; opened</td>
+              <td>O(4ⁿ / √n)</td>
+              <td>O(n)</td>
+              <td>Expected answer; work matches the output size</td>
+            </tr>
+            <tr>
+              <th scope="row">Build from Smaller Answers</th>
+              <td>"(" + dp[c] + ")" + dp[k - 1 - c]</td>
+              <td>O(4ⁿ / √n)</td>
+              <td>O(4ⁿ / √n)</td>
+              <td>Shows the Catalan structure; keeps every smaller table</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
