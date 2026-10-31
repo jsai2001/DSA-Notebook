@@ -2958,6 +2958,553 @@
         </div>
       </details>
 
+      <!-- ===== problems/0010-regular-expression-matching ===== -->
+      <details class="question" data-tags="string dynamic-programming dp recursion memoization regex wildcard pattern-matching">
+        <summary>
+          <span class="q-title">10. Regular Expression Matching</span>
+          <span class="q-meta">
+            <span class="badge hard">Hard</span>
+            <span class="tag">String</span>
+            <span class="tag">Dynamic Programming</span>
+            <span class="tag">Recursion</span>
+          </span>
+        </summary>
+
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> Match with two indexes, <code>i</code> in
+            <code>s</code> and <code>j</code> in <code>p</code>. If
+            <code>p[j + 1]</code> is <code>*</code>, there are two choices: use
+            <code>x*</code> zero times (skip to <code>j + 2</code>), or, if
+            <code>x</code> matches <code>s[i]</code>, use one <code>x</code> and
+            stay on <code>x*</code> (<code>i + 1</code>). Otherwise the characters
+            must match and both move on. The same <code>(i, j)</code> comes up again
+            and again, so memoize it or fill a table: O(m · n).
+          </div>
+
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/regular-expression-matching/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              Given a string <code>s</code> and a pattern <code>p</code>, return
+              whether <code>p</code> matches <strong>all</strong> of
+              <code>s</code>, where <code>.</code> matches any single character and
+              <code>*</code> matches zero or more of the element right before it.
+            </p>
+            <ul>
+              <li><code>1 &lt;= s.length &lt;= 20</code> and <code>1 &lt;= p.length &lt;= 20</code></li>
+              <li><code>s</code> has only lowercase letters.</li>
+              <li><code>p</code> has only lowercase letters, <code>.</code> and <code>*</code>.</li>
+              <li>Every <code>*</code> has a valid character right before it.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>"aa"</code>, <code>"a"</code> → <code>false</code>
+              (it must cover the whole string); <code>"aa"</code>,
+              <code>"a*"</code> → <code>true</code>; <code>"ab"</code>,
+              <code>".*"</code> → <code>true</code>.
+            </p>
+          </section>
+
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>s = "aa", p = "a"</code></td>
+                    <td><code>false</code></td>
+                    <td>A match must cover the whole string, not just the start.</td>
+                  </tr>
+                  <tr>
+                    <td><code>s = "ab", p = ".*"</code></td>
+                    <td><code>true</code></td>
+                    <td><code>.*</code> is "any character, any number of times", so the letters can differ.</td>
+                  </tr>
+                  <tr>
+                    <td><code>s = "aab", p = "c*a*b"</code></td>
+                    <td><code>true</code></td>
+                    <td><code>c*</code> is used zero times, at the very start.</td>
+                  </tr>
+                  <tr>
+                    <td><code>s = "a", p = "ab*"</code></td>
+                    <td><code>true</code></td>
+                    <td>After <code>s</code> runs out, a leftover <code>b*</code> still matches (zero b's). Don't stop just because <code>s</code> is used up.</td>
+                  </tr>
+                  <tr>
+                    <td><code>s = "aaa", p = "a*a"</code></td>
+                    <td><code>true</code></td>
+                    <td><code>a*</code> must leave the last a for the final <code>a</code>. Taking as many as possible and never giving any back fails.</td>
+                  </tr>
+                  <tr>
+                    <td><code>s = "aaa", p = "ab*a*c*a"</code></td>
+                    <td><code>true</code></td>
+                    <td>Several stars, some used zero times, in the middle of the pattern.</td>
+                  </tr>
+                  <tr>
+                    <td><code>s = "ab", p = ".*c"</code></td>
+                    <td><code>false</code></td>
+                    <td><code>.*</code> can't create the c the pattern needs at the end.</td>
+                  </tr>
+                  <tr>
+                    <td><code>s = "a", p = ".*..a*"</code></td>
+                    <td><code>false</code></td>
+                    <td>The two plain dots need at least 2 characters.</td>
+                  </tr>
+                  <tr>
+                    <td><code>s = "mississippi", p = "mis*is*p*."</code></td>
+                    <td><code>false</code></td>
+                    <td><code>p*</code> can cover "pp", but nothing in the pattern covers the "i" that comes before it.</td>
+                  </tr>
+                  <tr>
+                    <td><code>s = "bbbba", p = ".*a*a"</code></td>
+                    <td><code>true</code></td>
+                    <td><code>.*</code> takes "bbbb", <code>a*</code> takes nothing, and the last <code>a</code> matches the last letter.</td>
+                  </tr>
+                  <tr>
+                    <td><code>s = "aaaaaaaaaaaaaaaaaaab", p = "a*a*a*a*a*a*a*a*a*c"</code></td>
+                    <td><code>false</code></td>
+                    <td>The worst case for plain recursion: it tries every way to share the a's between the nine stars. It took 3.3 s in Python here, against 0.06 s in C++ and 0.04 s in Java; with a memo it's instant.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Plain Recursion</h2>
+            <p class="intuition">
+              Ask "does <code>s[i:]</code> match <code>p[j:]</code>?" and answer it
+              with smaller versions of the same question. The only hard part is
+              <code>*</code>, which gives two choices, so try both.
+            </p>
+            <ul>
+              <li>
+                Pattern used up: it's a match only if <code>s</code> is used up too.
+              </li>
+              <li>
+                <code>first</code> = <code>s[i]</code> exists and equals
+                <code>p[j]</code> (or <code>p[j]</code> is <code>.</code>).
+              </li>
+              <li>
+                If <code>p[j + 1]</code> is <code>*</code>: skip <code>x*</code>
+                (<code>match(i, j + 2)</code>), or use one x
+                (<code>first and match(i + 1, j)</code>). Otherwise
+                <code>first and match(i + 1, j + 1)</code>.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> exponential</span>
+              <span><strong>Space</strong> O(m + n)</span>
+            </div>
+            <p class="note">
+              Correct, but the same <code>(i, j)</code> is solved again every time a
+              different mix of star choices reaches it. On the worst-case edge case
+              above that's about 17 million calls for only 420 different (i, j)
+              questions: 3.3 s in Python on this Mac, which risks a time-out. The
+              recursion is at most m + n + 1 calls deep, so it never overflows.
+            </p>
+            <div class="code-tabs" data-viz="0010-regular-expression-matching/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"call":[3],"end":[4,5],"first":[6],"star":[7,9],"single":[10],"start":[12]}'>
+                class Solution(object):
+                    def isMatch(self, s, p):
+                        def match(i, j):  # does s[i:] match p[j:]?
+                            if j == len(p):
+                                return i == len(s)
+                            first = i < len(s) and p[j] in (s[i], '.')
+                            if j + 1 < len(p) and p[j + 1] == '*':
+                                # skip "x*" (zero copies), or use one copy and stay on "x*"
+                                return match(i, j + 2) or (first and match(i + 1, j))
+                            return first and match(i + 1, j + 1)
+
+                        return match(0, 0)
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"start":[5],"call":[9],"end":[10],"first":[11],"star":[12,14],"single":[16]}'>
+                #include <string>
+                class Solution {
+                public:
+                    bool isMatch(std::string s, std::string p) {
+                        return match(s, p, 0, 0);
+                    }
+                private:
+                    // does s[i..] match p[j..]?
+                    bool match(const std::string& s, const std::string& p, int i, int j) {
+                        if (j == (int)p.size()) return i == (int)s.size();
+                        bool first = i < (int)s.size() && (p[j] == s[i] || p[j] == '.');
+                        if (j + 1 < (int)p.size() && p[j + 1] == '*') {
+                            // skip "x*" (zero copies), or use one copy and stay on "x*"
+                            return match(s, p, i, j + 2) || (first && match(s, p, i + 1, j));
+                        }
+                        return first && match(s, p, i + 1, j + 1);
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"start":[3],"call":[7],"end":[8],"first":[9],"star":[10,12],"single":[14]}'>
+                class Solution {
+                    public boolean isMatch(String s, String p) {
+                        return match(s, p, 0, 0);
+                    }
+
+                    // does s[i..] match p[j..]?
+                    private boolean match(String s, String p, int i, int j) {
+                        if (j == p.length()) return i == s.length();
+                        boolean first = i < s.length() && (p.charAt(j) == s.charAt(i) || p.charAt(j) == '.');
+                        if (j + 1 < p.length() && p.charAt(j + 1) == '*') {
+                            // skip "x*" (zero copies), or use one copy and stay on "x*"
+                            return match(s, p, i, j + 2) || (first && match(s, p, i + 1, j));
+                        }
+                        return first && match(s, p, i + 1, j + 1);
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>Approach 2: Recursion with Memo</h2>
+            <p class="intuition">
+              The same recursion, but each answer is saved. There are only
+              <code>(m + 1) × (n + 1)</code> different <code>(i, j)</code> questions,
+              and each is worked out once.
+            </p>
+            <ul>
+              <li>
+                Check the memo first; store the answer before returning.
+              </li>
+              <li>
+                The code reads the same as Approach 1, so it's the easiest step up
+                in an interview.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(m · n)</span>
+              <span><strong>Space</strong> O(m · n)</span>
+            </div>
+            <p class="note">
+              At most 21 × 21 = 441 states, each O(1). The worst case that took 3.3 s
+              before now finishes in well under a millisecond.
+            </p>
+            <div class="code-tabs" data-viz="0010-regular-expression-matching/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"call":[5],"hit":[6,7],"end":[8,9],"first":[11],"star":[12,13],"single":[15],"store":[16,17],"return":[19]}'>
+                class Solution(object):
+                    def isMatch(self, s, p):
+                        memo = {}  # (i, j) -> does s[i:] match p[j:]?
+
+                        def match(i, j):
+                            if (i, j) in memo:
+                                return memo[(i, j)]
+                            if j == len(p):
+                                ans = i == len(s)
+                            else:
+                                first = i < len(s) and p[j] in (s[i], '.')
+                                if j + 1 < len(p) and p[j + 1] == '*':
+                                    ans = match(i, j + 2) or (first and match(i + 1, j))
+                                else:
+                                    ans = first and match(i + 1, j + 1)
+                            memo[(i, j)] = ans
+                            return ans
+
+                        return match(0, 0)
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7],"return":[8],"call":[12],"hit":[13],"end":[15,16],"first":[18],"star":[19,20],"single":[22],"store":[25,26]}'>
+                #include <string>
+                #include <vector>
+                class Solution {
+                public:
+                    bool isMatch(std::string s, std::string p) {
+                        // memo[i][j]: does s[i..] match p[j..]? -1 = not solved yet
+                        memo.assign(s.size() + 1, std::vector<int>(p.size() + 1, -1));
+                        return match(s, p, 0, 0);
+                    }
+                private:
+                    std::vector<std::vector<int>> memo;
+                    bool match(const std::string& s, const std::string& p, int i, int j) {
+                        if (memo[i][j] != -1) return memo[i][j];
+                        bool ans;
+                        if (j == (int)p.size()) {
+                            ans = i == (int)s.size();
+                        } else {
+                            bool first = i < (int)s.size() && (p[j] == s[i] || p[j] == '.');
+                            if (j + 1 < (int)p.size() && p[j + 1] == '*') {
+                                ans = match(s, p, i, j + 2) || (first && match(s, p, i + 1, j));
+                            } else {
+                                ans = first && match(s, p, i + 1, j + 1);
+                            }
+                        }
+                        memo[i][j] = ans;
+                        return ans;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[6,7,8],"return":[9],"call":[12],"hit":[13],"end":[15,16],"first":[18],"star":[19,20],"single":[22],"store":[25,26]}'>
+                class Solution {
+                    private Boolean[][] memo; // memo[i][j]: does s[i..] match p[j..]? null = not solved yet
+                    private String s, p;
+
+                    public boolean isMatch(String s, String p) {
+                        this.s = s;
+                        this.p = p;
+                        memo = new Boolean[s.length() + 1][p.length() + 1];
+                        return match(0, 0);
+                    }
+
+                    private boolean match(int i, int j) {
+                        if (memo[i][j] != null) return memo[i][j];
+                        boolean ans;
+                        if (j == p.length()) {
+                            ans = i == s.length();
+                        } else {
+                            boolean first = i < s.length() && (p.charAt(j) == s.charAt(i) || p.charAt(j) == '.');
+                            if (j + 1 < p.length() && p.charAt(j + 1) == '*') {
+                                ans = match(i, j + 2) || (first && match(i + 1, j));
+                            } else {
+                                ans = first && match(i + 1, j + 1);
+                            }
+                        }
+                        memo[i][j] = ans;
+                        return ans;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>
+              Approach 3: Bottom-Up DP Table
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              Fill a table from small prefixes to big ones.
+              <code>dp[i][j]</code> says whether the first <code>i</code> characters
+              of <code>s</code> match the first <code>j</code> of <code>p</code>.
+            </p>
+            <ul>
+              <li>
+                <code>dp[0][0] = true</code>. Row 0 (empty <code>s</code>):
+                <code>dp[0][j] = dp[0][j - 2]</code> when <code>p[j - 1]</code> is
+                <code>*</code>, so patterns like <code>a*b*</code> match "".
+              </li>
+              <li>
+                <code>p[j - 1]</code> is <code>*</code> on x:
+                <code>dp[i][j] = dp[i][j - 2]</code> (zero x's) or (x matches
+                <code>s[i - 1]</code> and <code>dp[i - 1][j]</code>) (one more x).
+              </li>
+              <li>
+                Otherwise: <code>p[j - 1]</code> matches <code>s[i - 1]</code> and
+                <code>dp[i - 1][j - 1]</code>.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(m · n)</span>
+              <span><strong>Space</strong> O(m · n)</span>
+            </div>
+            <p class="note">
+              No recursion, and every cell only looks at the current and previous
+              row, so it can be cut to two rows (O(n) space) if needed. Same speed
+              as Approach 2; this is the version most write-ups show.
+            </p>
+            <div class="code-tabs" data-viz="0010-regular-expression-matching/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,5,6],"empty":[7,8,9],"cell":[10,11],"star":[12,13,14,15],"single":[17],"return":[18]}'>
+                class Solution(object):
+                    def isMatch(self, s, p):
+                        m, n = len(s), len(p)
+                        # dp[i][j]: does s[:i] (first i chars) match p[:j]?
+                        dp = [[False] * (n + 1) for _ in range(m + 1)]
+                        dp[0][0] = True  # empty matches empty
+                        for j in range(2, n + 1):
+                            if p[j - 1] == '*':  # "a*b*" can match ""
+                                dp[0][j] = dp[0][j - 2]
+                        for i in range(1, m + 1):
+                            for j in range(1, n + 1):
+                                if p[j - 1] == '*':
+                                    zero = dp[i][j - 2]  # "x*" used zero times
+                                    more = p[j - 2] in (s[i - 1], '.') and dp[i - 1][j]  # one more x
+                                    dp[i][j] = zero or more
+                                else:
+                                    dp[i][j] = p[j - 1] in (s[i - 1], '.') and dp[i - 1][j - 1]
+                        return dp[m][n]
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,8,9],"empty":[10,11],"cell":[13,14],"star":[15,16,17,18],"single":[20],"return":[24]}'>
+                #include <string>
+                #include <vector>
+                class Solution {
+                public:
+                    bool isMatch(std::string s, std::string p) {
+                        int m = s.size(), n = p.size();
+                        // dp[i][j]: does s[0..i) (first i chars) match p[0..j)?
+                        std::vector<std::vector<bool>> dp(m + 1, std::vector<bool>(n + 1, false));
+                        dp[0][0] = true; // empty matches empty
+                        for (int j = 2; j <= n; ++j) {
+                            if (p[j - 1] == '*') dp[0][j] = dp[0][j - 2]; // "a*b*" can match ""
+                        }
+                        for (int i = 1; i <= m; ++i) {
+                            for (int j = 1; j <= n; ++j) {
+                                if (p[j - 1] == '*') {
+                                    bool zero = dp[i][j - 2]; // "x*" used zero times
+                                    bool more = (p[j - 2] == s[i - 1] || p[j - 2] == '.') && dp[i - 1][j]; // one more x
+                                    dp[i][j] = zero || more;
+                                } else {
+                                    dp[i][j] = (p[j - 1] == s[i - 1] || p[j - 1] == '.') && dp[i - 1][j - 1];
+                                }
+                            }
+                        }
+                        return dp[m][n];
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,5,6],"empty":[7,8],"cell":[10,11],"star":[12,13,14,15,16],"single":[18,19],"return":[23]}'>
+                class Solution {
+                    public boolean isMatch(String s, String p) {
+                        int m = s.length(), n = p.length();
+                        // dp[i][j]: does s[0..i) (first i chars) match p[0..j)?
+                        boolean[][] dp = new boolean[m + 1][n + 1];
+                        dp[0][0] = true; // empty matches empty
+                        for (int j = 2; j <= n; j++) {
+                            if (p.charAt(j - 1) == '*') dp[0][j] = dp[0][j - 2]; // "a*b*" can match ""
+                        }
+                        for (int i = 1; i <= m; i++) {
+                            for (int j = 1; j <= n; j++) {
+                                if (p.charAt(j - 1) == '*') {
+                                    boolean zero = dp[i][j - 2]; // "x*" used zero times
+                                    char x = p.charAt(j - 2);
+                                    boolean more = (x == s.charAt(i - 1) || x == '.') && dp[i - 1][j]; // one more x
+                                    dp[i][j] = zero || more;
+                                } else {
+                                    char c = p.charAt(j - 1);
+                                    dp[i][j] = (c == s.charAt(i - 1) || c == '.') && dp[i - 1][j - 1];
+                                }
+                            }
+                        }
+                        return dp[m][n];
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">Built-ins</span></h2>
+            <p>
+              <code>.</code> and <code>*</code> mean the same thing in real regular
+              expressions, so the standard library can do it in one line: Python's
+              <code>re</code> (anchored with <code>\Z</code>, like
+              <code>re.fullmatch</code>), C++'s <code>std::regex_match</code>, and
+              Java's <code>String.matches</code>. All three require the whole string
+              to match.
+            </p>
+            <div class="code-tabs">
+              <script type="text/plain" data-lang="Python">
+                import re
+
+
+                class Solution(object):
+                    def isMatch(self, s, p):
+                        # p only uses letters, '.' and '*', which mean the same in real regex.
+                        # \Z anchors the end, so the whole string must match (like re.fullmatch).
+                        return re.match("(?:" + p + r")\Z", s) is not None
+              </script>
+              <script type="text/plain" data-lang="C++">
+                #include <regex>
+                #include <string>
+                class Solution {
+                public:
+                    bool isMatch(std::string s, std::string p) {
+                        // p only uses letters, '.' and '*', which mean the same in real regex.
+                        return std::regex_match(s, std::regex(p)); // regex_match must cover the whole string
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java">
+                class Solution {
+                    public boolean isMatch(String s, String p) {
+                        // p only uses letters, '.' and '*', which mean the same in real regex.
+                        return s.matches(p); // String.matches must cover the whole string
+                    }
+                }
+              </script>
+            </div>
+            <div class="complexity">
+              <span><strong>Time</strong> depends on the engine</span>
+              <span><strong>Space</strong> depends on the engine</span>
+            </div>
+            <p class="note">
+              All three gave the right answer on every test here, with one
+              exception: on the worst-case edge case, C++'s
+              <code>std::regex_match</code> (Apple's library on this Mac) threw
+              <code>regex_error</code> because the match took too many steps.
+              LeetCode's C++ library is different and wasn't tested. Python and
+              Java finished it in 0.04 s. These engines backtrack, so long inputs
+              can get slow. In an interview, the point is to write Approach 2 or 3
+              yourself.
+            </p>
+          </section>
+
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Plain Recursion</th>
+                    <td>Try both choices at every <code>*</code></td>
+                    <td>Exponential</td>
+                    <td>O(m + n)</td>
+                    <td>Correct but slow on many stars (3.3 s in Python)</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Recursion with Memo</th>
+                    <td>Same, saving each (i, j)</td>
+                    <td>O(m · n)</td>
+                    <td>O(m · n)</td>
+                    <td>Smallest change from the recursion</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Bottom-Up DP Table</th>
+                    <td>dp[i][j] over prefixes, no recursion</td>
+                    <td>O(m · n)</td>
+                    <td>O(m · n)</td>
+                    <td>Standard answer; can be cut to two rows</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -5718,6 +6265,380 @@
             line: ["loop", "return"],
             note: `No digits left. Put the sign back: return ${sign * rev}.`,
             view: view({ done: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0010-regular-expression-matching/approach1.visual.js -->
+    <script>
+      // Plain recursion: match(i, j) tries every way to use each "x*". No memo, so calls can repeat.
+      DSAViz.register("0010-regular-expression-matching/approach1", {
+        inputs: [
+          { name: "s", type: "string", value: "aab", maxLength: 7 },
+          { name: "p", type: "string", value: "c*a*b", maxLength: 7 },
+        ],
+        trace({ s, p }) {
+          if (!/^[a-z]*$/.test(s)) throw new DSAViz.InputError("s can only use lowercase letters a–z.");
+          if (!p.length) throw new DSAViz.InputError("p can't be empty.");
+          if (!/^[a-z.*]+$/.test(p)) throw new DSAViz.InputError("p can only use lowercase letters, '.' and '*'.");
+          for (let k = 0; k < p.length; k++) {
+            if (p[k] === "*" && (k === 0 || p[k - 1] === "*")) {
+              throw new DSAViz.InputError("Each '*' needs a letter or '.' right before it, like a* or .*");
+            }
+          }
+          const LIMIT = 300;
+          const m = s.length;
+          const n = p.length;
+          const stack = [];
+          const steps = [];
+          const seen = new Map(); // "i,j" -> how many times called
+          let calls = 0;
+          const strip = (str, k, name) => {
+            const marks = { [str.length]: "ghost" };
+            if (k !== undefined && k < str.length) marks[k] = "active";
+            return { type: "array", label: name === "j" ? "p" : "s", values: [...str, "end"], marks, pointers: k === undefined ? {} : { [name]: k } };
+          };
+          const push = (step) => {
+            if (steps.length >= LIMIT) {
+              throw new DSAViz.InputError(
+                `Without a memo this input needs over ${LIMIT} steps: the same (i, j) keeps being solved again. That blow-up is why Approach 2 saves answers. Try a shorter s or p here.`
+              );
+            }
+            steps.push(step);
+          };
+          const view = (i, j, repeat) => {
+            const pStrip = strip(p, j, "j");
+            if (j !== undefined && j + 1 < n && p[j + 1] === "*") pStrip.marks[j + 1] = "window";
+            return [
+              strip(s, i, "i"),
+              pStrip,
+              { type: "array", label: "call stack: match(i, j), bottom → top", values: stack.slice(), wide: true, marks: stack.length ? { [stack.length - 1]: "active" } : {} },
+              {
+                type: "vars",
+                items: [
+                  { name: "calls so far", value: calls },
+                  { name: "repeated calls", value: [...seen.values()].reduce((a, v) => a + v - 1, 0), mark: repeat ? "compare" : "" },
+                ],
+              },
+            ];
+          };
+
+          push({
+            line: "start",
+            note: `match(i, j) asks: does s[i:] match p[j:]? Start with the whole of both: match(0, 0).`,
+            view: view(),
+          });
+
+          function match(i, j) {
+            calls++;
+            const key = `${i},${j}`;
+            const before = seen.get(key) || 0;
+            seen.set(key, before + 1);
+            stack.push(`(${i}, ${j})`);
+            push({
+              line: "call",
+              note: `match(${i}, ${j}): does "${s.slice(i)}" match "${p.slice(j)}"?` + (before ? ` (Solved ${before} time${before === 1 ? "" : "s"} already: wasted work.)` : ""),
+              view: view(i, j, before > 0),
+            });
+            let ans;
+            let retLine;
+            if (j === n) {
+              ans = i === m;
+              retLine = "end";
+              push({
+                line: "end",
+                note: ans ? `The pattern is used up, and so is s: match.` : `The pattern is used up but "${s.slice(i)}" is left: no match.`,
+                view: view(i, j),
+              });
+            } else {
+              const first = i < m && (p[j] === s[i] || p[j] === ".");
+              const why =
+                i >= m
+                  ? `s is used up, so nothing can match '${p[j]}'`
+                  : first
+                    ? `'${p[j]}' matches s[${i}] = '${s[i]}'`
+                    : `'${p[j]}' doesn't match s[${i}] = '${s[i]}'`;
+              if (j + 1 < n && p[j + 1] === "*") {
+                retLine = "star";
+                push({
+                  line: ["first", "star"],
+                  note: `${why}. "${p[j]}*" can repeat: first try it zero times, skipping to match(${i}, ${j + 2}).`,
+                  view: view(i, j),
+                });
+                ans = match(i, j + 2);
+                if (!ans && first) {
+                  push({
+                    line: "star",
+                    note: `Zero didn't work. Use one '${p[j]}' for s[${i}] and stay on "${p[j]}*": match(${i + 1}, ${j}).`,
+                    view: view(i, j),
+                  });
+                  ans = match(i + 1, j);
+                }
+              } else {
+                retLine = "single";
+                push({
+                  line: ["first", "single"],
+                  note: first ? `${why}. Move both on: match(${i + 1}, ${j + 1}).` : `${why}, so this is a dead end.`,
+                  view: view(i, j),
+                });
+                ans = first && match(i + 1, j + 1);
+              }
+            }
+            push({ line: retLine, note: `match(${i}, ${j}) returns ${ans}.`, view: view(i, j) });
+            stack.pop();
+            return ans;
+          }
+
+          const answer = match(0, 0);
+          const repeats = [...seen.values()].reduce((a, v) => a + v - 1, 0);
+          push({
+            line: "start",
+            note: `Return ${answer}. ${calls} calls, ${repeats} of them repeats of a question already answered. On long inputs that grows exponentially.`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0010-regular-expression-matching/approach2.visual.js -->
+    <script>
+      // Top-down recursion with a memo: match(i, j) = does s[i:] match p[j:]? Each (i, j) is solved once.
+      DSAViz.register("0010-regular-expression-matching/approach2", {
+        inputs: [
+          { name: "s", type: "string", value: "aab", maxLength: 7 },
+          { name: "p", type: "string", value: "c*a*b", maxLength: 7 },
+        ],
+        trace({ s, p }) {
+          if (!/^[a-z]*$/.test(s)) throw new DSAViz.InputError("s can only use lowercase letters a–z.");
+          if (!p.length) throw new DSAViz.InputError("p can't be empty.");
+          if (!/^[a-z.*]+$/.test(p)) throw new DSAViz.InputError("p can only use lowercase letters, '.' and '*'.");
+          for (let k = 0; k < p.length; k++) {
+            if (p[k] === "*" && (k === 0 || p[k - 1] === "*")) {
+              throw new DSAViz.InputError("Each '*' needs a letter or '.' right before it, like a* or .*");
+            }
+          }
+          const m = s.length;
+          const n = p.length;
+          const memo = Array.from({ length: m + 1 }, () => Array(n + 1).fill(null));
+          const stack = [];
+          const steps = [];
+          let hits = 0;
+          const T = (v) => (v ? "T" : "F");
+          const strip = (str, k, name) => {
+            const marks = { [str.length]: "ghost" };
+            if (k !== undefined && k < str.length) marks[k] = "active";
+            return { type: "array", label: name === "j" ? "p" : "s", values: [...str, "end"], marks, pointers: k === undefined ? {} : { [name]: k } };
+          };
+          const view = (i, j, opts = {}) => {
+            const marks = {};
+            for (let r = 0; r <= m; r++) {
+              for (let c = 0; c <= n; c++) if (memo[r][c] !== null) marks[`${r},${c}`] = memo[r][c] ? "match" : "visited";
+            }
+            if (i !== undefined) marks[`${i},${j}`] = opts.mark || "active";
+            const pStrip = strip(p, j, "j");
+            if (j !== undefined && j + 1 < n && p[j + 1] === "*") pStrip.marks[j + 1] = "window";
+            return [
+              strip(s, i, "i"),
+              pStrip,
+              {
+                type: "grid",
+                label: "memo[i][j]: does s[i:] match p[j:]? (blank = not solved yet; ∅ = nothing left)",
+                rows: Array.from({ length: m + 1 }, (_, k) => `${k} ${k < m ? s[k] : "∅"}`),
+                cols: Array.from({ length: n + 1 }, (_, k) => `${k} ${k < n ? p[k] : "∅"}`),
+                corner: "i \\ j",
+                cells: memo.map((row) => row.map((v) => (v === null ? "" : T(v)))),
+                marks,
+              },
+              { type: "array", label: "call stack: match(i, j), bottom → top", values: stack.slice(), wide: true, marks: stack.length ? { [stack.length - 1]: "active" } : {} },
+              { type: "vars", items: [{ name: "memo hits", value: hits, mark: opts.mark === "compare" ? "match" : "" }] },
+            ];
+          };
+
+          steps.push({
+            line: "init",
+            note: `match(i, j) asks: does s[i:] match p[j:]? Each answer goes in memo[i][j], so the same question is never worked out twice.`,
+            view: view(),
+          });
+
+          function match(i, j) {
+            stack.push(`(${i}, ${j})`);
+            steps.push({ line: "call", note: `match(${i}, ${j}): does "${s.slice(i)}" match "${p.slice(j)}"?`, view: view(i, j) });
+            if (memo[i][j] !== null) {
+              hits++;
+              const ans = memo[i][j];
+              steps.push({ line: "hit", note: `Already solved: memo[${i}][${j}] = ${T(ans)}. Reuse it.`, view: view(i, j, { mark: "compare" }) });
+              stack.pop();
+              return ans;
+            }
+            let ans;
+            if (j === n) {
+              ans = i === m;
+              steps.push({
+                line: "end",
+                note: ans ? `The pattern is used up, and so is s: match.` : `The pattern is used up but "${s.slice(i)}" is left: no match.`,
+                view: view(i, j),
+              });
+            } else {
+              const first = i < m && (p[j] === s[i] || p[j] === ".");
+              const why =
+                i >= m
+                  ? `s is used up, so nothing can match '${p[j]}'`
+                  : first
+                    ? `'${p[j]}' matches s[${i}] = '${s[i]}'`
+                    : `'${p[j]}' doesn't match s[${i}] = '${s[i]}'`;
+              if (j + 1 < n && p[j + 1] === "*") {
+                steps.push({
+                  line: ["first", "star"],
+                  note: `${why}. "${p[j]}*" can repeat: first try it zero times, skipping to match(${i}, ${j + 2}).`,
+                  view: view(i, j),
+                });
+                ans = match(i, j + 2);
+                if (!ans && first) {
+                  steps.push({
+                    line: "star",
+                    note: `Zero didn't work. Use one '${p[j]}' for s[${i}] and stay on "${p[j]}*": match(${i + 1}, ${j}).`,
+                    view: view(i, j),
+                  });
+                  ans = match(i + 1, j);
+                }
+              } else {
+                steps.push({
+                  line: ["first", "single"],
+                  note: first ? `${why}. Move both on: match(${i + 1}, ${j + 1}).` : `${why}, so this is a dead end.`,
+                  view: view(i, j),
+                });
+                ans = first && match(i + 1, j + 1);
+              }
+            }
+            memo[i][j] = ans;
+            steps.push({ line: "store", note: `match(${i}, ${j}) = ${T(ans)}. Save it in memo[${i}][${j}].`, view: view(i, j, { mark: "new" }) });
+            stack.pop();
+            return ans;
+          }
+
+          const answer = match(0, 0);
+          steps.push({
+            line: "return",
+            note: `Return ${answer}. At most (m + 1) × (n + 1) = ${(m + 1) * (n + 1)} different questions; the memo was reused ${hits} time${hits === 1 ? "" : "s"}.`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0010-regular-expression-matching/approach3.visual.js -->
+    <script>
+      // Bottom-up DP: dp[i][j] says whether the first i chars of s match the first j chars of p.
+      DSAViz.register("0010-regular-expression-matching/approach3", {
+        inputs: [
+          { name: "s", type: "string", value: "aab", maxLength: 7 },
+          { name: "p", type: "string", value: "c*a*b", maxLength: 7 },
+        ],
+        trace({ s, p }) {
+          if (!/^[a-z]*$/.test(s)) throw new DSAViz.InputError("s can only use lowercase letters a–z.");
+          if (!p.length) throw new DSAViz.InputError("p can't be empty.");
+          if (!/^[a-z.*]+$/.test(p)) throw new DSAViz.InputError("p can only use lowercase letters, '.' and '*'.");
+          for (let k = 0; k < p.length; k++) {
+            if (p[k] === "*" && (k === 0 || p[k - 1] === "*")) {
+              throw new DSAViz.InputError("Each '*' needs a letter or '.' right before it, like a* or .*");
+            }
+          }
+          const m = s.length;
+          const n = p.length;
+          const fits = (x, c) => x === c || x === ".";
+          const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(null)); // null = not filled yet
+          const steps = [];
+          const T = (v) => (v ? "T" : "F");
+          const view = (i, j, opts = {}) => {
+            const marks = {};
+            for (let r = 0; r <= m; r++) {
+              for (let c = 0; c <= n; c++) {
+                if (dp[r][c] === null) marks[`${r},${c}`] = "ghost";
+                else marks[`${r},${c}`] = dp[r][c] ? "match" : "visited";
+              }
+            }
+            (opts.deps || []).forEach(([r, c]) => (marks[`${r},${c}`] = "compare"));
+            if (i !== undefined) marks[`${i},${j}`] = "active";
+            if (opts.final) marks[`${m},${n}`] = dp[m][n] ? "match" : "compare";
+            return [
+              {
+                type: "grid",
+                label: "dp[i][j]: do the first i chars of s match the first j chars of p? (∅ = empty)",
+                rows: ["0 ∅", ...Array.from(s, (c, k) => `${k + 1} ${c}`)],
+                cols: ["0 ∅", ...Array.from(p, (c, k) => `${k + 1} ${c}`)],
+                corner: "s \\ p",
+                cells: dp.map((row) => row.map((v) => (v === null ? "" : T(v)))),
+                marks,
+              },
+              {
+                type: "vars",
+                items: [
+                  { name: "s[:i]", value: i === undefined ? "–" : `"${s.slice(0, i)}"` },
+                  { name: "p[:j]", value: j === undefined ? "–" : `"${p.slice(0, j)}"` },
+                ],
+              },
+            ];
+          };
+
+          dp[0][0] = true;
+          for (let j = 1; j <= n; j++) dp[0][j] = false;
+          for (let i = 1; i <= m; i++) dp[i][0] = false;
+          steps.push({
+            line: "init",
+            note: `Row 0 is the empty string, column 0 the empty pattern. dp[0][0] = T (empty matches empty); a non-empty s never matches an empty pattern, so column 0 is F.`,
+            view: view(),
+          });
+
+          for (let j = 2; j <= n; j++) {
+            if (p[j - 1] !== "*") continue;
+            dp[0][j] = dp[0][j - 2];
+            steps.push({
+              line: "empty",
+              note: `"${p.slice(0, j)}" ends in "${p[j - 2]}*", which can mean zero ${p[j - 2]}s. So it matches "" exactly when "${p.slice(0, j - 2)}" does: dp[0][${j}] = dp[0][${j - 2}] = ${T(dp[0][j])}.`,
+              view: view(0, j, { deps: [[0, j - 2]] }),
+            });
+          }
+
+          for (let i = 1; i <= m; i++) {
+            for (let j = 1; j <= n; j++) {
+              const c = s[i - 1];
+              if (p[j - 1] === "*") {
+                const x = p[j - 2];
+                const zero = dp[i][j - 2];
+                const fitsX = fits(x, c);
+                const more = fitsX && dp[i - 1][j];
+                dp[i][j] = zero || more;
+                const deps = [[i, j - 2]];
+                if (fitsX) deps.push([i - 1, j]);
+                steps.push({
+                  line: ["cell", "star"],
+                  note:
+                    `p[${j - 1}] is '*' on '${x}'. Zero ${x}s: dp[${i}][${j - 2}] = ${T(zero)}. ` +
+                    (fitsX
+                      ? `One more ${x}: '${x}' matches s[${i - 1}] = '${c}', and dp[${i - 1}][${j}] = ${T(dp[i - 1][j])}. `
+                      : `One more ${x}: '${x}' doesn't match s[${i - 1}] = '${c}'. `) +
+                    `So dp[${i}][${j}] = ${T(dp[i][j])}.`,
+                  view: view(i, j, { deps }),
+                });
+              } else {
+                const ok = fits(p[j - 1], c);
+                dp[i][j] = ok && dp[i - 1][j - 1];
+                steps.push({
+                  line: ["cell", "single"],
+                  note: ok
+                    ? `'${p[j - 1]}' matches s[${i - 1}] = '${c}', so it depends on the rest: dp[${i - 1}][${j - 1}] = ${T(dp[i - 1][j - 1])}. dp[${i}][${j}] = ${T(dp[i][j])}.`
+                    : `'${p[j - 1]}' doesn't match s[${i - 1}] = '${c}', so dp[${i}][${j}] = F.`,
+                  view: view(i, j, { deps: ok ? [[i - 1, j - 1]] : [] }),
+                });
+              }
+            }
+          }
+
+          steps.push({
+            line: "return",
+            note: `Return dp[${m}][${n}] = ${dp[m][n]}: "${s}" ${dp[m][n] ? "matches" : "doesn't match"} "${p}". ${(m + 1) * (n + 1)} cells, each O(1): O(m · n).`,
+            view: view(undefined, undefined, { final: true }),
           });
           return steps;
         },
