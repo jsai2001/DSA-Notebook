@@ -1,0 +1,262 @@
+<details class="question" data-tags="linked-list recursion dummy-node reverse in-place">
+  <summary>
+    <span class="q-title">25. Reverse Nodes in k-Group</span>
+    <span class="q-meta">
+      <span class="badge hard">Hard</span>
+      <span class="tag">Linked List</span>
+      <span class="tag">Recursion</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Keep <code>before</code>, the node just in
+      front of the next group (start it on a <strong>dummy</strong>). Walk
+      <code>k</code> nodes to find the group's <code>end</code>; if you fall
+      off the list, stop. Otherwise reverse the group with the usual
+      <code>prev</code>/<code>cur</code> flip, starting <code>prev</code> at the
+      node <em>after</em> the group, then set <code>before.next = end</code>
+      and <code>before = first</code>. O(n) time, O(1) space.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/reverse-nodes-in-k-group/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given the <code>head</code> of a linked list, reverse its nodes
+        <code>k</code> at a time and return the new head. If the number of
+        nodes left at the end is less than <code>k</code>, they stay as they
+        are.
+      </p>
+      <ul>
+        <li>The list has <code>n</code> nodes, <code>1 &lt;= k &lt;= n &lt;= 5000</code>.</li>
+        <li><code>0 &lt;= Node.val &lt;= 1000</code>.</li>
+        <li>Change the nodes themselves, not the values inside them.</li>
+        <li>Follow-up: can you do it with O(1) extra memory?</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[1,2,3,4,5]</code>, <code>k = 2</code> →
+        <code>[2,1,4,3,5]</code>; <code>[1,2,3,4,5]</code>, <code>k = 3</code>
+        → <code>[3,2,1,4,5]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[1]</code>, <code>k = 1</code></td>
+              <td><code>[1]</code></td>
+              <td>The smallest input: one group of one node.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3,4,5]</code>, <code>k = 1</code></td>
+              <td><code>[1,2,3,4,5]</code></td>
+              <td>Groups of one: nothing changes, but the code still has to run every group without breaking links.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2]</code>, <code>k = 2</code></td>
+              <td><code>[2,1]</code></td>
+              <td>The whole list is one group, so the head changes. A dummy node handles that without a special case.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3,4,5]</code>, <code>k = 3</code></td>
+              <td><code>[3,2,1,4,5]</code></td>
+              <td>The last 2 nodes are a short group and must <em>not</em> be reversed. Check that k nodes exist before flipping any.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3,4,5,6]</code>, <code>k = 3</code></td>
+              <td><code>[3,2,1,6,5,4]</code></td>
+              <td>n is a multiple of k: no leftover, and the last group's old first node must end up pointing to <code>null</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3,4,5]</code>, <code>k = 2</code></td>
+              <td><code>[2,1,4,3,5]</code></td>
+              <td>Linking groups together: the first group's new last node (1) must point to the second group's new first node (4), not to 3.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3,4,5]</code>, <code>k = 5</code></td>
+              <td><code>[5,4,3,2,1]</code></td>
+              <td>k = n: the whole list is reversed.</td>
+            </tr>
+            <tr>
+              <td><code>[7,7,7,7]</code>, <code>k = 2</code></td>
+              <td><code>[7,7,7,7]</code></td>
+              <td>The values look unchanged, but the nodes must still be reordered. Swapping values instead of nodes isn't allowed.</td>
+            </tr>
+            <tr>
+              <td>5,000 nodes, <code>k = 1</code></td>
+              <td>Unchanged</td>
+              <td>The most groups: a recursive solution goes 5,001 calls deep, which is over Python's default limit of 1,000.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Array of Nodes</h2>
+      <p class="intuition">
+        Reversing parts of a linked list is fiddly; reversing parts of an
+        array is easy. Put the nodes in an array, reverse each full block of
+        <code>k</code> in the array, then link the nodes in the array's order.
+      </p>
+      <ul>
+        <li>
+          Blocks start at <code>0, k, 2k, …</code> as long as a whole block
+          fits; a shorter last block is skipped.
+        </li>
+        <li>It moves the nodes (their <code>next</code> pointers), not the values, so it follows the rules.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Simple and hard to get wrong, but the array costs O(n) extra memory,
+        which the follow-up asks you to avoid.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Recursion</h2>
+      <p class="intuition">
+        Check that the first <code>k</code> nodes exist. If they do, the rest
+        of the list is the same problem: solve it first, then reverse this
+        group so that its old first node points to the rest's answer.
+      </p>
+      <ul>
+        <li>Fewer than <code>k</code> nodes: return <code>head</code> unchanged (this also covers <code>null</code>).</li>
+        <li>
+          Reversing with <code>prev</code> starting at the rest's answer means
+          the group is linked to the rest for free when the flip is done.
+        </li>
+        <li>The group's old last node is its new first: that's what the call returns.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n / k) call stack</span>
+      </div>
+      <p class="note">
+        Clear, but one call per group. With Python's default recursion limit
+        (1,000) it raised <code>RecursionError</code> here at n = 5,000 for
+        every k ≤ 5. C++ and Java handled 5,001 calls fine.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: In Place with a Dummy Node
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        The same steps as the recursion, but front to back in a loop, keeping
+        <code>before</code>, the node just in front of the current group.
+      </p>
+      <ul>
+        <li>
+          From <code>before</code>, walk <code>k</code> steps to
+          <code>end</code>. Hitting <code>null</code> means fewer than k nodes
+          are left: return <code>dummy.next</code>.
+        </li>
+        <li>
+          Remember <code>first = before.next</code> and
+          <code>after = end.next</code>. Reverse with <code>prev = after</code>
+          and <code>cur = first</code> until <code>cur</code> reaches
+          <code>after</code>; <code>first</code> ends up pointing to
+          <code>after</code>.
+        </li>
+        <li>
+          Reconnect: <code>before.next = end</code> (the new first), then
+          <code>before = first</code> (the new last) for the next group.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Each node is visited twice (once to find the group, once to flip it)
+        and only pointers change. This is the answer to the follow-up, and it
+        builds on Reverse Linked List (206) and the dummy node from Remove Nth
+        Node From End of List (19).
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        LeetCode's <code>ListNode</code> is a bare class, so there's no library
+        call to reverse part of it. <code>std::reverse</code>,
+        <code>Collections.reverse</code> and slicing only help once the nodes
+        are in an array, which is Approach 1.
+      </p>
+      <p class="note">
+        Write Approach 3. The pattern to remember: keep the node before the
+        part you're changing, and start <code>prev</code> at the node after
+        it, so the reversed part is already connected on both sides.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Array of Nodes</th>
+              <td>Reverse blocks in an array, relink</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Simplest; not O(1) memory</td>
+            </tr>
+            <tr>
+              <th scope="row">Recursion</th>
+              <td>Solve the rest, reverse this group onto it</td>
+              <td>O(n)</td>
+              <td>O(n / k)</td>
+              <td>Too deep for Python's default limit when k is small</td>
+            </tr>
+            <tr>
+              <th scope="row">In Place with a Dummy Node</th>
+              <td>before / first / end / after, flip, reconnect</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Answer to the follow-up</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
