@@ -1,0 +1,256 @@
+<details class="question" data-tags="linked-list two-pointers fast-slow dummy-node one-pass">
+  <summary>
+    <span class="q-title">19. Remove Nth Node From End of List</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Linked List</span>
+      <span class="tag">Two Pointers</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Put a <strong>dummy node</strong> in front of
+      the head, start <code>fast</code> and <code>slow</code> on it, and move
+      <code>fast</code> <code>n + 1</code> steps ahead. Then move both until
+      <code>fast</code> is <code>null</code>: <code>slow</code> is now just
+      before the node to remove, so <code>slow.next = slow.next.next</code>.
+      Return <code>dummy.next</code>. One pass, O(1) space.
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/remove-nth-node-from-end-of-list/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given the <code>head</code> of a linked list, remove the
+        <code>n</code>-th node from the end and return the head.
+      </p>
+      <ul>
+        <li>The list has between <code>1</code> and <code>30</code> nodes.</li>
+        <li><code>0 &lt;= Node.val &lt;= 100</code> and <code>1 &lt;= n &lt;= length</code>.</li>
+        <li>Follow-up: can you do it in one pass?</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[1,2,3,4,5]</code>, <code>n = 2</code> →
+        <code>[1,2,3,5]</code>; <code>[1]</code>, <code>n = 1</code> →
+        <code>[]</code>; <code>[1,2]</code>, <code>n = 1</code> →
+        <code>[1]</code>.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[1]</code>, <code>n = 1</code></td>
+              <td><code>[]</code></td>
+              <td>The only node goes: return <code>null</code> / <code>None</code>, not the old head.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2]</code>, <code>n = 2</code></td>
+              <td><code>[2]</code></td>
+              <td>Removing the head: there's no node before it to update. A dummy node in front handles this without a special case.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3,4,5]</code>, <code>n = 5</code></td>
+              <td><code>[2,3,4,5]</code></td>
+              <td><code>n</code> equals the length: also the head. Without a dummy, moving <code>fast</code> n + 1 steps runs past the end.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2]</code>, <code>n = 1</code></td>
+              <td><code>[1]</code></td>
+              <td>Removing the tail: the new last node must point to <code>null</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3,4,5]</code>, <code>n = 2</code></td>
+              <td><code>[1,2,3,5]</code></td>
+              <td>The usual case: off-by-one errors land on 3 or 5 instead of 4.</td>
+            </tr>
+            <tr>
+              <td><code>[1,1,1]</code>, <code>n = 2</code></td>
+              <td><code>[1,1]</code></td>
+              <td>Remove by position, not by value: comparing values can't tell these nodes apart.</td>
+            </tr>
+            <tr>
+              <td>30 nodes, <code>n = 30</code> or <code>n = 1</code></td>
+              <td>29 nodes</td>
+              <td>The extremes at the largest size: the head and the tail.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Count the Length, Then Walk</h2>
+      <p class="intuition">
+        The n-th from the end is the <code>(length - n + 1)</code>-th from the
+        start. Count the nodes in a first pass, then walk to the node just
+        before it and skip over it.
+      </p>
+      <ul>
+        <li>
+          Start <code>prev</code> on a dummy node in front of the head and
+          move it <code>length - n</code> times. When the target is the head,
+          that's 0 moves and <code>prev</code> is the dummy.
+        </li>
+        <li>
+          <code>prev.next = prev.next.next</code> removes it; return
+          <code>dummy.next</code>, which is the new head.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(L)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Two passes over the list. Perfectly good, but the follow-up asks for
+        one. In C++ the removed node is <code>delete</code>d; Java and Python
+        free it automatically.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Stack</h2>
+      <p class="intuition">
+        Push every node (dummy first) onto a stack. The nodes come back off in
+        reverse, so after <code>n</code> pops the top of the stack is the node
+        just before the target.
+      </p>
+      <ul>
+        <li>Pushing the dummy means there's always a node left on top, even when the head is removed.</li>
+        <li>It reads the list once, but stores all of it.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(L)</span>
+        <span><strong>Space</strong> O(L)</span>
+      </div>
+      <p class="note">
+        A natural way to "count from the end", but the extra O(L) memory is
+        what the two-pointer trick avoids.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Two Pointers, One Pass
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Keep a fixed gap. If <code>fast</code> is <code>n + 1</code> nodes ahead
+        of <code>slow</code>, then when <code>fast</code> falls off the end,
+        <code>slow</code> is exactly one node before the n-th from the end.
+      </p>
+      <ul>
+        <li>
+          Both start on the dummy. Move <code>fast</code>
+          <code>n + 1</code> times, then move both until <code>fast</code> is
+          <code>null</code>.
+        </li>
+        <li>
+          Why <code>n + 1</code>, not <code>n</code>: you want to stop
+          <em>before</em> the target so you can change its predecessor's
+          <code>next</code>.
+        </li>
+        <li>
+          Starting from the dummy keeps <code>n = length</code> safe:
+          <code>fast</code> lands exactly on <code>null</code> and
+          <code>slow</code> stays on the dummy.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(L)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        One pass and no extra memory: the answer to the follow-up. The same
+        fixed-gap idea finds the middle of a list (fast moves 2, slow moves 1)
+        and the k-th from the end.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        LeetCode's <code>ListNode</code> is a bare class, so the standard
+        library can't help. Copying the values into an array and rebuilding
+        the list works, but it's slower, uses O(L) memory, and makes new nodes
+        instead of removing one.
+      </p>
+      <p class="note">
+        Write Approach 3. The dummy node is worth remembering on its own: it
+        removes the "what if it's the head?" case from most linked-list
+        problems.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Count the Length, Then Walk</th>
+              <td>Two passes with a dummy node</td>
+              <td>O(L)</td>
+              <td>O(1)</td>
+              <td>Simple; not one pass</td>
+            </tr>
+            <tr>
+              <th scope="row">Stack</th>
+              <td>Push all, pop n, top is the predecessor</td>
+              <td>O(L)</td>
+              <td>O(L)</td>
+              <td>One pass, but stores every node</td>
+            </tr>
+            <tr>
+              <th scope="row">Two Pointers, One Pass</th>
+              <td>Fast starts n + 1 ahead of slow</td>
+              <td>O(L)</td>
+              <td>O(1)</td>
+              <td>Expected answer to the follow-up</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
