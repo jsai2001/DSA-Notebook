@@ -1,0 +1,280 @@
+<details class="question" data-tags="array two-pointers sorting hash-set 3sum triplets duplicates">
+  <summary>
+    <span class="q-title">15. 3Sum</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Two Pointers</span>
+      <span class="tag">Sorting</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Sort, then fix the first number
+      <code>nums[i]</code> and find the other two with two pointers:
+      <code>lo</code> just after <code>i</code>, <code>hi</code> at the end.
+      Sum too small → <code>lo++</code>; too big → <code>hi--</code>. Skip
+      repeated values for <code>i</code> and, after a hit, for
+      <code>lo</code>, so no triplet appears twice. O(n²) time, no extra set.
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/3sum/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given an integer array <code>nums</code>, return every triplet
+        <code>[nums[i], nums[j], nums[k]]</code> with <code>i</code>,
+        <code>j</code>, <code>k</code> all different and
+        <code>nums[i] + nums[j] + nums[k] == 0</code>. The answer must not
+        contain the same triplet twice. Order doesn't matter.
+      </p>
+      <ul>
+        <li><code>3 &lt;= nums.length &lt;= 3000</code></li>
+        <li><code>-10⁵ &lt;= nums[i] &lt;= 10⁵</code></li>
+      </ul>
+      <p class="note">
+        Examples: <code>[-1, 0, 1, 2, -1, -4]</code> →
+        <code>[[-1, -1, 2], [-1, 0, 1]]</code>; <code>[0, 1, 1]</code> →
+        <code>[]</code>; <code>[0, 0, 0]</code> → <code>[[0, 0, 0]]</code>.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[0, 1, 1]</code></td>
+              <td><code>[]</code></td>
+              <td>No triplet: return an empty list.</td>
+            </tr>
+            <tr>
+              <td><code>[1, 2, 3]</code></td>
+              <td><code>[]</code></td>
+              <td>All positive. After sorting, a positive first number means you can stop.</td>
+            </tr>
+            <tr>
+              <td><code>[-1, -1, -1]</code></td>
+              <td><code>[]</code></td>
+              <td>All negative: nothing sums to 0.</td>
+            </tr>
+            <tr>
+              <td><code>[0, 0, 0, 0]</code></td>
+              <td><code>[[0, 0, 0]]</code></td>
+              <td>Four ways to pick three zeros, but only one triplet. Skipping repeats is required, not optional.</td>
+            </tr>
+            <tr>
+              <td><code>[-4, 2, 2]</code></td>
+              <td><code>[[-4, 2, 2]]</code></td>
+              <td>The same value can be used twice if it appears twice: indexes must differ, values needn't.</td>
+            </tr>
+            <tr>
+              <td><code>[-1, 0, 1, 0]</code></td>
+              <td><code>[[-1, 0, 1]]</code></td>
+              <td>A repeated <em>middle</em> number: skip repeats of <code>lo</code> after a hit, not just of <code>i</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[-2, -2, 0, 0, 2, 2]</code></td>
+              <td><code>[[-2, 0, 2]]</code></td>
+              <td>Repeats in every position at once.</td>
+            </tr>
+            <tr>
+              <td><code>[-2, 0, 1, 1, 2]</code></td>
+              <td><code>[[-2, 0, 2], [-2, 1, 1]]</code></td>
+              <td>Two triplets share the first number: keep going after the first hit instead of moving on to the next <code>i</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[3, 0, -2, -1, 1, 2]</code></td>
+              <td><code>[[-2, -1, 3], [-2, 0, 2], [-1, 0, 1]]</code></td>
+              <td>Unsorted input with three different triplets.</td>
+            </tr>
+            <tr>
+              <td><code>[-100000, 50000, 50000]</code></td>
+              <td><code>[[-100000, 50000, 50000]]</code></td>
+              <td>The extremes. Any sum of three values is at most 3 × 10⁵ in size, so an <code>int</code> is enough.</td>
+            </tr>
+            <tr>
+              <td>3000 zeros</td>
+              <td><code>[[0, 0, 0]]</code></td>
+              <td>Every one of the 4.5 × 10⁹ triples sums to 0. Brute force took over 2 minutes in C++ and Java here; sort + two pointers finished instantly.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Brute Force (Every Triple)</h2>
+      <p class="intuition">
+        Try every <code>i &lt; j &lt; k</code>. When the three add up to 0,
+        sort them and put them in a set, so the same three numbers found in a
+        different order count once.
+      </p>
+      <ul>
+        <li>The set handles duplicates; nothing needs to be sorted first.</li>
+        <li>n(n - 1)(n - 2) / 6 triples: about 4.5 × 10⁹ at n = 3000.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n³)</span>
+        <span><strong>Space</strong> O(number of triplets)</span>
+      </div>
+      <p class="note">
+        Far too slow. In Python, n = 300 alone took 0.2 s, and n = 3000 is
+        1000× more work. C++ took about 2 s and Java 4–11 s on random inputs of
+        3000 numbers, and both took over 2 minutes on 3000 zeros, because every
+        triple is a hit that gets sorted and inserted.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Fix One, Then Two Sum with a Hash Set</h2>
+      <p class="intuition">
+        Fix the first number; now you need two numbers to its right that add
+        up to <code>-nums[i]</code>. That's Two Sum, solved with a set of
+        values seen so far.
+      </p>
+      <ul>
+        <li>
+          For each <code>j</code>, the third number must be
+          <code>need = -nums[i] - nums[j]</code>. If <code>need</code> was
+          already seen between <code>i</code> and <code>j</code>, it's a
+          triplet.
+        </li>
+        <li>
+          Sorting first makes every triplet come out as
+          <code>(nums[i], need, nums[j])</code> in increasing order, so a set
+          of tuples removes repeats. Skipping repeated <code>nums[i]</code>
+          saves work.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Passes. At n = 3000 it took 0.5–1.9 s in Python here, and about
+        0.2–0.5 s in C++ and Java: hashing costs more than the pointer
+        moves in Approach 3, and the result set still dedupes.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Sort + Two Pointers
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        After sorting, for a fixed <code>nums[i]</code> the other two can be
+        found the way Two Sum II does it on a sorted array: start at both ends
+        of the rest and close in.
+      </p>
+      <ul>
+        <li>
+          Sum &lt; 0: <code>hi</code> is already the largest number left, so
+          only a bigger <code>lo</code> can help. Sum &gt; 0: move
+          <code>hi</code> left.
+        </li>
+        <li>
+          No set needed for repeats: skip <code>nums[i]</code> equal to the
+          previous one, and after a hit skip <code>lo</code> past its repeats.
+          (<code>hi</code> then fixes itself on the next comparisons.)
+        </li>
+        <li>
+          Stop as soon as <code>nums[i] &gt; 0</code>: three numbers that are
+          all at least that big can't sum to 0.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(1) extra (besides the sort and the output)</span>
+      </div>
+      <p class="note">
+        The fastest here: under 0.1 s in C++ and Java and at most 0.8 s in
+        Python at n = 3000, even with 1.1 million triplets in the output. This
+        is the expected interview answer.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        Python's <code>itertools.combinations(nums, 3)</code> lists every
+        triple, but filtering it is just Approach 1 with the same O(n³) cost.
+        No standard library finds zero-sum triplets faster.
+      </p>
+      <p class="note">
+        Write Approach 3. The same sort + two pointers pattern solves 3Sum
+        Closest (16) and 4Sum (18), the latter with one more fixed number.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Brute Force (Every Triple)</th>
+              <td>All i &lt; j &lt; k, set of sorted triplets</td>
+              <td>O(n³)</td>
+              <td>O(triplets)</td>
+              <td>Too slow at n = 3000</td>
+            </tr>
+            <tr>
+              <th scope="row">Fix One, Then Two Sum with a Hash Set</th>
+              <td>Sorted, set of seen values per first number</td>
+              <td>O(n²)</td>
+              <td>O(n)</td>
+              <td>Passes; slower constant</td>
+            </tr>
+            <tr>
+              <th scope="row">Sort + Two Pointers</th>
+              <td>Close in from both ends, skip repeats</td>
+              <td>O(n²)</td>
+              <td>O(1) extra</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

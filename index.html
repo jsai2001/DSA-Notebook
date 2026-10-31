@@ -3937,6 +3937,511 @@
         </div>
       </details>
 
+      <!-- ===== problems/0015-3sum ===== -->
+      <details class="question" data-tags="array two-pointers sorting hash-set 3sum triplets duplicates">
+        <summary>
+          <span class="q-title">15. 3Sum</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">Array</span>
+            <span class="tag">Two Pointers</span>
+            <span class="tag">Sorting</span>
+          </span>
+        </summary>
+
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> Sort, then fix the first number
+            <code>nums[i]</code> and find the other two with two pointers:
+            <code>lo</code> just after <code>i</code>, <code>hi</code> at the end.
+            Sum too small → <code>lo++</code>; too big → <code>hi--</code>. Skip
+            repeated values for <code>i</code> and, after a hit, for
+            <code>lo</code>, so no triplet appears twice. O(n²) time, no extra set.
+          </div>
+
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/3sum/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              Given an integer array <code>nums</code>, return every triplet
+              <code>[nums[i], nums[j], nums[k]]</code> with <code>i</code>,
+              <code>j</code>, <code>k</code> all different and
+              <code>nums[i] + nums[j] + nums[k] == 0</code>. The answer must not
+              contain the same triplet twice. Order doesn't matter.
+            </p>
+            <ul>
+              <li><code>3 &lt;= nums.length &lt;= 3000</code></li>
+              <li><code>-10⁵ &lt;= nums[i] &lt;= 10⁵</code></li>
+            </ul>
+            <p class="note">
+              Examples: <code>[-1, 0, 1, 2, -1, -4]</code> →
+              <code>[[-1, -1, 2], [-1, 0, 1]]</code>; <code>[0, 1, 1]</code> →
+              <code>[]</code>; <code>[0, 0, 0]</code> → <code>[[0, 0, 0]]</code>.
+            </p>
+          </section>
+
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[0, 1, 1]</code></td>
+                    <td><code>[]</code></td>
+                    <td>No triplet: return an empty list.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1, 2, 3]</code></td>
+                    <td><code>[]</code></td>
+                    <td>All positive. After sorting, a positive first number means you can stop.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[-1, -1, -1]</code></td>
+                    <td><code>[]</code></td>
+                    <td>All negative: nothing sums to 0.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[0, 0, 0, 0]</code></td>
+                    <td><code>[[0, 0, 0]]</code></td>
+                    <td>Four ways to pick three zeros, but only one triplet. Skipping repeats is required, not optional.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[-4, 2, 2]</code></td>
+                    <td><code>[[-4, 2, 2]]</code></td>
+                    <td>The same value can be used twice if it appears twice: indexes must differ, values needn't.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[-1, 0, 1, 0]</code></td>
+                    <td><code>[[-1, 0, 1]]</code></td>
+                    <td>A repeated <em>middle</em> number: skip repeats of <code>lo</code> after a hit, not just of <code>i</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[-2, -2, 0, 0, 2, 2]</code></td>
+                    <td><code>[[-2, 0, 2]]</code></td>
+                    <td>Repeats in every position at once.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[-2, 0, 1, 1, 2]</code></td>
+                    <td><code>[[-2, 0, 2], [-2, 1, 1]]</code></td>
+                    <td>Two triplets share the first number: keep going after the first hit instead of moving on to the next <code>i</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[3, 0, -2, -1, 1, 2]</code></td>
+                    <td><code>[[-2, -1, 3], [-2, 0, 2], [-1, 0, 1]]</code></td>
+                    <td>Unsorted input with three different triplets.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[-100000, 50000, 50000]</code></td>
+                    <td><code>[[-100000, 50000, 50000]]</code></td>
+                    <td>The extremes. Any sum of three values is at most 3 × 10⁵ in size, so an <code>int</code> is enough.</td>
+                  </tr>
+                  <tr>
+                    <td>3000 zeros</td>
+                    <td><code>[[0, 0, 0]]</code></td>
+                    <td>Every one of the 4.5 × 10⁹ triples sums to 0. Brute force took over 2 minutes in C++ and Java here; sort + two pointers finished instantly.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Brute Force (Every Triple)</h2>
+            <p class="intuition">
+              Try every <code>i &lt; j &lt; k</code>. When the three add up to 0,
+              sort them and put them in a set, so the same three numbers found in a
+              different order count once.
+            </p>
+            <ul>
+              <li>The set handles duplicates; nothing needs to be sorted first.</li>
+              <li>n(n - 1)(n - 2) / 6 triples: about 4.5 × 10⁹ at n = 3000.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n³)</span>
+              <span><strong>Space</strong> O(number of triplets)</span>
+            </div>
+            <p class="note">
+              Far too slow. In Python, n = 300 alone took 0.2 s, and n = 3000 is
+              1000× more work. C++ took about 2 s and Java 4–11 s on random inputs of
+              3000 numbers, and both took over 2 minutes on 3000 zeros, because every
+              triple is a hit that gets sorted and inserted.
+            </p>
+            <div class="code-tabs" data-viz="0015-3sum/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"pick":[5,6,7],"check":[8],"found":[9],"return":[10]}'>
+                class Solution(object):
+                    def threeSum(self, nums):
+                        n = len(nums)
+                        found = set()  # sorted triplets, so [-1, 0, 1] and [0, 1, -1] count once
+                        for i in range(n):
+                            for j in range(i + 1, n):
+                                for k in range(j + 1, n):
+                                    if nums[i] + nums[j] + nums[k] == 0:
+                                        found.add(tuple(sorted((nums[i], nums[j], nums[k]))))
+                        return [list(t) for t in found]
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8],"pick":[9,10,11],"check":[12],"found":[13,14,15],"return":[20]}'>
+                #include <algorithm>
+                #include <set>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::vector<int>> threeSum(std::vector<int>& nums) {
+                        int n = nums.size();
+                        std::set<std::vector<int>> found; // sorted triplets, so [-1, 0, 1] and [0, 1, -1] count once
+                        for (int i = 0; i < n; ++i) {
+                            for (int j = i + 1; j < n; ++j) {
+                                for (int k = j + 1; k < n; ++k) {
+                                    if (nums[i] + nums[j] + nums[k] == 0) {
+                                        std::vector<int> t = {nums[i], nums[j], nums[k]};
+                                        std::sort(t.begin(), t.end());
+                                        found.insert(t);
+                                    }
+                                }
+                            }
+                        }
+                        return {found.begin(), found.end()};
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[9,10],"pick":[11,12,13],"check":[14],"found":[15,16,17],"return":[22]}'>
+                import java.util.ArrayList;
+                import java.util.Arrays;
+                import java.util.HashSet;
+                import java.util.List;
+                import java.util.Set;
+
+                class Solution {
+                    public List<List<Integer>> threeSum(int[] nums) {
+                        int n = nums.length;
+                        Set<List<Integer>> found = new HashSet<>(); // sorted triplets, so [-1, 0, 1] and [0, 1, -1] count once
+                        for (int i = 0; i < n; i++) {
+                            for (int j = i + 1; j < n; j++) {
+                                for (int k = j + 1; k < n; k++) {
+                                    if (nums[i] + nums[j] + nums[k] == 0) {
+                                        int[] t = {nums[i], nums[j], nums[k]};
+                                        Arrays.sort(t);
+                                        found.add(Arrays.asList(t[0], t[1], t[2]));
+                                    }
+                                }
+                            }
+                        }
+                        return new ArrayList<>(found);
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>Approach 2: Fix One, Then Two Sum with a Hash Set</h2>
+            <p class="intuition">
+              Fix the first number; now you need two numbers to its right that add
+              up to <code>-nums[i]</code>. That's Two Sum, solved with a set of
+              values seen so far.
+            </p>
+            <ul>
+              <li>
+                For each <code>j</code>, the third number must be
+                <code>need = -nums[i] - nums[j]</code>. If <code>need</code> was
+                already seen between <code>i</code> and <code>j</code>, it's a
+                triplet.
+              </li>
+              <li>
+                Sorting first makes every triplet come out as
+                <code>(nums[i], need, nums[j])</code> in increasing order, so a set
+                of tuples removes repeats. Skipping repeated <code>nums[i]</code>
+                saves work.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n²)</span>
+              <span><strong>Space</strong> O(n)</span>
+            </div>
+            <p class="note">
+              Passes. At n = 3000 it took 0.5–1.9 s in Python here, and about
+              0.2–0.5 s in C++ and Java: hashing costs more than the pointer
+              moves in Approach 3, and the result set still dedupes.
+            </p>
+            <div class="code-tabs" data-viz="0015-3sum/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"fix":[5,8],"skip":[6,7],"scan":[9],"need":[10],"check":[11],"found":[12],"store":[13],"return":[14]}'>
+                class Solution(object):
+                    def threeSum(self, nums):
+                        nums.sort()  # sorted, so each triplet comes out in the same order
+                        found = set()
+                        for i in range(len(nums)):
+                            if i > 0 and nums[i] == nums[i - 1]:  # same first number: same triplets
+                                continue
+                            seen = set()  # values seen to the right of i so far
+                            for j in range(i + 1, len(nums)):
+                                need = -nums[i] - nums[j]  # Two Sum on the rest: what pairs with nums[j]?
+                                if need in seen:
+                                    found.add((nums[i], need, nums[j]))
+                                seen.add(nums[j])
+                        return [list(t) for t in found]
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[8,9],"fix":[11,13],"skip":[12],"scan":[14],"need":[15],"check":[16],"found":[17],"store":[19],"return":[22]}'>
+                #include <algorithm>
+                #include <set>
+                #include <unordered_set>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::vector<int>> threeSum(std::vector<int>& nums) {
+                        std::sort(nums.begin(), nums.end()); // sorted, so each triplet comes out in the same order
+                        std::set<std::vector<int>> found;
+                        int n = nums.size();
+                        for (int i = 0; i < n; ++i) {
+                            if (i > 0 && nums[i] == nums[i - 1]) continue; // same first number: same triplets
+                            std::unordered_set<int> seen; // values seen to the right of i so far
+                            for (int j = i + 1; j < n; ++j) {
+                                int need = -nums[i] - nums[j]; // Two Sum on the rest: what pairs with nums[j]?
+                                if (seen.count(need)) {
+                                    found.insert({nums[i], need, nums[j]});
+                                }
+                                seen.insert(nums[j]);
+                            }
+                        }
+                        return {found.begin(), found.end()};
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[9,10],"fix":[12,14],"skip":[13],"scan":[15],"need":[16],"check":[17],"found":[18],"store":[20],"return":[23]}'>
+                import java.util.ArrayList;
+                import java.util.Arrays;
+                import java.util.HashSet;
+                import java.util.List;
+                import java.util.Set;
+
+                class Solution {
+                    public List<List<Integer>> threeSum(int[] nums) {
+                        Arrays.sort(nums); // sorted, so each triplet comes out in the same order
+                        Set<List<Integer>> found = new HashSet<>();
+                        int n = nums.length;
+                        for (int i = 0; i < n; i++) {
+                            if (i > 0 && nums[i] == nums[i - 1]) continue; // same first number: same triplets
+                            Set<Integer> seen = new HashSet<>(); // values seen to the right of i so far
+                            for (int j = i + 1; j < n; j++) {
+                                int need = -nums[i] - nums[j]; // Two Sum on the rest: what pairs with nums[j]?
+                                if (seen.contains(need)) {
+                                    found.add(Arrays.asList(nums[i], need, nums[j]));
+                                }
+                                seen.add(nums[j]);
+                            }
+                        }
+                        return new ArrayList<>(found);
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>
+              Approach 3: Sort + Two Pointers
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              After sorting, for a fixed <code>nums[i]</code> the other two can be
+              found the way Two Sum II does it on a sorted array: start at both ends
+              of the rest and close in.
+            </p>
+            <ul>
+              <li>
+                Sum &lt; 0: <code>hi</code> is already the largest number left, so
+                only a bigger <code>lo</code> can help. Sum &gt; 0: move
+                <code>hi</code> left.
+              </li>
+              <li>
+                No set needed for repeats: skip <code>nums[i]</code> equal to the
+                previous one, and after a hit skip <code>lo</code> past its repeats.
+                (<code>hi</code> then fixes itself on the next comparisons.)
+              </li>
+              <li>
+                Stop as soon as <code>nums[i] &gt; 0</code>: three numbers that are
+                all at least that big can't sum to 0.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n²)</span>
+              <span><strong>Space</strong> O(1) extra (besides the sort and the output)</span>
+            </div>
+            <p class="note">
+              The fastest here: under 0.1 s in C++ and Java and at most 0.8 s in
+              Python at n = 3000, even with 1.1 million triplets in the output. This
+              is the expected interview answer.
+            </p>
+            <div class="code-tabs" data-viz="0015-3sum/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"fix":[6,11],"stop":[7,8],"skip":[9,10],"loop":[12],"sum":[13],"less":[14,15],"more":[16,17],"found":[19,20,21],"dedupe":[22,23],"return":[24]}'>
+                class Solution(object):
+                    def threeSum(self, nums):
+                        nums.sort()
+                        result = []
+                        n = len(nums)
+                        for i in range(n - 2):
+                            if nums[i] > 0:  # the smallest of the three is positive: no sum can be 0
+                                break
+                            if i > 0 and nums[i] == nums[i - 1]:  # same first number as last time
+                                continue
+                            lo, hi = i + 1, n - 1
+                            while lo < hi:
+                                total = nums[i] + nums[lo] + nums[hi]
+                                if total < 0:  # too small: a bigger middle number
+                                    lo += 1
+                                elif total > 0:  # too big: a smaller last number
+                                    hi -= 1
+                                else:
+                                    result.append([nums[i], nums[lo], nums[hi]])
+                                    lo += 1
+                                    hi -= 1
+                                    while lo < hi and nums[lo] == nums[lo - 1]:  # skip repeats of the middle number
+                                        lo += 1
+                        return result
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8],"fix":[9,12],"stop":[10],"skip":[11],"loop":[13],"sum":[14],"less":[15,16],"more":[17,18],"found":[20,21,22],"dedupe":[23],"return":[27]}'>
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::vector<int>> threeSum(std::vector<int>& nums) {
+                        std::sort(nums.begin(), nums.end());
+                        std::vector<std::vector<int>> result;
+                        int n = nums.size();
+                        for (int i = 0; i + 2 < n; ++i) {
+                            if (nums[i] > 0) break; // the smallest of the three is positive: no sum can be 0
+                            if (i > 0 && nums[i] == nums[i - 1]) continue; // same first number as last time
+                            int lo = i + 1, hi = n - 1;
+                            while (lo < hi) {
+                                int total = nums[i] + nums[lo] + nums[hi];
+                                if (total < 0) { // too small: a bigger middle number
+                                    ++lo;
+                                } else if (total > 0) { // too big: a smaller last number
+                                    --hi;
+                                } else {
+                                    result.push_back({nums[i], nums[lo], nums[hi]});
+                                    ++lo;
+                                    --hi;
+                                    while (lo < hi && nums[lo] == nums[lo - 1]) ++lo; // skip repeats of the middle number
+                                }
+                            }
+                        }
+                        return result;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[7,8,9],"fix":[10,13],"stop":[11],"skip":[12],"loop":[14],"sum":[15],"less":[16,17],"more":[18,19],"found":[21,22,23],"dedupe":[24],"return":[28]}'>
+                import java.util.ArrayList;
+                import java.util.Arrays;
+                import java.util.List;
+
+                class Solution {
+                    public List<List<Integer>> threeSum(int[] nums) {
+                        Arrays.sort(nums);
+                        List<List<Integer>> result = new ArrayList<>();
+                        int n = nums.length;
+                        for (int i = 0; i + 2 < n; i++) {
+                            if (nums[i] > 0) break; // the smallest of the three is positive: no sum can be 0
+                            if (i > 0 && nums[i] == nums[i - 1]) continue; // same first number as last time
+                            int lo = i + 1, hi = n - 1;
+                            while (lo < hi) {
+                                int total = nums[i] + nums[lo] + nums[hi];
+                                if (total < 0) { // too small: a bigger middle number
+                                    lo++;
+                                } else if (total > 0) { // too big: a smaller last number
+                                    hi--;
+                                } else {
+                                    result.add(Arrays.asList(nums[i], nums[lo], nums[hi]));
+                                    lo++;
+                                    hi--;
+                                    while (lo < hi && nums[lo] == nums[lo - 1]) lo++; // skip repeats of the middle number
+                                }
+                            }
+                        }
+                        return result;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">No shortcut</span></h2>
+            <p>
+              Python's <code>itertools.combinations(nums, 3)</code> lists every
+              triple, but filtering it is just Approach 1 with the same O(n³) cost.
+              No standard library finds zero-sum triplets faster.
+            </p>
+            <p class="note">
+              Write Approach 3. The same sort + two pointers pattern solves 3Sum
+              Closest (16) and 4Sum (18), the latter with one more fixed number.
+            </p>
+          </section>
+
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Brute Force (Every Triple)</th>
+                    <td>All i &lt; j &lt; k, set of sorted triplets</td>
+                    <td>O(n³)</td>
+                    <td>O(triplets)</td>
+                    <td>Too slow at n = 3000</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Fix One, Then Two Sum with a Hash Set</th>
+                    <td>Sorted, set of seen values per first number</td>
+                    <td>O(n²)</td>
+                    <td>O(n)</td>
+                    <td>Passes; slower constant</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Sort + Two Pointers</th>
+                    <td>Close in from both ends, skip repeats</td>
+                    <td>O(n²)</td>
+                    <td>O(1) extra</td>
+                    <td>Expected answer</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -7744,6 +8249,203 @@
             line: ["loop", "return"],
             note: `Return ${best}. Only ${measured} area${measured === 1 ? " was" : "s were"} measured; Approach 2 would measure ${n - 1}. Still O(n), just fewer multiplications.`,
             view: view({ final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0015-3sum/approach1.visual.js -->
+    <script>
+      // Brute force: try every triple of indexes; keep sorted triplets in a set so repeats count once.
+      DSAViz.register("0015-3sum/approach1", {
+        inputs: [{ name: "nums", type: "int[]", value: "[-1, 0, 1, 2, -1, -4]", minLength: 3, maxLength: 6, minValue: -9, maxValue: 9 }],
+        trace({ nums }) {
+          const n = nums.length;
+          const steps = [];
+          const found = new Map(); // "a,b,c" -> triplet
+          const view = (i, j, k, opts = {}) => {
+            const marks = {};
+            if (i !== undefined) [i, j, k].forEach((x) => (marks[x] = opts.hit ? "match" : "active"));
+            return [
+              { type: "array", label: "nums", values: nums, marks, pointers: i !== undefined ? { i, j, k } : {} },
+              { type: "set", label: "found (sorted triplets)", items: [...found.keys()].map((key) => `[${key}]`), marks: opts.newKey ? { [`[${opts.newKey}]`]: "new" } : {} },
+              { type: "vars", items: [{ name: "sum", value: opts.sum === undefined ? "–" : opts.sum, mark: opts.hit ? "match" : "" }] },
+            ];
+          };
+          steps.push({
+            line: "init",
+            note: `Try all ${(n * (n - 1) * (n - 2)) / 6} triples i < j < k. Store each hit sorted, so the same three numbers found in a different order count once.`,
+            view: view(),
+          });
+          for (let i = 0; i < n; i++) {
+            for (let j = i + 1; j < n; j++) {
+              for (let k = j + 1; k < n; k++) {
+                const sum = nums[i] + nums[j] + nums[k];
+                if (sum !== 0) {
+                  steps.push({ line: ["pick", "check"], note: `${nums[i]} + ${nums[j]} + ${nums[k]} = ${sum}. Not 0.`, view: view(i, j, k, { sum }) });
+                  continue;
+                }
+                const key = [nums[i], nums[j], nums[k]].sort((a, b) => a - b).join(", ");
+                const dup = found.has(key);
+                found.set(key, true);
+                steps.push({
+                  line: ["pick", "check", "found"],
+                  note: `${nums[i]} + ${nums[j]} + ${nums[k]} = 0. Sorted: [${key}].` + (dup ? ` Already in the set, so it isn't added twice.` : ` Add it.`),
+                  view: view(i, j, k, { sum, hit: true, newKey: dup ? undefined : key }),
+                });
+              }
+            }
+          }
+          steps.push({
+            line: "return",
+            note: `Return ${found.size} triplet${found.size === 1 ? "" : "s"}. That was every triple: O(n³), about 4.5 × 10⁹ at n = 3000.`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0015-3sum/approach2.visual.js -->
+    <script>
+      // Sort, fix the first number, then run Two Sum with a hash set on the rest.
+      DSAViz.register("0015-3sum/approach2", {
+        inputs: [{ name: "nums", type: "int[]", value: "[-1, 0, 1, 2, -1, -4]", minLength: 3, maxLength: 8, minValue: -9, maxValue: 9 }],
+        trace({ nums: input }) {
+          const nums = input.slice().sort((a, b) => a - b);
+          const n = nums.length;
+          const steps = [];
+          const found = new Map();
+          let seen = [];
+          const view = (i, j, opts = {}) => {
+            const marks = {};
+            if (i !== undefined) marks[i] = "active";
+            if (opts.skip !== undefined) marks[opts.skip] = "visited";
+            if (j !== undefined) marks[j] = opts.hit ? "match" : "compare";
+            const pointers = {};
+            if (i !== undefined) pointers.i = i;
+            if (j !== undefined) pointers.j = j;
+            if (opts.skip !== undefined) pointers.i = opts.skip;
+            return [
+              { type: "array", label: "nums (sorted)", values: nums, marks, pointers },
+              { type: "set", label: "seen: values between i and j", items: seen.slice(), marks: opts.need !== undefined && opts.hit ? { [opts.need]: "match" } : opts.stored !== undefined ? { [opts.stored]: "new" } : {} },
+              { type: "set", label: "found", items: [...found.keys()].map((k) => `[${k}]`), marks: opts.newKey ? { [`[${opts.newKey}]`]: "new" } : {} },
+              { type: "vars", items: [{ name: "need", value: opts.need === undefined ? "–" : opts.need, mark: opts.hit ? "match" : "" }] },
+            ];
+          };
+          steps.push({
+            line: "init",
+            note: `Sort: [${nums.join(", ")}]. Then each triplet found comes out in increasing order, which makes repeats easy to spot.`,
+            view: view(),
+          });
+          for (let i = 0; i < n; i++) {
+            if (i > 0 && nums[i] === nums[i - 1]) {
+              steps.push({ line: "skip", note: `nums[${i}] = ${nums[i]} is the same first number as last time: it would find the same triplets. Skip it.`, view: view(undefined, undefined, { skip: i }) });
+              continue;
+            }
+            seen = [];
+            steps.push({ line: "fix", note: `Fix nums[${i}] = ${nums[i]}. Now find two numbers to its right that add up to ${-nums[i]}: that's Two Sum.`, view: view(i) });
+            for (let j = i + 1; j < n; j++) {
+              const need = -nums[i] - nums[j];
+              const hit = seen.includes(need);
+              let newKey;
+              if (hit) {
+                const key = `${nums[i]}, ${need}, ${nums[j]}`;
+                if (!found.has(key)) newKey = key;
+                found.set(key, true);
+              }
+              steps.push({
+                line: hit ? ["scan", "need", "check", "found"] : ["scan", "need", "check"],
+                note:
+                  `nums[${j}] = ${nums[j]} needs ${-nums[i]} - ${nums[j]} = ${need}. ` +
+                  (hit
+                    ? `${need} is in seen: [${nums[i]}, ${need}, ${nums[j]}]` + (newKey ? `. Add it.` : `, already found.`)
+                    : `${need} isn't in seen yet.`),
+                view: view(i, j, { need, hit, newKey }),
+              });
+              if (!seen.includes(nums[j])) seen.push(nums[j]);
+              steps.push({ line: "store", note: `Add ${nums[j]} to seen for the numbers after it.`, view: view(i, j, { stored: nums[j] }) });
+            }
+          }
+          steps.push({
+            line: "return",
+            note: `Return ${found.size} triplet${found.size === 1 ? "" : "s"}. One Two Sum pass per first number: O(n²) time, plus O(n) for the set.`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0015-3sum/approach3.visual.js -->
+    <script>
+      // Sort, fix the first number, then close in on the rest with two pointers, skipping repeats.
+      DSAViz.register("0015-3sum/approach3", {
+        inputs: [{ name: "nums", type: "int[]", value: "[-1, 0, 1, 2, -1, -4]", minLength: 3, maxLength: 10, minValue: -9, maxValue: 9 }],
+        trace({ nums: input }) {
+          const nums = input.slice().sort((a, b) => a - b);
+          const n = nums.length;
+          const steps = [];
+          const result = [];
+          const view = (i, lo, hi, opts = {}) => {
+            const marks = {};
+            if (i !== undefined) {
+              for (let k = 0; k < i; k++) marks[k] = "visited";
+              marks[i] = "active";
+            }
+            if (lo !== undefined && lo < hi) {
+              marks[lo] = opts.hit ? "match" : "compare";
+              marks[hi] = opts.hit ? "match" : "compare";
+            }
+            if (opts.skip !== undefined) marks[opts.skip] = "ghost";
+            const pointers = {};
+            if (i !== undefined) pointers.i = i;
+            if (lo !== undefined && lo < hi) {
+              pointers.lo = lo;
+              pointers.hi = hi;
+            }
+            if (opts.skip !== undefined) pointers.lo = opts.skip;
+            return [
+              { type: "array", label: "nums (sorted)", values: nums, marks, pointers },
+              { type: "array", label: "result", values: result.map((t) => `[${t.join(", ")}]`), wide: true, marks: opts.hit ? { [result.length - 1]: "new" } : {} },
+              { type: "vars", items: [{ name: "total", value: opts.total === undefined ? "–" : opts.total, mark: opts.hit ? "match" : "" }] },
+            ];
+          };
+          steps.push({ line: "init", note: `Sort: [${nums.join(", ")}]. Sorted order is what lets the two pointers know which way to move.`, view: view() });
+          for (let i = 0; i + 2 < n; i++) {
+            if (nums[i] > 0) {
+              steps.push({ line: ["fix", "stop"], note: `nums[${i}] = ${nums[i]} > 0: the smallest of the three is positive, so no sum can be 0. Stop.`, view: view(i) });
+              break;
+            }
+            if (i > 0 && nums[i] === nums[i - 1]) {
+              steps.push({ line: ["fix", "skip"], note: `nums[${i}] = ${nums[i]} is the same as the previous first number. Skip it, or every triplet would be found twice.`, view: view(i) });
+              continue;
+            }
+            let lo = i + 1;
+            let hi = n - 1;
+            steps.push({ line: "fix", note: `Fix nums[${i}] = ${nums[i]}. lo starts just after it, hi at the end.`, view: view(i, lo, hi) });
+            while (lo < hi) {
+              const total = nums[i] + nums[lo] + nums[hi];
+              if (total < 0) {
+                steps.push({ line: ["loop", "sum", "less"], note: `${nums[i]} + ${nums[lo]} + ${nums[hi]} = ${total} < 0. Too small, and hi is already the largest left, so move lo right.`, view: view(i, lo, hi, { total }) });
+                lo++;
+              } else if (total > 0) {
+                steps.push({ line: ["loop", "sum", "more"], note: `${nums[i]} + ${nums[lo]} + ${nums[hi]} = ${total} > 0. Too big, and lo is already the smallest left, so move hi left.`, view: view(i, lo, hi, { total }) });
+                hi--;
+              } else {
+                result.push([nums[i], nums[lo], nums[hi]]);
+                steps.push({ line: ["loop", "sum", "found"], note: `${nums[i]} + ${nums[lo]} + ${nums[hi]} = 0. Found [${nums[i]}, ${nums[lo]}, ${nums[hi]}]. Move both pointers in.`, view: view(i, lo, hi, { total, hit: true }) });
+                lo++;
+                hi--;
+                while (lo < hi && nums[lo] === nums[lo - 1]) {
+                  steps.push({ line: "dedupe", note: `nums[${lo}] = ${nums[lo]} is the middle number we just used. Skip it so the same triplet isn't added again.`, view: view(i, lo, hi, { skip: lo }) });
+                  lo++;
+                }
+              }
+            }
+          }
+          steps.push({
+            line: "return",
+            note: `Return ${result.length} triplet${result.length === 1 ? "" : "s"}, with no repeats and no extra set. O(n²) time; the sort is O(n log n).`,
+            view: view(),
           });
           return steps;
         },
