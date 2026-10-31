@@ -4448,6 +4448,379 @@
         </div>
       </details>
 
+      <!-- ===== problems/0017-letter-combinations-of-a-phone-number ===== -->
+      <details class="question" data-tags="string backtracking recursion combinations phone keypad cartesian-product">
+        <summary>
+          <span class="q-title">17. Letter Combinations of a Phone Number</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">String</span>
+            <span class="tag">Backtracking</span>
+          </span>
+        </summary>
+
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> Every answer picks one letter per digit, so
+            this is every combination of the digits' letters. Backtrack: for
+            <code>digits[i]</code>, try each of its letters, recurse on
+            <code>i + 1</code>, then undo. When <code>i == len(digits)</code>, the
+            path is one answer. Empty input returns <code>[]</code>, not
+            <code>[""]</code>. O(4ⁿ · n), which is the size of the output.
+          </div>
+
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/letter-combinations-of-a-phone-number/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              Given a string of digits from <code>2</code> to <code>9</code>, return
+              every letter combination the number could spell on a phone keypad, in
+              any order: 2 = abc, 3 = def, 4 = ghi, 5 = jkl, 6 = mno, 7 = pqrs,
+              8 = tuv, 9 = wxyz.
+            </p>
+            <ul>
+              <li><code>0 &lt;= digits.length &lt;= 4</code></li>
+              <li><code>digits[i]</code> is one of <code>2</code> to <code>9</code>.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>"23"</code> →
+              <code>["ad","ae","af","bd","be","bf","cd","ce","cf"]</code>;
+              <code>""</code> → <code>[]</code>; <code>"2"</code> →
+              <code>["a","b","c"]</code>.
+            </p>
+          </section>
+
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>""</code></td>
+                    <td><code>[]</code></td>
+                    <td>The trap: starting from <code>[""]</code>, or backtracking with no check, returns <code>[""]</code>. So does <code>itertools.product()</code> of nothing.</td>
+                  </tr>
+                  <tr>
+                    <td><code>"2"</code></td>
+                    <td><code>["a","b","c"]</code></td>
+                    <td>One digit: just its letters.</td>
+                  </tr>
+                  <tr>
+                    <td><code>"7"</code></td>
+                    <td><code>["p","q","r","s"]</code></td>
+                    <td>7 and 9 have four letters, not three. Don't assume three letters per key.</td>
+                  </tr>
+                  <tr>
+                    <td><code>"22"</code></td>
+                    <td>9 combinations, <code>"aa"</code> … <code>"cc"</code></td>
+                    <td>The same digit twice is fine: <code>"aa"</code> is a valid answer.</td>
+                  </tr>
+                  <tr>
+                    <td><code>"79"</code></td>
+                    <td>16 combinations</td>
+                    <td>4 × 4: the count is the product of the letter counts.</td>
+                  </tr>
+                  <tr>
+                    <td><code>"7999"</code></td>
+                    <td>256 combinations</td>
+                    <td>The largest possible output (4⁴), still tiny.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Build Level by Level</h2>
+            <p class="intuition">
+              Keep the list of combinations for the digits seen so far. Each new
+              digit replaces every combination with one copy per letter of that
+              digit.
+            </p>
+            <ul>
+              <li>
+                Start with <code>[""]</code> (one way to spell nothing), but return
+                <code>[]</code> early for empty input.
+              </li>
+              <li>
+                <code>combos = [c + ch for c in combos for ch in letters[d]]</code>:
+                after the last digit, <code>combos</code> is the answer.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(4ⁿ · n)</span>
+              <span><strong>Space</strong> O(4ⁿ · n)</span>
+            </div>
+            <p class="note">
+              No recursion, and easy to follow. It keeps a full copy of the previous
+              level while building the next, so it uses about twice the output's
+              memory; at n ≤ 4 (256 strings) that's nothing.
+            </p>
+            <div class="code-tabs" data-viz="0017-letter-combinations-of-a-phone-number/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"empty":[3,4],"init":[5,6,7],"digit":[8],"extend":[10],"return":[11]}'>
+                class Solution(object):
+                    def letterCombinations(self, digits):
+                        if not digits:  # no digits: no combinations (not [""])
+                            return []
+                        letters = {"2": "abc", "3": "def", "4": "ghi", "5": "jkl",
+                                   "6": "mno", "7": "pqrs", "8": "tuv", "9": "wxyz"}
+                        combos = [""]  # one way to spell nothing so far
+                        for d in digits:
+                            # every combination so far, extended by every letter of this digit
+                            combos = [c + ch for c in combos for ch in letters[d]]
+                        return combos
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"empty":[7],"init":[8,9],"digit":[10],"extend":[12,13,14,15],"return":[17]}'>
+                #include <string>
+                #include <utility>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::string> letterCombinations(std::string digits) {
+                        if (digits.empty()) return {}; // no digits: no combinations (not [""])
+                        const std::vector<std::string> letters = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
+                        std::vector<std::string> combos = {""}; // one way to spell nothing so far
+                        for (char d : digits) {
+                            // every combination so far, extended by every letter of this digit
+                            std::vector<std::string> next;
+                            for (const std::string& c : combos)
+                                for (char ch : letters[d - '0']) next.push_back(c + ch);
+                            combos = std::move(next);
+                        }
+                        return combos;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"empty":[9],"init":[10],"digit":[11],"extend":[13,14,15,16],"return":[18]}'>
+                import java.util.ArrayList;
+                import java.util.List;
+
+                class Solution {
+                    private static final String[] LETTERS = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
+
+                    public List<String> letterCombinations(String digits) {
+                        List<String> combos = new ArrayList<>();
+                        if (digits.isEmpty()) return combos; // no digits: no combinations (not [""])
+                        combos.add(""); // one way to spell nothing so far
+                        for (char d : digits.toCharArray()) {
+                            // every combination so far, extended by every letter of this digit
+                            List<String> next = new ArrayList<>();
+                            for (String c : combos)
+                                for (char ch : LETTERS[d - '0'].toCharArray()) next.add(c + ch);
+                            combos = next;
+                        }
+                        return combos;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>
+              Approach 2: Backtracking
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              Build one combination at a time. For digit <code>i</code>, add one of
+              its letters to the path, go on to digit <code>i + 1</code>, and when
+              you come back, remove that letter so the next one can take its place.
+            </p>
+            <ul>
+              <li>
+                Base case: <code>i == len(digits)</code> means every digit has a
+                letter, so save a copy of the path.
+              </li>
+              <li>
+                Choose → recurse → undo is the backtracking pattern used for
+                Permutations (46), Subsets (78), Combination Sum (39) and N-Queens
+                (51).
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(4ⁿ · n)</span>
+              <span><strong>Space</strong> O(n) besides the output</span>
+            </div>
+            <p class="note">
+              Same time as Approach 1 (both have to write out every answer), but only
+              one path of length ≤ 4 is kept besides the result. This is the version
+              interviewers expect, mostly because the same pattern carries over to
+              harder problems.
+            </p>
+            <div class="code-tabs" data-viz="0017-letter-combinations-of-a-phone-number/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"empty":[3,4],"init":[5,6,7],"call":[9],"done":[10,11,12],"choose":[13,14,15],"undo":[16],"start":[18],"return":[19]}'>
+                class Solution(object):
+                    def letterCombinations(self, digits):
+                        if not digits:  # no digits: no combinations (not [""])
+                            return []
+                        letters = {"2": "abc", "3": "def", "4": "ghi", "5": "jkl",
+                                   "6": "mno", "7": "pqrs", "8": "tuv", "9": "wxyz"}
+                        result, path = [], []
+
+                        def backtrack(i):  # pick a letter for digits[i]
+                            if i == len(digits):  # one letter picked for every digit
+                                result.append("".join(path))
+                                return
+                            for ch in letters[digits[i]]:
+                                path.append(ch)
+                                backtrack(i + 1)
+                                path.pop()  # undo, so the next letter can take its place
+
+                        backtrack(0)
+                        return result
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"empty":[6],"init":[7,8],"start":[9],"return":[10],"call":[16],"done":[17,18,19],"choose":[21,22,23],"undo":[24]}'>
+                #include <string>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::string> letterCombinations(std::string digits) {
+                        if (digits.empty()) return {}; // no digits: no combinations (not [""])
+                        result.clear();
+                        path.clear();
+                        backtrack(digits, 0);
+                        return result;
+                    }
+                private:
+                    const std::vector<std::string> letters = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
+                    std::vector<std::string> result;
+                    std::string path;
+                    void backtrack(const std::string& digits, int i) { // pick a letter for digits[i]
+                        if (i == (int)digits.size()) { // one letter picked for every digit
+                            result.push_back(path);
+                            return;
+                        }
+                        for (char ch : letters[digits[i] - '0']) {
+                            path.push_back(ch);
+                            backtrack(digits, i + 1);
+                            path.pop_back(); // undo, so the next letter can take its place
+                        }
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[10,12],"empty":[11],"start":[13],"return":[14],"call":[17],"done":[18,19,20],"choose":[22,23,24],"undo":[25]}'>
+                import java.util.ArrayList;
+                import java.util.List;
+
+                class Solution {
+                    private static final String[] LETTERS = {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
+                    private List<String> result;
+                    private StringBuilder path;
+
+                    public List<String> letterCombinations(String digits) {
+                        result = new ArrayList<>();
+                        if (digits.isEmpty()) return result; // no digits: no combinations (not [""])
+                        path = new StringBuilder();
+                        backtrack(digits, 0);
+                        return result;
+                    }
+
+                    private void backtrack(String digits, int i) { // pick a letter for digits[i]
+                        if (i == digits.length()) { // one letter picked for every digit
+                            result.add(path.toString());
+                            return;
+                        }
+                        for (char ch : LETTERS[digits.charAt(i) - '0'].toCharArray()) {
+                            path.append(ch);
+                            backtrack(digits, i + 1);
+                            path.deleteCharAt(path.length() - 1); // undo, so the next letter can take its place
+                        }
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">Built-ins</span></h2>
+            <p>
+              This is a Cartesian product of the digits' letters, and Python has it:
+              <code>itertools.product</code>. C++ and Java have no standard
+              equivalent, so there you'd write Approach 1 or 2.
+            </p>
+            <div class="code-tabs">
+              <script type="text/plain" data-lang="Python">
+                from itertools import product
+
+
+                class Solution(object):
+                    def letterCombinations(self, digits):
+                        if not digits:  # product() of nothing gives one empty tuple, which would be [""]
+                            return []
+                        letters = {"2": "abc", "3": "def", "4": "ghi", "5": "jkl",
+                                   "6": "mno", "7": "pqrs", "8": "tuv", "9": "wxyz"}
+                        return ["".join(p) for p in product(*(letters[d] for d in digits))]
+              </script>
+            </div>
+            <div class="complexity">
+              <span><strong>Time</strong> O(4ⁿ · n)</span>
+              <span><strong>Space</strong> O(4ⁿ · n)</span>
+            </div>
+            <p class="note">
+              Passes, but keep the empty check: <code>product()</code> of nothing
+              yields one empty tuple, which becomes <code>[""]</code> instead of
+              <code>[]</code>.
+            </p>
+          </section>
+
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Build Level by Level</th>
+                    <td>Extend every combination by each letter, digit by digit</td>
+                    <td>O(4ⁿ · n)</td>
+                    <td>O(4ⁿ · n)</td>
+                    <td>No recursion; holds two levels at once</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Backtracking</th>
+                    <td>Choose a letter, recurse, undo</td>
+                    <td>O(4ⁿ · n)</td>
+                    <td>O(n) + output</td>
+                    <td>Expected answer; pattern for harder problems</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -8451,6 +8824,108 @@
           steps.push({
             line: "return",
             note: `Return ${result.length} triplet${result.length === 1 ? "" : "s"}, with no repeats and no extra set. O(n²) time; the sort is O(n log n).`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0017-letter-combinations-of-a-phone-number/approach1.visual.js -->
+    <script>
+      // Build level by level: start with [""], and for each digit extend every combination by each of its letters.
+      DSAViz.register("0017-letter-combinations-of-a-phone-number/approach1", {
+        inputs: [{ name: "digits", type: "string", value: "23", maxLength: 3 }],
+        trace({ digits }) {
+          if (!/^[2-9]*$/.test(digits)) throw new DSAViz.InputError("digits can only use 2 to 9 (the keys that have letters).");
+          const KEYS = { 2: "abc", 3: "def", 4: "ghi", 5: "jkl", 6: "mno", 7: "pqrs", 8: "tuv", 9: "wxyz" };
+          const steps = [];
+          const keypad = (k) => ({
+            type: "map", label: "keypad", columns: ["digit", "letters"],
+            entries: [...new Set(digits)].map((d) => [d, KEYS[d]]), marks: k !== undefined ? { [digits[k]]: "active" } : {},
+          });
+          const view = (k, combos, opts = {}) => [
+            { type: "array", label: "digits", values: [...digits], marks: k !== undefined ? { [k]: "active" } : {}, pointers: k !== undefined ? { d: k } : {} },
+            ...(digits ? [keypad(k)] : []),
+            {
+              type: "array", label: `combos (${combos.length})`, values: combos.map((c) => (c === "" ? '""' : c)), wide: true,
+              marks: opts.fresh ? Object.fromEntries(combos.map((_, i) => [i, "new"])) : {},
+            },
+          ];
+          if (!digits) {
+            steps.push({ line: "empty", note: `No digits, so there's nothing to spell: return []. (Starting from [""] and skipping this check would wrongly return [""].)`, view: view(undefined, []) });
+            return steps;
+          }
+          let combos = [""];
+          steps.push({ line: "init", note: `Start with one empty combination, "", the only way to spell zero digits. Each digit multiplies the count by its number of letters.`, view: view(undefined, combos) });
+          for (let k = 0; k < digits.length; k++) {
+            const d = digits[k];
+            steps.push({ line: "digit", note: `Digit ${d} has ${KEYS[d].length} letters: ${KEYS[d].split("").join(", ")}.`, view: view(k, combos) });
+            const before = combos.length;
+            combos = combos.flatMap((c) => KEYS[d].split("").map((ch) => c + ch));
+            steps.push({
+              line: "extend",
+              note: `Add each of ${KEYS[d].split("").join(", ")} to each of the ${before} combination${before === 1 ? "" : "s"}: ${before} × ${KEYS[d].length} = ${combos.length}.`,
+              view: view(k, combos, { fresh: true }),
+            });
+          }
+          steps.push({
+            line: "return",
+            note: `Return all ${combos.length}. The output itself has up to 4ⁿ strings of length n, so no method can beat O(4ⁿ · n).`,
+            view: view(undefined, combos),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0017-letter-combinations-of-a-phone-number/approach2.visual.js -->
+    <script>
+      // Backtracking: pick one letter per digit, go deeper, and undo the pick before trying the next letter.
+      DSAViz.register("0017-letter-combinations-of-a-phone-number/approach2", {
+        inputs: [{ name: "digits", type: "string", value: "23", maxLength: 3 }],
+        trace({ digits }) {
+          if (!/^[2-9]*$/.test(digits)) throw new DSAViz.InputError("digits can only use 2 to 9 (the keys that have letters).");
+          const KEYS = { 2: "abc", 3: "def", 4: "ghi", 5: "jkl", 6: "mno", 7: "pqrs", 8: "tuv", 9: "wxyz" };
+          const steps = [];
+          const result = [];
+          const path = [];
+          const view = (i, opts = {}) => {
+            const dmarks = {};
+            for (let k = 0; k < digits.length; k++) if (k < path.length) dmarks[k] = "visited";
+            if (i !== undefined && i < digits.length) dmarks[i] = "active";
+            const letters = i !== undefined && i < digits.length ? KEYS[digits[i]].split("") : [];
+            const lmarks = {};
+            if (opts.ch !== undefined) lmarks[letters.indexOf(opts.ch)] = opts.undo ? "visited" : "active";
+            return [
+              { type: "array", label: "digits", values: [...digits], marks: dmarks, pointers: i !== undefined && i < digits.length ? { i } : {} },
+              ...(letters.length ? [{ type: "array", label: `letters for ${digits[i]}`, values: letters, marks: lmarks }] : []),
+              { type: "array", label: "path (letters picked so far)", values: path.slice(), marks: opts.done ? Object.fromEntries(path.map((_, k) => [k, "match"])) : {} },
+              { type: "array", label: `result (${result.length})`, values: result.slice(), wide: true, marks: opts.done ? { [result.length - 1]: "new" } : {} },
+            ];
+          };
+          if (!digits) {
+            steps.push({ line: "empty", note: `No digits: return []. Without this check, backtrack(0) would add the empty path and return [""].`, view: view() });
+            return steps;
+          }
+          steps.push({ line: ["init", "start"], note: `backtrack(i) picks a letter for digits[i]. path holds the letters picked so far; it grows on the way down and shrinks on the way back.`, view: view(0) });
+          function backtrack(i) {
+            steps.push({ line: "call", note: i < digits.length ? `backtrack(${i}): choose a letter for digit ${digits[i]}.` : `backtrack(${i}): every digit has a letter.`, view: view(i) });
+            if (i === digits.length) {
+              result.push(path.join(""));
+              steps.push({ line: "done", note: `Path "${path.join("")}" is complete: add it to result.`, view: view(i, { done: true }) });
+              return;
+            }
+            for (const ch of KEYS[digits[i]]) {
+              path.push(ch);
+              steps.push({ line: "choose", note: `Try '${ch}' for digit ${digits[i]}: path = "${path.join("")}". Go deeper.`, view: view(i, { ch }) });
+              backtrack(i + 1);
+              path.pop();
+              steps.push({ line: "undo", note: `Back from '${ch}': remove it, so path = "${path.join("")}" and the next letter can take its place.`, view: view(i, { ch, undo: true }) });
+            }
+          }
+          backtrack(0);
+          steps.push({
+            line: "return",
+            note: `Return all ${result.length}. Only one path is kept in memory at a time (length ≤ n), besides the answer itself.`,
             view: view(),
           });
           return steps;

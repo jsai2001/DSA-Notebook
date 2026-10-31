@@ -1,0 +1,220 @@
+<details class="question" data-tags="string backtracking recursion combinations phone keypad cartesian-product">
+  <summary>
+    <span class="q-title">17. Letter Combinations of a Phone Number</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">String</span>
+      <span class="tag">Backtracking</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Every answer picks one letter per digit, so
+      this is every combination of the digits' letters. Backtrack: for
+      <code>digits[i]</code>, try each of its letters, recurse on
+      <code>i + 1</code>, then undo. When <code>i == len(digits)</code>, the
+      path is one answer. Empty input returns <code>[]</code>, not
+      <code>[""]</code>. O(4ⁿ · n), which is the size of the output.
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/letter-combinations-of-a-phone-number/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given a string of digits from <code>2</code> to <code>9</code>, return
+        every letter combination the number could spell on a phone keypad, in
+        any order: 2 = abc, 3 = def, 4 = ghi, 5 = jkl, 6 = mno, 7 = pqrs,
+        8 = tuv, 9 = wxyz.
+      </p>
+      <ul>
+        <li><code>0 &lt;= digits.length &lt;= 4</code></li>
+        <li><code>digits[i]</code> is one of <code>2</code> to <code>9</code>.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>"23"</code> →
+        <code>["ad","ae","af","bd","be","bf","cd","ce","cf"]</code>;
+        <code>""</code> → <code>[]</code>; <code>"2"</code> →
+        <code>["a","b","c"]</code>.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>""</code></td>
+              <td><code>[]</code></td>
+              <td>The trap: starting from <code>[""]</code>, or backtracking with no check, returns <code>[""]</code>. So does <code>itertools.product()</code> of nothing.</td>
+            </tr>
+            <tr>
+              <td><code>"2"</code></td>
+              <td><code>["a","b","c"]</code></td>
+              <td>One digit: just its letters.</td>
+            </tr>
+            <tr>
+              <td><code>"7"</code></td>
+              <td><code>["p","q","r","s"]</code></td>
+              <td>7 and 9 have four letters, not three. Don't assume three letters per key.</td>
+            </tr>
+            <tr>
+              <td><code>"22"</code></td>
+              <td>9 combinations, <code>"aa"</code> … <code>"cc"</code></td>
+              <td>The same digit twice is fine: <code>"aa"</code> is a valid answer.</td>
+            </tr>
+            <tr>
+              <td><code>"79"</code></td>
+              <td>16 combinations</td>
+              <td>4 × 4: the count is the product of the letter counts.</td>
+            </tr>
+            <tr>
+              <td><code>"7999"</code></td>
+              <td>256 combinations</td>
+              <td>The largest possible output (4⁴), still tiny.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Build Level by Level</h2>
+      <p class="intuition">
+        Keep the list of combinations for the digits seen so far. Each new
+        digit replaces every combination with one copy per letter of that
+        digit.
+      </p>
+      <ul>
+        <li>
+          Start with <code>[""]</code> (one way to spell nothing), but return
+          <code>[]</code> early for empty input.
+        </li>
+        <li>
+          <code>combos = [c + ch for c in combos for ch in letters[d]]</code>:
+          after the last digit, <code>combos</code> is the answer.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(4ⁿ · n)</span>
+        <span><strong>Space</strong> O(4ⁿ · n)</span>
+      </div>
+      <p class="note">
+        No recursion, and easy to follow. It keeps a full copy of the previous
+        level while building the next, so it uses about twice the output's
+        memory; at n ≤ 4 (256 strings) that's nothing.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Backtracking
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Build one combination at a time. For digit <code>i</code>, add one of
+        its letters to the path, go on to digit <code>i + 1</code>, and when
+        you come back, remove that letter so the next one can take its place.
+      </p>
+      <ul>
+        <li>
+          Base case: <code>i == len(digits)</code> means every digit has a
+          letter, so save a copy of the path.
+        </li>
+        <li>
+          Choose → recurse → undo is the backtracking pattern used for
+          Permutations (46), Subsets (78), Combination Sum (39) and N-Queens
+          (51).
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(4ⁿ · n)</span>
+        <span><strong>Space</strong> O(n) besides the output</span>
+      </div>
+      <p class="note">
+        Same time as Approach 1 (both have to write out every answer), but only
+        one path of length ≤ 4 is kept besides the result. This is the version
+        interviewers expect, mostly because the same pattern carries over to
+        harder problems.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        This is a Cartesian product of the digits' letters, and Python has it:
+        <code>itertools.product</code>. C++ and Java have no standard
+        equivalent, so there you'd write Approach 1 or 2.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(4ⁿ · n)</span>
+        <span><strong>Space</strong> O(4ⁿ · n)</span>
+      </div>
+      <p class="note">
+        Passes, but keep the empty check: <code>product()</code> of nothing
+        yields one empty tuple, which becomes <code>[""]</code> instead of
+        <code>[]</code>.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Build Level by Level</th>
+              <td>Extend every combination by each letter, digit by digit</td>
+              <td>O(4ⁿ · n)</td>
+              <td>O(4ⁿ · n)</td>
+              <td>No recursion; holds two levels at once</td>
+            </tr>
+            <tr>
+              <th scope="row">Backtracking</th>
+              <td>Choose a letter, recurse, undo</td>
+              <td>O(4ⁿ · n)</td>
+              <td>O(n) + output</td>
+              <td>Expected answer; pattern for harder problems</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

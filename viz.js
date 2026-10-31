@@ -620,11 +620,13 @@
         row.classList.toggle("is-current", on);
         if (on && !first) first = row;
       });
-      // Keep the current line visible inside the code pane without scrolling the page.
+      // Keep the current line comfortably inside the code pane (not half-hidden
+      // at its edge) without scrolling the page.
       if (first) {
         const top = first.offsetTop;
         const bottom = top + first.offsetHeight;
-        if (top < pre.scrollTop || bottom > pre.scrollTop + pre.clientHeight) {
+        const margin = first.offsetHeight * 1.5;
+        if (top < pre.scrollTop + margin || bottom > pre.scrollTop + pre.clientHeight - margin) {
           pre.scrollTop = Math.max(0, top - pre.clientHeight / 3);
         }
       }
