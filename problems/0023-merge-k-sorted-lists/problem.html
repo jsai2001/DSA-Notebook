@@ -1,0 +1,294 @@
+<details class="question" data-tags="linked-list heap priority-queue divide-and-conquer merge-sort dummy-node">
+  <summary>
+    <span class="q-title">23. Merge k Sorted Lists</span>
+    <span class="q-meta">
+      <span class="badge hard">Hard</span>
+      <span class="tag">Linked List</span>
+      <span class="tag">Heap (Priority Queue)</span>
+      <span class="tag">Divide and Conquer</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Never compare against all <code>k</code> heads
+      one by one. Either keep the heads in a <strong>min-heap</strong> (pop the
+      smallest, push its next node), or <strong>merge in pairs</strong> like
+      merge sort (k lists → k/2 → k/4 → … → 1) using Merge Two Sorted Lists.
+      Both give O(N log k) for N nodes in total.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/merge-k-sorted-lists/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        You're given an array of <code>k</code> linked lists, each sorted in
+        ascending order. Merge them all into one sorted linked list and return
+        it.
+      </p>
+      <ul>
+        <li><code>0 &lt;= k &lt;= 10⁴</code> and each list has <code>0</code> to <code>500</code> nodes.</li>
+        <li>At most <code>10⁴</code> nodes in total (call it <code>N</code>).</li>
+        <li><code>-10⁴ &lt;= Node.val &lt;= 10⁴</code>, and every list is sorted.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[[1,4,5],[1,3,4],[2,6]]</code> →
+        <code>[1,1,2,3,4,4,5,6]</code>; <code>[]</code> → <code>[]</code>;
+        <code>[[]]</code> → <code>[]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[]</code></td>
+              <td><code>[]</code></td>
+              <td>No lists at all (k = 0): reading <code>lists[0]</code> is out of range.</td>
+            </tr>
+            <tr>
+              <td><code>[[]]</code></td>
+              <td><code>[]</code></td>
+              <td>One list, and it's empty: <code>lists[0]</code> exists but is <code>null</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,2,3],[],[],[4]]</code></td>
+              <td><code>[1,2,3,4]</code></td>
+              <td>Empty lists in the middle: a heap must skip <code>null</code> heads, or comparing <code>.val</code> crashes.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,4,5],[1,3,4],[2,6]]</code></td>
+              <td><code>[1,1,2,3,4,4,5,6]</code></td>
+              <td>The usual case, with equal values in different lists.</td>
+            </tr>
+            <tr>
+              <td><code>[[5,6],[1,2],[3,4]]</code></td>
+              <td><code>[1,2,3,4,5,6]</code></td>
+              <td>The head of the answer doesn't come from <code>lists[0]</code>. A dummy node avoids picking the head up front.</td>
+            </tr>
+            <tr>
+              <td><code>[[2,2],[2],[2,2,2]]</code></td>
+              <td><code>[2,2,2,2,2,2]</code></td>
+              <td>All ties. In Python 3, a heap of <code>(val, node)</code> tuples compares the nodes on a tie and raises <code>TypeError</code>: add the list index as a tie-breaker.</td>
+            </tr>
+            <tr>
+              <td><code>[[-10000,0,10000],[-10000],[10000]]</code></td>
+              <td><code>[-10000,-10000,0,10000,10000]</code></td>
+              <td>The extreme values: don't start a "smallest so far" at <code>0</code> or use a sentinel inside the range.</td>
+            </tr>
+            <tr>
+              <td>10⁴ lists of 1 node each</td>
+              <td>10⁴ nodes</td>
+              <td>The case that sinks merging one list at a time: about 5 × 10⁷ node steps. It took 1.6 s in Python here (3.2 s with all values equal), where the heap took 0.01 s.</td>
+            </tr>
+            <tr>
+              <td>One list of 10⁴ nodes + 9,999 empty lists</td>
+              <td>The long list</td>
+              <td>k is huge but almost every list is empty: the answer should cost about N, not k · N.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Collect, Sort, Relink</h2>
+      <p class="intuition">
+        Ignore that the lists are sorted: put all <code>N</code> nodes in one
+        array, sort it by value, and link the nodes in that order.
+      </p>
+      <ul>
+        <li>It reuses the same nodes, so nothing new is allocated (and nothing leaks in C++).</li>
+        <li>Remember to set the last node's <code>next</code> to <code>null</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(N log N)</span>
+        <span><strong>Space</strong> O(N)</span>
+      </div>
+      <p class="note">
+        Simple and fast enough here (N ≤ 10⁴), but it wastes the sorted
+        order and needs an array of every node.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Merge One List at a Time</h2>
+      <p class="intuition">
+        You already know how to merge two lists (LeetCode 21). Merge the first
+        list into an empty answer, then the second into that, and so on.
+      </p>
+      <ul>
+        <li>
+          The catch: every merge walks the whole answer so far again. The
+          nodes from the first list get walked about <code>k</code> times.
+        </li>
+        <li>
+          With <code>k</code> lists of about <code>N / k</code> nodes, that's
+          about <code>N / k · (1 + 2 + … + k)</code> ≈ <code>k · N / 2</code>
+          steps.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(k · N)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Fine for a few lists. At k = N = 10⁴ it's around 5 × 10⁷ steps: it
+        passed here in C++ and Java (about 0.1 s), but took 1.6 to 3.2 s in
+        Python, which risks Time Limit Exceeded.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Min-Heap of the Heads</h2>
+      <p class="intuition">
+        The next node of the answer is always the smallest of the
+        <code>k</code> current heads. A min-heap gives that smallest head in
+        O(log k) instead of checking all <code>k</code>.
+      </p>
+      <ul>
+        <li>Push the head of every non-empty list.</li>
+        <li>
+          Pop the smallest, attach it to <code>tail</code>, and push its
+          <code>next</code> (if any). The heap never holds more than
+          <code>k</code> nodes.
+        </li>
+        <li>
+          Python's <code>heapq</code> compares whole tuples, so push
+          <code>(val, i, node)</code>: the list index <code>i</code> settles
+          ties before Python tries to compare two nodes. C++'s
+          <code>priority_queue</code> puts the largest on top, so its comparator
+          uses <code>&gt;</code>.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(N log k)</span>
+        <span><strong>Space</strong> O(k)</span>
+      </div>
+      <p class="note">
+        The answer most interviewers expect, and the idea behind merging many
+        sorted files on disk (k-way merge). It also works when the lists are
+        streams you can only read from the front.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- APPROACH 4 -->
+    <section class="approach">
+      <h2>
+        Approach 4: Divide and Conquer (Merge in Pairs)
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Do what merge sort does: merge the lists in pairs, then merge the
+        results in pairs, until one list is left. Every round halves the number
+        of lists, so there are about <code>log₂ k</code> rounds.
+      </p>
+      <ul>
+        <li>
+          In one round each node is in at most one merge, so a round costs
+          O(N). <code>log k</code> rounds give O(N log k).
+        </li>
+        <li>
+          Bottom-up with a <code>step</code>: merge <code>lists[i]</code> with
+          <code>lists[i + step]</code> for <code>i = 0, 2·step, 4·step, …</code>,
+          then double <code>step</code>. The answer ends up in
+          <code>lists[0]</code>.
+        </li>
+        <li>No recursion and no heap, so the only extra memory is a few pointers.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(N log k)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        As fast as the heap with less memory, and it reuses the two-list merge
+        you already have. It does overwrite entries of the input array, which
+        is fine on LeetCode.
+      </p>
+      <div class="code-tabs" data-src="approach4"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        There's no library call that merges LeetCode's <code>ListNode</code>
+        lists. Python's <code>heapq.merge</code> and C++'s
+        <code>std::merge</code> work on iterables and iterators, and would mean
+        copying values out and building new nodes. What the library does give
+        you is the heap: <code>heapq</code>, <code>std::priority_queue</code>
+        and <code>java.util.PriorityQueue</code>.
+      </p>
+      <p class="note">
+        Write Approach 3 or 4. The heap version is the one to know by heart:
+        "the smallest of k candidates, again and again" is a heap problem.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Collect, Sort, Relink</th>
+              <td>Array of all nodes, sort by value</td>
+              <td>O(N log N)</td>
+              <td>O(N)</td>
+              <td>Ignores that the lists are sorted</td>
+            </tr>
+            <tr>
+              <th scope="row">Merge One List at a Time</th>
+              <td>mergeTwo into a growing answer</td>
+              <td>O(k · N)</td>
+              <td>O(1)</td>
+              <td>Re-walks the answer every time; slow in Python at k = 10⁴</td>
+            </tr>
+            <tr>
+              <th scope="row">Min-Heap of the Heads</th>
+              <td>Pop smallest head, push its next</td>
+              <td>O(N log k)</td>
+              <td>O(k)</td>
+              <td>The standard k-way merge</td>
+            </tr>
+            <tr>
+              <th scope="row">Divide and Conquer</th>
+              <td>Merge in pairs, double the step</td>
+              <td>O(N log k)</td>
+              <td>O(1)</td>
+              <td>Merge sort's idea; no extra structure</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

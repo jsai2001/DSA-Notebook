@@ -32,7 +32,8 @@
 // Marks: "active", "compare", "match", "visited", "new", "window", "ghost", "cut".
 // int[] inputs accept minLength/maxLength and minValue/maxValue; string inputs accept
 // maxLength and ascii: true; tree inputs (level-order with null) accept maxLength and
-// minValue/maxValue; int[][] inputs (grids) accept maxRows/maxCols and minValue/maxValue.
+// minValue/maxValue; int[][] inputs (grids) accept maxRows/maxCols and minValue/maxValue,
+// and jagged: true for a list of lists that may be empty or uneven ([[1, 4], [], [2]]).
 // The page script (app.js) calls DSAViz.mount() for each code block with data-viz.
 
 (function () {
@@ -104,23 +105,29 @@
 
     // Grid of whole numbers, like LeetCode writes it: [[2, 1, 1], [1, 1, 0]].
     if (spec.type === "int[][]") {
-      const bad = `${name} must be a grid of whole numbers, like ${spec.value}.`;
+      const bad = `${name} must be a ${spec.jagged ? "list of lists" : "grid"} of whole numbers, like ${spec.value}.`;
       let rows;
       try {
         rows = JSON.parse(text);
       } catch (e) {
         throw new InputError(bad);
       }
-      if (!Array.isArray(rows) || !rows.length || !rows.every((r) => Array.isArray(r) && r.length && r.every(Number.isInteger))) {
+      if (!Array.isArray(rows) || !rows.every((r) => Array.isArray(r) && r.every(Number.isInteger))) {
         throw new InputError(bad);
       }
-      if (rows.some((r) => r.length !== rows[0].length)) {
+      // jagged: a list of lists, like [[1, 4, 5], [], [2, 6]]; empty and uneven rows are fine.
+      if (!spec.jagged && (!rows.length || rows.some((r) => !r.length))) throw new InputError(bad);
+      if (!spec.jagged && rows.some((r) => r.length !== rows[0].length)) {
         throw new InputError(`Every row of ${name} needs the same number of values.`);
       }
       const maxRows = spec.maxRows ?? 6;
       const maxCols = spec.maxCols ?? 6;
-      if (rows.length > maxRows || rows[0].length > maxCols) {
-        throw new InputError(`${name} can be at most ${maxRows} × ${maxCols} here (kept small so the steps stay readable).`);
+      if (rows.length > maxRows || rows.some((r) => r.length > maxCols)) {
+        throw new InputError(
+          spec.jagged
+            ? `${name} can have at most ${maxRows} lists of up to ${maxCols} values here (kept small so the steps stay readable).`
+            : `${name} can be at most ${maxRows} × ${maxCols} here (kept small so the steps stay readable).`
+        );
       }
       const minValue = spec.minValue ?? -99;
       const maxValue = spec.maxValue ?? 99;

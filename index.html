@@ -6566,6 +6566,677 @@
         </div>
       </details>
 
+      <!-- ===== problems/0023-merge-k-sorted-lists ===== -->
+      <details class="question" data-tags="linked-list heap priority-queue divide-and-conquer merge-sort dummy-node">
+        <summary>
+          <span class="q-title">23. Merge k Sorted Lists</span>
+          <span class="q-meta">
+            <span class="badge hard">Hard</span>
+            <span class="tag">Linked List</span>
+            <span class="tag">Heap (Priority Queue)</span>
+            <span class="tag">Divide and Conquer</span>
+          </span>
+        </summary>
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> Never compare against all <code>k</code> heads
+            one by one. Either keep the heads in a <strong>min-heap</strong> (pop the
+            smallest, push its next node), or <strong>merge in pairs</strong> like
+            merge sort (k lists → k/2 → k/4 → … → 1) using Merge Two Sorted Lists.
+            Both give O(N log k) for N nodes in total.
+          </div>
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/merge-k-sorted-lists/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              You're given an array of <code>k</code> linked lists, each sorted in
+              ascending order. Merge them all into one sorted linked list and return
+              it.
+            </p>
+            <ul>
+              <li><code>0 &lt;= k &lt;= 10⁴</code> and each list has <code>0</code> to <code>500</code> nodes.</li>
+              <li>At most <code>10⁴</code> nodes in total (call it <code>N</code>).</li>
+              <li><code>-10⁴ &lt;= Node.val &lt;= 10⁴</code>, and every list is sorted.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>[[1,4,5],[1,3,4],[2,6]]</code> →
+              <code>[1,1,2,3,4,4,5,6]</code>; <code>[]</code> → <code>[]</code>;
+              <code>[[]]</code> → <code>[]</code>.
+            </p>
+          </section>
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[]</code></td>
+                    <td><code>[]</code></td>
+                    <td>No lists at all (k = 0): reading <code>lists[0]</code> is out of range.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[]]</code></td>
+                    <td><code>[]</code></td>
+                    <td>One list, and it's empty: <code>lists[0]</code> exists but is <code>null</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[1,2,3],[],[],[4]]</code></td>
+                    <td><code>[1,2,3,4]</code></td>
+                    <td>Empty lists in the middle: a heap must skip <code>null</code> heads, or comparing <code>.val</code> crashes.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[1,4,5],[1,3,4],[2,6]]</code></td>
+                    <td><code>[1,1,2,3,4,4,5,6]</code></td>
+                    <td>The usual case, with equal values in different lists.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[5,6],[1,2],[3,4]]</code></td>
+                    <td><code>[1,2,3,4,5,6]</code></td>
+                    <td>The head of the answer doesn't come from <code>lists[0]</code>. A dummy node avoids picking the head up front.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[2,2],[2],[2,2,2]]</code></td>
+                    <td><code>[2,2,2,2,2,2]</code></td>
+                    <td>All ties. In Python 3, a heap of <code>(val, node)</code> tuples compares the nodes on a tie and raises <code>TypeError</code>: add the list index as a tie-breaker.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[-10000,0,10000],[-10000],[10000]]</code></td>
+                    <td><code>[-10000,-10000,0,10000,10000]</code></td>
+                    <td>The extreme values: don't start a "smallest so far" at <code>0</code> or use a sentinel inside the range.</td>
+                  </tr>
+                  <tr>
+                    <td>10⁴ lists of 1 node each</td>
+                    <td>10⁴ nodes</td>
+                    <td>The case that sinks merging one list at a time: about 5 × 10⁷ node steps. It took 1.6 s in Python here (3.2 s with all values equal), where the heap took 0.01 s.</td>
+                  </tr>
+                  <tr>
+                    <td>One list of 10⁴ nodes + 9,999 empty lists</td>
+                    <td>The long list</td>
+                    <td>k is huge but almost every list is empty: the answer should cost about N, not k · N.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Collect, Sort, Relink</h2>
+            <p class="intuition">
+              Ignore that the lists are sorted: put all <code>N</code> nodes in one
+              array, sort it by value, and link the nodes in that order.
+            </p>
+            <ul>
+              <li>It reuses the same nodes, so nothing new is allocated (and nothing leaks in C++).</li>
+              <li>Remember to set the last node's <code>next</code> to <code>null</code>.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(N log N)</span>
+              <span><strong>Space</strong> O(N)</span>
+            </div>
+            <p class="note">
+              Simple and fast enough here (N ≤ 10⁴), but it wastes the sorted
+              order and needs an array of every node.
+            </p>
+            <div class="code-tabs" data-viz="0023-merge-k-sorted-lists/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"collect":[8,9,10,11,12],"sort":[13],"link":[14,15],"return":[16,17,18,19]}'>
+                # Definition for singly-linked list.
+                # class ListNode(object):
+                #     def __init__(self, val=0, next=None):
+                #         self.val = val
+                #         self.next = next
+                class Solution(object):
+                    def mergeKLists(self, lists):
+                        nodes = []
+                        for node in lists:
+                            while node:
+                                nodes.append(node)
+                                node = node.next
+                        nodes.sort(key=lambda node: node.val)
+                        for a, b in zip(nodes, nodes[1:]):  # relink the same nodes in sorted order
+                            a.next = b
+                        if not nodes:  # no lists, or only empty ones
+                            return None
+                        nodes[-1].next = None
+                        return nodes[0]
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"collect":[16,17,18],"sort":[19],"link":[20],"return":[21,22,23]}'>
+                /**
+                 * Definition for singly-linked list.
+                 * struct ListNode {
+                 *     int val;
+                 *     ListNode *next;
+                 *     ListNode() : val(0), next(nullptr) {}
+                 *     ListNode(int x) : val(x), next(nullptr) {}
+                 *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+                 * };
+                 */
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    ListNode* mergeKLists(std::vector<ListNode*>& lists) {
+                        std::vector<ListNode*> nodes;
+                        for (ListNode* head : lists)
+                            for (ListNode* node = head; node; node = node->next) nodes.push_back(node);
+                        std::stable_sort(nodes.begin(), nodes.end(), [](ListNode* a, ListNode* b) { return a->val < b->val; });
+                        for (size_t k = 0; k + 1 < nodes.size(); ++k) nodes[k]->next = nodes[k + 1]; // relink the same nodes in sorted order
+                        if (nodes.empty()) return nullptr; // no lists, or only empty ones
+                        nodes.back()->next = nullptr;
+                        return nodes.front();
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"collect":[16,17,18],"sort":[19],"link":[20],"return":[21,22,23]}'>
+                /**
+                 * Definition for singly-linked list.
+                 * public class ListNode {
+                 *     int val;
+                 *     ListNode next;
+                 *     ListNode() {}
+                 *     ListNode(int val) { this.val = val; }
+                 *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+                 * }
+                 */
+                import java.util.ArrayList;
+                import java.util.Comparator;
+                import java.util.List;
+                class Solution {
+                    public ListNode mergeKLists(ListNode[] lists) {
+                        List<ListNode> nodes = new ArrayList<>();
+                        for (ListNode head : lists)
+                            for (ListNode node = head; node != null; node = node.next) nodes.add(node);
+                        nodes.sort(Comparator.comparingInt(node -> node.val));
+                        for (int k = 0; k + 1 < nodes.size(); k++) nodes.get(k).next = nodes.get(k + 1); // relink the same nodes in sorted order
+                        if (nodes.isEmpty()) return null; // no lists, or only empty ones
+                        nodes.get(nodes.size() - 1).next = null;
+                        return nodes.get(0);
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>Approach 2: Merge One List at a Time</h2>
+            <p class="intuition">
+              You already know how to merge two lists (LeetCode 21). Merge the first
+              list into an empty answer, then the second into that, and so on.
+            </p>
+            <ul>
+              <li>
+                The catch: every merge walks the whole answer so far again. The
+                nodes from the first list get walked about <code>k</code> times.
+              </li>
+              <li>
+                With <code>k</code> lists of about <code>N / k</code> nodes, that's
+                about <code>N / k · (1 + 2 + … + k)</code> ≈ <code>k · N / 2</code>
+                steps.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(k · N)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              Fine for a few lists. At k = N = 10⁴ it's around 5 × 10⁷ steps: it
+              passed here in C++ and Java (about 0.1 s), but took 1.6 to 3.2 s in
+              Python, which risks Time Limit Exceeded.
+            </p>
+            <div class="code-tabs" data-viz="0023-merge-k-sorted-lists/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[8],"each":[9],"merge":[10],"return":[11]}'>
+                # Definition for singly-linked list.
+                # class ListNode(object):
+                #     def __init__(self, val=0, next=None):
+                #         self.val = val
+                #         self.next = next
+                class Solution(object):
+                    def mergeKLists(self, lists):
+                        result = None
+                        for head in lists:
+                            result = self.mergeTwo(result, head)  # the answer so far absorbs one more list
+                        return result
+
+                    def mergeTwo(self, a, b):  # Merge Two Sorted Lists (LeetCode 21)
+                        dummy = tail = ListNode()
+                        while a and b:
+                            if a.val <= b.val:
+                                tail.next, a = a, a.next
+                            else:
+                                tail.next, b = b, b.next
+                            tail = tail.next
+                        tail.next = a or b
+                        return dummy.next
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[15],"each":[16],"merge":[17],"return":[18]}'>
+                /**
+                 * Definition for singly-linked list.
+                 * struct ListNode {
+                 *     int val;
+                 *     ListNode *next;
+                 *     ListNode() : val(0), next(nullptr) {}
+                 *     ListNode(int x) : val(x), next(nullptr) {}
+                 *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+                 * };
+                 */
+                #include <vector>
+                class Solution {
+                public:
+                    ListNode* mergeKLists(std::vector<ListNode*>& lists) {
+                        ListNode* result = nullptr;
+                        for (ListNode* head : lists)
+                            result = mergeTwo(result, head); // the answer so far absorbs one more list
+                        return result;
+                    }
+                private:
+                    ListNode* mergeTwo(ListNode* a, ListNode* b) { // Merge Two Sorted Lists (LeetCode 21)
+                        ListNode dummy;
+                        ListNode* tail = &dummy;
+                        while (a && b) {
+                            if (a->val <= b->val) {
+                                tail->next = a;
+                                a = a->next;
+                            } else {
+                                tail->next = b;
+                                b = b->next;
+                            }
+                            tail = tail->next;
+                        }
+                        tail->next = a ? a : b;
+                        return dummy.next;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[13],"each":[14],"merge":[15],"return":[16]}'>
+                /**
+                 * Definition for singly-linked list.
+                 * public class ListNode {
+                 *     int val;
+                 *     ListNode next;
+                 *     ListNode() {}
+                 *     ListNode(int val) { this.val = val; }
+                 *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+                 * }
+                 */
+                class Solution {
+                    public ListNode mergeKLists(ListNode[] lists) {
+                        ListNode result = null;
+                        for (ListNode head : lists)
+                            result = mergeTwo(result, head); // the answer so far absorbs one more list
+                        return result;
+                    }
+
+                    private ListNode mergeTwo(ListNode a, ListNode b) { // Merge Two Sorted Lists (LeetCode 21)
+                        ListNode dummy = new ListNode();
+                        ListNode tail = dummy;
+                        while (a != null && b != null) {
+                            if (a.val <= b.val) {
+                                tail.next = a;
+                                a = a.next;
+                            } else {
+                                tail.next = b;
+                                b = b.next;
+                            }
+                            tail = tail.next;
+                        }
+                        tail.next = a != null ? a : b;
+                        return dummy.next;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>Approach 3: Min-Heap of the Heads</h2>
+            <p class="intuition">
+              The next node of the answer is always the smallest of the
+              <code>k</code> current heads. A min-heap gives that smallest head in
+              O(log k) instead of checking all <code>k</code>.
+            </p>
+            <ul>
+              <li>Push the head of every non-empty list.</li>
+              <li>
+                Pop the smallest, attach it to <code>tail</code>, and push its
+                <code>next</code> (if any). The heap never holds more than
+                <code>k</code> nodes.
+              </li>
+              <li>
+                Python's <code>heapq</code> compares whole tuples, so push
+                <code>(val, i, node)</code>: the list index <code>i</code> settles
+                ties before Python tries to compare two nodes. C++'s
+                <code>priority_queue</code> puts the largest on top, so its comparator
+                uses <code>&gt;</code>.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(N log k)</span>
+              <span><strong>Space</strong> O(k)</span>
+            </div>
+            <p class="note">
+              The answer most interviewers expect, and the idea behind merging many
+              sorted files on disk (k-way merge). It also works when the lists are
+              streams you can only read from the front.
+            </p>
+            <div class="code-tabs" data-viz="0023-merge-k-sorted-lists/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[9],"heads":[11,12],"pop":[13,14],"attach":[15,16],"push":[17,18],"return":[19]}'>
+                # Definition for singly-linked list.
+                # class ListNode(object):
+                #     def __init__(self, val=0, next=None):
+                #         self.val = val
+                #         self.next = next
+                import heapq
+                class Solution(object):
+                    def mergeKLists(self, lists):
+                        dummy = tail = ListNode()
+                        # one head per non-empty list; i breaks ties, so two nodes are never compared
+                        heap = [(head.val, i, head) for i, head in enumerate(lists) if head]
+                        heapq.heapify(heap)
+                        while heap:
+                            _, i, node = heapq.heappop(heap)  # the smallest of all the current heads
+                            tail.next = node
+                            tail = node
+                            if node.next:  # the next node of the same list takes its place
+                                heapq.heappush(heap, (node.next.val, i, node.next))
+                        return dummy.next
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[16,17],"heads":[19,20,21,22],"pop":[23,24,25],"attach":[26,27],"push":[28],"return":[30]}'>
+                /**
+                 * Definition for singly-linked list.
+                 * struct ListNode {
+                 *     int val;
+                 *     ListNode *next;
+                 *     ListNode() : val(0), next(nullptr) {}
+                 *     ListNode(int x) : val(x), next(nullptr) {}
+                 *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+                 * };
+                 */
+                #include <queue>
+                #include <vector>
+                class Solution {
+                public:
+                    ListNode* mergeKLists(std::vector<ListNode*>& lists) {
+                        ListNode dummy;
+                        ListNode* tail = &dummy;
+                        // priority_queue keeps the "largest" on top, so compare with > to get the smallest val
+                        auto later = [](ListNode* a, ListNode* b) { return a->val > b->val; };
+                        std::priority_queue<ListNode*, std::vector<ListNode*>, decltype(later)> heap(later);
+                        for (ListNode* head : lists)
+                            if (head) heap.push(head); // one head per non-empty list
+                        while (!heap.empty()) {
+                            ListNode* node = heap.top(); // the smallest of all the current heads
+                            heap.pop();
+                            tail->next = node;
+                            tail = node;
+                            if (node->next) heap.push(node->next); // the next node of the same list takes its place
+                        }
+                        return dummy.next;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[14,15],"heads":[16,17,18],"pop":[19,20],"attach":[21,22],"push":[23],"return":[25]}'>
+                /**
+                 * Definition for singly-linked list.
+                 * public class ListNode {
+                 *     int val;
+                 *     ListNode next;
+                 *     ListNode() {}
+                 *     ListNode(int val) { this.val = val; }
+                 *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+                 * }
+                 */
+                import java.util.PriorityQueue;
+                class Solution {
+                    public ListNode mergeKLists(ListNode[] lists) {
+                        ListNode dummy = new ListNode();
+                        ListNode tail = dummy;
+                        PriorityQueue<ListNode> heap = new PriorityQueue<>((a, b) -> Integer.compare(a.val, b.val)); // min-heap by val
+                        for (ListNode head : lists)
+                            if (head != null) heap.add(head); // one head per non-empty list
+                        while (!heap.isEmpty()) {
+                            ListNode node = heap.poll(); // the smallest of all the current heads
+                            tail.next = node;
+                            tail = node;
+                            if (node.next != null) heap.add(node.next); // the next node of the same list takes its place
+                        }
+                        return dummy.next;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 4 -->
+          <section class="approach">
+            <h2>
+              Approach 4: Divide and Conquer (Merge in Pairs)
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              Do what merge sort does: merge the lists in pairs, then merge the
+              results in pairs, until one list is left. Every round halves the number
+              of lists, so there are about <code>log₂ k</code> rounds.
+            </p>
+            <ul>
+              <li>
+                In one round each node is in at most one merge, so a round costs
+                O(N). <code>log k</code> rounds give O(N log k).
+              </li>
+              <li>
+                Bottom-up with a <code>step</code>: merge <code>lists[i]</code> with
+                <code>lists[i + step]</code> for <code>i = 0, 2·step, 4·step, …</code>,
+                then double <code>step</code>. The answer ends up in
+                <code>lists[0]</code>.
+              </li>
+              <li>No recursion and no heap, so the only extra memory is a few pointers.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(N log k)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              As fast as the heap with less memory, and it reuses the two-list merge
+              you already have. It does overwrite entries of the input array, which
+              is fine on LeetCode.
+            </p>
+            <div class="code-tabs" data-viz="0023-merge-k-sorted-lists/approach4">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"empty":[8,9],"init":[10],"round":[11],"pair":[12,13],"double":[14],"return":[15]}'>
+                # Definition for singly-linked list.
+                # class ListNode(object):
+                #     def __init__(self, val=0, next=None):
+                #         self.val = val
+                #         self.next = next
+                class Solution(object):
+                    def mergeKLists(self, lists):
+                        if not lists:  # k = 0: nothing to merge
+                            return None
+                        step = 1  # lists[i] and lists[i + step] are the pairs to merge this round
+                        while step < len(lists):
+                            for i in range(0, len(lists) - step, 2 * step):
+                                lists[i] = self.mergeTwo(lists[i], lists[i + step])
+                            step *= 2  # half as many lists, each about twice as long
+                        return lists[0]
+
+                    def mergeTwo(self, a, b):  # Merge Two Sorted Lists (LeetCode 21)
+                        dummy = tail = ListNode()
+                        while a and b:
+                            if a.val <= b.val:
+                                tail.next, a = a, a.next
+                            else:
+                                tail.next, b = b, b.next
+                            tail = tail.next
+                        tail.next = a or b
+                        return dummy.next
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"empty":[15],"init":[16],"round":[17],"pair":[18,19],"double":[20],"return":[22]}'>
+                /**
+                 * Definition for singly-linked list.
+                 * struct ListNode {
+                 *     int val;
+                 *     ListNode *next;
+                 *     ListNode() : val(0), next(nullptr) {}
+                 *     ListNode(int x) : val(x), next(nullptr) {}
+                 *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+                 * };
+                 */
+                #include <vector>
+                class Solution {
+                public:
+                    ListNode* mergeKLists(std::vector<ListNode*>& lists) {
+                        if (lists.empty()) return nullptr; // k = 0: nothing to merge
+                        size_t step = 1; // lists[i] and lists[i + step] are the pairs to merge this round
+                        while (step < lists.size()) {
+                            for (size_t i = 0; i + step < lists.size(); i += 2 * step)
+                                lists[i] = mergeTwo(lists[i], lists[i + step]);
+                            step *= 2; // half as many lists, each about twice as long
+                        }
+                        return lists[0];
+                    }
+                private:
+                    ListNode* mergeTwo(ListNode* a, ListNode* b) { // Merge Two Sorted Lists (LeetCode 21)
+                        ListNode dummy;
+                        ListNode* tail = &dummy;
+                        while (a && b) {
+                            if (a->val <= b->val) {
+                                tail->next = a;
+                                a = a->next;
+                            } else {
+                                tail->next = b;
+                                b = b->next;
+                            }
+                            tail = tail->next;
+                        }
+                        tail->next = a ? a : b;
+                        return dummy.next;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"empty":[13],"init":[14],"round":[15],"pair":[16,17],"double":[18],"return":[20]}'>
+                /**
+                 * Definition for singly-linked list.
+                 * public class ListNode {
+                 *     int val;
+                 *     ListNode next;
+                 *     ListNode() {}
+                 *     ListNode(int val) { this.val = val; }
+                 *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+                 * }
+                 */
+                class Solution {
+                    public ListNode mergeKLists(ListNode[] lists) {
+                        if (lists.length == 0) return null; // k = 0: nothing to merge
+                        int step = 1; // lists[i] and lists[i + step] are the pairs to merge this round
+                        while (step < lists.length) {
+                            for (int i = 0; i + step < lists.length; i += 2 * step)
+                                lists[i] = mergeTwo(lists[i], lists[i + step]);
+                            step *= 2; // half as many lists, each about twice as long
+                        }
+                        return lists[0];
+                    }
+
+                    private ListNode mergeTwo(ListNode a, ListNode b) { // Merge Two Sorted Lists (LeetCode 21)
+                        ListNode dummy = new ListNode();
+                        ListNode tail = dummy;
+                        while (a != null && b != null) {
+                            if (a.val <= b.val) {
+                                tail.next = a;
+                                a = a.next;
+                            } else {
+                                tail.next = b;
+                                b = b.next;
+                            }
+                            tail = tail.next;
+                        }
+                        tail.next = a != null ? a : b;
+                        return dummy.next;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">No shortcut</span></h2>
+            <p>
+              There's no library call that merges LeetCode's <code>ListNode</code>
+              lists. Python's <code>heapq.merge</code> and C++'s
+              <code>std::merge</code> work on iterables and iterators, and would mean
+              copying values out and building new nodes. What the library does give
+              you is the heap: <code>heapq</code>, <code>std::priority_queue</code>
+              and <code>java.util.PriorityQueue</code>.
+            </p>
+            <p class="note">
+              Write Approach 3 or 4. The heap version is the one to know by heart:
+              "the smallest of k candidates, again and again" is a heap problem.
+            </p>
+          </section>
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Collect, Sort, Relink</th>
+                    <td>Array of all nodes, sort by value</td>
+                    <td>O(N log N)</td>
+                    <td>O(N)</td>
+                    <td>Ignores that the lists are sorted</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Merge One List at a Time</th>
+                    <td>mergeTwo into a growing answer</td>
+                    <td>O(k · N)</td>
+                    <td>O(1)</td>
+                    <td>Re-walks the answer every time; slow in Python at k = 10⁴</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Min-Heap of the Heads</th>
+                    <td>Pop smallest head, push its next</td>
+                    <td>O(N log k)</td>
+                    <td>O(k)</td>
+                    <td>The standard k-way merge</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Divide and Conquer</th>
+                    <td>Merge in pairs, double the step</td>
+                    <td>O(N log k)</td>
+                    <td>O(1)</td>
+                    <td>Merge sort's idea; no extra structure</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -11517,6 +12188,347 @@
           steps.push({
             line: "return",
             note: `Return dp[${n}]: ${dp[n].length} string${dp[n].length === 1 ? "" : "s"}. No duplicates: a string's first '(' and its matching ')' fix c, inside and after, so it's made exactly once.`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0023-merge-k-sorted-lists/approach1.visual.js -->
+    <script>
+      // Collect every node from all k lists, sort them by value, and relink the same nodes in that order.
+      DSAViz.register("0023-merge-k-sorted-lists/approach1", {
+        inputs: [{ name: "lists", type: "int[][]", jagged: true, value: "[[1, 4, 5], [1, 3, 4], [2, 6]]", maxRows: 4, maxCols: 4, minValue: -99, maxValue: 99 }],
+        trace({ lists }) {
+          lists.forEach((l, i) => {
+            for (let k = 1; k < l.length; k++) {
+              if (l[k] < l[k - 1]) throw new DSAViz.InputError(`lists[${i}] must be sorted (non-decreasing), like [1, 4, 5].`);
+            }
+          });
+          const steps = [];
+          const fmt = (arr) => `[${arr.join(", ")}]`;
+          let nodes = []; // [{ src, k }]
+          const val = (m) => lists[m.src][m.k];
+          const view = (opts = {}) => {
+            const widgets = lists.map((l, src) => ({
+              type: "list",
+              label: `lists[${src}]`,
+              nodes: l.map((v, k) => ({ value: v, caption: `#${src}`, mark: opts.at && opts.at[0] === src && opts.at[1] === k ? "active" : "" })),
+              pointers: opts.at && opts.at[0] === src ? { node: opts.at[1] } : {},
+            }));
+            if (!lists.length) widgets.push({ type: "vars", items: [{ name: "lists", value: "[] (k = 0)" }] });
+            const marks = {};
+            if (opts.newest) marks[nodes.length - 1] = "new";
+            if (opts.pair !== undefined) {
+              marks[opts.pair] = "active";
+              marks[opts.pair + 1] = "active";
+            }
+            if (opts.sorted) nodes.forEach((_, idx) => (marks[idx] = "match"));
+            widgets.push({ type: "array", label: "nodes array (source list underneath)", values: nodes.map(val), sub: nodes.map((m) => `#${m.src}`), marks });
+            if (opts.linked !== undefined) {
+              widgets.push({
+                type: "list",
+                label: "relinked",
+                nodes: nodes.slice(0, opts.linked).map((m, idx) => ({ value: val(m), caption: `#${m.src}`, mark: idx === opts.linked - 1 && opts.pair !== undefined ? "new" : "" })),
+                pointers: opts.linked ? { head: 0 } : {},
+              });
+            }
+            return widgets;
+          };
+
+          steps.push({ line: "collect", note: `Walk all ${lists.length} list${lists.length === 1 ? "" : "s"} and put every node in one array.`, view: view() });
+          lists.forEach((list, src) =>
+            list.forEach((v, k) => {
+              nodes.push({ src, k });
+              steps.push({ line: "collect", note: `Add lists[${src}]'s node ${v}.`, view: view({ at: [src, k], newest: true }) });
+            })
+          );
+          nodes = nodes.slice().sort((x, y) => val(x) - val(y));
+          steps.push({
+            line: "sort",
+            note: nodes.length ? `Sort all ${nodes.length} nodes by value: ${fmt(nodes.map(val))}.` : "There are no nodes to sort.",
+            view: view({ sorted: true }),
+          });
+          for (let k = 0; k + 1 < nodes.length; k++) {
+            steps.push({
+              line: "link",
+              note: `nodes[${k}].next = nodes[${k + 1}]: ${val(nodes[k])} → ${val(nodes[k + 1])}.`,
+              view: view({ pair: k, linked: k + 2 }),
+            });
+          }
+          steps.push({
+            line: "return",
+            note: nodes.length
+              ? `Set the last node's next to null and return nodes[0]: ${fmt(nodes.map(val))}. Sorting all N nodes costs O(N log N) and ignores that each list was already sorted.`
+              : `No nodes at all (${lists.length ? "only empty lists" : "no lists"}): return null.`,
+            view: view({ linked: nodes.length }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0023-merge-k-sorted-lists/approach2.visual.js -->
+    <script>
+      // Merge one list at a time into a growing answer, using Merge Two Sorted Lists each time.
+      DSAViz.register("0023-merge-k-sorted-lists/approach2", {
+        inputs: [{ name: "lists", type: "int[][]", jagged: true, value: "[[1, 4, 5], [1, 3, 4], [2, 6]]", maxRows: 4, maxCols: 4, minValue: -99, maxValue: 99 }],
+        trace({ lists }) {
+          lists.forEach((l, i) => {
+            for (let k = 1; k < l.length; k++) {
+              if (l[k] < l[k - 1]) throw new DSAViz.InputError(`lists[${i}] must be sorted (non-decreasing), like [1, 4, 5].`);
+            }
+          });
+          const steps = [];
+          const fmt = (arr) => `[${arr.join(", ")}]`;
+          let result = []; // [{ value, src }]
+          let work = 0;
+          // merge two runs the way mergeTwo does (ties go to the answer so far, a)
+          const mergeTwo = (a, b) => {
+            const out = [];
+            let i = 0;
+            let j = 0;
+            while (i < a.length && j < b.length) out.push(a[i].value <= b[j].value ? a[i++] : b[j++]);
+            return out.concat(a.slice(i), b.slice(j));
+          };
+          const view = (opts = {}) => {
+            const widgets = lists.map((l, src) => ({
+              type: "list",
+              label: `lists[${src}]${opts.done !== undefined && src < opts.done ? " (merged in)" : ""}`,
+              nodes: l.map((v) => ({
+                value: v,
+                caption: `#${src}`,
+                mark: src === opts.next ? "active" : opts.done !== undefined && src < opts.done ? "visited" : "",
+              })),
+              pointers: src === opts.next ? { head: 0 } : {},
+            }));
+            if (!lists.length) widgets.push({ type: "vars", items: [{ name: "lists", value: "[] (k = 0)" }] });
+            widgets.push({
+              type: "list",
+              label: `result (${result.length} node${result.length === 1 ? "" : "s"})`,
+              nodes: result.map((m) => ({ value: m.value, caption: `#${m.src}`, mark: m.src === opts.fresh ? "new" : "" })),
+              pointers: { result: 0 }, // on an empty answer this points at null
+            });
+            widgets.push({ type: "vars", items: [{ name: "work so far", value: `${work} node${work === 1 ? "" : "s"}` }] });
+            return widgets;
+          };
+
+          steps.push({
+            line: "init",
+            note: `Start with an empty answer. "work" adds up the nodes in both lists of every merge: that's how much each mergeTwo can walk.`,
+            view: view({ done: 0 }),
+          });
+          lists.forEach((l, src) => {
+            steps.push({
+              line: "each",
+              note: `Next is lists[${src}] = ${fmt(l)}. It gets merged with the whole answer so far (${result.length} node${result.length === 1 ? "" : "s"}).`,
+              view: view({ next: src, done: src }),
+            });
+            const cost = result.length + l.length;
+            work += cost;
+            result = mergeTwo(result, l.map((value) => ({ value, src })));
+            steps.push({
+              line: "merge",
+              note: `mergeTwo(result, lists[${src}]) → ${fmt(result.map((m) => m.value))}. This merge had ${cost} node${cost === 1 ? "" : "s"} to go through.`,
+              view: view({ fresh: src, done: src + 1 }),
+            });
+          });
+          steps.push({
+            line: "return",
+            note: lists.length && !result.length
+              ? "Every list was empty, so result is still null: return null."
+              : lists.length
+              ? `Return result: ${fmt(result.map((m) => m.value))}. The early nodes get walked again in every later merge, so the work grows like k · N.`
+              : "No lists: the loop never runs, so return null.",
+            view: view({ done: lists.length }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0023-merge-k-sorted-lists/approach3.visual.js -->
+    <script>
+      // Min-heap of the k current heads: pop the smallest, attach it, push the next node from the same list.
+      DSAViz.register("0023-merge-k-sorted-lists/approach3", {
+        inputs: [{ name: "lists", type: "int[][]", jagged: true, value: "[[1, 4, 5], [1, 3, 4], [2, 6]]", maxRows: 4, maxCols: 4, minValue: -99, maxValue: 99 }],
+        trace({ lists }) {
+          lists.forEach((l, i) => {
+            for (let k = 1; k < l.length; k++) {
+              if (l[k] < l[k - 1]) throw new DSAViz.InputError(`lists[${i}] must be sorted (non-decreasing), like [1, 4, 5].`);
+            }
+          });
+          const steps = [];
+          const fmt = (arr) => `[${arr.join(", ")}]`;
+          const pos = lists.map(() => 0); // next node of each list that hasn't entered the heap
+          let heap = []; // [{ src, k }], kept ordered by (value, src) for display
+          const merged = [];
+          const val = (m) => lists[m.src][m.k];
+          const order = () => heap.sort((x, y) => val(x) - val(y) || x.src - y.src);
+          const inHeap = (src, k) => heap.some((m) => m.src === src && m.k === k);
+          // opts.popped: node just taken; opts.pushed: node that just entered the heap
+          const view = (opts = {}) => {
+            const widgets = lists.map((l, src) => ({
+              type: "list",
+              label: `lists[${src}]`,
+              nodes: l.map((v, k) => {
+                let mark = "";
+                if (merged.some((m) => m.src === src && m.k === k)) mark = "visited";
+                if (inHeap(src, k)) mark = "compare";
+                if (opts.popped && opts.popped.src === src && opts.popped.k === k) mark = "active";
+                if (opts.pushed && opts.pushed.src === src && opts.pushed.k === k) mark = "new";
+                return { value: v, caption: `#${src}`, mark };
+              }),
+            }));
+            if (!lists.length) widgets.push({ type: "vars", items: [{ name: "lists", value: "[] (k = 0)" }] });
+            const hmarks = {};
+            heap.forEach((m, idx) => {
+              if (opts.pushed && m.src === opts.pushed.src && m.k === opts.pushed.k) hmarks[idx] = "new";
+            });
+            if (opts.top && heap.length) hmarks[0] = "active";
+            widgets.push({
+              type: "array",
+              label: `heap (${heap.length} of at most ${lists.length}, shown smallest first)`,
+              values: heap.map(val),
+              sub: heap.map((m) => `#${m.src}`),
+              marks: hmarks,
+            });
+            widgets.push({
+              type: "list",
+              label: "merged (from the dummy)",
+              nodes: [{ value: "D", mark: "ghost", caption: "dummy" }].concat(
+                merged.map((m, idx) => ({ value: val(m), caption: `#${m.src}`, mark: opts.attached && idx === merged.length - 1 ? "new" : "" }))
+              ),
+              pointers: { tail: merged.length },
+            });
+            return widgets;
+          };
+
+          steps.push({ line: "init", note: "A dummy node D in front of the answer, and tail on it.", view: view() });
+          lists.forEach((l, src) => {
+            if (l.length) {
+              heap.push({ src, k: 0 });
+              pos[src] = 1;
+            }
+          });
+          order();
+          const empties = lists.filter((l) => !l.length).length;
+          steps.push({
+            line: "heads",
+            note: heap.length
+              ? `Put the head of every non-empty list in a min-heap: ${fmt(heap.map(val))}.${empties ? ` ${empties} empty list${empties === 1 ? " is" : "s are"} skipped.` : ""} The smallest node overall must be one of these.`
+              : "No non-empty lists: the heap starts empty.",
+            view: view(),
+          });
+          while (heap.length) {
+            steps.push({ line: "pop", note: `The heap's top is the smallest current head: ${val(heap[0])} from lists[${heap[0].src}].`, view: view({ top: true }) });
+            const node = heap.shift();
+            merged.push(node);
+            steps.push({ line: "attach", note: `Pop it and attach it: tail.next = ${val(node)}, tail moves onto it.`, view: view({ popped: node, attached: true }) });
+            if (node.k + 1 < lists[node.src].length) {
+              const next = { src: node.src, k: node.k + 1 };
+              heap.push(next);
+              order();
+              steps.push({
+                line: "push",
+                note: `lists[${node.src}] has a next node, ${val(next)}: push it so its list stays in the race. The heap never holds more than k nodes.`,
+                view: view({ pushed: next }),
+              });
+            } else {
+              steps.push({ line: "push", note: `lists[${node.src}] is used up: nothing to push.`, view: view() });
+            }
+          }
+          steps.push({
+            line: "return",
+            note: merged.length
+              ? `The heap is empty: return dummy.next = ${fmt(merged.map(val))}. Each of the N nodes was pushed and popped once at O(log k): O(N log k).`
+              : "The heap is empty from the start: return dummy.next, which is null.",
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0023-merge-k-sorted-lists/approach4.visual.js -->
+    <script>
+      // Divide and conquer, bottom-up: merge lists in pairs, then pairs of pairs, until one list is left.
+      DSAViz.register("0023-merge-k-sorted-lists/approach4", {
+        inputs: [{ name: "lists", type: "int[][]", jagged: true, value: "[[1, 4, 5], [1, 3, 4], [2, 6], [0, 7]]", maxRows: 4, maxCols: 4, minValue: -99, maxValue: 99 }],
+        trace({ lists }) {
+          lists.forEach((l, i) => {
+            for (let k = 1; k < l.length; k++) {
+              if (l[k] < l[k - 1]) throw new DSAViz.InputError(`lists[${i}] must be sorted (non-decreasing), like [1, 4, 5].`);
+            }
+          });
+          const steps = [];
+          const fmt = (arr) => `[${arr.join(", ")}]`;
+          const k = lists.length;
+          if (!k) {
+            steps.push({ line: "empty", note: "No lists at all (k = 0): return null. Without this check, lists[0] would be out of range.", view: [{ type: "vars", items: [{ name: "lists", value: "[]" }] }] });
+            return steps;
+          }
+          const slots = lists.map((l, src) => l.map((value) => ({ value, src }))); // current list in each slot
+          const into = lists.map(() => null); // slot i was merged into slot into[i]
+          let work = 0;
+          const mergeTwo = (a, b) => {
+            const out = [];
+            let i = 0;
+            let j = 0;
+            while (i < a.length && j < b.length) out.push(a[i].value <= b[j].value ? a[i++] : b[j++]);
+            return out.concat(a.slice(i), b.slice(j));
+          };
+          // opts.a / opts.b: the pair being merged; opts.fresh: the slot that just received a merge
+          const view = (step, opts = {}) => {
+            const widgets = [];
+            slots.forEach((s, i) => {
+              if (into[i] !== null) {
+                widgets.push({ type: "vars", items: [{ name: `lists[${i}]`, value: `already merged into lists[${into[i]}]`, mark: "ghost" }] });
+                return;
+              }
+              const role = i === opts.a ? " (lists[i])" : i === opts.b ? " (lists[i + step])" : "";
+              widgets.push({
+                type: "list",
+                label: `lists[${i}]${role}`,
+                nodes: s.map((m) => ({ value: m.value, caption: `#${m.src}`, mark: i === opts.a ? "active" : i === opts.b ? "compare" : i === opts.fresh ? "new" : "" })),
+              });
+            });
+            const items = [];
+            if (step !== undefined) items.push({ name: "step", value: String(step) });
+            items.push({ name: "work so far", value: `${work} node${work === 1 ? "" : "s"}` });
+            widgets.push({ type: "vars", items });
+            return widgets;
+          };
+
+          steps.push({
+            line: "init",
+            note: `step = 1: merge neighbours (0 with 1, 2 with 3, ...). Each round doubles step, so there are about log₂ ${k} rounds.`,
+            view: view(1),
+          });
+          let step = 1;
+          let round = 0;
+          while (step < k) {
+            round++;
+            const live = slots.filter((_, i) => into[i] === null).length;
+            steps.push({ line: "round", note: `Round ${round}, step = ${step}: ${live} lists left, merge them in pairs.`, view: view(step) });
+            for (let i = 0; i + step < k; i += 2 * step) {
+              steps.push({ line: "pair", note: `Pair lists[${i}] with lists[${i + step}].`, view: view(step, { a: i, b: i + step }) });
+              const cost = slots[i].length + slots[i + step].length;
+              work += cost;
+              slots[i] = mergeTwo(slots[i], slots[i + step]);
+              slots[i + step] = [];
+              into[i + step] = i;
+              steps.push({
+                line: "pair",
+                note: `lists[${i}] = mergeTwo(lists[${i}], lists[${i + step}]) → ${fmt(slots[i].map((m) => m.value))} (${cost} node${cost === 1 ? "" : "s"} to go through).`,
+                view: view(step, { fresh: i }),
+              });
+            }
+            step *= 2;
+            steps.push({ line: "double", note: `step = ${step}. Every node took part in at most one merge this round.`, view: view(step) });
+          }
+          steps.push({
+            line: "return",
+            note: !slots[0].length
+              ? "Return lists[0]. Every list was empty, so it's null."
+              : `Return lists[0]: ${fmt(slots[0].map((m) => m.value))}. Each node was in at most ${round} merge${round === 1 ? "" : "s"} (one per round, about log₂ k rounds): O(N log k), with no extra memory.`,
             view: view(),
           });
           return steps;
