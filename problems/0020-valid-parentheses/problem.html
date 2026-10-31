@@ -1,0 +1,223 @@
+<details class="question" data-tags="string stack brackets parentheses matching">
+  <summary>
+    <span class="q-title">20. Valid Parentheses</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">String</span>
+      <span class="tag">Stack</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Use a <strong>stack</strong> of open brackets.
+      Push every opener. For a closer, the stack must be non-empty and its top
+      must be the matching opener; pop it. At the end the stack must be empty.
+      The most recent open bracket is always the one that has to close next,
+      and that's exactly what a stack's top gives you. O(n).
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/valid-parentheses/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given a string <code>s</code> of the characters <code>( ) [ ] { }</code>,
+        return whether it is valid: every open bracket is closed by the same
+        type of bracket, brackets close in the right order, and every closing
+        bracket has an open bracket before it.
+      </p>
+      <ul>
+        <li><code>1 &lt;= s.length &lt;= 10⁴</code></li>
+        <li><code>s</code> contains only <code>()[]{}</code>.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>"()[]{}"</code> → <code>true</code>;
+        <code>"(]"</code> → <code>false</code>; <code>"([)]"</code> →
+        <code>false</code>; <code>"{[]}"</code> → <code>true</code>.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>")"</code></td>
+              <td><code>false</code></td>
+              <td>A closer with nothing open: check the stack is non-empty before looking at its top, or the code crashes.</td>
+            </tr>
+            <tr>
+              <td><code>"(("</code></td>
+              <td><code>false</code></td>
+              <td>Every character is fine on its own, but brackets are left open: check the stack is empty at the end.</td>
+            </tr>
+            <tr>
+              <td><code>"(]"</code></td>
+              <td><code>false</code></td>
+              <td>The right count, the wrong type.</td>
+            </tr>
+            <tr>
+              <td><code>"([)]"</code></td>
+              <td><code>false</code></td>
+              <td>Each type is balanced on its own, but they cross. Counting each type separately says true; only a stack catches the order.</td>
+            </tr>
+            <tr>
+              <td><code>"){"</code></td>
+              <td><code>false</code></td>
+              <td>Even length, but it starts with a closer.</td>
+            </tr>
+            <tr>
+              <td><code>"(()"</code></td>
+              <td><code>false</code></td>
+              <td>An odd length can never be valid: a quick early exit.</td>
+            </tr>
+            <tr>
+              <td><code>"{[()]}"</code></td>
+              <td><code>true</code></td>
+              <td>Nested three deep: each closer matches the most recent opener.</td>
+            </tr>
+            <tr>
+              <td><code>"()[]{}"</code></td>
+              <td><code>true</code></td>
+              <td>Side by side: the stack empties and refills.</td>
+            </tr>
+            <tr>
+              <td>5000 × <code>(</code> then 5000 × <code>)</code></td>
+              <td><code>true</code></td>
+              <td>The longest input, nested as deep as it gets. Removing pairs one layer at a time needs 5000 passes.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Remove Matching Pairs Until Nothing Changes</h2>
+      <p class="intuition">
+        In a valid string there's always a pair like <code>()</code>,
+        <code>[]</code> or <code>{}</code> with nothing between, and removing it
+        leaves a string that's still valid. So keep removing them: valid
+        exactly when nothing is left.
+      </p>
+      <ul>
+        <li>Stop when a pass removes nothing, then check whether the string is empty.</li>
+        <li>Removing an inner pair brings its outer brackets together, so the next pass can remove those.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Each pass is O(n), and deep nesting needs up to n / 2 passes. It still
+        passes at n = 10⁴: the deepest input took 0.15 s in Python here and
+        about 0.1 s in C++ and Java, against 0.002 s for the stack. Short to
+        write, and a nice way to see why the answer works.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Stack
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Read left to right and keep the brackets that are still open. The one
+        that must close next is always the most recent one, so a stack (last
+        in, first out) is the right shape.
+      </p>
+      <ul>
+        <li>Opener: push it.</li>
+        <li>
+          Closer: if the stack is empty, or its top isn't the matching opener,
+          return false. Otherwise pop.
+        </li>
+        <li>
+          At the end, return whether the stack is empty. An odd length can
+          return false straight away.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        One pass. The stack holds at most n / 2 openers on a valid string. The
+        same "most recent unmatched thing" stack shows up in Min Stack (155),
+        Daily Temperatures (739) and expression evaluation.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        A standard regular expression can't check nesting to any depth, and no
+        standard library has a bracket checker. The stack is a few lines with
+        <code>list</code> / <code>std::stack</code> /
+        <code>ArrayDeque</code>, which is what you'd write.
+      </p>
+      <p class="note">
+        In Java, prefer <code>ArrayDeque</code> over the old
+        <code>Stack</code> class, which locks on every call.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Remove Matching Pairs</th>
+              <td>Delete (), [], {} until nothing changes</td>
+              <td>O(n²)</td>
+              <td>O(n)</td>
+              <td>Passes at 10⁴; slow on deep nesting</td>
+            </tr>
+            <tr>
+              <th scope="row">Stack</th>
+              <td>Push openers, match closers against the top</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
