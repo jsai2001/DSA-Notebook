@@ -671,6 +671,12 @@ function visualizerOnScreen() {
 }
 
 document.addEventListener("keydown", (e) => {
+  // Esc closes the search box from anywhere on the page (inside the box itself,
+  // its own handler already did it).
+  if (e.key === "Escape" && !search.hidden && e.target !== search) {
+    setSearchOpen(false);
+    return;
+  }
   if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || typingInField(e.target)) return;
   if (e.key === "/") {
     e.preventDefault();

@@ -87,4 +87,4 @@ Edit page-wide things (header, buttons, scripts) in `template.html`, `app.js` an
 ## Using the page
 - Opening a card puts its link in the address bar (`#q-15-3sum`; jump-bar sections give `#q-15-3sum-approach-3`), so a refresh or bookmark comes back to the same place.
 - **Same pattern** at the end of a card lists other cards with the same pattern tag. It's built from the tags, so a new problem joins automatically; the broad tags Array, String and Math are left out.
-- Keyboard: `/` search, `r` Surprise me, `←` / `→` step the visualizer on screen.
+- Keyboard: `/` opens search and `Esc` closes it (from anywhere on the page), `r` Surprise me, `←` / `→` step the visualizer on screen.
