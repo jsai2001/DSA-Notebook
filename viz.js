@@ -32,7 +32,7 @@
 // Marks: "active", "compare", "match", "visited", "new", "window", "ghost", "cut".
 // int[] inputs accept minLength/maxLength and minValue/maxValue; string inputs accept
 // maxLength and ascii: true; tree inputs (level-order with null) accept maxLength and
-// minValue/maxValue.
+// minValue/maxValue; int[][] inputs (grids) accept maxRows/maxCols and minValue/maxValue.
 // The page script (app.js) calls DSAViz.mount() for each code block with data-viz.
 
 (function () {
@@ -100,6 +100,34 @@
         throw new InputError(`Numbers in ${name} must be between ${minValue} and ${maxValue}.`);
       }
       return values;
+    }
+
+    // Grid of whole numbers, like LeetCode writes it: [[2, 1, 1], [1, 1, 0]].
+    if (spec.type === "int[][]") {
+      const bad = `${name} must be a grid of whole numbers, like ${spec.value}.`;
+      let rows;
+      try {
+        rows = JSON.parse(text);
+      } catch (e) {
+        throw new InputError(bad);
+      }
+      if (!Array.isArray(rows) || !rows.length || !rows.every((r) => Array.isArray(r) && r.length && r.every(Number.isInteger))) {
+        throw new InputError(bad);
+      }
+      if (rows.some((r) => r.length !== rows[0].length)) {
+        throw new InputError(`Every row of ${name} needs the same number of values.`);
+      }
+      const maxRows = spec.maxRows ?? 6;
+      const maxCols = spec.maxCols ?? 6;
+      if (rows.length > maxRows || rows[0].length > maxCols) {
+        throw new InputError(`${name} can be at most ${maxRows} × ${maxCols} here (kept small so the steps stay readable).`);
+      }
+      const minValue = spec.minValue ?? -99;
+      const maxValue = spec.maxValue ?? 99;
+      if (rows.some((r) => r.some((v) => v < minValue || v > maxValue))) {
+        throw new InputError(`Values in ${name} must be between ${minValue} and ${maxValue}.`);
+      }
+      return rows;
     }
 
     // Binary tree in LeetCode's level-order form: [3, 1, 4, 3, null, 1, 5].

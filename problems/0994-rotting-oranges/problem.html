@@ -1,0 +1,246 @@
+<details class="question" data-tags="matrix grid bfs breadth-first-search multi-source-bfs queue simulation graph">
+  <summary>
+    <span class="q-title">994. Rotting Oranges</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Matrix</span>
+      <span class="tag">BFS</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Multi-source BFS. Put <strong>every</strong>
+      rotten orange in the queue at the start, then process the queue one
+      level at a time: each level is one minute. Rot a neighbor the moment you
+      queue it, count the fresh oranges as you go, and if any are left at the
+      end, return <code>-1</code>. O(m · n).
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/rotting-oranges/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        In an <code>m × n</code> grid, <code>0</code> is an empty cell,
+        <code>1</code> a fresh orange and <code>2</code> a rotten one. Every
+        minute, each fresh orange next to a rotten one (up, down, left or
+        right) becomes rotten. Return the minimum number of minutes until no
+        fresh orange is left, or <code>-1</code> if that can't happen.
+      </p>
+      <ul>
+        <li><code>1 &lt;= m, n &lt;= 10</code></li>
+        <li><code>grid[i][j]</code> is <code>0</code>, <code>1</code> or <code>2</code>.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[[2,1,1],[1,1,0],[0,1,1]]</code> → <code>4</code>;
+        <code>[[2,1,1],[0,1,1],[1,0,1]]</code> → <code>-1</code> (the
+        bottom-left orange is cut off); <code>[[0,2]]</code> →
+        <code>0</code>.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[[0]]</code></td>
+              <td><code>0</code></td>
+              <td>No oranges at all: nothing to wait for, so 0, not -1.</td>
+            </tr>
+            <tr>
+              <td><code>[[0,2]]</code></td>
+              <td><code>0</code></td>
+              <td>No fresh oranges at the start: 0 minutes. Don't count a minute just because the queue isn't empty.</td>
+            </tr>
+            <tr>
+              <td><code>[[1]]</code></td>
+              <td><code>-1</code></td>
+              <td>A fresh orange with no rotten one anywhere.</td>
+            </tr>
+            <tr>
+              <td><code>[[2,1]]</code></td>
+              <td><code>1</code></td>
+              <td>Off by one: the last level of the BFS rots nothing new, so don't count it as a minute.</td>
+            </tr>
+            <tr>
+              <td><code>[[2,0],[0,1]]</code></td>
+              <td><code>-1</code></td>
+              <td>Diagonal neighbors don't count: only up, down, left and right.</td>
+            </tr>
+            <tr>
+              <td><code>[[2,1,1],[0,1,1],[1,0,1]]</code></td>
+              <td><code>-1</code></td>
+              <td>Most oranges rot, but one is walled off by empty cells.</td>
+            </tr>
+            <tr>
+              <td><code>[[2,1,1],[1,1,1],[0,1,2]]</code></td>
+              <td><code>2</code></td>
+              <td>Two rotten oranges spread at the same time, so each fresh orange rots from whichever is closer. Spreading from one rotten orange at a time and keeping the largest time gives 3.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,1,2,1,1]]</code></td>
+              <td><code>2</code></td>
+              <td>The rot spreads both ways at once.</td>
+            </tr>
+            <tr>
+              <td><code>[[2,1,1],[1,1,0],[0,1,1]]</code></td>
+              <td><code>4</code></td>
+              <td>The classic bug: rotting oranges <em>during</em> the scan lets the rot spread several steps in one minute, and that version answers 1. Collect first, then rot.</td>
+            </tr>
+            <tr>
+              <td>10 × 10, all <code>1</code> except a <code>2</code> in one corner</td>
+              <td><code>18</code></td>
+              <td>The far corner is 9 + 9 steps away.</td>
+            </tr>
+            <tr>
+              <td>10 × 10 snake: rows of <code>1</code>s joined by one gap at alternating ends, <code>2</code> at the start</td>
+              <td><code>54</code></td>
+              <td>The longest path: the rot has to wind through every row, so the simulation scans the whole grid 55 times (54 minutes, then one scan that finds nothing).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Minute-by-Minute Simulation</h2>
+      <p class="intuition">
+        Do exactly what the problem describes. Each minute, scan the whole
+        grid, collect every fresh orange that touches a rotten one, then rot
+        all of them together. Stop when a minute changes nothing.
+      </p>
+      <ul>
+        <li>
+          Collect first, then rot. If you rot in place during the scan, an
+          orange rotted this minute can rot its neighbor in the same minute.
+          On the example above that answers 1 instead of 4.
+        </li>
+        <li>
+          At the end, any fresh orange left can never be reached: return
+          <code>-1</code>.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O((m · n)²)</span>
+        <span><strong>Space</strong> O(m · n)</span>
+      </div>
+      <p class="note">
+        Up to m · n minutes (54 on the 10 × 10 snake), and each one rescans all
+        m · n cells. With at most 100 cells that's still tiny, so it passes,
+        but most scans look at cells that can't change.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Multi-Source BFS
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Only the oranges that rotted last minute can rot anything new, so keep
+        them in a queue instead of rescanning. Start with every rotten orange
+        in the queue: they all spread at the same time.
+      </p>
+      <ul>
+        <li>
+          Process the queue one level at a time
+          (<code>for _ in range(len(queue))</code>). Each level is one minute.
+        </li>
+        <li>
+          Rot a neighbor and lower <code>fresh</code> as soon as you queue it,
+          so nothing is queued twice. Looping
+          <code>while queue and fresh</code> stops before an extra, empty
+          minute.
+        </li>
+        <li>
+          After the loop, <code>fresh &gt; 0</code> means some oranges were
+          unreachable: <code>-1</code>.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m · n)</span>
+        <span><strong>Space</strong> O(m · n)</span>
+      </div>
+      <p class="note">
+        Every cell is queued at most once and checks 4 neighbors. This is the
+        standard pattern for "spreads one step per minute from several places
+        at once" problems.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No standard library spreads values across a grid. The only built-in
+        that helps is the queue itself: <code>collections.deque</code> in
+        Python, <code>std::queue</code> in C++ and <code>ArrayDeque</code> in
+        Java, all used in Approach 2.
+      </p>
+      <p class="note">
+        Approach 2 is what you'd write. In Python, avoid
+        <code>list.pop(0)</code> for the queue: it's O(n) per pop, while
+        <code>deque.popleft()</code> is O(1).
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Minute-by-Minute Simulation</th>
+              <td>Rescan the grid every minute</td>
+              <td>O((m · n)²)</td>
+              <td>O(m · n)</td>
+              <td>Passes at 10 × 10; collect before rotting</td>
+            </tr>
+            <tr>
+              <th scope="row">Multi-Source BFS</th>
+              <td>Queue every rotten orange, one level per minute</td>
+              <td>O(m · n)</td>
+              <td>O(m · n)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

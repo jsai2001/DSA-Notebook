@@ -74,7 +74,7 @@ Any approach can have a step-by-step visualizer. It shows up as a **Visualize** 
      },
    });
    ```
-   Widgets: `array` (with optional `cut` partition line, `wide` cells for short text), `list` (linked list), `tree` (binary tree from a level-order list), `bars` (bar chart with optional water between two bars), `grid` (2D table), `map`, `set`, `vars`. Input types: `int`, `int[]`, `string`, `tree` (level order with `null`, like LeetCode). Marks: `active`, `compare`, `match`, `visited`, `new`, `window`, `ghost`, `cut`. Every problem in `problems/` has complete examples; `viz.js` documents the engine.
+   Widgets: `array` (with optional `cut` partition line, `wide` cells for short text), `list` (linked list), `tree` (binary tree from a level-order list), `bars` (bar chart with optional water between two bars), `grid` (2D table), `map`, `set`, `vars`. Input types: `int`, `int[]`, `string`, `tree` (level order with `null`, like LeetCode), `int[][]` (a grid like `[[2, 1], [0, 1]]`). Marks: `active`, `compare`, `match`, `visited`, `new`, `window`, `ghost`, `cut`. Every problem in `problems/` has complete examples; `viz.js` documents the engine.
 3. Run `python3 build.py`.
 
 ## Checking the build
