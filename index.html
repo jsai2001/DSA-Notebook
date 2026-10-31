@@ -3505,6 +3505,438 @@
         </div>
       </details>
 
+      <!-- ===== problems/0011-container-with-most-water ===== -->
+      <details class="question" data-tags="array two-pointers greedy container water area">
+        <summary>
+          <span class="q-title">11. Container With Most Water</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">Array</span>
+            <span class="tag">Two Pointers</span>
+            <span class="tag">Greedy</span>
+          </span>
+        </summary>
+
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> Start with the widest container (both ends)
+            and move inward. The water is as high as the <strong>shorter</strong>
+            line, so always drop the shorter one: any narrower container that keeps
+            it is no higher and narrower, so it can't win. One pass, O(n) time,
+            O(1) space.
+          </div>
+
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/container-with-most-water/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              <code>height[i]</code> is a vertical line at position <code>i</code>.
+              Pick two lines that, with the x-axis, hold the most water, and return
+              that amount. The area between lines <code>i &lt; j</code> is
+              <code>min(height[i], height[j]) × (j - i)</code>. The container can't
+              be tilted.
+            </p>
+            <ul>
+              <li><code>2 &lt;= height.length &lt;= 10⁵</code></li>
+              <li><code>0 &lt;= height[i] &lt;= 10⁴</code></li>
+            </ul>
+            <p class="note">
+              Example: <code>[1, 8, 6, 2, 5, 4, 8, 3, 7]</code> → <code>49</code>
+              (lines 1 and 8: min(8, 7) × 7). <code>[1, 1]</code> →
+              <code>1</code>.
+            </p>
+          </section>
+
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[1, 1]</code></td>
+                    <td><code>1</code></td>
+                    <td>Smallest input: only one pair to check.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[0, 0]</code></td>
+                    <td><code>0</code></td>
+                    <td>Height 0 holds no water.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[0, 10000]</code></td>
+                    <td><code>0</code></td>
+                    <td>A tall line doesn't help: the water stops at the shorter one.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[4, 3, 2, 1, 4]</code></td>
+                    <td><code>16</code></td>
+                    <td>The very first container checked (both ends) is the answer.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2, 3, 4, 5, 18, 17, 6]</code></td>
+                    <td><code>17</code></td>
+                    <td>The two tallest lines sit side by side, and width 1 still wins.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1, 2, 4, 3]</code></td>
+                    <td><code>4</code></td>
+                    <td>The best pair (lines 1 and 3) is neither the widest nor uses the tallest line.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]</code></td>
+                    <td><code>25</code></td>
+                    <td>Steadily rising: the left pointer keeps moving, and the best (lines 4 and 9) is in the middle.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[5, 5, 5, 5]</code></td>
+                    <td><code>15</code></td>
+                    <td>Equal heights: moving either pointer is fine.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1, 3, 2, 5, 25, 24, 5]</code></td>
+                    <td><code>24</code></td>
+                    <td>A tall pair close together beats wider, shorter ones.</td>
+                  </tr>
+                  <tr>
+                    <td>10⁵ lines, all <code>10⁴</code></td>
+                    <td><code>999990000</code></td>
+                    <td>The largest possible answer still fits in a 32-bit <code>int</code> (max 2,147,483,647). Brute force has about 5 × 10⁹ pairs here.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Brute Force (Every Pair)</h2>
+            <p class="intuition">
+              Try every pair of lines and keep the largest area.
+            </p>
+            <ul>
+              <li>
+                Area of <code>(i, j)</code> = <code>min(height[i], height[j]) ×
+                (j - i)</code>: the shorter line sets the water level.
+              </li>
+              <li>
+                n(n - 1) / 2 pairs, each O(1).
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n²)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              Too slow at n = 10⁵ (about 5 × 10⁹ pairs). Measured here: Python took
+              5 s for just n = 10⁴, so roughly 100 times that at full size; Java took
+              3.2 s at n = 10⁵. C++ took 0.5 s at n = 10⁵ because the compiler turns
+              the inner loop into vector instructions, so don't count on that.
+            </p>
+            <div class="code-tabs" data-viz="0011-container-with-most-water/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"pair":[5,6],"area":[7],"best":[8],"return":[9]}'>
+                class Solution(object):
+                    def maxArea(self, height):
+                        n = len(height)
+                        best = 0
+                        for i in range(n):
+                            for j in range(i + 1, n):
+                                area = min(height[i], height[j]) * (j - i)  # water is as high as the shorter line
+                                best = max(best, area)
+                        return best
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7],"pair":[8,9],"area":[10],"best":[11],"return":[14]}'>
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    int maxArea(std::vector<int>& height) {
+                        int n = height.size();
+                        int best = 0;
+                        for (int i = 0; i < n; ++i) {
+                            for (int j = i + 1; j < n; ++j) {
+                                int area = std::min(height[i], height[j]) * (j - i); // water is as high as the shorter line
+                                best = std::max(best, area);
+                            }
+                        }
+                        return best;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4],"pair":[5,6],"area":[7],"best":[8],"return":[11]}'>
+                class Solution {
+                    public int maxArea(int[] height) {
+                        int n = height.length;
+                        int best = 0;
+                        for (int i = 0; i < n; i++) {
+                            for (int j = i + 1; j < n; j++) {
+                                int area = Math.min(height[i], height[j]) * (j - i); // water is as high as the shorter line
+                                best = Math.max(best, area);
+                            }
+                        }
+                        return best;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>
+              Approach 2: Two Pointers
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              Start with <code>left = 0</code>, <code>right = n - 1</code>: the
+              widest container. Every move inward makes it narrower, so the only way
+              to do better is a higher water level. That can't happen while the
+              shorter line stays, so move the shorter one.
+            </p>
+            <ul>
+              <li>
+                Why it's safe: if <code>height[left] &lt; height[right]</code>, every
+                container <code>(left, k)</code> with <code>k &lt; right</code> is at
+                most <code>height[left]</code> high and narrower than now. None of
+                them can beat the current area, so <code>left</code> can be dropped
+                without missing the answer.
+              </li>
+              <li>
+                On a tie, move either one: any container that keeps either line is
+                at most that height and narrower.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              Exactly n - 1 steps, since each one drops a line. About 0.01 s in
+              Python at n = 10⁵ here. This is the expected interview answer, and the
+              "why it's safe" argument is usually the follow-up question.
+            </p>
+            <div class="code-tabs" data-viz="0011-container-with-most-water/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"loop":[5],"area":[6],"best":[7],"move":[10],"moveleft":[11],"moveright":[13],"return":[14]}'>
+                class Solution(object):
+                    def maxArea(self, height):
+                        left, right = 0, len(height) - 1  # start as wide as possible
+                        best = 0
+                        while left < right:
+                            area = min(height[left], height[right]) * (right - left)
+                            best = max(best, area)
+                            # Every narrower container that keeps the shorter line is no taller
+                            # and narrower, so it can't beat this one: drop the shorter line.
+                            if height[left] < height[right]:
+                                left += 1
+                            else:
+                                right -= 1
+                        return best
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7],"loop":[8],"area":[9],"best":[10],"move":[13],"moveleft":[14],"moveright":[16],"return":[19]}'>
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    int maxArea(std::vector<int>& height) {
+                        int left = 0, right = height.size() - 1; // start as wide as possible
+                        int best = 0;
+                        while (left < right) {
+                            int area = std::min(height[left], height[right]) * (right - left);
+                            best = std::max(best, area);
+                            // Every narrower container that keeps the shorter line is no taller
+                            // and narrower, so it can't beat this one: drop the shorter line.
+                            if (height[left] < height[right]) {
+                                ++left;
+                            } else {
+                                --right;
+                            }
+                        }
+                        return best;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4],"loop":[5],"area":[6],"best":[7],"move":[10],"moveleft":[11],"moveright":[13],"return":[16]}'>
+                class Solution {
+                    public int maxArea(int[] height) {
+                        int left = 0, right = height.length - 1; // start as wide as possible
+                        int best = 0;
+                        while (left < right) {
+                            int area = Math.min(height[left], height[right]) * (right - left);
+                            best = Math.max(best, area);
+                            // Every narrower container that keeps the shorter line is no taller
+                            // and narrower, so it can't beat this one: drop the shorter line.
+                            if (height[left] < height[right]) {
+                                left++;
+                            } else {
+                                right--;
+                            }
+                        }
+                        return best;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>Approach 3: Two Pointers, Skipping Short Lines</h2>
+            <p class="intuition">
+              After measuring at water level <code>h</code>, every line no taller
+              than <code>h</code> that's further in can only make a smaller
+              container. Skip all of them, on both sides, before measuring again.
+            </p>
+            <ul>
+              <li>
+                Same argument as Approach 2, applied to several lines at once.
+              </li>
+              <li>
+                Using <code>&lt;=</code> (not <code>&lt;</code>) when skipping is
+                what guarantees progress: at least one side always moves.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              Still O(n), but it measures fewer areas. In Python at n = 10⁵ here it
+              was about 3× faster on random input (0.004 s vs 0.013 s) and about 2×
+              on a steady ramp (0.006 s vs 0.013 s). A nice extra; Approach 2 is
+              enough in an interview.
+            </p>
+            <div class="code-tabs" data-viz="0011-container-with-most-water/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"loop":[5],"area":[6],"best":[7],"skipleft":[10,11],"skipright":[12,13],"return":[14]}'>
+                class Solution(object):
+                    def maxArea(self, height):
+                        left, right = 0, len(height) - 1
+                        best = 0
+                        while left < right:
+                            h = min(height[left], height[right])
+                            best = max(best, h * (right - left))
+                            # A line no taller than h, closer in, can only give a smaller
+                            # container: skip all of them on both sides in one go.
+                            while left < right and height[left] <= h:
+                                left += 1
+                            while left < right and height[right] <= h:
+                                right -= 1
+                        return best
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7],"loop":[8],"area":[9],"best":[10],"skipleft":[13],"skipright":[14],"return":[16]}'>
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    int maxArea(std::vector<int>& height) {
+                        int left = 0, right = height.size() - 1;
+                        int best = 0;
+                        while (left < right) {
+                            int h = std::min(height[left], height[right]);
+                            best = std::max(best, h * (right - left));
+                            // A line no taller than h, closer in, can only give a smaller
+                            // container: skip all of them on both sides in one go.
+                            while (left < right && height[left] <= h) ++left;
+                            while (left < right && height[right] <= h) --right;
+                        }
+                        return best;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4],"loop":[5],"area":[6],"best":[7],"skipleft":[10],"skipright":[11],"return":[13]}'>
+                class Solution {
+                    public int maxArea(int[] height) {
+                        int left = 0, right = height.length - 1;
+                        int best = 0;
+                        while (left < right) {
+                            int h = Math.min(height[left], height[right]);
+                            best = Math.max(best, h * (right - left));
+                            // A line no taller than h, closer in, can only give a smaller
+                            // container: skip all of them on both sides in one go.
+                            while (left < right && height[left] <= h) left++;
+                            while (left < right && height[right] <= h) right--;
+                        }
+                        return best;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">No shortcut</span></h2>
+            <p>
+              No standard library function finds the best pair. A
+              <code>max(...)</code> over every pair is just Approach 1 in one line,
+              with the same O(n²) cost.
+            </p>
+            <p class="note">
+              Approach 2 is what you'd write: about eight lines, one pass, and no
+              extra memory.
+            </p>
+          </section>
+
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Brute Force (Every Pair)</th>
+                    <td>Check all n(n - 1) / 2 pairs</td>
+                    <td>O(n²)</td>
+                    <td>O(1)</td>
+                    <td>Too slow at n = 10⁵</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Two Pointers</th>
+                    <td>Start wide, drop the shorter line</td>
+                    <td>O(n)</td>
+                    <td>O(1)</td>
+                    <td>Expected answer; know why it's safe</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Two Pointers, Skipping Short Lines</th>
+                    <td>Skip every line ≤ the water level</td>
+                    <td>O(n)</td>
+                    <td>O(1)</td>
+                    <td>Fewer area checks; same complexity</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -6639,6 +7071,232 @@
             line: "return",
             note: `Return dp[${m}][${n}] = ${dp[m][n]}: "${s}" ${dp[m][n] ? "matches" : "doesn't match"} "${p}". ${(m + 1) * (n + 1)} cells, each O(1): O(m · n).`,
             view: view(undefined, undefined, { final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0011-container-with-most-water/approach1.visual.js -->
+    <script>
+      // Brute force: try every pair of lines; the water is as high as the shorter one.
+      DSAViz.register("0011-container-with-most-water/approach1", {
+        inputs: [{ name: "height", type: "int[]", value: "[1, 8, 6, 2, 5, 4, 8, 3, 7]", minLength: 2, maxLength: 9, minValue: 0, maxValue: 20 }],
+        trace({ height }) {
+          const n = height.length;
+          const steps = [];
+          let best = 0;
+          let bestPair = null;
+          const view = (i, j, opts = {}) => {
+            const marks = {};
+            if (i !== undefined) {
+              marks[i] = height[i] <= height[j] ? "compare" : "active";
+              marks[j] = height[j] < height[i] ? "compare" : "active";
+            }
+            if (opts.final && bestPair) bestPair.forEach((k) => (marks[k] = "match"));
+            const water = i !== undefined ? [i, j] : opts.final ? bestPair : undefined;
+            return [
+              { type: "bars", label: "height (yellow = the shorter line, which sets the water level)", values: height, marks, pointers: i !== undefined ? { i, j } : {}, water },
+              {
+                type: "vars",
+                items: [
+                  { name: "area", value: opts.area === undefined ? "–" : opts.area },
+                  { name: "best", value: bestPair ? `${best} (lines ${bestPair[0]} and ${bestPair[1]})` : best, mark: opts.newBest ? "match" : "" },
+                ],
+              },
+            ];
+          };
+
+          steps.push({
+            line: "init",
+            note: `Check every pair i < j. Water between two lines is as high as the shorter one and as wide as j - i. That's ${(n * (n - 1)) / 2} pairs here.`,
+            view: view(),
+          });
+          for (let i = 0; i < n; i++) {
+            for (let j = i + 1; j < n; j++) {
+              const h = Math.min(height[i], height[j]);
+              const area = h * (j - i);
+              const newBest = area > best;
+              if (newBest) {
+                best = area;
+                bestPair = [i, j];
+              }
+              steps.push({
+                line: newBest ? ["pair", "area", "best"] : ["pair", "area"],
+                note: `Lines ${i} and ${j}: min(${height[i]}, ${height[j]}) × (${j} - ${i}) = ${h} × ${j - i} = ${area}.` + (newBest ? ` New best.` : ""),
+                view: view(i, j, { area, newBest }),
+              });
+            }
+          }
+          steps.push({
+            line: "return",
+            note: `Return ${best}. Every pair was checked: O(n²), about 5 × 10⁹ pairs at n = 10⁵, which is too slow.`,
+            view: view(undefined, undefined, { final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0011-container-with-most-water/approach2.visual.js -->
+    <script>
+      // Two pointers: start at both ends; always drop the shorter line.
+      DSAViz.register("0011-container-with-most-water/approach2", {
+        inputs: [{ name: "height", type: "int[]", value: "[1, 8, 6, 2, 5, 4, 8, 3, 7]", minLength: 2, maxLength: 12, minValue: 0, maxValue: 20 }],
+        trace({ height }) {
+          const n = height.length;
+          const steps = [];
+          let left = 0;
+          let right = n - 1;
+          let best = 0;
+          let bestPair = null;
+          const view = (opts = {}) => {
+            const marks = {};
+            for (let k = 0; k < n; k++) if (k < left || k > right) marks[k] = "visited";
+            if (!opts.final) {
+              marks[left] = height[left] < height[right] ? "compare" : "active";
+              marks[right] = height[left] < height[right] ? "active" : "compare";
+            }
+            if (opts.final && bestPair) bestPair.forEach((k) => (marks[k] = "match"));
+            return [
+              {
+                type: "bars", label: "height (yellow = the shorter line, dashed = dropped)", values: height, marks,
+                pointers: opts.final ? {} : left === right ? { "left, right": left } : { left, right },
+                water: opts.final ? bestPair : [left, right],
+              },
+              {
+                type: "vars",
+                items: [
+                  { name: "area", value: opts.area === undefined ? "–" : opts.area },
+                  { name: "best", value: bestPair ? `${best} (lines ${bestPair[0]} and ${bestPair[1]})` : best, mark: opts.newBest ? "match" : "" },
+                ],
+              },
+            ];
+          };
+
+          steps.push({
+            line: "init",
+            note: `Start with the widest container: left = 0, right = ${n - 1}. Every move makes it narrower, so it only gets bigger if the water gets higher.`,
+            view: view(),
+          });
+          while (left < right) {
+            const h = Math.min(height[left], height[right]);
+            const area = h * (right - left);
+            const newBest = area > best;
+            if (newBest) {
+              best = area;
+              bestPair = [left, right];
+            }
+            steps.push({
+              line: newBest ? ["loop", "area", "best"] : ["loop", "area"],
+              note: `min(${height[left]}, ${height[right]}) × (${right} - ${left}) = ${h} × ${right - left} = ${area}.` + (newBest ? ` New best.` : ` Best stays ${best}.`),
+              view: view({ area, newBest }),
+            });
+            if (height[left] < height[right]) {
+              steps.push({
+                line: ["move", "moveleft"],
+                note: `Line ${left} (height ${height[left]}) is shorter. Any narrower container that keeps it is at most ${height[left]} high, so none can beat ${area}. Drop it: left = ${left + 1}.`,
+                view: view({ area }),
+              });
+              left++;
+            } else {
+              steps.push({
+                line: ["move", "moveright"],
+                note:
+                  (height[left] === height[right]
+                    ? `Both lines are ${height[left]}: either can go, because any container that keeps one of them is at most ${height[left]} high. `
+                    : `Line ${right} (height ${height[right]}) is shorter, so no narrower container that keeps it can beat ${area}. `) +
+                  `Drop the right one: right = ${right - 1}.`,
+                view: view({ area }),
+              });
+              right--;
+            }
+          }
+          steps.push({
+            line: ["loop", "return"],
+            note: `left meets right. Return ${best}. Each step dropped one line, so it took n - 1 = ${n - 1} steps: O(n).`,
+            view: view({ final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0011-container-with-most-water/approach3.visual.js -->
+    <script>
+      // Two pointers, skipping: after measuring at height h, skip every line no taller than h.
+      DSAViz.register("0011-container-with-most-water/approach3", {
+        inputs: [{ name: "height", type: "int[]", value: "[1, 8, 6, 2, 5, 4, 8, 3, 7]", minLength: 2, maxLength: 12, minValue: 0, maxValue: 20 }],
+        trace({ height }) {
+          const n = height.length;
+          const steps = [];
+          let left = 0;
+          let right = n - 1;
+          let best = 0;
+          let bestPair = null;
+          let h = null;
+          let measured = 0;
+          const view = (opts = {}) => {
+            const marks = {};
+            for (let k = 0; k < n; k++) if (k < left || k > right) marks[k] = "visited";
+            if (opts.skip !== undefined) marks[opts.skip] = "compare";
+            else if (!opts.final) {
+              marks[left] = "active";
+              marks[right] = "active";
+            }
+            if (opts.final && bestPair) bestPair.forEach((k) => (marks[k] = "match"));
+            return [
+              {
+                type: "bars", label: "height (yellow = being skipped, dashed = dropped)", values: height, marks,
+                pointers: opts.final ? {} : left === right ? { "left, right": left } : { left, right },
+                water: opts.final ? bestPair : opts.water,
+              },
+              {
+                type: "vars",
+                items: [
+                  { name: "h", value: h === null ? "–" : h },
+                  { name: "best", value: bestPair ? `${best} (lines ${bestPair[0]} and ${bestPair[1]})` : best, mark: opts.newBest ? "match" : "" },
+                  { name: "areas measured", value: measured },
+                ],
+              },
+            ];
+          };
+
+          steps.push({ line: "init", note: `Start at both ends, like Approach 2.`, view: view({ water: [left, right] }) });
+          while (left < right) {
+            h = Math.min(height[left], height[right]);
+            const area = h * (right - left);
+            measured++;
+            const newBest = area > best;
+            if (newBest) {
+              best = area;
+              bestPair = [left, right];
+            }
+            steps.push({
+              line: newBest ? ["loop", "area", "best"] : ["loop", "area"],
+              note: `h = min(${height[left]}, ${height[right]}) = ${h}. Area ${h} × ${right - left} = ${area}.` + (newBest ? ` New best.` : ` Best stays ${best}.`),
+              view: view({ water: [left, right], newBest }),
+            });
+            const pairL = left;
+            const pairR = right;
+            while (left < right && height[left] <= h) {
+              steps.push({
+                line: "skipleft",
+                note: `Line ${left} (height ${height[left]}) ≤ ${h}: any container using it is narrower and no higher than ${h}, so skip it.`,
+                view: view({ skip: left, water: [pairL, pairR] }),
+              });
+              left++;
+            }
+            while (left < right && height[right] <= h) {
+              steps.push({
+                line: "skipright",
+                note: `Line ${right} (height ${height[right]}) ≤ ${h}: same reason, skip it.`,
+                view: view({ skip: right, water: [pairL, pairR] }),
+              });
+              right--;
+            }
+          }
+          steps.push({
+            line: ["loop", "return"],
+            note: `Return ${best}. Only ${measured} area${measured === 1 ? " was" : "s were"} measured; Approach 2 would measure ${n - 1}. Still O(n), just fewer multiplications.`,
+            view: view({ final: true }),
           });
           return steps;
         },

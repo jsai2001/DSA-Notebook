@@ -24,6 +24,8 @@
 //   { type: "tree",  label, values: [3, 1, 4, null, 5], marks: { 0: "active" }, captions: { 0: "max 3" } }
 //     (level-order like LeetCode; node id = index in values; DSAViz.buildTree(values)
 //      gives { root, nodes: { id: { val, left, right, depth } } } for traces)
+//   { type: "bars",  label, values: [1, 8, 6], pointers: { l: 0 }, marks: { 0: "active" }, water: [0, 2] }
+//     (bar chart; water shades between bars l and r up to the shorter one)
 //   { type: "set",   label, items: ["a", "b"], marks: { a: "new" } }
 //   { type: "vars",  items: [{ name, value, mark }] }
 //
@@ -352,6 +354,59 @@
         }
         svg.append(g);
       });
+      wrap.append(svg);
+      block.append(wrap);
+      return block;
+    },
+
+    // Bar chart (SVG): one bar per value, value above, index and pointers below.
+    // water: [l, r] shades the area between bars l and r up to the shorter one.
+    bars(w) {
+      const block = el("div", "viz-block");
+      if (w.label) block.append(el("div", "viz-label", w.label));
+      const vals = w.values || [];
+      const NS = "http://www.w3.org/2000/svg";
+      const make = (tag, attrs, text) => {
+        const node = document.createElementNS(NS, tag);
+        Object.entries(attrs).forEach(([k, v]) => node.setAttribute(k, v));
+        if (text !== undefined) node.textContent = text;
+        return node;
+      };
+      const BW = 28, GAP = 8, H = 120, TOP = 18;
+      const names = {};
+      Object.entries(w.pointers || {}).forEach(([name, idx]) => (names[idx] = (names[idx] || []).concat(name)));
+      const rowsBelow = Math.max(1, ...Object.values(names).map((a) => a.length));
+      const base = TOP + H;
+      const width = vals.length * (BW + GAP) + GAP;
+      const height = base + 16 + rowsBelow * 14 + 4;
+      const max = Math.max(1, ...vals);
+      const x = (i) => GAP + i * (BW + GAP);
+      const y = (v) => base - (v / max) * H;
+      const svg = make("svg", {
+        class: "viz-bars", width, height, viewBox: `0 0 ${width} ${height}`, role: "img",
+        "aria-label": "Bars: " + vals.join(", "),
+      });
+      svg.append(make("line", { class: "viz-bars-axis", x1: 0, y1: base, x2: width, y2: base }));
+      if (w.water) {
+        const [l, r] = w.water;
+        const level = Math.min(vals[l], vals[r]);
+        if (level > 0 && r > l) {
+          svg.append(make("rect", {
+            class: "viz-water", x: x(l) + BW / 2, y: y(level), width: x(r) - x(l), height: base - y(level),
+          }));
+        }
+      }
+      vals.forEach((v, i) => {
+        const g = make("g", { class: "viz-bar" + markClass(w.marks && w.marks[i]) });
+        g.append(make("rect", { x: x(i), y: y(v), width: BW, height: Math.max(base - y(v), 1), rx: 3 }));
+        g.append(make("text", { class: "viz-bar-value", x: x(i) + BW / 2, y: y(v) - 5 }, String(v)));
+        g.append(make("text", { class: "viz-bar-index", x: x(i) + BW / 2, y: base + 12 }, String(i)));
+        (names[i] || []).forEach((name, k) => {
+          g.append(make("text", { class: "viz-bar-pointer", x: x(i) + BW / 2, y: base + 26 + k * 14 }, "↑ " + name));
+        });
+        svg.append(g);
+      });
+      const wrap = el("div", "viz-tree-wrap");
       wrap.append(svg);
       block.append(wrap);
       return block;
