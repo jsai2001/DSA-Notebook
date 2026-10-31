@@ -17,9 +17,10 @@ problems/
     approach2.visual.js optional step-by-step visualizer for approach 2
   0002-add-two-numbers/
   ...
-template.html           page shell (header, theme toggle fixed at the top right, and a
-                        bottom dock with search and Surprise me that stays on screen)
-app.js                  search, code tabs, accordion, theme, Surprise me
+template.html           page shell (header with difficulty/topic filters, theme toggle
+                        fixed at the top right, bottom dock with search and Surprise me)
+app.js                  search + filters, code tabs, accordion, theme, Surprise me,
+                        each card's jump bar (built from its sections), floating controls
 viz.js                  visualizer engine (widgets, controls, line highlighting)
 solutions.css           styles (light and dark themes)
 build.py                stitches template.html + problems/ into index.html

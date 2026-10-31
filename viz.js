@@ -571,7 +571,12 @@
     const counter = el("span", "viz-counter");
     controls.append(prevBtn, playBtn, nextBtn, slider, counter);
 
-    root.append(form, error, main, note, controls);
+    // The explanation and the controls travel together: CSS pins this footer to
+    // the bottom of the screen while the panel is in view, so stepping never
+    // needs scrolling.
+    const footer = el("div", "viz-footer");
+    footer.append(note, controls);
+    root.append(form, error, main, footer);
 
     // --- state ---
     let steps = [];

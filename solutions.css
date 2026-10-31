@@ -257,7 +257,9 @@ body {
   border: 0.1rem solid var(--border);
   border-radius: 1.5rem;
   background: var(--surface);
-  overflow: hidden;
+  /* clip, not hidden: hidden would make the card a scroll container and stop
+     the jump bar and the visualizer footer from sticking to the screen. */
+  overflow: clip;
 }
 
 .question summary {
@@ -353,6 +355,145 @@ body {
 
 .q-body p {
   margin-bottom: 0.75rem;
+}
+
+/* Jump bar: sticks to the top of the screen while an open card is read.
+   Built by app.js from the card's sections. */
+.q-jump {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 -1.5rem;
+  padding: 0.6rem 1.5rem;
+  background: var(--surface);
+  border-bottom: 0.1rem solid var(--border-soft);
+}
+
+.q-jump::-webkit-scrollbar {
+  display: none;
+}
+
+.q-jump a {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.2rem 0.75rem;
+  border: 0.1rem solid var(--border);
+  border-radius: 1rem;
+  color: var(--text-strong);
+  background: var(--bg);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.q-jump a:hover {
+  border-color: var(--active-bg);
+}
+
+.q-jump a.is-optimal {
+  border-color: var(--easy-text);
+  color: var(--easy-text);
+}
+
+.q-jump a[aria-current="true"] {
+  background: var(--active-bg);
+  border-color: var(--active-bg);
+  color: var(--active-text);
+}
+
+.q-jump a:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+/* Jump targets stop below the sticky bar, not under it */
+.q-body > .key-idea,
+.q-body > section {
+  scroll-margin-top: 3.5rem;
+}
+
+/* Filters under the title: difficulty and topic chips, combined with search */
+.filters {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.filter-chip {
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.25rem 0.8rem;
+  border: 0.1rem solid var(--border);
+  border-radius: 1rem;
+  background: var(--bg);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.filter-chip:hover {
+  border-color: var(--active-bg);
+  color: var(--text-strong);
+}
+
+.filter-chip[aria-pressed="true"] {
+  background: var(--active-bg);
+  border-color: var(--active-bg);
+  color: var(--active-text);
+}
+
+.filter-chip:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.filter-chip .chip-count {
+  margin-left: 0.3rem;
+  opacity: 0.6;
+}
+
+.filter-count {
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.filter-count:empty {
+  display: none;
+}
+
+/* Floating controls fade out while the page scrolls and come back when it
+   stops; the dock also steps aside while a visualizer is on screen, so it
+   never covers the pinned Prev / Play / Next. */
+.theme-toggle,
+.dock {
+  transition: opacity 0.2s, visibility 0.2s;
+}
+
+body.is-scrolling .theme-toggle,
+body.is-scrolling .dock:not(.is-searching),
+body.viz-in-view .dock:not(.is-searching) {
+  opacity: 0;
+  visibility: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle,
+  .dock {
+    transition: none;
+  }
 }
 
 /* Key idea callout: the line to remember when revising */
@@ -616,6 +757,38 @@ pre {
   .dock.is-searching {
     width: calc(100vw - 2rem);
   }
+
+  /* A smaller theme button covers less of the cards it floats over */
+  .theme-toggle {
+    width: 2.4rem;
+    height: 2.4rem;
+    font-size: 1rem;
+  }
+
+  /* Jump bar: match the phone card padding, and leave room on the right
+     for the theme button so the last chip can scroll clear of it. */
+  .q-jump {
+    margin: 0 -1rem;
+    padding: 0.55rem 3.75rem 0.55rem 1rem;
+  }
+
+  /* Topic chips: one row that scrolls sideways instead of many lines */
+  .filter-group.is-topics {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: none;
+    max-width: 100%;
+    padding-bottom: 0.2rem;
+  }
+
+  .filter-group.is-topics::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-group.is-topics .filter-chip {
+    flex-shrink: 0;
+  }
 }
 
 /* Link to the original problem */
@@ -777,12 +950,26 @@ pre {
   display: none;
 }
 
-/* Stage (data) beside the code; stacks on narrow screens */
+/* Stage (data) on top, code full width below it, on every screen size,
+   so the highlighted line is never cut off by a narrow column. */
 .viz-main {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   margin-top: 1rem;
+}
+
+/* Explanation + controls, pinned to the bottom of the screen while the
+   panel is in view (sticky inside .viz, so it stops at the panel's end). */
+.viz-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  margin: 0 -1.25rem -1.25rem;
+  padding: 0.25rem 1.25rem 1rem;
+  border-radius: 0 0 1rem 1rem;
+  background: var(--surface);
+  box-shadow: 0 -0.6rem 1rem -0.8rem rgba(0, 0, 0, 0.25);
 }
 
 .viz-stage {
@@ -1357,6 +1544,30 @@ pre {
   user-select: none;
 }
 
+/* Wider screens: wrap long lines instead of hiding their ends. The line
+   number stays in its own column, so wrapped text lines up under the code. */
+@media screen and (min-width: 601px) {
+  .viz-pre code {
+    width: auto;
+  }
+
+  .viz-line {
+    display: flex;
+    white-space: normal;
+  }
+
+  .viz-lineno {
+    flex-shrink: 0;
+  }
+
+  .viz-linetext {
+    flex: 1;
+    min-width: 0;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+}
+
 .viz-line.is-current {
   background: rgba(255, 255, 255, 0.14);
   border-left-color: rgb(250, 215, 140);
@@ -1399,12 +1610,6 @@ pre {
   white-space: nowrap;
 }
 
-@media screen and (max-width: 800px) {
-  .viz-main {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
 @media screen and (max-width: 600px) {
   /* Nested cards eat width on phones; trim their padding. */
   .q-body {
@@ -1418,6 +1623,23 @@ pre {
 
   .viz {
     padding: 0.75rem;
+  }
+
+  /* Same edge-to-edge width as the code above it (see .viz-pre below),
+     so no code shows through at the sides of the pinned footer. */
+  .viz-footer {
+    margin: 0 calc(-1 * (var(--bleed) + 0.85rem)) -0.75rem;
+    padding: 0.25rem calc(var(--bleed) + 0.85rem) 0.75rem;
+    border-radius: 0;
+  }
+
+  /* Long explanations scroll inside the pinned footer instead of
+     pushing the data off the screen. */
+  .viz-footer .viz-note {
+    max-height: 7.5em;
+    overflow-y: auto;
+    margin-top: 0.6rem;
+    font-size: 0.88rem;
   }
 
   .viz-langs {
