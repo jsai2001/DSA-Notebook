@@ -94,7 +94,7 @@ function setSearchOpen(open) {
   dock.classList.toggle("is-searching", open);
   searchToggle.setAttribute("aria-expanded", String(open));
   searchToggle.setAttribute("aria-label", open ? "Close search" : "Search questions");
-  searchToggle.title = open ? "Close search" : "Search by name or tag";
+  searchToggle.title = open ? "Close search (Esc)" : "Search by name or tag (/)";
   if (open) {
     search.focus();
   } else if (search.value) {
@@ -383,15 +383,54 @@ CODE_MOBILE.addEventListener("change", () =>
 // language change, so it calls these directly.
 window.DSACode = { observe: observeCode, fit: fitCode };
 
-// ---------- Jump bar: links to each section of an open card ----------
-// Built from the card's own sections, so new problems get one automatically.
+// ---------- Card ids (used by links, the jump bar and the address bar) ----------
 const slugify = (text) => text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+const titleOf = (q) => q.querySelector(".q-title").textContent.trim();
+questions.forEach((q) => {
+  q.id = q.id || "q-" + slugify(titleOf(q));
+});
 
+// ---------- "Same pattern": other cards that share a pattern tag ----------
+// Built from the tags when the page loads, so new problems join automatically.
+// Broad tags say nothing about the technique, so they're left out.
+const BROAD_TAGS = new Set(["Array", "String", "Math"]);
 questions.forEach((q) => {
   const body = q.querySelector(".q-body");
   if (!body) return;
-  const qid = "q-" + slugify(q.querySelector(".q-title").textContent);
-  q.id = q.id || qid;
+  const groups = topicsOf(q)
+    .filter((t) => !BROAD_TAGS.has(t))
+    .map((tag) => ({ tag, others: [...questions].filter((o) => o !== q && topicsOf(o).includes(tag)) }))
+    .filter((g) => g.others.length);
+  if (!groups.length) return;
+  const sec = document.createElement("section");
+  sec.className = "q-section related";
+  const h2 = document.createElement("h2");
+  h2.textContent = "Same pattern";
+  const list = document.createElement("ul");
+  list.className = "related-list";
+  groups.forEach(({ tag, others }) => {
+    const li = document.createElement("li");
+    const name = document.createElement("span");
+    name.className = "related-tag";
+    name.textContent = tag;
+    li.append(name);
+    others.forEach((o) => {
+      const a = document.createElement("a");
+      a.href = "#" + o.id;
+      a.textContent = titleOf(o);
+      li.append(a);
+    });
+    list.append(li);
+  });
+  sec.append(h2, list);
+  body.append(sec);
+});
+
+// ---------- Jump bar: links to each section of an open card ----------
+// Built from the card's own sections, so new problems get one automatically.
+questions.forEach((q) => {
+  const body = q.querySelector(".q-body");
+  if (!body) return;
 
   const targets = [];
   const keyIdea = body.querySelector(":scope > .key-idea");
@@ -425,6 +464,7 @@ questions.forEach((q) => {
     e.preventDefault();
     q.scrollIntoView({ block: "start" });
     q.querySelector("summary").focus({ preventScroll: true });
+    setAddress(q.id);
   });
   nav.append(top);
 
@@ -442,6 +482,7 @@ questions.forEach((q) => {
       q.jumpClicked = { el: t.el, until: performance.now() + 700 };
       t.el.scrollIntoView({ block: "start" });
       requestAnimationFrame(updateJump);
+      setAddress(t.el.id); // a refresh comes back to this section
     });
     nav.append(a);
     return { a, el: t.el };
@@ -532,3 +573,119 @@ questions.forEach((q) =>
   )
 );
 window.addEventListener("resize", updateVizInView);
+
+// ---------- Address bar: each open card (and jump-bar section) has its own link ----------
+// e.g. …/index.html#q-15-3sum or #q-15-3sum-approach-3. A refresh or a bookmark
+// opens the same place. replaceState keeps the Back button for real page changes.
+function setAddress(id) {
+  const url = location.pathname + location.search + (id ? "#" + id : "");
+  if (location.pathname + location.search + location.hash !== url) history.replaceState(null, "", url);
+}
+
+// The page restores its own place from the link, so don't let the browser
+// jump back to an old scroll position on reload.
+if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+
+const hashIsIn = (q) => location.hash === "#" + q.id || location.hash.startsWith("#" + q.id + "-");
+
+// Registered after the accordion's toggle handler, so by the time this runs
+// the other cards are already closed and the layout has settled.
+questions.forEach((q) =>
+  q.addEventListener("toggle", () => {
+    if (q.open) {
+      if (!hashIsIn(q)) setAddress(q.id); // keep a section link (#q-...-approach-3) as it is
+      if (q.pendingScroll) {
+        const target = q.pendingScroll;
+        q.pendingScroll = null;
+        requestAnimationFrame(() => target.scrollIntoView({ block: "start" }));
+      }
+    } else if (hashIsIn(q)) {
+      setAddress("");
+    }
+  })
+);
+
+// Open the card a link points at (#q-... or #q-...-section), then scroll there.
+function openFromHash(hash) {
+  const id = decodeURIComponent((hash || "").slice(1));
+  if (!id) return false;
+  const target = document.getElementById(id);
+  const q = target && (target.closest(".question") || null);
+  if (!q) return false;
+  if (q.hidden) {
+    // A filter is hiding it: clear the filters so the link still works.
+    filters.difficulty = filters.topic = null;
+    document.querySelectorAll(".filter-chip").forEach((c) => c.setAttribute("aria-pressed", "false"));
+    search.value = "";
+    applyFilters();
+  }
+  setAddress(id);
+  if (q.open) {
+    requestAnimationFrame(() => target.scrollIntoView({ block: "start" }));
+  } else {
+    q.pendingScroll = target; // scrolled to once the card has opened (see above)
+    q.open = true; // the accordion closes the others
+  }
+  return true;
+}
+
+openFromHash(location.hash);
+window.addEventListener("hashchange", () => openFromHash(location.hash));
+// Fonts can still shift the layout after the script runs; land on the target again once loaded.
+// On phones, code blocks above the target also shrink to fit (ResizeObserver),
+// which runs a frame later, so wait two frames before the final scroll.
+window.addEventListener("load", () => {
+  const target = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+  if (!target || !target.closest(".question[open]")) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => target.scrollIntoView({ block: "start" })));
+});
+
+// "Same pattern" links: open the other card instead of only changing the hash.
+document.addEventListener("click", (e) => {
+  const a = e.target.closest(".related-list a");
+  if (!a) return;
+  e.preventDefault();
+  openFromHash(a.getAttribute("href"));
+});
+
+// ---------- Keyboard shortcuts (physical keyboards only; phones never see them) ----------
+//   /      search          r      Surprise me
+//   ← →    step the visualizer that's on screen
+function typingInField(el) {
+  return el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
+}
+
+function visualizerOnScreen() {
+  let best = null;
+  let bestArea = 0;
+  document.querySelectorAll(".viz").forEach((v) => {
+    if (v.hidden || !v.offsetParent) return;
+    const r = v.getBoundingClientRect();
+    const visible = Math.max(0, Math.min(r.bottom, window.innerHeight) - Math.max(r.top, 0));
+    if (visible > bestArea) {
+      best = v;
+      bestArea = visible;
+    }
+  });
+  return best;
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.altKey || typingInField(e.target)) return;
+  if (e.key === "/") {
+    e.preventDefault();
+    if (search.hidden) setSearchOpen(true);
+    else search.focus();
+  } else if (e.key === "r" || e.key === "R") {
+    e.preventDefault();
+    surpriseBtn.click();
+  } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+    const v = visualizerOnScreen();
+    if (!v) return; // no visualizer showing: let the arrows scroll as usual
+    const btn = v.querySelector(e.key === "ArrowRight" ? '[aria-label="Next step"]' : '[aria-label="Previous step"]');
+    if (btn && !btn.disabled) {
+      e.preventDefault();
+      btn.click();
+    }
+  }
+});

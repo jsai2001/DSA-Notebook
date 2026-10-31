@@ -20,7 +20,8 @@ problems/
 template.html           page shell (header with difficulty/topic filters, theme toggle
                         fixed at the top right, bottom dock with search and Surprise me)
 app.js                  search + filters, code tabs, accordion, theme, Surprise me,
-                        each card's jump bar (built from its sections), floating controls
+                        each card's jump bar and "Same pattern" links (built from its
+                        sections and tags), links in the address bar, keyboard shortcuts
 viz.js                  visualizer engine (widgets, controls, line highlighting)
 solutions.css           styles (light and dark themes)
 build.py                stitches template.html + problems/ into index.html
@@ -83,3 +84,7 @@ Any approach can have a step-by-step visualizer. It shows up as a **Visualize** 
 `python3 build.py --check` exits with an error if `index.html` is out of date, without changing anything. The build also stops with a clear message if a placeholder has no code files, a code file isn't used by any placeholder, a folder is misnamed, or code contains `</script`.
 
 Edit page-wide things (header, buttons, scripts) in `template.html`, `app.js` and `solutions.css`, then rebuild.
+## Using the page
+- Opening a card puts its link in the address bar (`#q-15-3sum`; jump-bar sections give `#q-15-3sum-approach-3`), so a refresh or bookmark comes back to the same place.
+- **Same pattern** at the end of a card lists other cards with the same pattern tag. It's built from the tags, so a new problem joins automatically; the broad tags Array, String and Math are left out.
+- Keyboard: `/` search, `r` Surprise me, `←` / `→` step the visualizer on screen.
