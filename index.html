@@ -5632,6 +5632,494 @@
         </div>
       </details>
 
+      <!-- ===== problems/0021-merge-two-sorted-lists ===== -->
+      <details class="question" data-tags="linked-list recursion dummy-node merge two-pointers">
+        <summary>
+          <span class="q-title">21. Merge Two Sorted Lists</span>
+          <span class="q-meta">
+            <span class="badge easy">Easy</span>
+            <span class="tag">Linked List</span>
+            <span class="tag">Recursion</span>
+          </span>
+        </summary>
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> Put a <strong>dummy node</strong> in front of
+            the answer and keep a <code>tail</code> pointer. While both lists have
+            nodes, attach the <strong>smaller head</strong> to <code>tail</code> and
+            move on. When one list runs out, attach the rest of the other in one
+            step. Return <code>dummy.next</code>. O(m + n) time, O(1) space.
+          </div>
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/merge-two-sorted-lists/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              You're given the heads of two sorted linked lists,
+              <code>list1</code> and <code>list2</code>. Merge them into one sorted
+              list made by splicing together the nodes of the two lists, and return
+              its head.
+            </p>
+            <ul>
+              <li>Each list has between <code>0</code> and <code>50</code> nodes.</li>
+              <li><code>-100 &lt;= Node.val &lt;= 100</code>.</li>
+              <li>Both lists are sorted in non-decreasing order.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>[1,2,4]</code>, <code>[1,3,4]</code> →
+              <code>[1,1,2,3,4,4]</code>; <code>[]</code>, <code>[]</code> →
+              <code>[]</code>; <code>[]</code>, <code>[0]</code> → <code>[0]</code>.
+            </p>
+          </section>
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[]</code>, <code>[]</code></td>
+                    <td><code>[]</code></td>
+                    <td>Both heads are <code>null</code>: return <code>null</code> / <code>None</code> without reading <code>.val</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[]</code>, <code>[0]</code></td>
+                    <td><code>[0]</code></td>
+                    <td>Only <code>list1</code> is empty: the answer is just <code>list2</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1]</code>, <code>[]</code></td>
+                    <td><code>[1]</code></td>
+                    <td>The mirror case: <code>list2</code> is empty. Code that checks only one side breaks here.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,2,4]</code>, <code>[1,3,4]</code></td>
+                    <td><code>[1,1,2,3,4,4]</code></td>
+                    <td>Ties at both ends: equal values must both be kept, not merged into one.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[5]</code>, <code>[1,2,3]</code></td>
+                    <td><code>[1,2,3,5]</code></td>
+                    <td>The head of the answer comes from <code>list2</code>, so returning <code>list1</code> is wrong. A dummy node avoids deciding the head up front.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,2,3]</code>, <code>[4,5,6]</code></td>
+                    <td><code>[1,2,3,4,5,6]</code></td>
+                    <td><code>list1</code> runs out first, and all of <code>list2</code> is still left: the leftover must be attached, not dropped.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[-100,0,100]</code>, <code>[-100,100]</code></td>
+                    <td><code>[-100,-100,0,100,100]</code></td>
+                    <td>The extreme values, and negatives: don't start a "smallest so far" at <code>0</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2,2,2]</code>, <code>[2,2]</code></td>
+                    <td><code>[2,2,2,2,2]</code></td>
+                    <td>Every value equal: the comparison is always a tie, so <code>&lt;=</code> vs <code>&lt;</code> decides which list goes first, and both must still finish.</td>
+                  </tr>
+                  <tr>
+                    <td>50 nodes and 50 nodes</td>
+                    <td>100 nodes</td>
+                    <td>The largest input. The recursive version goes about 100 calls deep, which is fine at this size.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Collect, Sort, Relink</h2>
+            <p class="intuition">
+              Forget that the lists are sorted: put every node in one array, sort the
+              array by value, and link the nodes in that order.
+            </p>
+            <ul>
+              <li>
+                It moves the <em>same</em> nodes rather than making new ones, which
+                is what "splicing together the nodes" asks for (and in C++ nothing
+                is leaked).
+              </li>
+              <li>
+                A stable sort keeps <code>list1</code>'s node first on a tie. The
+                values come out the same either way.
+              </li>
+              <li>Remember to set the last node's <code>next</code> to <code>null</code>.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O((m + n) log(m + n))</span>
+              <span><strong>Space</strong> O(m + n)</span>
+            </div>
+            <p class="note">
+              Easy to get right, but it throws away the fact that both lists are
+              already sorted. That's exactly what the next two approaches use.
+            </p>
+            <div class="code-tabs" data-viz="0021-merge-two-sorted-lists/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"collect":[8,9,10,11,12],"sort":[13],"link":[14,15],"return":[16,17,18,19]}'>
+                # Definition for singly-linked list.
+                # class ListNode(object):
+                #     def __init__(self, val=0, next=None):
+                #         self.val = val
+                #         self.next = next
+                class Solution(object):
+                    def mergeTwoLists(self, list1, list2):
+                        nodes = []
+                        for node in (list1, list2):
+                            while node:
+                                nodes.append(node)
+                                node = node.next
+                        nodes.sort(key=lambda node: node.val)  # stable: on a tie, list1's node stays first
+                        for a, b in zip(nodes, nodes[1:]):  # relink the same nodes in sorted order
+                            a.next = b
+                        if not nodes:  # both lists were empty
+                            return None
+                        nodes[-1].next = None
+                        return nodes[0]
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"collect":[16,17,18],"sort":[20],"link":[21],"return":[22,23,24]}'>
+                /**
+                 * Definition for singly-linked list.
+                 * struct ListNode {
+                 *     int val;
+                 *     ListNode *next;
+                 *     ListNode() : val(0), next(nullptr) {}
+                 *     ListNode(int x) : val(x), next(nullptr) {}
+                 *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+                 * };
+                 */
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    ListNode* mergeTwoLists(ListNode* list1, ListNode* list2) {
+                        std::vector<ListNode*> nodes;
+                        for (ListNode* head : {list1, list2})
+                            for (ListNode* node = head; node; node = node->next) nodes.push_back(node);
+                        // stable: on a tie, list1's node stays first
+                        std::stable_sort(nodes.begin(), nodes.end(), [](ListNode* a, ListNode* b) { return a->val < b->val; });
+                        for (size_t k = 0; k + 1 < nodes.size(); ++k) nodes[k]->next = nodes[k + 1]; // relink the same nodes in sorted order
+                        if (nodes.empty()) return nullptr; // both lists were empty
+                        nodes.back()->next = nullptr;
+                        return nodes.front();
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"collect":[17,18,19],"sort":[20],"link":[21],"return":[22,23,24]}'>
+                /**
+                 * Definition for singly-linked list.
+                 * public class ListNode {
+                 *     int val;
+                 *     ListNode next;
+                 *     ListNode() {}
+                 *     ListNode(int val) { this.val = val; }
+                 *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+                 * }
+                 */
+                import java.util.ArrayList;
+                import java.util.Comparator;
+                import java.util.List;
+
+                class Solution {
+                    public ListNode mergeTwoLists(ListNode list1, ListNode list2) {
+                        List<ListNode> nodes = new ArrayList<>();
+                        for (ListNode head : new ListNode[] {list1, list2})
+                            for (ListNode node = head; node != null; node = node.next) nodes.add(node);
+                        nodes.sort(Comparator.comparingInt(node -> node.val)); // stable: on a tie, list1's node stays first
+                        for (int k = 0; k + 1 < nodes.size(); k++) nodes.get(k).next = nodes.get(k + 1); // relink the same nodes in sorted order
+                        if (nodes.isEmpty()) return null; // both lists were empty
+                        nodes.get(nodes.size() - 1).next = null;
+                        return nodes.get(0);
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>Approach 2: Recursion</h2>
+            <p class="intuition">
+              The smaller of the two heads must be the first node. What comes after
+              it? The merge of everything that's left, which is the same problem on
+              smaller lists.
+            </p>
+            <ul>
+              <li>Base case: if one list is empty, the answer is the other list.</li>
+              <li>
+                Otherwise, if <code>list1.val &lt;= list2.val</code>, set
+                <code>list1.next = merge(list1.next, list2)</code> and return
+                <code>list1</code>; else do the same with <code>list2</code>.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(m + n)</span>
+              <span><strong>Space</strong> O(m + n) call stack</span>
+            </div>
+            <p class="note">
+              Short and clear. Each call handles one node, so the stack grows to
+              m + n frames. Fine for 100 nodes; for very long lists it would
+              overflow the stack (Python's default limit is 1,000 calls).
+            </p>
+            <div class="code-tabs" data-viz="0021-merge-two-sorted-lists/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"base":[8,9,10,11],"pick":[12],"left":[13,14],"right":[15,16]}'>
+                # Definition for singly-linked list.
+                # class ListNode(object):
+                #     def __init__(self, val=0, next=None):
+                #         self.val = val
+                #         self.next = next
+                class Solution(object):
+                    def mergeTwoLists(self, list1, list2):
+                        if not list1:  # one list is empty: the answer is the other one
+                            return list2
+                        if not list2:
+                            return list1
+                        if list1.val <= list2.val:  # the smaller head goes first (list1 on a tie)
+                            list1.next = self.mergeTwoLists(list1.next, list2)
+                            return list1
+                        list2.next = self.mergeTwoLists(list1, list2.next)
+                        return list2
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"base":[14,15],"pick":[16],"left":[17,18],"right":[20,21]}'>
+                /**
+                 * Definition for singly-linked list.
+                 * struct ListNode {
+                 *     int val;
+                 *     ListNode *next;
+                 *     ListNode() : val(0), next(nullptr) {}
+                 *     ListNode(int x) : val(x), next(nullptr) {}
+                 *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+                 * };
+                 */
+                class Solution {
+                public:
+                    ListNode* mergeTwoLists(ListNode* list1, ListNode* list2) {
+                        if (!list1) return list2; // one list is empty: the answer is the other one
+                        if (!list2) return list1;
+                        if (list1->val <= list2->val) { // the smaller head goes first (list1 on a tie)
+                            list1->next = mergeTwoLists(list1->next, list2);
+                            return list1;
+                        }
+                        list2->next = mergeTwoLists(list1, list2->next);
+                        return list2;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"base":[13,14],"pick":[15],"left":[16,17],"right":[19,20]}'>
+                /**
+                 * Definition for singly-linked list.
+                 * public class ListNode {
+                 *     int val;
+                 *     ListNode next;
+                 *     ListNode() {}
+                 *     ListNode(int val) { this.val = val; }
+                 *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+                 * }
+                 */
+                class Solution {
+                    public ListNode mergeTwoLists(ListNode list1, ListNode list2) {
+                        if (list1 == null) return list2; // one list is empty: the answer is the other one
+                        if (list2 == null) return list1;
+                        if (list1.val <= list2.val) { // the smaller head goes first (list1 on a tie)
+                            list1.next = mergeTwoLists(list1.next, list2);
+                            return list1;
+                        }
+                        list2.next = mergeTwoLists(list1, list2.next);
+                        return list2;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>
+              Approach 3: Iterative with a Dummy Node
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              The same choice as the recursion, done in a loop: keep a
+              <code>tail</code> on the last node of the answer and keep attaching
+              the smaller head to it.
+            </p>
+            <ul>
+              <li>
+                The dummy node means the first node isn't a special case: the head
+                of the answer is simply <code>dummy.next</code>.
+              </li>
+              <li>
+                When one list runs out, the other is already sorted and every value
+                in it is at least the tail's, so attach all of it at once:
+                <code>tail.next = list1 or list2</code>.
+              </li>
+              <li>Using <code>&lt;=</code> takes <code>list1</code>'s node on a tie, which keeps the merge stable.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(m + n)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              Each node is looked at once and only pointers change. This merge step
+              is the core of merge sort, and it's reused in Merge k Sorted Lists
+              and Sort List.
+            </p>
+            <div class="code-tabs" data-viz="0021-merge-two-sorted-lists/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[8],"loop":[9],"pick":[10],"left":[11,12],"right":[14,15],"advance":[16],"rest":[17],"return":[18]}'>
+                # Definition for singly-linked list.
+                # class ListNode(object):
+                #     def __init__(self, val=0, next=None):
+                #         self.val = val
+                #         self.next = next
+                class Solution(object):
+                    def mergeTwoLists(self, list1, list2):
+                        dummy = tail = ListNode()  # dummy in front, so the first node isn't a special case
+                        while list1 and list2:
+                            if list1.val <= list2.val:  # take the smaller head (list1 on a tie)
+                                tail.next = list1
+                                list1 = list1.next
+                            else:
+                                tail.next = list2
+                                list2 = list2.next
+                            tail = tail.next
+                        tail.next = list1 or list2  # one list is used up: attach the rest of the other
+                        return dummy.next
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[14,15],"loop":[16],"pick":[17],"left":[18,19],"right":[21,22],"advance":[24],"rest":[26],"return":[27]}'>
+                /**
+                 * Definition for singly-linked list.
+                 * struct ListNode {
+                 *     int val;
+                 *     ListNode *next;
+                 *     ListNode() : val(0), next(nullptr) {}
+                 *     ListNode(int x) : val(x), next(nullptr) {}
+                 *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+                 * };
+                 */
+                class Solution {
+                public:
+                    ListNode* mergeTwoLists(ListNode* list1, ListNode* list2) {
+                        ListNode dummy; // in front, so the first node isn't a special case
+                        ListNode* tail = &dummy;
+                        while (list1 && list2) {
+                            if (list1->val <= list2->val) { // take the smaller head (list1 on a tie)
+                                tail->next = list1;
+                                list1 = list1->next;
+                            } else {
+                                tail->next = list2;
+                                list2 = list2->next;
+                            }
+                            tail = tail->next;
+                        }
+                        tail->next = list1 ? list1 : list2; // one list is used up: attach the rest of the other
+                        return dummy.next;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[13,14],"loop":[15],"pick":[16],"left":[17,18],"right":[20,21],"advance":[23],"rest":[25],"return":[26]}'>
+                /**
+                 * Definition for singly-linked list.
+                 * public class ListNode {
+                 *     int val;
+                 *     ListNode next;
+                 *     ListNode() {}
+                 *     ListNode(int val) { this.val = val; }
+                 *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+                 * }
+                 */
+                class Solution {
+                    public ListNode mergeTwoLists(ListNode list1, ListNode list2) {
+                        ListNode dummy = new ListNode(); // in front, so the first node isn't a special case
+                        ListNode tail = dummy;
+                        while (list1 != null && list2 != null) {
+                            if (list1.val <= list2.val) { // take the smaller head (list1 on a tie)
+                                tail.next = list1;
+                                list1 = list1.next;
+                            } else {
+                                tail.next = list2;
+                                list2 = list2.next;
+                            }
+                            tail = tail.next;
+                        }
+                        tail.next = list1 != null ? list1 : list2; // one list is used up: attach the rest of the other
+                        return dummy.next;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">No shortcut</span></h2>
+            <p>
+              LeetCode's <code>ListNode</code> is a bare class, so the standard
+              library can't merge it. C++ has <code>std::list::merge</code> and
+              <code>std::merge</code>, and Python has <code>heapq.merge</code>, but
+              they work on <code>std::list</code>, iterators and iterables, not on
+              these nodes. Copying the values out, merging, and building new nodes
+              works, but it makes new nodes instead of splicing the old ones.
+            </p>
+            <p class="note">
+              Write Approach 3. The dummy node plus tail pointer is the standard way
+              to build any linked list as you go.
+            </p>
+          </section>
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Collect, Sort, Relink</th>
+                    <td>Array of nodes, stable sort by value</td>
+                    <td>O((m + n) log(m + n))</td>
+                    <td>O(m + n)</td>
+                    <td>Ignores that the input is sorted</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Recursion</th>
+                    <td>Smaller head, then merge the rest</td>
+                    <td>O(m + n)</td>
+                    <td>O(m + n) stack</td>
+                    <td>Shortest code; deep on long lists</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Iterative with a Dummy Node</th>
+                    <td>Tail pointer, attach the smaller head</td>
+                    <td>O(m + n)</td>
+                    <td>O(1)</td>
+                    <td>Expected answer</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -10063,6 +10551,295 @@
               ? `The end, but ${stack.length} bracket${stack.length === 1 ? " is" : "s are"} still open (${stack.join(" ")}): return false.`
               : `The end, and the stack is empty: every bracket was closed in the right order. Return true. One pass: O(n).`,
             view: view(undefined),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0021-merge-two-sorted-lists/approach1.visual.js -->
+    <script>
+      // Collect every node into an array, stable-sort it by value, and relink the same nodes in that order.
+      DSAViz.register("0021-merge-two-sorted-lists/approach1", {
+        inputs: [
+          { name: "list1", type: "int[]", value: "[1, 2, 4]", minLength: 0, maxLength: 8, minValue: -99, maxValue: 99 },
+          { name: "list2", type: "int[]", value: "[1, 3, 4]", minLength: 0, maxLength: 8, minValue: -99, maxValue: 99 },
+        ],
+        trace({ list1, list2 }) {
+          for (const [name, v] of [["list1", list1], ["list2", list2]]) {
+            for (let k = 1; k < v.length; k++) {
+              if (v[k] < v[k - 1]) throw new DSAViz.InputError(`${name} must be sorted (non-decreasing), like [1, 2, 4].`);
+            }
+          }
+          const lists = [list1, list2];
+          const steps = [];
+          const fmt = (arr) => `[${arr.join(", ")}]`;
+          let nodes = []; // [{ src, k }]
+          const val = (m) => lists[m.src][m.k];
+          // opts.at: [src, k] of the node being read; opts.linked: how many array cells are joined so far
+          const view = (opts = {}) => {
+            const source = (src) => {
+              const at = opts.at && opts.at[0] === src ? opts.at[1] : undefined;
+              return {
+                type: "list",
+                label: `list${src + 1}`,
+                nodes: lists[src].map((v, k) => ({ value: v, caption: `list${src + 1}`, mark: k === at ? "active" : "" })),
+                pointers: at === undefined ? {} : { node: at },
+              };
+            };
+            const marks = {};
+            if (opts.newest) marks[nodes.length - 1] = "new";
+            if (opts.pair !== undefined) {
+              marks[opts.pair] = "active";
+              marks[opts.pair + 1] = "active";
+            }
+            if (opts.sorted) nodes.forEach((_, idx) => (marks[idx] = marks[idx] || "match"));
+            const widgets = [
+              source(0),
+              source(1),
+              { type: "array", label: "nodes array (source list underneath)", values: nodes.map(val), sub: nodes.map((m) => `list${m.src + 1}`), marks },
+            ];
+            if (opts.linked !== undefined) {
+              widgets.push({
+                type: "list",
+                label: "relinked",
+                nodes: nodes.slice(0, opts.linked).map((m, idx) => ({ value: val(m), caption: `list${m.src + 1}`, mark: idx === opts.linked - 1 && opts.pair !== undefined ? "new" : "" })),
+                pointers: opts.linked ? { head: 0 } : {},
+              });
+            }
+            return widgets;
+          };
+
+          steps.push({ line: "collect", note: "Walk list1, then list2, and put every node in one array.", view: view() });
+          lists.forEach((list, src) =>
+            list.forEach((v, k) => {
+              nodes.push({ src, k });
+              steps.push({ line: "collect", note: `Add list${src + 1}'s node ${v}.`, view: view({ at: [src, k], newest: true }) });
+            })
+          );
+          // Array.prototype.sort is stable, like Python's sort, std::stable_sort and Java's List.sort
+          nodes = nodes.slice().sort((x, y) => val(x) - val(y));
+          steps.push({
+            line: "sort",
+            note: nodes.length
+              ? `Sort the nodes by value: ${fmt(nodes.map(val))}. The sort is stable, so on a tie list1's node stays first.`
+              : "There are no nodes to sort.",
+            view: view({ sorted: true }),
+          });
+          for (let k = 0; k + 1 < nodes.length; k++) {
+            steps.push({
+              line: "link",
+              note: `nodes[${k}].next = nodes[${k + 1}]: ${val(nodes[k])} → ${val(nodes[k + 1])}.`,
+              view: view({ pair: k, linked: k + 2 }),
+            });
+          }
+          steps.push({
+            line: "return",
+            note: nodes.length
+              ? `Set the last node's next to null and return nodes[0]: ${fmt(nodes.map(val))}. The sort ignores that both lists were already sorted: O((m + n) log(m + n)) time, O(m + n) space.`
+              : "Both lists were empty: return null.",
+            view: view({ linked: nodes.length }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0021-merge-two-sorted-lists/approach2.visual.js -->
+    <script>
+      // Recursive merge: the smaller head goes first, and its next is the merge of everything after it.
+      DSAViz.register("0021-merge-two-sorted-lists/approach2", {
+        inputs: [
+          { name: "list1", type: "int[]", value: "[1, 2, 4]", minLength: 0, maxLength: 8, minValue: -99, maxValue: 99 },
+          { name: "list2", type: "int[]", value: "[1, 3, 4]", minLength: 0, maxLength: 8, minValue: -99, maxValue: 99 },
+        ],
+        trace({ list1, list2 }) {
+          for (const [name, v] of [["list1", list1], ["list2", list2]]) {
+            for (let k = 1; k < v.length; k++) {
+              if (v[k] < v[k - 1]) throw new DSAViz.InputError(`${name} must be sorted (non-decreasing), like [1, 2, 4].`);
+            }
+          }
+          const lists = [list1, list2];
+          const steps = [];
+          const fmt = (arr) => `[${arr.join(", ")}]`;
+          const head = (src, at) => (at < lists[src].length ? String(lists[src][at]) : "null");
+          const frames = []; // calls still waiting for their answer: { i, j, src }
+          let returned = null; // [{ src, k }] once the recursion starts to unwind
+          const view = (i, j, opts = {}) => {
+            const source = (src, at) =>
+              lists[src].map((v, k) => {
+                let mark = "";
+                if (k < at) mark = "visited";
+                if (opts.compare && k === at) mark = "compare";
+                if (opts.took && opts.took.src === src && opts.took.k === k) mark = "match";
+                return { value: v, caption: `list${src + 1}`, mark };
+              });
+            const calls = frames.map((f) => `(${head(0, f.i)}, ${head(1, f.j)})`);
+            if (opts.current) calls.push(`(${head(0, i)}, ${head(1, j)})`);
+            const widgets = [
+              { type: "list", label: "list1", nodes: source(0, i), pointers: { list1: i } },
+              { type: "list", label: "list2", nodes: source(1, j), pointers: { list2: j } },
+              { type: "array", label: "call stack: merge(list1, list2), newest on the right", values: calls, wide: true, marks: calls.length ? { [calls.length - 1]: "active" } : {} },
+            ];
+            if (returned) {
+              widgets.push({
+                type: "list",
+                label: "returned so far",
+                nodes: returned.map((m, idx) => ({ value: lists[m.src][m.k], caption: `list${m.src + 1}`, mark: idx === 0 && opts.fresh ? "new" : "" })),
+                pointers: returned.length ? { head: 0 } : {},
+              });
+            }
+            return widgets;
+          };
+
+          let i = 0;
+          let j = 0;
+          for (;;) {
+            if (i === list1.length || j === list2.length) {
+              const src = i === list1.length ? 1 : 0;
+              const from = src === 0 ? i : j;
+              returned = lists[src].slice(from).map((_, d) => ({ src, k: from + d }));
+              const empty = i === list1.length ? "list1" : "list2";
+              steps.push({
+                line: "base",
+                note: returned.length
+                  ? `${empty} is null: return list${src + 1} as it is, ${fmt(lists[src].slice(from))}.`
+                  : "Both lists are null: return null.",
+                view: view(i, j, { current: true, fresh: true }),
+              });
+              break;
+            }
+            const a = list1[i];
+            const b = list2[j];
+            const left = a <= b;
+            steps.push({
+              line: "pick",
+              note: left
+                ? `${a} ≤ ${b}${a === b ? " (a tie goes to list1)" : ""}: list1's node is first.`
+                : `${a} > ${b}: list2's node is first.`,
+              view: view(i, j, { current: true, compare: true }),
+            });
+            frames.push({ i, j, src: left ? 0 : 1 });
+            steps.push({
+              line: left ? "left" : "right",
+              note: `Its next is the merge of the rest: call merge(${left ? "list1.next" : "list1"}, ${left ? "list2" : "list2.next"}).`,
+              view: view(left ? i + 1 : i, left ? j : j + 1, { current: true, took: left ? { src: 0, k: i } : { src: 1, k: j } }),
+            });
+            if (left) i++;
+            else j++;
+          }
+          const depth = frames.length + 1;
+          while (frames.length) {
+            const f = frames.pop();
+            const took = f.src === 0 ? { src: 0, k: f.i } : { src: 1, k: f.j };
+            returned = [took].concat(returned);
+            const v = lists[took.src][took.k];
+            steps.push({
+              line: f.src === 0 ? "left" : "right",
+              note: `Back in merge(${head(0, f.i)}, ${head(1, f.j)}): set ${v}.next to the returned list and return ${v}: ${fmt(returned.map((m) => lists[m.src][m.k]))}.`,
+              view: view(f.i, f.j, { current: true, took, fresh: true }),
+            });
+          }
+          // the outermost call's return is the answer
+          steps[steps.length - 1].note += ` That's the answer. The stack went ${depth} call${depth === 1 ? "" : "s"} deep: O(m + n) space.`;
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0021-merge-two-sorted-lists/approach3.visual.js -->
+    <script>
+      // Iterative merge: a dummy node, a tail pointer, and always take the smaller head.
+      DSAViz.register("0021-merge-two-sorted-lists/approach3", {
+        inputs: [
+          { name: "list1", type: "int[]", value: "[1, 2, 4]", minLength: 0, maxLength: 8, minValue: -99, maxValue: 99 },
+          { name: "list2", type: "int[]", value: "[1, 3, 4]", minLength: 0, maxLength: 8, minValue: -99, maxValue: 99 },
+        ],
+        trace({ list1, list2 }) {
+          for (const [name, v] of [["list1", list1], ["list2", list2]]) {
+            for (let k = 1; k < v.length; k++) {
+              if (v[k] < v[k - 1]) throw new DSAViz.InputError(`${name} must be sorted (non-decreasing), like [1, 2, 4].`);
+            }
+          }
+          const lists = [list1, list2];
+          const steps = [];
+          let i = 0;
+          let j = 0;
+          const merged = []; // [{ src: 0 | 1, k }]
+          const fmt = (arr) => `[${arr.join(", ")}]`;
+          const mergedValues = () => merged.map((m) => lists[m.src][m.k]);
+          // opts.compare: highlight both heads; opts.took: the node just attached; opts.tailNew: tail sits on the newest node
+          const view = (opts = {}) => {
+            const source = (src, at) =>
+              lists[src].map((v, k) => {
+                let mark = "";
+                if (k < at) mark = "visited";
+                if (opts.compare && k === at) mark = "compare";
+                if (opts.took && opts.took.src === src && opts.took.k === k) mark = "match";
+                return { value: v, caption: `list${src + 1}`, mark };
+              });
+            const out = [{ value: "D", mark: "ghost", caption: "dummy" }].concat(
+              merged.map((m, idx) => ({
+                value: lists[m.src][m.k],
+                caption: `list${m.src + 1}`,
+                mark: idx >= (opts.newFrom ?? merged.length) ? "new" : "",
+              }))
+            );
+            return [
+              { type: "list", label: "list1", nodes: source(0, i), pointers: { list1: i } },
+              { type: "list", label: "list2", nodes: source(1, j), pointers: { list2: j } },
+              { type: "list", label: "merged (from the dummy)", nodes: out, pointers: { tail: opts.tail ?? merged.length } },
+            ];
+          };
+
+          steps.push({ line: "init", note: "Put a dummy node D in front of the answer and start tail on it.", view: view({ tail: 0 }) });
+          while (i < list1.length && j < list2.length) {
+            const a = list1[i];
+            const b = list2[j];
+            steps.push({ line: "loop", note: `Both lists still have nodes: compare ${a} and ${b}.`, view: view({ compare: true }) });
+            const left = a <= b;
+            steps.push({
+              line: "pick",
+              note: left
+                ? `${a} ≤ ${b}${a === b ? " (a tie goes to list1)" : ""}, so list1's node comes next.`
+                : `${a} > ${b}, so list2's node comes next.`,
+              view: view({ compare: true }),
+            });
+            const took = left ? { src: 0, k: i } : { src: 1, k: j };
+            merged.push(took);
+            if (left) i++;
+            else j++;
+            steps.push({
+              line: left ? "left" : "right",
+              note: `tail.next = ${left ? "list1" : "list2"} (${left ? a : b}), then ${left ? "list1" : "list2"} moves to its next node.`,
+              view: view({ took, newFrom: merged.length - 1, tail: merged.length - 1 }),
+            });
+            steps.push({ line: "advance", note: `tail moves onto ${left ? a : b}, the last node of the answer so far.`, view: view({ newFrom: merged.length - 1 }) });
+          }
+          const done = i < list1.length ? "list2" : "list1";
+          steps.push({
+            line: "loop",
+            note:
+              !list1.length && !list2.length
+                ? "Both lists are empty: the loop never runs."
+                : `${i === list1.length && j === list2.length ? "Both lists are" : done + " is"} used up: stop comparing.`,
+            view: view(),
+          });
+          const before = merged.length;
+          const restSrc = i < list1.length ? 0 : 1;
+          const restFrom = restSrc === 0 ? i : j;
+          const rest = lists[restSrc].slice(restFrom);
+          rest.forEach((_, d) => merged.push({ src: restSrc, k: restFrom + d }));
+          if (restSrc === 0) i = list1.length;
+          else j = list2.length;
+          steps.push({
+            line: "rest",
+            note: rest.length
+              ? `Attach what's left of list${restSrc + 1} in one step: ${fmt(rest)}. It's already sorted, and every value is ≥ the tail.`
+              : "Nothing is left in either list: tail.next = null.",
+            view: view({ newFrom: before, tail: before }),
+          });
+          steps.push({
+            line: "return",
+            note: `Return dummy.next: ${fmt(mergedValues())}. Each node was linked once: O(m + n) time, O(1) extra space.`,
+            view: view(),
           });
           return steps;
         },
