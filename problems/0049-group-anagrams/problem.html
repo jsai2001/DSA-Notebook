@@ -1,0 +1,235 @@
+<details class="question" data-tags="array hash-table string sorting anagram counting grouping">
+  <summary>
+    <span class="q-title">49. Group Anagrams</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Hash Table</span>
+      <span class="tag">String</span>
+      <span class="tag">Sorting</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Give every word a <strong>key</strong> that
+      only anagrams share, and group by it in a hash map. The sorted word
+      (<code>"eat"</code> → <code>"aet"</code>) works; the
+      <strong>26 letter counts</strong> work without sorting, in O(k) per
+      word. One pass: O(n · k).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/group-anagrams/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given an array of strings <code>strs</code>, group the anagrams
+        together (words made of the same letters, each used the same number of
+        times). The groups, and the words inside them, can be in any order.
+      </p>
+      <ul>
+        <li><code>1 &lt;= strs.length &lt;= 10⁴</code> and <code>0 &lt;= strs[i].length &lt;= 100</code>.</li>
+        <li>Only lowercase English letters.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>["eat","tea","tan","ate","nat","bat"]</code> →
+        <code>[["bat"],["nat","tan"],["ate","eat","tea"]]</code>;
+        <code>[""]</code> → <code>[[""]]</code>; <code>["a"]</code> →
+        <code>[["a"]]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[""]</code></td>
+              <td><code>[[""]]</code></td>
+              <td>The empty word is a real word with a real group, not something to skip.</td>
+            </tr>
+            <tr>
+              <td><code>["",""]</code> / <code>["a","a"]</code></td>
+              <td><code>[["",""]]</code> / <code>[["a","a"]]</code></td>
+              <td>Duplicates stay: both copies go into the same group. A set would lose one.</td>
+            </tr>
+            <tr>
+              <td><code>["aab","abb"]</code></td>
+              <td><code>[["aab"],["abb"]]</code></td>
+              <td>Same letters, different counts: not anagrams. A key made from the <em>set</em> of letters groups them by mistake.</td>
+            </tr>
+            <tr>
+              <td><code>["ab","ba","abc"]</code></td>
+              <td><code>[["ab","ba"],["abc"]]</code></td>
+              <td>A word containing another's letters isn't its anagram; lengths must match too.</td>
+            </tr>
+            <tr>
+              <td><code>["abbbbbbbbbbb","aaaaaaaaaaab"]</code></td>
+              <td>Two groups</td>
+              <td>Counts 1, 11 and 11, 1. Joining counts into a string <em>without a separator</em> gives "111…" for both and merges them.</td>
+            </tr>
+            <tr>
+              <td><code>["eat","tea","tan","ate","nat","bat"]</code></td>
+              <td>3 groups</td>
+              <td>The usual case: groups of different sizes, words out of order.</td>
+            </tr>
+            <tr>
+              <td>10⁴ different words of 100 letters</td>
+              <td>10⁴ groups of one</td>
+              <td>No anagrams at all: comparing each word with every group so far is about 5 × 10⁷ checks.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Compare with Every Group</h2>
+      <p class="intuition">
+        Keep a list of groups. For each word, check it against one word from
+        each group (are they anagrams?), and join the first one that matches,
+        or start a new group.
+      </p>
+      <ul>
+        <li>Two words are anagrams if they have the same length and the same letters when sorted.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · g · k log k), g = groups</span>
+        <span><strong>Space</strong> O(n · k)</span>
+      </div>
+      <p class="note">
+        Correct, but each word may be checked against every group. With 10⁴
+        words and no anagrams it took about 9 minutes in Python here (about 2
+        in Java): far over the time limit.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Sorted Word as the Key</h2>
+      <p class="intuition">
+        Instead of comparing words with each other, give each word a label that
+        all its anagrams share. Sorting the letters does that:
+        <code>"eat"</code>, <code>"tea"</code> and <code>"ate"</code> all
+        become <code>"aet"</code>. A hash map from label to group finds the
+        right group in one lookup.
+      </p>
+      <ul>
+        <li>Python <code>dict.setdefault</code>, C++ <code>map[key].push_back</code>, Java <code>computeIfAbsent</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · k log k)</span>
+        <span><strong>Space</strong> O(n · k)</span>
+      </div>
+      <p class="note">
+        The one most people write first, and plenty fast: 0.07 s in Python
+        here for 10⁴ words of 100 letters.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Letter Counts as the Key
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        With only 26 letters, the key can be "how many of each": one pass over
+        the word instead of a sort. Two words are anagrams exactly when all 26
+        counts are equal.
+      </p>
+      <ul>
+        <li>Python: a <code>tuple</code> of the 26 counts (lists can't be dict keys).</li>
+        <li>Java: a 26-character string where each char is a count (at most 100, so it fits).</li>
+        <li>C++: the counts joined with a separator (<code>"1#0#…"</code>), so 1, 11 and 11, 1 stay different.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · k)</span>
+        <span><strong>Space</strong> O(n · k)</span>
+      </div>
+      <p class="note">
+        Linear in the total number of letters. In practice the gap to
+        Approach 2 is small for short words (0.05 s vs 0.07 s here); it grows
+        with longer words.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Java's <code>Collectors.groupingBy</code> builds the map from key to
+        list for you. Python's <code>itertools.groupby</code> also works, but
+        only groups <em>neighbouring</em> items, so the words must be sorted by
+        key first. C++ has no grouping helper; the map of Approach 2 is the
+        idiomatic way.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · k log k), plus O(n log n) for Python's sort</span>
+        <span><strong>Space</strong> O(n · k)</span>
+      </div>
+      <p class="note">
+        Both pass. Forgetting the sort before <code>groupby</code> splits a
+        group wherever another word sits between its members.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Compare with Every Group</th>
+              <td>Anagram check against each group</td>
+              <td>O(n · g · k log k)</td>
+              <td>O(n · k)</td>
+              <td>Minutes on 10⁴ different words</td>
+            </tr>
+            <tr>
+              <th scope="row">Sorted Word as the Key</th>
+              <td>Hash map: sorted letters → words</td>
+              <td>O(n · k log k)</td>
+              <td>O(n · k)</td>
+              <td>Most common answer</td>
+            </tr>
+            <tr>
+              <th scope="row">Letter Counts as the Key</th>
+              <td>Hash map: 26 counts → words</td>
+              <td>O(n · k)</td>
+              <td>O(n · k)</td>
+              <td>No sorting; needs a safe key format</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

@@ -32,7 +32,7 @@
 //
 // Marks: "active", "compare", "match", "visited", "new", "window", "ghost", "cut".
 // int[] inputs accept minLength/maxLength and minValue/maxValue; string inputs accept
-// maxLength and ascii: true; tree inputs (level-order with null) accept maxLength and
+// maxLength, ascii: true, and raw: true (don't strip surrounding quotes); tree inputs (level-order with null) accept maxLength and
 // minValue/maxValue; int[][] inputs (grids) accept maxRows/maxCols and minValue/maxValue,
 // and jagged: true for a list of lists that may be empty or uneven ([[1, 4], [], [2]]).
 // The page script (app.js) calls DSAViz.mount() for each code block with data-viz.
@@ -163,7 +163,8 @@
 
     if (spec.type === "string") {
       // Quotes are optional; use them to keep leading/trailing spaces.
-      const unquoted = text.replace(/^(["'])(.*)\1$/, "$2");
+      // raw: true keeps the text exactly as typed (for inputs that use quotes themselves).
+      const unquoted = spec.raw ? text : text.replace(/^(["'])(.*)\1$/, "$2");
       const maxLength = spec.maxLength ?? 16;
       if (unquoted.length > maxLength) {
         throw new InputError(`${name} can be at most ${maxLength} characters here.`);

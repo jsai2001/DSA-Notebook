@@ -11560,6 +11560,447 @@
         </div>
       </details>
 
+      <!-- ===== problems/0049-group-anagrams ===== -->
+      <details class="question" data-tags="array hash-table string sorting anagram counting grouping">
+        <summary>
+          <span class="q-title">49. Group Anagrams</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">Array</span>
+            <span class="tag">Hash Table</span>
+            <span class="tag">String</span>
+            <span class="tag">Sorting</span>
+          </span>
+        </summary>
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> Give every word a <strong>key</strong> that
+            only anagrams share, and group by it in a hash map. The sorted word
+            (<code>"eat"</code> → <code>"aet"</code>) works; the
+            <strong>26 letter counts</strong> work without sorting, in O(k) per
+            word. One pass: O(n · k).
+          </div>
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/group-anagrams/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              Given an array of strings <code>strs</code>, group the anagrams
+              together (words made of the same letters, each used the same number of
+              times). The groups, and the words inside them, can be in any order.
+            </p>
+            <ul>
+              <li><code>1 &lt;= strs.length &lt;= 10⁴</code> and <code>0 &lt;= strs[i].length &lt;= 100</code>.</li>
+              <li>Only lowercase English letters.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>["eat","tea","tan","ate","nat","bat"]</code> →
+              <code>[["bat"],["nat","tan"],["ate","eat","tea"]]</code>;
+              <code>[""]</code> → <code>[[""]]</code>; <code>["a"]</code> →
+              <code>[["a"]]</code>.
+            </p>
+          </section>
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[""]</code></td>
+                    <td><code>[[""]]</code></td>
+                    <td>The empty word is a real word with a real group, not something to skip.</td>
+                  </tr>
+                  <tr>
+                    <td><code>["",""]</code> / <code>["a","a"]</code></td>
+                    <td><code>[["",""]]</code> / <code>[["a","a"]]</code></td>
+                    <td>Duplicates stay: both copies go into the same group. A set would lose one.</td>
+                  </tr>
+                  <tr>
+                    <td><code>["aab","abb"]</code></td>
+                    <td><code>[["aab"],["abb"]]</code></td>
+                    <td>Same letters, different counts: not anagrams. A key made from the <em>set</em> of letters groups them by mistake.</td>
+                  </tr>
+                  <tr>
+                    <td><code>["ab","ba","abc"]</code></td>
+                    <td><code>[["ab","ba"],["abc"]]</code></td>
+                    <td>A word containing another's letters isn't its anagram; lengths must match too.</td>
+                  </tr>
+                  <tr>
+                    <td><code>["abbbbbbbbbbb","aaaaaaaaaaab"]</code></td>
+                    <td>Two groups</td>
+                    <td>Counts 1, 11 and 11, 1. Joining counts into a string <em>without a separator</em> gives "111…" for both and merges them.</td>
+                  </tr>
+                  <tr>
+                    <td><code>["eat","tea","tan","ate","nat","bat"]</code></td>
+                    <td>3 groups</td>
+                    <td>The usual case: groups of different sizes, words out of order.</td>
+                  </tr>
+                  <tr>
+                    <td>10⁴ different words of 100 letters</td>
+                    <td>10⁴ groups of one</td>
+                    <td>No anagrams at all: comparing each word with every group so far is about 5 × 10⁷ checks.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Compare with Every Group</h2>
+            <p class="intuition">
+              Keep a list of groups. For each word, check it against one word from
+              each group (are they anagrams?), and join the first one that matches,
+              or start a new group.
+            </p>
+            <ul>
+              <li>Two words are anagrams if they have the same length and the same letters when sorted.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n · g · k log k), g = groups</span>
+              <span><strong>Space</strong> O(n · k)</span>
+            </div>
+            <p class="note">
+              Correct, but each word may be checked against every group. With 10⁴
+              words and no anagrams it took about 9 minutes in Python here (about 2
+              in Java): far over the time limit.
+            </p>
+            <div class="code-tabs" data-viz="0049-group-anagrams/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"word":[4],"compare":[5,6],"join":[7,8],"new":[9,10],"return":[11]}'>
+                class Solution(object):
+                    def groupAnagrams(self, strs):
+                        groups = []  # each group: words that are anagrams of each other
+                        for s in strs:
+                            for group in groups:  # compare with one word from each group so far
+                                if self.is_anagram(group[0], s):
+                                    group.append(s)
+                                    break
+                            else:  # no group matched: s starts a new one
+                                groups.append([s])
+                        return groups
+
+                    def is_anagram(self, a, b):  # same letters, same number of times
+                        return len(a) == len(b) and sorted(a) == sorted(b)
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7],"word":[8],"compare":[10,11],"join":[12,13,14],"new":[17],"return":[19]}'>
+                #include <algorithm>
+                #include <string>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::vector<std::string>> groupAnagrams(std::vector<std::string>& strs) {
+                        std::vector<std::vector<std::string>> groups; // each group: words that are anagrams of each other
+                        for (const std::string& s : strs) {
+                            bool placed = false;
+                            for (auto& group : groups) { // compare with one word from each group so far
+                                if (isAnagram(group[0], s)) {
+                                    group.push_back(s);
+                                    placed = true;
+                                    break;
+                                }
+                            }
+                            if (!placed) groups.push_back({s}); // no group matched: s starts a new one
+                        }
+                        return groups;
+                    }
+                private:
+                    static bool isAnagram(std::string a, std::string b) { // same letters, same number of times
+                        if (a.size() != b.size()) return false;
+                        std::sort(a.begin(), a.end());
+                        std::sort(b.begin(), b.end());
+                        return a == b;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[6],"word":[7],"compare":[9,10],"join":[11,12,13],"new":[16],"return":[18]}'>
+                import java.util.ArrayList;
+                import java.util.Arrays;
+                import java.util.List;
+                class Solution {
+                    public List<List<String>> groupAnagrams(String[] strs) {
+                        List<List<String>> groups = new ArrayList<>(); // each group: words that are anagrams of each other
+                        for (String s : strs) {
+                            boolean placed = false;
+                            for (List<String> group : groups) { // compare with one word from each group so far
+                                if (isAnagram(group.get(0), s)) {
+                                    group.add(s);
+                                    placed = true;
+                                    break;
+                                }
+                            }
+                            if (!placed) groups.add(new ArrayList<>(List.of(s))); // no group matched: s starts a new one
+                        }
+                        return groups;
+                    }
+
+                    private static boolean isAnagram(String a, String b) { // same letters, same number of times
+                        if (a.length() != b.length()) return false;
+                        char[] x = a.toCharArray(), y = b.toCharArray();
+                        Arrays.sort(x);
+                        Arrays.sort(y);
+                        return Arrays.equals(x, y);
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>Approach 2: Sorted Word as the Key</h2>
+            <p class="intuition">
+              Instead of comparing words with each other, give each word a label that
+              all its anagrams share. Sorting the letters does that:
+              <code>"eat"</code>, <code>"tea"</code> and <code>"ate"</code> all
+              become <code>"aet"</code>. A hash map from label to group finds the
+              right group in one lookup.
+            </p>
+            <ul>
+              <li>Python <code>dict.setdefault</code>, C++ <code>map[key].push_back</code>, Java <code>computeIfAbsent</code>.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n · k log k)</span>
+              <span><strong>Space</strong> O(n · k)</span>
+            </div>
+            <p class="note">
+              The one most people write first, and plenty fast: 0.07 s in Python
+              here for 10⁴ words of 100 letters.
+            </p>
+            <div class="code-tabs" data-viz="0049-group-anagrams/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"word":[4],"key":[5],"add":[6],"return":[7]}'>
+                class Solution(object):
+                    def groupAnagrams(self, strs):
+                        groups = {}  # sorted letters -> the words that have them
+                        for s in strs:
+                            key = "".join(sorted(s))  # anagrams sort to the same string: "eat", "tea" -> "aet"
+                            groups.setdefault(key, []).append(s)
+                        return list(groups.values())
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[8],"word":[9],"key":[10,11],"add":[12],"return":[14,15,16]}'>
+                #include <algorithm>
+                #include <string>
+                #include <unordered_map>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::vector<std::string>> groupAnagrams(std::vector<std::string>& strs) {
+                        std::unordered_map<std::string, std::vector<std::string>> groups; // sorted letters -> the words that have them
+                        for (const std::string& s : strs) {
+                            std::string key = s;
+                            std::sort(key.begin(), key.end()); // anagrams sort to the same string: "eat", "tea" -> "aet"
+                            groups[key].push_back(s);
+                        }
+                        std::vector<std::vector<std::string>> result;
+                        for (auto& [key, words] : groups) result.push_back(std::move(words));
+                        return result;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[8],"word":[9],"key":[10,11,12],"add":[13],"return":[15]}'>
+                import java.util.ArrayList;
+                import java.util.Arrays;
+                import java.util.HashMap;
+                import java.util.List;
+                import java.util.Map;
+                class Solution {
+                    public List<List<String>> groupAnagrams(String[] strs) {
+                        Map<String, List<String>> groups = new HashMap<>(); // sorted letters -> the words that have them
+                        for (String s : strs) {
+                            char[] letters = s.toCharArray();
+                            Arrays.sort(letters); // anagrams sort to the same string: "eat", "tea" -> "aet"
+                            String key = new String(letters);
+                            groups.computeIfAbsent(key, k -> new ArrayList<>()).add(s);
+                        }
+                        return new ArrayList<>(groups.values());
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>
+              Approach 3: Letter Counts as the Key
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              With only 26 letters, the key can be "how many of each": one pass over
+              the word instead of a sort. Two words are anagrams exactly when all 26
+              counts are equal.
+            </p>
+            <ul>
+              <li>Python: a <code>tuple</code> of the 26 counts (lists can't be dict keys).</li>
+              <li>Java: a 26-character string where each char is a count (at most 100, so it fits).</li>
+              <li>C++: the counts joined with a separator (<code>"1#0#…"</code>), so 1, 11 and 11, 1 stay different.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n · k)</span>
+              <span><strong>Space</strong> O(n · k)</span>
+            </div>
+            <p class="note">
+              Linear in the total number of letters. In practice the gap to
+              Approach 2 is small for short words (0.05 s vs 0.07 s here); it grows
+              with longer words.
+            </p>
+            <div class="code-tabs" data-viz="0049-group-anagrams/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"word":[4],"count":[5,6,7],"key":[8],"add":[9],"return":[10]}'>
+                class Solution(object):
+                    def groupAnagrams(self, strs):
+                        groups = {}  # letter counts -> the words that have them
+                        for s in strs:
+                            count = [0] * 26  # how many a's, b's, ..., z's
+                            for ch in s:
+                                count[ord(ch) - ord("a")] += 1
+                            key = tuple(count)  # a tuple can be a dict key; anagrams have equal counts
+                            groups.setdefault(key, []).append(s)
+                        return list(groups.values())
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7],"word":[8],"count":[9,10],"key":[11,12],"add":[13],"return":[15,16,17]}'>
+                #include <string>
+                #include <unordered_map>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::vector<std::string>> groupAnagrams(std::vector<std::string>& strs) {
+                        std::unordered_map<std::string, std::vector<std::string>> groups; // letter counts -> the words that have them
+                        for (const std::string& s : strs) {
+                            int count[26] = {}; // how many a's, b's, ..., z's
+                            for (char ch : s) count[ch - 'a']++;
+                            std::string key; // e.g. "1#0#0#...": a separator after each count, so 1,11 and 11,1 differ
+                            for (int c : count) key += std::to_string(c) + '#';
+                            groups[key].push_back(s);
+                        }
+                        std::vector<std::vector<std::string>> result;
+                        for (auto& [key, words] : groups) result.push_back(std::move(words));
+                        return result;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[7],"word":[8],"count":[9,10],"key":[11],"add":[12],"return":[14]}'>
+                import java.util.ArrayList;
+                import java.util.HashMap;
+                import java.util.List;
+                import java.util.Map;
+                class Solution {
+                    public List<List<String>> groupAnagrams(String[] strs) {
+                        Map<String, List<String>> groups = new HashMap<>(); // letter counts -> the words that have them
+                        for (String s : strs) {
+                            char[] count = new char[26]; // how many a's, b's, ..., z's (at most 100, so a char holds it)
+                            for (char ch : s.toCharArray()) count[ch - 'a']++;
+                            String key = new String(count); // one char per letter: no separator needed
+                            groups.computeIfAbsent(key, k -> new ArrayList<>()).add(s);
+                        }
+                        return new ArrayList<>(groups.values());
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">Built-ins</span></h2>
+            <p>
+              Java's <code>Collectors.groupingBy</code> builds the map from key to
+              list for you. Python's <code>itertools.groupby</code> also works, but
+              only groups <em>neighbouring</em> items, so the words must be sorted by
+              key first. C++ has no grouping helper; the map of Approach 2 is the
+              idiomatic way.
+            </p>
+            <div class="code-tabs">
+              <script type="text/plain" data-lang="Python">
+                from itertools import groupby
+                class Solution(object):
+                    def groupAnagrams(self, strs):
+                        key = lambda s: "".join(sorted(s))
+                        # groupby only joins neighbours, so sort by the key first
+                        return [list(g) for _, g in groupby(sorted(strs, key=key), key=key)]
+              </script>
+              <script type="text/plain" data-lang="Java">
+                import java.util.ArrayList;
+                import java.util.Arrays;
+                import java.util.List;
+                import java.util.stream.Collectors;
+                class Solution {
+                    public List<List<String>> groupAnagrams(String[] strs) {
+                        return new ArrayList<>(Arrays.stream(strs)
+                            .collect(Collectors.groupingBy(s -> { // a map from key to list, built for you
+                                char[] letters = s.toCharArray();
+                                Arrays.sort(letters);
+                                return new String(letters);
+                            }))
+                            .values());
+                    }
+                }
+              </script>
+            </div>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n · k log k), plus O(n log n) for Python's sort</span>
+              <span><strong>Space</strong> O(n · k)</span>
+            </div>
+            <p class="note">
+              Both pass. Forgetting the sort before <code>groupby</code> splits a
+              group wherever another word sits between its members.
+            </p>
+          </section>
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Compare with Every Group</th>
+                    <td>Anagram check against each group</td>
+                    <td>O(n · g · k log k)</td>
+                    <td>O(n · k)</td>
+                    <td>Minutes on 10⁴ different words</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Sorted Word as the Key</th>
+                    <td>Hash map: sorted letters → words</td>
+                    <td>O(n · k log k)</td>
+                    <td>O(n · k)</td>
+                    <td>Most common answer</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Letter Counts as the Key</th>
+                    <td>Hash map: 26 counts → words</td>
+                    <td>O(n · k)</td>
+                    <td>O(n · k)</td>
+                    <td>No sorting; needs a safe key format</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -19315,6 +19756,181 @@
             }
           }
           steps.push({ line: "move", note: `Done: every cell was moved exactly once. O(n²) time, O(1) extra space, in one pass.`, view: view({ final: true }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0049-group-anagrams/approach1.visual.js -->
+    <script>
+      // Brute force: compare each word with one word from every group so far; join the first group it's an anagram of.
+      DSAViz.register("0049-group-anagrams/approach1", {
+        inputs: [{ name: "strs", label: "strs (comma-separated; \"\" = empty word)", type: "string", value: "eat, tea, tan, ate, nat, bat", maxLength: 60, raw: true }],
+        trace({ strs: text }) {
+          const words = text.split(",").map((w) => w.trim()).map((w) => (w === '""' ? "" : w));
+          if (!text.trim()) throw new DSAViz.InputError('Type some words separated by commas, like eat, tea, tan (use "" for an empty word).');
+          if (words.some((w) => !/^[a-z]*$/.test(w))) throw new DSAViz.InputError('Words can only use lowercase letters a-z (use "" for an empty word).');
+          if (words.length > 8) throw new DSAViz.InputError("Up to 8 words here, so the steps stay readable.");
+          const show = (w) => (w === "" ? '""' : w);
+          const sortedOf = (w) => [...w].sort().join("");
+          const steps = [];
+          const groups = [];
+          let compares = 0;
+          const view = (wi, opts = {}) => {
+            const wmarks = {};
+            for (let k = 0; k < (wi ?? words.length); k++) wmarks[k] = "visited";
+            if (wi !== undefined) wmarks[wi] = "active";
+            const gmarks = {};
+            if (opts.g !== undefined) gmarks[opts.g] = opts.hit ? "match" : opts.fresh ? "new" : "compare";
+            return [
+              { type: "array", label: "strs", values: words.map(show), wide: true, marks: wmarks, pointers: wi !== undefined ? { s: wi } : {} },
+              { type: "array", label: `groups (${groups.length})`, values: groups.map((g) => `[${g.map(show).join(", ")}]`), wide: true, marks: gmarks },
+              { type: "vars", items: [{ name: "anagram checks", value: compares }] },
+            ];
+          };
+
+          steps.push({ line: "init", note: "No groups yet. Each word is checked against one word from every group made so far.", view: view() });
+          words.forEach((s, wi) => {
+            steps.push({ line: "word", note: `Next word: ${show(s)}.`, view: view(wi) });
+            let placed = false;
+            for (let g = 0; g < groups.length; g++) {
+              compares++;
+              const same = groups[g][0].length === s.length && sortedOf(groups[g][0]) === sortedOf(s);
+              if (same) {
+                groups[g].push(s);
+                steps.push({ line: ["compare", "join"], note: `${show(s)} vs ${show(groups[g][0])}: same letters, same counts. Join that group.`, view: view(wi, { g, hit: true }) });
+                placed = true;
+                break;
+              }
+              steps.push({
+                line: "compare",
+                note: `${show(s)} vs ${show(groups[g][0])}: ${groups[g][0].length !== s.length ? "different lengths" : `sorted, ${show(sortedOf(s))} ≠ ${show(sortedOf(groups[g][0]))}`}. Not an anagram.`,
+                view: view(wi, { g }),
+              });
+            }
+            if (!placed) {
+              groups.push([s]);
+              steps.push({ line: "new", note: `${show(s)} matched no group: it starts a new one.`, view: view(wi, { g: groups.length - 1, fresh: true }) });
+            }
+          });
+          steps.push({
+            line: "return",
+            note: `Return ${groups.length} group${groups.length === 1 ? "" : "s"}: ${groups.map((g) => `[${g.map(show).join(", ")}]`).join(", ")}. ${compares} anagram checks: with many different words that grows like n², each check costing a sort.`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0049-group-anagrams/approach2.visual.js -->
+    <script>
+      // Sorted word as the key: anagrams sort to the same string, so a hash map groups them in one pass.
+      DSAViz.register("0049-group-anagrams/approach2", {
+        inputs: [{ name: "strs", label: "strs (comma-separated; \"\" = empty word)", type: "string", value: "eat, tea, tan, ate, nat, bat", maxLength: 60, raw: true }],
+        trace({ strs: text }) {
+          const words = text.split(",").map((w) => w.trim()).map((w) => (w === '""' ? "" : w));
+          if (!text.trim()) throw new DSAViz.InputError('Type some words separated by commas, like eat, tea, tan (use "" for an empty word).');
+          if (words.some((w) => !/^[a-z]*$/.test(w))) throw new DSAViz.InputError('Words can only use lowercase letters a-z (use "" for an empty word).');
+          if (words.length > 8) throw new DSAViz.InputError("Up to 8 words here, so the steps stay readable.");
+          const show = (w) => (w === "" ? '""' : w);
+          const steps = [];
+          const groups = new Map();
+          const view = (wi, opts = {}) => {
+            const wmarks = {};
+            for (let k = 0; k < (wi ?? words.length); k++) wmarks[k] = "visited";
+            if (wi !== undefined) wmarks[wi] = "active";
+            return [
+              { type: "array", label: "strs", values: words.map(show), wide: true, marks: wmarks, pointers: wi !== undefined ? { s: wi } : {} },
+              ...(opts.key !== undefined ? [{ type: "vars", items: [{ name: "key = sorted(s)", value: show(opts.key) }] }] : []),
+              {
+                type: "map",
+                label: "groups: sorted letters → words",
+                columns: ["key", "words"],
+                entries: [...groups].map(([k, v]) => [show(k), `[${v.map(show).join(", ")}]`]),
+                marks: opts.key !== undefined ? { [show(opts.key)]: opts.fresh ? "new" : "match" } : {},
+              },
+            ];
+          };
+
+          steps.push({ line: "init", note: "A hash map from a key to its group. Anagrams have the same letters, so sorting them gives the same string.", view: view() });
+          words.forEach((s, wi) => {
+            const key = [...s].sort().join("");
+            steps.push({ line: ["word", "key"], note: `${show(s)} sorted is ${show(key)}.`, view: view(wi, { key: groups.has(key) ? key : undefined }) });
+            const fresh = !groups.has(key);
+            if (fresh) groups.set(key, []);
+            groups.get(key).push(s);
+            steps.push({
+              line: "add",
+              note: fresh ? `No group has key ${show(key)} yet: start one with ${show(s)}.` : `Key ${show(key)} is already there: add ${show(s)} to its group.`,
+              view: view(wi, { key, fresh }),
+            });
+          });
+          const out = [...groups.values()].map((g) => `[${g.map(show).join(", ")}]`);
+          steps.push({ line: "return", note: `Return the map's groups: ${out.join(", ")}. One sort per word: O(n · k log k).`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0049-group-anagrams/approach3.visual.js -->
+    <script>
+      // Letter counts as the key: count a..z in each word (O(k), no sort); anagrams have identical counts.
+      DSAViz.register("0049-group-anagrams/approach3", {
+        inputs: [{ name: "strs", label: "strs (comma-separated; \"\" = empty word)", type: "string", value: "eat, tea, tan, ate, nat, bat", maxLength: 60, raw: true }],
+        trace({ strs: text }) {
+          const words = text.split(",").map((w) => w.trim()).map((w) => (w === '""' ? "" : w));
+          if (!text.trim()) throw new DSAViz.InputError('Type some words separated by commas, like eat, tea, tan (use "" for an empty word).');
+          if (words.some((w) => !/^[a-z]*$/.test(w))) throw new DSAViz.InputError('Words can only use lowercase letters a-z (use "" for an empty word).');
+          if (words.length > 8) throw new DSAViz.InputError("Up to 8 words here, so the steps stay readable.");
+          const show = (w) => (w === "" ? '""' : w);
+          // Only the letters that appear, e.g. a1 e1 t1; the real key also holds the 23 zeros
+          const countsOf = (w) => {
+            const c = Array(26).fill(0);
+            for (const ch of w) c[ch.charCodeAt(0) - 97]++;
+            return c;
+          };
+          const label = (c) => c.map((n, i) => (n ? `${String.fromCharCode(97 + i)}${n}` : "")).filter(Boolean).join(" ") || "(all zero)";
+          const steps = [];
+          const groups = new Map();
+          const view = (wi, opts = {}) => {
+            const wmarks = {};
+            for (let k = 0; k < (wi ?? words.length); k++) wmarks[k] = "visited";
+            if (wi !== undefined) wmarks[wi] = "active";
+            const widgets = [{ type: "array", label: "strs", values: words.map(show), wide: true, marks: wmarks, pointers: wi !== undefined ? { s: wi } : {} }];
+            if (opts.counts) {
+              const used = opts.counts.map((n, i) => [String.fromCharCode(97 + i), n]).filter(([, n]) => n);
+              widgets.push({
+                type: "array",
+                label: `count for ${show(words[wi])} (letters that appear; all others 0)`,
+                values: used.length ? used.map(([, n]) => n) : [],
+                sub: used.map(([ch]) => ch),
+                marks: Object.fromEntries(used.map((_, k) => [k, "new"])),
+              });
+            }
+            widgets.push({
+              type: "map",
+              label: "groups: letter counts → words",
+              columns: ["counts", "words"],
+              entries: [...groups].map(([k, v]) => [k, `[${v.map(show).join(", ")}]`]),
+              marks: opts.key !== undefined ? { [opts.key]: opts.fresh ? "new" : "match" } : {},
+            });
+            return widgets;
+          };
+
+          steps.push({ line: "init", note: "Instead of sorting, count each letter. Two words are anagrams exactly when all 26 counts match.", view: view() });
+          words.forEach((s, wi) => {
+            const c = countsOf(s);
+            const key = label(c);
+            steps.push({ line: ["word", "count"], note: `Count the letters of ${show(s)}: ${key}. One pass over the word, no sort.`, view: view(wi, { counts: c }) });
+            const fresh = !groups.has(key);
+            if (fresh) groups.set(key, []);
+            groups.get(key).push(s);
+            steps.push({
+              line: ["key", "add"],
+              note: fresh ? `No group has these counts yet: start one with ${show(s)}.` : `These counts are already a key: add ${show(s)} to that group.`,
+              view: view(wi, { key, fresh }),
+            });
+          });
+          const out = [...groups.values()].map((g) => `[${g.map(show).join(", ")}]`);
+          steps.push({ line: "return", note: `Return the map's groups: ${out.join(", ")}. O(k) per word (plus the 26-entry key): O(n · k).`, view: view() });
           return steps;
         },
       });
