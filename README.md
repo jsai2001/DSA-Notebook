@@ -17,18 +17,28 @@ problems/
     approach2.visual.js optional step-by-step visualizer for approach 2
   0002-add-two-numbers/
   ...
-template.html           page shell (header with difficulty/topic filters, theme toggle
-                        fixed at the top right, bottom dock with search and Surprise me)
+designs/                System Design cards, same rules as problems/
+  0001-how-uber-finds-a-driver/
+    problem.html        the card: key idea, problem, one section per step
+    script.js           optional: this card's interactive scenes
+    style.css           optional: this card's styles (scope them to the card)
+template.html           shared page shell for both tabs (header with the tab bar and
+                        difficulty/topic filters, theme toggle fixed at the top right,
+                        bottom dock with search and Surprise me)
 app.js                  search + filters, code tabs, accordion, theme, Surprise me,
                         each card's jump bar and "Same pattern" links (built from its
                         sections and tags), links in the address bar, keyboard shortcuts
 viz.js                  visualizer engine (widgets, controls, line highlighting)
 solutions.css           styles (light and dark themes)
-build.py                stitches template.html + problems/ into index.html
-index.html              GENERATED. Don't edit by hand.
+build.py                stitches template.html + problems/ into index.html, and
+                        template.html + designs/ into system-design.html
+index.html              GENERATED (Coding Solutions tab). Don't edit by hand.
+system-design.html      GENERATED (System Design tab). Don't edit by hand.
 ```
 
-`index.html` is generated but committed, so the site still works by opening it directly in a browser or deploying the repo root to any static host (for example Netlify). No build step is needed on the host.
+The two tabs share one template and one script, so search, filters, Surprise me, the jump bar, card links and the theme work the same on both. The tab bar is built from `PAGES` in `build.py`; to add a tab, add an entry there and a folder of cards.
+
+The generated pages are committed, so the site still works by opening them directly in a browser or deploying the repo root to any static host (for example Netlify). No build step is needed on the host.
 
 ## Adding a problem
 
@@ -45,6 +55,13 @@ index.html              GENERATED. Don't edit by hand.
    ```
    python3 build.py
    ```
+
+## Adding a System Design question
+
+1. Create a folder in `designs/` named `NNNN-slug` with a running number, e.g. `designs/0002-url-shortener/`. Cards are listed in folder-name order.
+2. Copy `problem.html` from an existing design card: title, tags, `data-tags`, key idea, the problem, then one `<section class="approach scene" data-jump="1. Short label">` per step. `data-jump` is the step's label in the card's jump bar.
+3. Optional: `script.js` for interactive parts and `style.css` for their styles. Both are added to `system-design.html` only. Give the card body its own class (`<div class="q-body my-design">`) and start every CSS selector with it, so the styles can't leak into other cards.
+4. Run `python3 build.py` and commit `system-design.html` with your changes.
 
 ## Adding a visualizer (optional)
 
@@ -81,7 +98,7 @@ Any approach can have a step-by-step visualizer. It shows up as a **Visualize** 
 
 ## Checking the build
 
-`python3 build.py --check` exits with an error if `index.html` is out of date, without changing anything. The build also stops with a clear message if a placeholder has no code files, a code file isn't used by any placeholder, a folder is misnamed, or code contains `</script`.
+`python3 build.py --check` exits with an error if `index.html` or `system-design.html` is out of date, without changing anything. The build also stops with a clear message if a placeholder has no code files, a code file isn't used by any placeholder, a folder is misnamed, or code contains `</script` (or a card's `style.css` contains `</style`).
 
 Edit page-wide things (header, buttons, scripts) in `template.html`, `app.js` and `solutions.css`, then rebuild.
 ## Using the page

@@ -1,0 +1,404 @@
+/* How Uber Finds a Driver (designs/0001-how-uber-finds-a-driver).
+   Builds on solutions.css: same colours, theme, cards (.approach), chips
+   (.filter-chip) and stat pills (.complexity). Only map-specific styles here, all scoped to .uber-design (the card body). */
+:root {
+  --map-bg: rgb(246, 246, 246);
+  --street: rgb(222, 222, 222);
+  --hex-line: rgb(205, 205, 205);
+  --water: rgb(170, 205, 235);
+  --water-edge: rgb(120, 165, 205);
+  --driver: rgb(60, 60, 60);
+  --rider: rgb(30, 110, 220);
+  --ring0: rgba(30, 110, 220, 0.45);
+  --ring1: rgba(30, 110, 220, 0.25);
+  --ring2: rgba(30, 110, 220, 0.13);
+  --ring3: rgba(30, 110, 220, 0.06);
+  --scan: rgba(150, 20, 20, 0.18);
+  --pick: rgb(20, 140, 60);
+}
+:root[data-theme="dark"] {
+  --map-bg: rgb(30, 30, 30);
+  --street: rgb(52, 52, 52);
+  --hex-line: rgb(70, 70, 70);
+  --water: rgb(35, 70, 105);
+  --water-edge: rgb(70, 115, 160);
+  --driver: rgb(215, 215, 215);
+  --rider: rgb(110, 175, 255);
+  --ring0: rgba(110, 175, 255, 0.5);
+  --ring1: rgba(110, 175, 255, 0.3);
+  --ring2: rgba(110, 175, 255, 0.16);
+  --ring3: rgba(110, 175, 255, 0.08);
+  --scan: rgba(255, 150, 150, 0.22);
+  --pick: rgb(120, 225, 150);
+}
+.uber-design h3 {
+  margin: 1.5rem 0 0.6rem;
+  font-size: 1rem;
+  color: var(--text-strong);
+}
+.uber-design .intuition {
+  margin: 0.5rem 0 1rem;
+}
+
+/* Controls row */
+.uber-design .controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.uber-design .controls .filter-group {
+  justify-content: flex-start;
+}
+.uber-design .controls .filter-chip {
+  font-size: 0.85rem;
+  padding: 0.35rem 0.9rem;
+}
+.uber-design .controls .filter-chip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.uber-design .inline-range,
+.uber-design .check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-strong);
+}
+.uber-design .inline-range output {
+  min-width: 1.5rem;
+  font-weight: 600;
+}
+.uber-design input[type="range"] {
+  accent-color: var(--rider);
+}
+.uber-design input[type="checkbox"] {
+  accent-color: var(--rider);
+  width: 1rem;
+  height: 1rem;
+}
+
+/* SVG maps */
+.uber-design .map {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 0.1rem solid var(--border-card);
+  border-radius: 0.75rem;
+  background: var(--map-bg);
+  margin-bottom: 0.5rem;
+  touch-action: manipulation;
+}
+.uber-design #naive-map,
+.uber-design #hex-map {
+  cursor: crosshair;
+}
+.uber-design .map-hint {
+  margin-bottom: 0.75rem;
+}
+.uber-design .map text {
+  font-family: "Poppins", sans-serif;
+  fill: var(--text-strong);
+}
+.uber-design .street {
+  stroke: var(--street);
+  stroke-width: 6;
+  stroke-linecap: round;
+  fill: none;
+}
+.uber-design .driver {
+  fill: var(--driver);
+}
+.uber-design .driver.is-candidate {
+  fill: var(--medium-text);
+}
+.uber-design .driver.is-pick {
+  fill: var(--pick);
+  stroke: var(--card-bg);
+  stroke-width: 2;
+}
+.uber-design .rider circle.dot {
+  fill: var(--rider);
+  stroke: var(--card-bg);
+  stroke-width: 3;
+}
+.uber-design .rider circle.halo {
+  fill: none;
+  stroke: var(--rider);
+  stroke-width: 2;
+  opacity: 0.35;
+}
+.uber-design .rider text,
+.uber-design .label-text {
+  font-size: 13px;
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: var(--map-bg);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+.uber-design .scan-line {
+  stroke: var(--scan);
+  stroke-width: 1;
+}
+.uber-design .cand-line {
+  stroke: var(--medium-text);
+  stroke-width: 1.5;
+  opacity: 0.7;
+}
+.uber-design .pick-line {
+  stroke: var(--pick);
+  stroke-width: 3;
+}
+.uber-design .cell {
+  fill: transparent;
+  stroke: var(--hex-line);
+  stroke-width: 1;
+}
+.uber-design .cell.ring-0 { fill: var(--ring0); }
+.uber-design .cell.ring-1 { fill: var(--ring1); }
+.uber-design .cell.ring-2 { fill: var(--ring2); }
+.uber-design .cell.ring-3 { fill: var(--ring3); }
+
+.uber-design .legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.uber-design .legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.uber-design .sw {
+  display: inline-block;
+  width: 0.9rem;
+  height: 0.9rem;
+  border: 0.1rem solid var(--hex-line);
+  border-radius: 0.2rem;
+}
+.uber-design .sw-ring0 { background: var(--ring0); }
+.uber-design .sw-ring1 { background: var(--ring1); }
+.uber-design .sw-ring2 { background: var(--ring2); }
+.uber-design .sw-ring3 { background: var(--ring3); }
+
+.uber-design .status {
+  min-height: 1.5em;
+  color: var(--text-strong);
+}
+
+/* Scale-it-up calculator */
+.uber-design .calc {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) 2fr;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--text-strong);
+}
+.uber-design .calc output {
+  font-weight: 600;
+  margin-left: 0.3rem;
+}
+.uber-design .calc-result {
+  margin-top: 0.75rem;
+  color: var(--text-strong);
+}
+.uber-design .calc-result strong {
+  color: var(--hard-text);
+}
+
+/* Why hexagons */
+.uber-design .why .shape {
+  fill: var(--card-bg);
+  stroke: var(--hex-line);
+  stroke-width: 1.5;
+}
+.uber-design .why .shape.center {
+  fill: var(--ring0);
+}
+.uber-design .why .near {
+  stroke: var(--pick);
+  stroke-width: 2.5;
+}
+.uber-design .why .far {
+  stroke: var(--hard-text);
+  stroke-width: 2.5;
+  stroke-dasharray: 5 4;
+}
+.uber-design .why .pt {
+  fill: var(--driver);
+}
+.uber-design .why .pt.far-pt {
+  fill: var(--hard-text);
+}
+.uber-design .why .reach {
+  fill: none;
+  stroke: var(--rider);
+  stroke-width: 2;
+  stroke-dasharray: 3 5;
+}
+.uber-design .why .reach[hidden] {
+  display: none;
+}
+.uber-design .why .title-text {
+  font-size: 16px;
+  font-weight: 600;
+}
+.uber-design .why .len {
+  font-size: 12px;
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: var(--map-bg);
+  stroke-width: 4px;
+}
+.uber-design .why .len.far-len {
+  fill: var(--hard-text);
+}
+.uber-design .why .len.near-len {
+  fill: var(--pick);
+}
+
+/* Latest location */
+.uber-design .split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+.uber-design .store caption {
+  text-align: left;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-strong);
+  padding-bottom: 0.4rem;
+}
+.uber-design .store td {
+  font-variant-numeric: tabular-nums;
+  transition: background 0.6s;
+}
+.uber-design .store tr.is-new td {
+  background: var(--medium-bg);
+  transition: none;
+}
+.uber-design .trail {
+  fill: var(--driver);
+}
+.uber-design .ping-ring {
+  fill: none;
+  stroke: var(--medium-text);
+  stroke-width: 2;
+}
+.uber-design .swatch-dot {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  margin-right: 0.35rem;
+  vertical-align: middle;
+}
+
+/* ETA */
+.uber-design .water {
+  fill: var(--water);
+  stroke: var(--water-edge);
+  stroke-width: 1.5;
+}
+.uber-design .bridge {
+  fill: var(--street);
+  stroke: var(--text-muted);
+  stroke-width: 1;
+}
+.uber-design .route {
+  fill: none;
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  opacity: 0.55;
+  stroke: var(--text-muted);
+}
+.uber-design .straight {
+  stroke-width: 2;
+  stroke-dasharray: 6 5;
+  opacity: 0.55;
+  stroke: var(--text-muted);
+}
+.uber-design .route.is-best,
+.uber-design .straight.is-best {
+  stroke: var(--pick);
+  opacity: 1;
+  stroke-width: 4;
+}
+.uber-design #eta-rows tr.is-best td,
+.uber-design #batch-options tr.is-best td {
+  background: var(--easy-bg);
+  color: var(--easy-text);
+  font-weight: 600;
+}
+
+/* Batch */
+.uber-design .assign {
+  stroke: var(--street);
+  stroke-width: 2;
+}
+.uber-design .assign.is-chosen {
+  stroke: var(--pick);
+  stroke-width: 5;
+}
+.uber-design .node circle {
+  stroke: var(--card-bg);
+  stroke-width: 3;
+}
+.uber-design .node.rider-node circle {
+  fill: var(--rider);
+}
+.uber-design .node.driver-node circle {
+  fill: var(--driver);
+}
+.uber-design .node text.inside {
+  fill: var(--card-bg);
+  font-size: 13px;
+  font-weight: 700;
+}
+.uber-design .eta-matrix input {
+  width: 4.5rem;
+  font: inherit;
+  padding: 0.25rem 0.4rem;
+  border: 0.1rem solid var(--border);
+  border-radius: 0.4rem;
+  background: var(--bg);
+  color: var(--text-strong);
+}
+.uber-design .eta-matrix input[aria-invalid="true"] {
+  border-color: var(--hard-text);
+}
+.uber-design .eta-matrix input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+.uber-design .tag-pill {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.6rem;
+  border-radius: 1rem;
+  border: 0.1rem solid currentColor;
+  white-space: nowrap;
+}
+
+@media screen and (max-width: 600px) {
+  .uber-design .split {
+    grid-template-columns: 1fr;
+  }
+  .uber-design .calc {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .uber-design .store td {
+    transition: none;
+  }
+}

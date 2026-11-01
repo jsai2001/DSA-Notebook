@@ -1,0 +1,264 @@
+<details class="question" data-tags="system-design uber ride-hailing geospatial h3 hexagon grid location real-time cache eta matching batching assignment">
+  <summary>
+    <span class="q-title">How Uber Finds a Driver</span>
+    <span class="q-meta">
+      <span class="tag">Geospatial</span>
+      <span class="tag">Real-time</span>
+      <span class="tag">Matching</span>
+    </span>
+  </summary>
+  <div class="q-body uber-design">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Don't measure the distance to every driver.
+      Put the map on a <strong>hexagon grid</strong> (H3), look only in your
+      cell and the 6 around it (then 19, 37, …), keep just each driver's
+      <strong>latest</strong> location in fast storage, rank candidates by
+      <strong>road ETA</strong>, and match a whole <strong>batch</strong> of
+      riders at once to keep the total wait low.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>Problem</h2>
+      <p>
+        A rider taps "Request". Find them a good nearby driver within a few
+        seconds.
+      </p>
+      <ul>
+        <li>Tens of thousands of drivers can be online in a big city at once, and they keep moving.</li>
+        <li>Every driver's app sends its location every few seconds.</li>
+        <li>Many riders request at the same moment and compete for the same drivers.</li>
+        <li>The match has to be fast, and the pickup wait short.</li>
+      </ul>
+      <p class="note">Thousands of moving drivers, a match in seconds. Play with each step below.</p>
+    </section>
+    <!-- SCENE 1 -->
+    <section class="approach scene" id="naive" data-jump="1. Check everyone?" aria-labelledby="naive-title">
+      <h2 id="naive-title">1. The obvious way: check every driver</h2>
+      <p class="intuition">
+        Take your location, compute the distance to every driver in the city,
+        and pick the smallest. It works, but it does a lot of work per request.
+      </p>
+      <div class="controls">
+        <button type="button" class="filter-chip" id="naive-run">Check every driver</button>
+        <button type="button" class="filter-chip" id="naive-move">Move me somewhere else</button>
+      </div>
+      <svg id="naive-map" class="map" viewBox="0 0 720 440" role="img"
+        aria-labelledby="naive-map-desc">
+        <desc id="naive-map-desc">A city map with 400 driver dots and your position. Running the check draws a line to every driver.</desc>
+      </svg>
+      <p class="map-hint note">Tip: click or tap the map to move yourself.</p>
+      <div class="complexity" aria-live="polite">
+        <span><strong>Distance checks</strong> <output id="naive-checks">0</output></span>
+        <span><strong>Nearest driver</strong> <output id="naive-nearest">–</output></span>
+      </div>
+      <p class="status note" id="naive-status" aria-live="polite"></p>
+
+      <h3>Now scale it up</h3>
+      <div class="calc">
+        <label for="calc-drivers">Active drivers in the city
+          <output id="calc-drivers-out" for="calc-drivers">20,000</output></label>
+        <input type="range" id="calc-drivers" min="1000" max="50000" step="1000" value="20000" />
+        <label for="calc-riders">Riders requesting right now
+          <output id="calc-riders-out" for="calc-riders">2,000</output></label>
+        <input type="range" id="calc-riders" min="100" max="5000" step="100" value="2000" />
+      </div>
+      <p class="calc-result" aria-live="polite">
+        <strong id="calc-total">40,000,000</strong> distance checks for one round of matching,
+        repeated every few seconds as drivers move. That's what melts the servers.
+      </p>
+    </section>
+
+    <!-- SCENE 2 -->
+    <section class="approach scene" id="hexes" data-jump="2. Hexagon cells" aria-labelledby="hexes-title">
+      <h2 id="hexes-title">2. Split the planet into hexagons (H3)</h2>
+      <p class="intuition">
+        Uber's H3 system covers the Earth in hexagonal cells, each under a
+        square kilometre. Every driver's latest location falls in exactly one
+        cell. To find drivers, look in your cell and the 6 touching it. Not
+        enough? Add the next ring: 19 cells, then 37.
+      </p>
+      <div class="controls">
+        <div class="filter-group" role="group" aria-label="Area">
+          <button type="button" class="filter-chip" data-density="400" aria-pressed="true">Busy area (400 drivers)</button>
+          <button type="button" class="filter-chip" data-density="60" aria-pressed="false">Quiet area (60 drivers)</button>
+        </div>
+        <label class="inline-range" for="hex-needed">Drivers needed
+          <input type="range" id="hex-needed" min="1" max="12" value="5" />
+          <output id="hex-needed-out" for="hex-needed">5</output>
+        </label>
+        <button type="button" class="filter-chip" id="hex-run">Find drivers</button>
+        <button type="button" class="filter-chip" id="hex-move">Move me somewhere else</button>
+      </div>
+      <svg id="hex-map" class="map" viewBox="0 0 720 440" role="img"
+        aria-labelledby="hex-map-desc">
+        <desc id="hex-map-desc">The same city covered in hexagon cells. The search lights up your cell, then ring after ring of neighbours, until enough drivers are found.</desc>
+      </svg>
+      <p class="map-hint note">Tip: click or tap the map to move yourself.</p>
+      <div class="legend" aria-hidden="true">
+        <span><i class="sw sw-ring0"></i>Your cell</span>
+        <span><i class="sw sw-ring1"></i>Ring 1</span>
+        <span><i class="sw sw-ring2"></i>Ring 2</span>
+        <span><i class="sw sw-ring3"></i>Ring 3+</span>
+      </div>
+      <div class="complexity" aria-live="polite">
+        <span><strong>Cells searched</strong> <output id="hex-cells">0</output></span>
+        <span><strong>Drivers checked</strong> <output id="hex-checked">0</output></span>
+        <span><strong>Skipped</strong> <output id="hex-skipped">0</output></span>
+      </div>
+      <p class="status note" id="hex-status" aria-live="polite"></p>
+      <p class="note">
+        Cells per search: 1 → <strong>7</strong> (1 + 6) → <strong>19</strong>
+        (+ 12) → <strong>37</strong> (+ 18). Ring <em>k</em> adds 6<em>k</em>
+        cells, so the total is 3<em>k</em>(<em>k</em> + 1) + 1. Finding a
+        driver's cell is a lookup, not a scan of the whole city.
+      </p>
+    </section>
+
+    <!-- SCENE 3 -->
+    <section class="approach scene" id="why-hex" data-jump="3. Why hexagons" aria-labelledby="why-hex-title">
+      <h2 id="why-hex-title">3. Why hexagons and not squares?</h2>
+      <p class="intuition">
+        A square has two kinds of neighbours: 4 that share a side and 4 that
+        only touch at a corner, about 1.41× farther away. So "nearby" depends
+        on direction. A hexagon is closer to a circle: all 6 neighbours sit at
+        the same distance.
+      </p>
+      <div class="controls">
+        <label class="check"><input type="checkbox" id="why-circle" checked /> Show the "nearby" circle</label>
+      </div>
+      <svg id="why-svg" class="map why" viewBox="0 0 680 320" role="img"
+        aria-labelledby="why-desc">
+        <desc id="why-desc">Left: a 3 by 3 square grid. Side neighbours are 1.0 away, corner neighbours 1.41 away and fall outside the circle. Right: a hexagon with 6 neighbours, all 1.0 away and all on the circle.</desc>
+      </svg>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th scope="col">Grid</th><th scope="col">Neighbours</th><th scope="col">Distance to neighbour centres</th></tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Square</th><td>8 (4 sides + 4 corners)</td><td>1.00 and 1.41: corners are 41% farther</td></tr>
+            <tr><th scope="row">Hexagon</th><td>6 (all share a side)</td><td>1.00 for every neighbour</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SCENE 4 -->
+    <section class="approach scene" id="latest" data-jump="4. Latest location only" aria-labelledby="latest-title">
+      <h2 id="latest-title">4. Keep only the latest location</h2>
+      <p class="intuition">
+        Every driver pings their location every 4 seconds. For matching, only
+        the newest ping matters, so Uber keeps one row per driver in fast
+        storage and overwrites it on each ping.
+      </p>
+      <div class="controls">
+        <button type="button" class="filter-chip" id="ping-play" aria-pressed="false">Play</button>
+        <button type="button" class="filter-chip" id="ping-step">Next second</button>
+      </div>
+      <div class="split">
+        <svg id="ping-map" class="map" viewBox="0 0 420 300" role="img"
+          aria-labelledby="ping-desc">
+          <desc id="ping-desc">Four drivers moving. Faded dots are their old pings, which the store throws away.</desc>
+        </svg>
+        <div class="table-wrap store">
+          <table>
+            <caption>Fast store: one row per driver</caption>
+            <thead>
+              <tr><th scope="col">Driver</th><th scope="col">Latest location</th><th scope="col">Cell</th><th scope="col">Age</th></tr>
+            </thead>
+            <tbody id="ping-rows"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="complexity" aria-live="off">
+        <span><strong>Clock</strong> <output id="ping-clock">0 s</output></span>
+        <span><strong>Pings received</strong> <output id="ping-count">0</output></span>
+        <span><strong>Rows stored</strong> <output id="ping-rows-count">4</output></span>
+      </div>
+      <p class="note">One second here is one second of simulated time. Old pings (faded dots) are overwritten, so the store stays the size of the fleet, not the size of its history.</p>
+    </section>
+
+    <!-- SCENE 5 -->
+    <section class="approach scene" id="eta" data-jump="5. Road ETA" aria-labelledby="eta-title">
+      <h2 id="eta-title">5. Closest isn't fastest: rank by road ETA</h2>
+      <p class="intuition">
+        A car 300 m away in a straight line can be across a river and 15
+        minutes away by road. So candidates are ranked by estimated time of
+        arrival along real roads, not by straight-line distance.
+      </p>
+      <div class="controls">
+        <div class="filter-group" role="group" aria-label="Rank drivers by">
+          <button type="button" class="filter-chip" data-rank="line" aria-pressed="true">Rank by straight line</button>
+          <button type="button" class="filter-chip" data-rank="eta" aria-pressed="false">Rank by road ETA</button>
+        </div>
+      </div>
+      <svg id="eta-map" class="map" viewBox="0 0 640 360" role="img"
+        aria-labelledby="eta-desc">
+        <desc id="eta-desc">A river splits the city with one bridge at the top. Driver A is 300 m away across the river; drivers B and C are on your side.</desc>
+      </svg>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th scope="col">Rank</th><th scope="col">Driver</th><th scope="col">Straight line</th><th scope="col">Road ETA</th></tr>
+          </thead>
+          <tbody id="eta-rows"></tbody>
+        </table>
+      </div>
+      <p class="status note" id="eta-status" aria-live="polite"></p>
+    </section>
+
+    <!-- SCENE 6 -->
+    <section class="approach scene" id="batch" data-jump="6. Batch matching" aria-labelledby="batch-title">
+      <h2 id="batch-title">6. Match riders in batches</h2>
+      <p class="intuition">
+        You and John request at almost the same time. Handing each request
+        its own closest driver can leave someone waiting a long time. Uber
+        collects requests for a short window and matches the whole batch to
+        keep the <em>total</em> wait low.
+      </p>
+      <div class="controls">
+        <div class="filter-group" role="group" aria-label="Matching strategy">
+          <button type="button" class="filter-chip" data-mode="greedy" aria-pressed="true">One at a time</button>
+          <button type="button" class="filter-chip" data-mode="batch" aria-pressed="false">Batch</button>
+        </div>
+        <button type="button" class="filter-chip" id="batch-reset">Reset ETAs</button>
+      </div>
+      <svg id="batch-svg" class="map" viewBox="0 0 640 300" role="img"
+        aria-labelledby="batch-desc">
+        <desc id="batch-desc">Two riders on the left, three drivers on the right. Thick lines show who is assigned to whom, labelled with the wait in minutes.</desc>
+      </svg>
+      <div class="complexity" aria-live="polite">
+        <span><strong>Your wait</strong> <output id="batch-you">–</output></span>
+        <span><strong>John's wait</strong> <output id="batch-john">–</output></span>
+        <span><strong>Total</strong> <output id="batch-total">–</output></span>
+      </div>
+      <p class="status note" id="batch-status" aria-live="polite"></p>
+
+      <h3>ETA in minutes (edit to try your own)</h3>
+      <div class="table-wrap">
+        <table class="eta-matrix">
+          <thead>
+            <tr><th scope="col">Rider</th><th scope="col">D1</th><th scope="col">D2</th><th scope="col">D3</th></tr>
+          </thead>
+          <tbody id="batch-matrix"></tbody>
+        </table>
+      </div>
+
+      <h3>Every possible assignment</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th scope="col">You get</th><th scope="col">John gets</th><th scope="col">Total wait</th><th scope="col"></th></tr>
+          </thead>
+          <tbody id="batch-options"></tbody>
+        </table>
+      </div>
+      <p class="note">
+        With two riders you can try every option. Real batches have many
+        riders and drivers, so this becomes an assignment problem solved with
+        matching algorithms rather than by listing every option.
+      </p>
+    </section>
+  </div>
+</details>

@@ -441,7 +441,10 @@ questions.forEach((q) => {
     if (!h2) return;
     // The heading's own text, without its badges or links ("Optimal", "View on LeetCode").
     const heading = [...h2.childNodes].filter((c) => c.nodeType === Node.TEXT_NODE).map((c) => c.textContent).join(" ").trim();
-    if (sec.classList.contains("approach")) {
+    if (sec.dataset.jump) {
+      // A short label chosen by the card (e.g. system-design steps), with the full heading as a tooltip.
+      targets.push({ el: sec, label: sec.dataset.jump, slug: slugify(sec.dataset.jump), title: heading });
+    } else if (sec.classList.contains("approach")) {
       n++;
       targets.push({
         el: sec, label: `Approach ${n}`, slug: `approach-${n}`, title: heading,
