@@ -1,0 +1,375 @@
+/* Present mode (present.js): a card's steps as full-screen slides.
+   Uses the theme colours from solutions.css, so light and dark both work. */
+
+/* "Present" button at the top of a card that has steps */
+.present-launch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  padding: 0.4rem 1rem 0.4rem 0.8rem;
+  border: 0.1rem solid var(--active-bg);
+  border-radius: 1.5rem;
+  background: var(--active-bg);
+  color: var(--active-text);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.present-launch svg {
+  width: 1rem;
+  height: 1rem;
+}
+.present-launch:hover {
+  opacity: 0.88;
+}
+.present-launch:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* While presenting: no page scroll, and type scales with the screen so it
+   reads well in a recording. */
+html.is-presenting,
+html.is-presenting body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+html.is-presenting {
+  font-size: clamp(15px, 0.55vw + 8.5px, 22px);
+}
+.present [data-slide="hide"] {
+  display: none;
+}
+
+.present {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-areas: "top" "progress" "stage" "bottom";
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Top bar: title, slide count, theme, fullscreen, exit */
+.present-top {
+  grid-area: top;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem clamp(1rem, 3vw, 2.5rem);
+  border-bottom: 0.1rem solid var(--border-soft);
+}
+.present-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+.present-count {
+  margin-left: auto;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.present-btn {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 2.3rem;
+  height: 2.3rem;
+  padding: 0;
+  border: 0.1rem solid var(--border);
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--text-strong);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.present-btn svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+.present-btn:hover {
+  background: var(--active-bg);
+  border-color: var(--active-bg);
+  color: var(--active-text);
+}
+.present-btn:focus-visible,
+.present-step:focus-visible,
+.present-dot:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.present-progress {
+  grid-area: progress;
+  height: 0.2rem;
+  background: var(--border-soft);
+}
+.present-progress span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--active-bg);
+  transition: width 0.3s ease;
+}
+
+/* Bottom bar: Prev, one dot per slide, Next */
+.present-bottom {
+  grid-area: bottom;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem clamp(1rem, 3vw, 2.5rem);
+  border-top: 0.1rem solid var(--border-soft);
+}
+.present-step {
+  min-width: 6.5rem;
+  padding: 0.45rem 1rem;
+  border: 0.1rem solid var(--border);
+  border-radius: 1.5rem;
+  background: var(--bg);
+  color: var(--text-strong);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.present-step:hover:not(:disabled) {
+  background: var(--active-bg);
+  border-color: var(--active-bg);
+  color: var(--active-text);
+}
+.present-step:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.present-dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
+}
+.present-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  padding: 0;
+  border: 0.1rem solid var(--border);
+  border-radius: 1rem;
+  background: transparent;
+  cursor: pointer;
+  transition: width 0.2s;
+}
+.present-dot:hover {
+  border-color: var(--active-bg);
+}
+.present-dot[aria-current] {
+  width: 1.8rem;
+  background: var(--active-bg);
+  border-color: var(--active-bg);
+}
+
+/* H: hide the bars for a clean recording */
+.present.is-clean .present-top,
+.present.is-clean .present-progress,
+.present.is-clean .present-bottom {
+  display: none;
+}
+
+/* Slides */
+.present-stage {
+  grid-area: stage;
+  position: relative;
+  overflow: hidden;
+  touch-action: pan-y; /* sideways swipes come to us; vertical still scrolls */
+}
+.slide {
+  position: absolute;
+  inset: 0;
+  display: none;
+  padding: clamp(1rem, 3vh, 2.5rem) clamp(1.25rem, 4vw, 4rem);
+}
+.slide.is-current {
+  display: block;
+  animation: present-in-next 0.35s ease both;
+}
+.present-stage[data-dir="prev"] .slide.is-current {
+  animation-name: present-in-prev;
+}
+@keyframes present-in-next {
+  from {
+    opacity: 0;
+    transform: translateX(2.5rem);
+  }
+}
+@keyframes present-in-prev {
+  from {
+    opacity: 0;
+    transform: translateX(-2.5rem);
+  }
+}
+.slide:focus {
+  outline: none;
+}
+.present svg.map {
+  touch-action: pan-y;
+}
+
+/* Title, text and recap slides: one centred column */
+.slide-title.is-current,
+.slide-plain.is-current,
+.slide-recap.is-current {
+  display: flex;
+  overflow-y: auto;
+}
+.slide-inner {
+  width: 100%;
+  max-width: 54rem;
+  margin: auto; /* centres, and still scrolls from the top when too tall */
+}
+.slide-heading {
+  font-size: clamp(2.2rem, 4.5vw, 4rem);
+  line-height: 1.15;
+  color: var(--text-strong);
+}
+.slide-title .slide-inner {
+  text-align: center;
+}
+.slide-title .slide-inner > section {
+  margin-top: 2rem;
+  text-align: left;
+}
+.slide-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 1rem;
+}
+.slide-inner > section h2 {
+  font-size: 1.4rem;
+  margin-bottom: 0.5rem;
+}
+.slide-inner p,
+.slide-inner li {
+  font-size: 1.1rem;
+}
+.slide-inner ul {
+  padding-left: 1.4rem;
+}
+.slide-hint {
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 0.85rem !important;
+  color: var(--text-muted);
+}
+.slide-recap .slide-heading {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+.slide-recap .key-idea {
+  margin: 0;
+  padding: 1.5rem 2rem;
+  font-size: 1.35rem;
+  line-height: 1.8;
+}
+
+/* Step slides: explanation on the left, visual on the right */
+.present .slide > section.scene {
+  display: grid;
+  grid-template-columns: minmax(20rem, 2fr) minmax(0, 3fr);
+  gap: 1rem clamp(1.5rem, 3vw, 3.5rem);
+  max-width: 110rem;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+.present .slide.no-visual > section.scene {
+  grid-template-columns: minmax(0, 54rem);
+  justify-content: center;
+}
+.slide-text {
+  align-self: center;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+.slide-text > h2 {
+  font-size: clamp(1.5rem, 2.4vw, 2.2rem);
+  line-height: 1.2;
+  margin-bottom: 0.75rem;
+  color: var(--text-strong);
+}
+.present .slide-text > .intuition {
+  font-size: 1.1rem;
+  margin-top: 0;
+}
+.slide-visual {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.75rem;
+  min-width: 0;
+  min-height: 0;
+}
+/* present.js sets the width so the whole map fits the column's height */
+.present .slide-visual > svg.map {
+  flex: none;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+/* Phones and portrait screens: one column that scrolls */
+@media (max-width: 820px), (orientation: portrait) and (max-width: 1100px) {
+  .slide.is-current {
+    overflow-y: auto;
+  }
+  .present .slide > section.scene {
+    display: block;
+    height: auto;
+  }
+  .slide-text {
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+  }
+  .slide-visual {
+    margin-top: 1rem;
+  }
+  .present-name {
+    display: none;
+  }
+  .present-step {
+    min-width: 0;
+  }
+}
+@media (max-width: 480px) {
+  .present-dots {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .slide.is-current {
+    animation: none;
+  }
+  .present-progress span,
+  .present-dot {
+    transition: none;
+  }
+}

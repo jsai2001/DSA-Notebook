@@ -30,6 +30,7 @@ app.js                  search + filters, code tabs, accordion, theme, Surprise 
                         sections and tags), links in the address bar, keyboard shortcuts
 viz.js                  visualizer engine (widgets, controls, line highlighting)
 solutions.css           styles (light and dark themes)
+present.js / .css       Present mode: a card's steps as full-screen slides
 build.py                stitches template.html + problems/ into index.html, and
                         template.html + designs/ into system-design.html
 index.html              GENERATED (Coding Solutions tab). Don't edit by hand.
@@ -62,6 +63,8 @@ The generated pages are committed, so the site still works by opening them direc
 2. Copy `problem.html` from an existing design card: title, tags, `data-tags`, key idea, the problem, then one `<section class="approach scene" data-jump="1. Short label">` per step. `data-jump` is the step's label in the card's jump bar.
 3. Optional: `script.js` for interactive parts and `style.css` for their styles. Both are added to `system-design.html` only. Give the card body its own class (`<div class="q-body my-design">`) and start every CSS selector with it, so the styles can't leak into other cards.
 4. Run `python3 build.py` and commit `system-design.html` with your changes.
+
+Any card with `scene` sections gets a **Present** button (or press `P` with the card open) that shows it as full-screen slides for talks and screen recordings: a title slide with the problem, one slide per step, then the key idea as a recap. In a step slide the visual (`svg.map`, `.split`, or anything marked `data-slide="visual"`) goes on the right and the rest on the left; `data-slide="hide"` hides an element while presenting. The card's own elements are moved into the slides, so its interactive parts keep working. Keys: `←` / `→`, `Home` / `End`, `1`–`9`, `F` fullscreen, `H` hide the controls for a clean recording, `Esc` exit. Swipe on touch screens. Links look like `system-design.html#present/q-how-uber-finds-a-driver/3`.
 
 ## Adding a visualizer (optional)
 
