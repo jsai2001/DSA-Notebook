@@ -8265,6 +8265,465 @@
         </div>
       </details>
 
+      <!-- ===== problems/0039-combination-sum ===== -->
+      <details class="question" data-tags="array backtracking recursion dynamic-programming combinations unbounded">
+        <summary>
+          <span class="q-title">39. Combination Sum</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">Array</span>
+            <span class="tag">Backtracking</span>
+          </span>
+        </summary>
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> Backtrack with a <code>start</code> index.
+            From <code>start</code> on, try each candidate, recurse with
+            <strong>the same index</strong> <code>i</code> (so it can be reused) and
+            never go back to smaller indices (so <code>[2,3]</code> and
+            <code>[3,2]</code> aren't both built). Sort first, and
+            <code>break</code> as soon as a candidate is bigger than what's left.
+          </div>
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/combination-sum/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              Given an array of <strong>distinct</strong> integers
+              <code>candidates</code> and a <code>target</code>, return every unique
+              combination of candidates that adds up to <code>target</code>. The same
+              number may be chosen any number of times. Two combinations are
+              different if some number is used a different number of times. Any
+              order is fine.
+            </p>
+            <ul>
+              <li><code>1 &lt;= candidates.length &lt;= 30</code> and <code>2 &lt;= candidates[i] &lt;= 40</code>, all different.</li>
+              <li><code>1 &lt;= target &lt;= 40</code>.</li>
+              <li>The tests have fewer than 150 combinations for each input.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>[2,3,6,7]</code>, target <code>7</code> →
+              <code>[[2,2,3],[7]]</code>; <code>[2,3,5]</code>, target
+              <code>8</code> → <code>[[2,2,2,2],[2,3,3],[3,5]]</code>;
+              <code>[2]</code>, target <code>1</code> → <code>[]</code>.
+            </p>
+          </section>
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[2]</code>, target <code>1</code></td>
+                    <td><code>[]</code></td>
+                    <td>Every candidate is bigger than the target: return an empty list, not <code>[[]]</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2]</code>, target <code>2</code></td>
+                    <td><code>[[2]]</code></td>
+                    <td>The smallest case with an answer: one candidate used once.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[3,5]</code>, target <code>4</code></td>
+                    <td><code>[]</code></td>
+                    <td>Smaller than one candidate, but no mix of them hits it exactly.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2,3]</code>, target <code>5</code></td>
+                    <td><code>[[2,3]]</code></td>
+                    <td>The duplicate trap: <code>[3,2]</code> is the same combination. Looping over all candidates at every level builds both.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2,3,6,7]</code>, target <code>7</code></td>
+                    <td><code>[[2,2,3],[7]]</code></td>
+                    <td>Reuse: 2 appears twice. Recursing with <code>i + 1</code> instead of <code>i</code> misses <code>[2,2,3]</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[3,2]</code>, target <code>2</code></td>
+                    <td><code>[[2]]</code></td>
+                    <td>Unsorted input. Breaking at the first candidate that's too big (3) only works after sorting; without it this returns <code>[]</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2,3,5]</code>, target <code>8</code></td>
+                    <td><code>[[2,2,2,2],[2,3,3],[3,5]]</code></td>
+                    <td>Several answers of different lengths.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2]</code>, target <code>40</code></td>
+                    <td>Twenty 2s</td>
+                    <td>The deepest path: 20 levels of recursion.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[40]</code>, target <code>40</code></td>
+                    <td><code>[[40]]</code></td>
+                    <td>The largest values allowed.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Take or Skip</h2>
+            <p class="intuition">
+              Look at the candidates one at a time. For the current one, there are
+              only two choices: take it (and stay on it, since it can be taken
+              again), or skip it and never use it again on this path.
+            </p>
+            <ul>
+              <li>Reaching <code>remaining == 0</code> means the path is an answer.</li>
+              <li>
+                Running out of candidates or going below 0 is a dead end. Because
+                "skip" always moves forward, each combination is built in exactly one
+                way: no duplicates.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(2^(T/M + n)) roughly</span>
+              <span><strong>Space</strong> O(T/M + n) recursion</span>
+            </div>
+            <p class="note">
+              Here T is the target, M the smallest candidate and n the number of
+              candidates. It's correct and simple, but it only notices an overshoot
+              after making the call, and it spends a level on every skip.
+            </p>
+            <div class="code-tabs" data-viz="0039-combination-sum/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"start":[3,14],"call":[4],"done":[5,6,7],"dead":[8,9],"take":[10,11],"undo":[12],"skip":[13],"return":[15]}'>
+                class Solution(object):
+                    def combinationSum(self, candidates, target):
+                        result, path = [], []
+                        def dfs(i, remaining):  # decide about candidates[i], with `remaining` still to reach
+                            if remaining == 0:  # path adds up to target
+                                result.append(path[:])
+                                return
+                            if i == len(candidates) or remaining < 0:  # no candidates left, or overshot
+                                return
+                            path.append(candidates[i])  # take candidates[i]; stay at i, so it can be taken again
+                            dfs(i, remaining - candidates[i])
+                            path.pop()  # undo the take
+                            dfs(i + 1, remaining)  # skip it: candidates[i] is never used again on this branch
+                        dfs(0, target)
+                        return result
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"start":[5,6,7],"return":[8],"call":[13],"done":[14,15,16],"dead":[18],"take":[19,20],"undo":[21],"skip":[22]}'>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::vector<int>> combinationSum(std::vector<int>& candidates, int target) {
+                        result.clear();
+                        path.clear();
+                        dfs(candidates, 0, target);
+                        return result;
+                    }
+                private:
+                    std::vector<std::vector<int>> result;
+                    std::vector<int> path;
+                    void dfs(const std::vector<int>& candidates, int i, int remaining) { // decide about candidates[i]
+                        if (remaining == 0) { // path adds up to target
+                            result.push_back(path);
+                            return;
+                        }
+                        if (i == (int)candidates.size() || remaining < 0) return; // no candidates left, or overshot
+                        path.push_back(candidates[i]); // take candidates[i]; stay at i, so it can be taken again
+                        dfs(candidates, i, remaining - candidates[i]);
+                        path.pop_back(); // undo the take
+                        dfs(candidates, i + 1, remaining); // skip it: candidates[i] is never used again on this branch
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"start":[7,8,9],"return":[10],"call":[12],"done":[13,14,15],"dead":[17],"take":[18,19],"undo":[20],"skip":[21]}'>
+                import java.util.ArrayList;
+                import java.util.List;
+                class Solution {
+                    private List<List<Integer>> result;
+                    private List<Integer> path;
+                    public List<List<Integer>> combinationSum(int[] candidates, int target) {
+                        result = new ArrayList<>();
+                        path = new ArrayList<>();
+                        dfs(candidates, 0, target);
+                        return result;
+                    }
+                    private void dfs(int[] candidates, int i, int remaining) { // decide about candidates[i]
+                        if (remaining == 0) { // path adds up to target
+                            result.add(new ArrayList<>(path));
+                            return;
+                        }
+                        if (i == candidates.length || remaining < 0) return; // no candidates left, or overshot
+                        path.add(candidates[i]); // take candidates[i]; stay at i, so it can be taken again
+                        dfs(candidates, i, remaining - candidates[i]);
+                        path.remove(path.size() - 1); // undo the take
+                        dfs(candidates, i + 1, remaining); // skip it: candidates[i] is never used again on this branch
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>
+              Approach 2: Backtracking with a Start Index
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              Build each combination in non-decreasing order. At every level, loop
+              over the candidates from <code>start</code> on, take one, and recurse
+              with <code>start = i</code>.
+            </p>
+            <ul>
+              <li><code>backtrack(i, …)</code>, not <code>i + 1</code>: the same number can be used again.</li>
+              <li>Never looking before <code>start</code> is what stops <code>[3,2]</code> after <code>[2,3]</code>.</li>
+              <li>
+                After sorting, the first candidate bigger than <code>remaining</code>
+                ends the loop: all later ones are bigger too.
+              </li>
+              <li>Add a <em>copy</em> of <code>path</code> to the result; the list itself keeps changing.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n^(T/M + 1)) worst case</span>
+              <span><strong>Space</strong> O(T/M) recursion</span>
+            </div>
+            <p class="note">
+              Exponential in the worst case, like any method that lists every
+              answer, but the pruning keeps it fast in practice. With 30 candidates
+              and target 40 (6,131 answers, far beyond LeetCode's tests) it took
+              0.01 s in Python here. The same pattern solves Combination Sum II,
+              Subsets and Permutations.
+            </p>
+            <div class="code-tabs" data-viz="0039-combination-sum/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"sort":[3,4],"call":[5],"done":[6,7,8],"choose":[9,12,13],"prune":[10,11],"undo":[14],"start":[15],"return":[16]}'>
+                class Solution(object):
+                    def combinationSum(self, candidates, target):
+                        candidates = sorted(candidates)  # sorted, so the loop can stop at the first one that's too big
+                        result, path = [], []
+                        def backtrack(start, remaining):
+                            if remaining == 0:  # path adds up to target
+                                result.append(path[:])
+                                return
+                            for i in range(start, len(candidates)):  # only from start on: each combination is built in one order
+                                if candidates[i] > remaining:  # this one and every later one are too big
+                                    break
+                                path.append(candidates[i])
+                                backtrack(i, remaining - candidates[i])  # i, not i + 1: the same number can be used again
+                                path.pop()  # undo, so the next candidate can take its place
+                        backtrack(0, target)
+                        return result
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"sort":[6,7,8],"start":[9],"return":[10],"call":[15],"done":[16,17,18],"choose":[20,22,23],"prune":[21],"undo":[24]}'>
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::vector<int>> combinationSum(std::vector<int>& candidates, int target) {
+                        std::sort(candidates.begin(), candidates.end()); // sorted, so the loop can stop at the first one that's too big
+                        result.clear();
+                        path.clear();
+                        backtrack(candidates, 0, target);
+                        return result;
+                    }
+                private:
+                    std::vector<std::vector<int>> result;
+                    std::vector<int> path;
+                    void backtrack(const std::vector<int>& candidates, int start, int remaining) {
+                        if (remaining == 0) { // path adds up to target
+                            result.push_back(path);
+                            return;
+                        }
+                        for (int i = start; i < (int)candidates.size(); ++i) { // only from start on: each combination is built in one order
+                            if (candidates[i] > remaining) break; // this one and every later one are too big
+                            path.push_back(candidates[i]);
+                            backtrack(candidates, i, remaining - candidates[i]); // i, not i + 1: the same number can be used again
+                            path.pop_back(); // undo, so the next candidate can take its place
+                        }
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"sort":[8,9,10],"start":[11],"return":[12],"call":[14],"done":[15,16,17],"choose":[19,21,22],"prune":[20],"undo":[23]}'>
+                import java.util.ArrayList;
+                import java.util.Arrays;
+                import java.util.List;
+                class Solution {
+                    private List<List<Integer>> result;
+                    private List<Integer> path;
+                    public List<List<Integer>> combinationSum(int[] candidates, int target) {
+                        Arrays.sort(candidates); // sorted, so the loop can stop at the first one that's too big
+                        result = new ArrayList<>();
+                        path = new ArrayList<>();
+                        backtrack(candidates, 0, target);
+                        return result;
+                    }
+                    private void backtrack(int[] candidates, int start, int remaining) {
+                        if (remaining == 0) { // path adds up to target
+                            result.add(new ArrayList<>(path));
+                            return;
+                        }
+                        for (int i = start; i < candidates.length; i++) { // only from start on: each combination is built in one order
+                            if (candidates[i] > remaining) break; // this one and every later one are too big
+                            path.add(candidates[i]);
+                            backtrack(candidates, i, remaining - candidates[i]); // i, not i + 1: the same number can be used again
+                            path.remove(path.size() - 1); // undo, so the next candidate can take its place
+                        }
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>Approach 3: Dynamic Programming by Amount</h2>
+            <p class="intuition">
+              This is Coin Change II (518) with the combinations kept instead of
+              just counted. <code>dp[t]</code> holds every combination that adds up
+              to <code>t</code>; each candidate <code>c</code> extends
+              <code>dp[t - c]</code> into <code>dp[t]</code>.
+            </p>
+            <ul>
+              <li><code>dp[0] = [[]]</code>: one way to make 0, taking nothing.</li>
+              <li>
+                Candidates in the <em>outer</em> loop, amounts in the inner loop:
+                then all of one candidate is added before the next, so each
+                combination is built in one order. Swapping the loops counts
+                <code>[2,3]</code> and <code>[3,2]</code> separately.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> total size of all dp lists</span>
+              <span><strong>Space</strong> answers for every t ≤ target</span>
+            </div>
+            <p class="note">
+              No recursion, but it builds and stores answers for every smaller
+              amount, which are thrown away at the end. Worth knowing for the link
+              to 518; in an interview, write Approach 2.
+            </p>
+            <div class="code-tabs" data-viz="0039-combination-sum/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"coin":[5],"amount":[6],"extend":[7,8],"return":[9]}'>
+                class Solution(object):
+                    def combinationSum(self, candidates, target):
+                        dp = [[] for _ in range(target + 1)]  # dp[t]: every combination that adds up to t
+                        dp[0] = [[]]  # one way to make 0: take nothing
+                        for c in candidates:  # candidates in the outer loop, so each combination is built in one order
+                            for t in range(c, target + 1):
+                                for combo in dp[t - c]:  # every way to make t - c, plus one more c
+                                    dp[t].append(combo + [c])
+                        return dp[target]
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,6],"coin":[7],"amount":[8],"extend":[9,10,11,12],"return":[16]}'>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::vector<int>> combinationSum(std::vector<int>& candidates, int target) {
+                        std::vector<std::vector<std::vector<int>>> dp(target + 1); // dp[t]: every combination that adds up to t
+                        dp[0] = {{}}; // one way to make 0: take nothing
+                        for (int c : candidates) { // candidates in the outer loop, so each combination is built in one order
+                            for (int t = c; t <= target; ++t) {
+                                for (const std::vector<int>& combo : dp[t - c]) { // every way to make t - c, plus one more c
+                                    std::vector<int> longer = combo;
+                                    longer.push_back(c);
+                                    dp[t].push_back(longer);
+                                }
+                            }
+                        }
+                        return dp[target];
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6,7],"coin":[8],"amount":[9],"extend":[10,11,12,13],"return":[17]}'>
+                import java.util.ArrayList;
+                import java.util.List;
+                class Solution {
+                    public List<List<Integer>> combinationSum(int[] candidates, int target) {
+                        List<List<List<Integer>>> dp = new ArrayList<>(); // dp.get(t): every combination that adds up to t
+                        for (int t = 0; t <= target; t++) dp.add(new ArrayList<>());
+                        dp.get(0).add(new ArrayList<>()); // one way to make 0: take nothing
+                        for (int c : candidates) { // candidates in the outer loop, so each combination is built in one order
+                            for (int t = c; t <= target; t++) {
+                                for (List<Integer> combo : dp.get(t - c)) { // every way to make t - c, plus one more c
+                                    List<Integer> longer = new ArrayList<>(combo);
+                                    longer.add(c);
+                                    dp.get(t).add(longer);
+                                }
+                            }
+                        }
+                        return dp.get(target);
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">No shortcut</span></h2>
+            <p>
+              Python's <code>itertools.combinations_with_replacement</code> can list
+              multisets of a fixed size, but you'd have to try every size up to
+              <code>target / min(candidates)</code> and filter by sum, which builds
+              far more than it keeps. C++ and Java have nothing similar.
+            </p>
+            <p class="note">
+              Write Approach 2. Remember the three details: sort, recurse with
+              <code>i</code>, and append a copy of the path.
+            </p>
+          </section>
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Take or Skip</th>
+                    <td>Two choices per candidate</td>
+                    <td>Exponential</td>
+                    <td>O(T/M + n)</td>
+                    <td>Simple; finds overshoots late</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Backtracking with a Start Index</th>
+                    <td>Loop from start, reuse i, break when too big</td>
+                    <td>Exponential, well pruned</td>
+                    <td>O(T/M)</td>
+                    <td>Expected answer</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Dynamic Programming by Amount</th>
+                    <td>dp[t] += each of dp[t − c] plus c</td>
+                    <td>Size of all dp lists</td>
+                    <td>All smaller answers</td>
+                    <td>Coin Change II, keeping the lists</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -14583,6 +15042,232 @@
             }
           }
           steps.push({ line: "missing", note: `lo = ${lo} > hi = ${hi}: nothing left to search, so ${target} isn't in nums. Return -1 after ${round} round${round === 1 ? "" : "s"}: each round halves the range, O(log n).`, view: view(lo, hi) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0039-combination-sum/approach1.visual.js -->
+    <script>
+      // Take or skip: at each step, either take candidates[i] (and stay at i) or skip it for good (move to i + 1).
+      DSAViz.register("0039-combination-sum/approach1", {
+        inputs: [
+          { name: "candidates", type: "int[]", value: "[2, 3, 5]", minLength: 1, maxLength: 4, minValue: 2, maxValue: 40 },
+          { name: "target", type: "int", value: "5", min: 1, max: 10 },
+        ],
+        trace({ candidates: cands, target }) {
+          if (new Set(cands).size !== cands.length) throw new DSAViz.InputError("The candidates must all be different.");
+          const steps = [];
+          const result = [];
+          const path = [];
+          let calls = 0;
+          const fmt = (arr) => `[${arr.join(", ")}]`;
+          const view = (i, remaining, opts = {}) => {
+            const marks = {};
+            cands.forEach((_, k) => {
+              if (i !== undefined && k < i) marks[k] = "ghost";
+            });
+            if (i !== undefined && i < cands.length) marks[i] = opts.mark || "active";
+            return [
+              { type: "array", label: "candidates (faded = skipped for good on this branch)", values: cands, marks, pointers: i !== undefined && i < cands.length ? { i } : {} },
+              { type: "array", label: "path", values: path.slice(), marks: opts.done ? Object.fromEntries(path.map((_, k) => [k, "match"])) : opts.added ? { [path.length - 1]: "new" } : {} },
+              {
+                type: "vars",
+                items: [
+                  { name: "remaining", value: remaining, mark: remaining === 0 ? "match" : remaining < 0 ? "cut" : "" },
+                  { name: "calls so far", value: calls },
+                ],
+              },
+              { type: "array", label: `result (${result.length})`, values: result.map(fmt), wide: true, marks: opts.done ? { [result.length - 1]: "new" } : {} },
+            ];
+          };
+
+          steps.push({ line: "start", note: `dfs(0, ${target}): for each candidate in turn, either take it (maybe again) or skip it forever.`, view: view(0, target) });
+          function dfs(i, remaining) {
+            calls++;
+            if (remaining === 0) {
+              result.push(path.slice());
+              steps.push({ line: ["call", "done"], note: `dfs(${i}, 0): ${fmt(path)} adds up to ${target}. Add a copy to result.`, view: view(i, 0, { done: true }) });
+              return;
+            }
+            if (i === cands.length || remaining < 0) {
+              steps.push({
+                line: ["call", "dead"],
+                note: remaining < 0 ? `dfs(${i}, ${remaining}): overshot ${target} (path ${fmt(path)}). Dead end.` : `dfs(${i}, ${remaining}): no candidates left, but ${remaining} is still missing. Dead end.`,
+                view: view(i, remaining, { mark: "cut" }),
+              });
+              return;
+            }
+            path.push(cands[i]);
+            steps.push({
+              line: ["call", "take"],
+              note: `dfs(${i}, ${remaining}): take ${cands[i]}, path = ${fmt(path)}. Stay at i = ${i}, so it can be taken again.`,
+              view: view(i, remaining - cands[i], { added: true }),
+            });
+            dfs(i, remaining - cands[i]);
+            path.pop();
+            steps.push({
+              line: ["undo", "skip"],
+              note: `Back at dfs(${i}, ${remaining}): undo the take, then skip ${cands[i]} for good: dfs(${i + 1}, ${remaining}).`,
+              view: view(i + 1, remaining),
+            });
+            dfs(i + 1, remaining);
+          }
+          dfs(0, target);
+          steps.push({
+            line: "return",
+            note: `${result.length ? `Return ${result.map(fmt).join(", ")}` : "Return []"}. That took ${calls} calls: it only notices an overshoot after making the call, which the sorted loop in Approach 2 avoids.`,
+            view: view(undefined, target),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0039-combination-sum/approach2.visual.js -->
+    <script>
+      // Sorted backtracking: try candidates from `start` on, reuse the same one, and stop the loop at the first one that's too big.
+      DSAViz.register("0039-combination-sum/approach2", {
+        inputs: [
+          { name: "candidates", type: "int[]", value: "[2, 3, 6, 7]", minLength: 1, maxLength: 4, minValue: 2, maxValue: 40 },
+          { name: "target", type: "int", value: "7", min: 1, max: 10 },
+        ],
+        trace({ candidates: raw, target }) {
+          if (new Set(raw).size !== raw.length) throw new DSAViz.InputError("The candidates must all be different.");
+          const cands = raw.slice().sort((a, b) => a - b);
+          const steps = [];
+          const result = [];
+          const path = [];
+          const fmt = (arr) => `[${arr.join(", ")}]`;
+          // i: candidate being looked at; start: first allowed index
+          const view = (start, i, remaining, opts = {}) => {
+            const marks = {};
+            cands.forEach((c, k) => {
+              if (start !== undefined && k < start) marks[k] = "ghost";
+              else if (opts.pruned !== undefined && k >= opts.pruned) marks[k] = "cut";
+            });
+            if (i !== undefined && i < cands.length && opts.pruned === undefined) marks[i] = opts.undo ? "visited" : "active";
+            const pointers = {};
+            if (start !== undefined && start < cands.length) pointers.start = start;
+            if (i !== undefined && i < cands.length) pointers[i === start ? "start, i" : "i"] = i;
+            if (i === start) delete pointers.start;
+            return [
+              { type: "array", label: "candidates (sorted; faded = before start)", values: cands, marks, pointers },
+              { type: "array", label: "path", values: path.slice(), marks: opts.done ? Object.fromEntries(path.map((_, k) => [k, "match"])) : opts.added ? { [path.length - 1]: "new" } : {} },
+              { type: "vars", items: [{ name: "remaining", value: remaining === undefined ? target : remaining, mark: remaining === 0 ? "match" : "" }] },
+              { type: "array", label: `result (${result.length})`, values: result.map(fmt), wide: true, marks: opts.done ? { [result.length - 1]: "new" } : {} },
+            ];
+          };
+
+          steps.push({
+            line: "sort",
+            note: `Sort the candidates: ${fmt(cands)}. Then a candidate that's too big means every later one is too big as well.`,
+            view: view(0, undefined, target),
+          });
+          steps.push({ line: "start", note: `backtrack(0, ${target}): any candidate may be used, and ${target} is left to make.`, view: view(0, undefined, target) });
+          function backtrack(start, remaining) {
+            if (remaining === 0) {
+              result.push(path.slice());
+              steps.push({ line: "done", note: `remaining = 0: ${fmt(path)} adds up to ${target}. Add a copy to result.`, view: view(start, undefined, 0, { done: true }) });
+              return;
+            }
+            steps.push({
+              line: "call",
+              note: `backtrack(${start}, ${remaining}): path ${fmt(path)}, ${remaining} still to make. Try candidates from index ${start} (${cands[start]}) on.`,
+              view: view(start, undefined, remaining),
+            });
+            for (let i = start; i < cands.length; i++) {
+              if (cands[i] > remaining) {
+                steps.push({
+                  line: "prune",
+                  note: `${cands[i]} > ${remaining}: too big, and so is everything after it. Stop the loop${i + 1 < cands.length ? ` (${cands.length - i - 1} more skipped without a look)` : ""}.`,
+                  view: view(start, i, remaining, { pruned: i }),
+                });
+                break;
+              }
+              path.push(cands[i]);
+              steps.push({
+                line: "choose",
+                note: `Take ${cands[i]}: path = ${fmt(path)}, ${remaining - cands[i]} left. Recurse with start = ${i}, so ${cands[i]} can be taken again but smaller ones can't come back.`,
+                view: view(start, i, remaining - cands[i], { added: true }),
+              });
+              backtrack(i, remaining - cands[i]);
+              path.pop();
+              steps.push({ line: "undo", note: `Back: remove ${cands[i]}, so path = ${fmt(path)} again. Next, try the candidate after it.`, view: view(start, i, remaining, { undo: true }) });
+            }
+          }
+          backtrack(0, target);
+          steps.push({
+            line: "return",
+            note: result.length
+              ? `Return ${result.length} combination${result.length === 1 ? "" : "s"}: ${result.map(fmt).join(", ")}. Each is built once, in non-decreasing order, so there are no duplicates.`
+              : `Return []: no combination of the candidates adds up to ${target}.`,
+            view: view(undefined, undefined, target),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0039-combination-sum/approach3.visual.js -->
+    <script>
+      // Bottom-up DP: dp[t] lists every combination for t; candidates in the outer loop keep each combination in one order.
+      DSAViz.register("0039-combination-sum/approach3", {
+        inputs: [
+          { name: "candidates", type: "int[]", value: "[2, 3, 5]", minLength: 1, maxLength: 4, minValue: 2, maxValue: 40 },
+          { name: "target", type: "int", value: "8", min: 1, max: 10 },
+        ],
+        trace({ candidates: cands, target }) {
+          if (new Set(cands).size !== cands.length) throw new DSAViz.InputError("The candidates must all be different.");
+          const steps = [];
+          const dp = Array.from({ length: target + 1 }, () => []);
+          dp[0] = [[]];
+          const fmt = (arr) => `[${arr.join(", ")}]`;
+          const show = (t) => (dp[t].length ? dp[t].map(fmt).join(" ") : "—");
+          // opts.t: amount being filled; opts.from: amount it reads
+          const view = (ci, opts = {}) => {
+            const marks = {};
+            if (opts.from !== undefined) marks[opts.from] = "compare";
+            if (opts.t !== undefined) marks[opts.t] = opts.fresh ? "new" : "active";
+            if (opts.final) marks[target] = "match";
+            return [
+              {
+                type: "array",
+                label: "candidates (outer loop)",
+                values: cands,
+                marks: Object.fromEntries(cands.map((_, k) => [k, ci === undefined ? "" : k < ci ? "visited" : k === ci ? "active" : ""])),
+                pointers: ci !== undefined ? { c: ci } : {},
+              },
+              { type: "map", label: "dp[t]: every combination that adds up to t", columns: ["t", "combinations"], entries: dp.map((_, t) => [t, show(t)]), marks },
+            ];
+          };
+
+          steps.push({ line: "init", note: `dp[0] = [[]]: there's exactly one way to make 0, take nothing. Every other dp[t] starts empty.`, view: view() });
+          cands.forEach((c, ci) => {
+            steps.push({
+              line: "coin",
+              note: `Candidate ${c}: for each amount t from ${c} up to ${target}, every combination for t - ${c} plus one more ${c} is a combination for t.`,
+              view: view(ci),
+            });
+            for (let t = c; t <= target; t++) {
+              const from = dp[t - c];
+              if (!from.length) {
+                steps.push({ line: "amount", note: `t = ${t}: dp[${t - c}] is empty, so ${c} adds nothing here.`, view: view(ci, { t, from: t - c }) });
+                continue;
+              }
+              const made = from.map((combo) => combo.concat([c]));
+              dp[t].push(...made);
+              steps.push({
+                line: ["amount", "extend"],
+                note: `t = ${t}: dp[${t - c}] = ${from.map(fmt).join(" ")}, each plus ${c}: add ${made.map(fmt).join(" ")}.`,
+                view: view(ci, { t, from: t - c, fresh: true }),
+              });
+            }
+          });
+          steps.push({
+            line: "return",
+            note: dp[target].length
+              ? `Return dp[${target}]: ${dp[target].map(fmt).join(", ")}. Because the candidates are the outer loop, ${cands[0]}s are always added before later candidates, so no combination appears twice. The table also keeps every smaller amount's answers.`
+              : `Return dp[${target}] = []: no combination adds up to ${target}.`,
+            view: view(undefined, { final: true }),
+          });
           return steps;
         },
       });

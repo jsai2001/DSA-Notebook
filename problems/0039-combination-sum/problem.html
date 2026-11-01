@@ -1,0 +1,259 @@
+<details class="question" data-tags="array backtracking recursion dynamic-programming combinations unbounded">
+  <summary>
+    <span class="q-title">39. Combination Sum</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Backtracking</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Backtrack with a <code>start</code> index.
+      From <code>start</code> on, try each candidate, recurse with
+      <strong>the same index</strong> <code>i</code> (so it can be reused) and
+      never go back to smaller indices (so <code>[2,3]</code> and
+      <code>[3,2]</code> aren't both built). Sort first, and
+      <code>break</code> as soon as a candidate is bigger than what's left.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/combination-sum/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given an array of <strong>distinct</strong> integers
+        <code>candidates</code> and a <code>target</code>, return every unique
+        combination of candidates that adds up to <code>target</code>. The same
+        number may be chosen any number of times. Two combinations are
+        different if some number is used a different number of times. Any
+        order is fine.
+      </p>
+      <ul>
+        <li><code>1 &lt;= candidates.length &lt;= 30</code> and <code>2 &lt;= candidates[i] &lt;= 40</code>, all different.</li>
+        <li><code>1 &lt;= target &lt;= 40</code>.</li>
+        <li>The tests have fewer than 150 combinations for each input.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[2,3,6,7]</code>, target <code>7</code> →
+        <code>[[2,2,3],[7]]</code>; <code>[2,3,5]</code>, target
+        <code>8</code> → <code>[[2,2,2,2],[2,3,3],[3,5]]</code>;
+        <code>[2]</code>, target <code>1</code> → <code>[]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[2]</code>, target <code>1</code></td>
+              <td><code>[]</code></td>
+              <td>Every candidate is bigger than the target: return an empty list, not <code>[[]]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[2]</code>, target <code>2</code></td>
+              <td><code>[[2]]</code></td>
+              <td>The smallest case with an answer: one candidate used once.</td>
+            </tr>
+            <tr>
+              <td><code>[3,5]</code>, target <code>4</code></td>
+              <td><code>[]</code></td>
+              <td>Smaller than one candidate, but no mix of them hits it exactly.</td>
+            </tr>
+            <tr>
+              <td><code>[2,3]</code>, target <code>5</code></td>
+              <td><code>[[2,3]]</code></td>
+              <td>The duplicate trap: <code>[3,2]</code> is the same combination. Looping over all candidates at every level builds both.</td>
+            </tr>
+            <tr>
+              <td><code>[2,3,6,7]</code>, target <code>7</code></td>
+              <td><code>[[2,2,3],[7]]</code></td>
+              <td>Reuse: 2 appears twice. Recursing with <code>i + 1</code> instead of <code>i</code> misses <code>[2,2,3]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[3,2]</code>, target <code>2</code></td>
+              <td><code>[[2]]</code></td>
+              <td>Unsorted input. Breaking at the first candidate that's too big (3) only works after sorting; without it this returns <code>[]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[2,3,5]</code>, target <code>8</code></td>
+              <td><code>[[2,2,2,2],[2,3,3],[3,5]]</code></td>
+              <td>Several answers of different lengths.</td>
+            </tr>
+            <tr>
+              <td><code>[2]</code>, target <code>40</code></td>
+              <td>Twenty 2s</td>
+              <td>The deepest path: 20 levels of recursion.</td>
+            </tr>
+            <tr>
+              <td><code>[40]</code>, target <code>40</code></td>
+              <td><code>[[40]]</code></td>
+              <td>The largest values allowed.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Take or Skip</h2>
+      <p class="intuition">
+        Look at the candidates one at a time. For the current one, there are
+        only two choices: take it (and stay on it, since it can be taken
+        again), or skip it and never use it again on this path.
+      </p>
+      <ul>
+        <li>Reaching <code>remaining == 0</code> means the path is an answer.</li>
+        <li>
+          Running out of candidates or going below 0 is a dead end. Because
+          "skip" always moves forward, each combination is built in exactly one
+          way: no duplicates.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(2^(T/M + n)) roughly</span>
+        <span><strong>Space</strong> O(T/M + n) recursion</span>
+      </div>
+      <p class="note">
+        Here T is the target, M the smallest candidate and n the number of
+        candidates. It's correct and simple, but it only notices an overshoot
+        after making the call, and it spends a level on every skip.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Backtracking with a Start Index
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Build each combination in non-decreasing order. At every level, loop
+        over the candidates from <code>start</code> on, take one, and recurse
+        with <code>start = i</code>.
+      </p>
+      <ul>
+        <li><code>backtrack(i, …)</code>, not <code>i + 1</code>: the same number can be used again.</li>
+        <li>Never looking before <code>start</code> is what stops <code>[3,2]</code> after <code>[2,3]</code>.</li>
+        <li>
+          After sorting, the first candidate bigger than <code>remaining</code>
+          ends the loop: all later ones are bigger too.
+        </li>
+        <li>Add a <em>copy</em> of <code>path</code> to the result; the list itself keeps changing.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n^(T/M + 1)) worst case</span>
+        <span><strong>Space</strong> O(T/M) recursion</span>
+      </div>
+      <p class="note">
+        Exponential in the worst case, like any method that lists every
+        answer, but the pruning keeps it fast in practice. With 30 candidates
+        and target 40 (6,131 answers, far beyond LeetCode's tests) it took
+        0.01 s in Python here. The same pattern solves Combination Sum II,
+        Subsets and Permutations.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Dynamic Programming by Amount</h2>
+      <p class="intuition">
+        This is Coin Change II (518) with the combinations kept instead of
+        just counted. <code>dp[t]</code> holds every combination that adds up
+        to <code>t</code>; each candidate <code>c</code> extends
+        <code>dp[t - c]</code> into <code>dp[t]</code>.
+      </p>
+      <ul>
+        <li><code>dp[0] = [[]]</code>: one way to make 0, taking nothing.</li>
+        <li>
+          Candidates in the <em>outer</em> loop, amounts in the inner loop:
+          then all of one candidate is added before the next, so each
+          combination is built in one order. Swapping the loops counts
+          <code>[2,3]</code> and <code>[3,2]</code> separately.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> total size of all dp lists</span>
+        <span><strong>Space</strong> answers for every t ≤ target</span>
+      </div>
+      <p class="note">
+        No recursion, but it builds and stores answers for every smaller
+        amount, which are thrown away at the end. Worth knowing for the link
+        to 518; in an interview, write Approach 2.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        Python's <code>itertools.combinations_with_replacement</code> can list
+        multisets of a fixed size, but you'd have to try every size up to
+        <code>target / min(candidates)</code> and filter by sum, which builds
+        far more than it keeps. C++ and Java have nothing similar.
+      </p>
+      <p class="note">
+        Write Approach 2. Remember the three details: sort, recurse with
+        <code>i</code>, and append a copy of the path.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Take or Skip</th>
+              <td>Two choices per candidate</td>
+              <td>Exponential</td>
+              <td>O(T/M + n)</td>
+              <td>Simple; finds overshoots late</td>
+            </tr>
+            <tr>
+              <th scope="row">Backtracking with a Start Index</th>
+              <td>Loop from start, reuse i, break when too big</td>
+              <td>Exponential, well pruned</td>
+              <td>O(T/M)</td>
+              <td>Expected answer</td>
+            </tr>
+            <tr>
+              <th scope="row">Dynamic Programming by Amount</th>
+              <td>dp[t] += each of dp[t − c] plus c</td>
+              <td>Size of all dp lists</td>
+              <td>All smaller answers</td>
+              <td>Coin Change II, keeping the lists</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
