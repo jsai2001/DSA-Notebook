@@ -10297,6 +10297,412 @@
         </div>
       </details>
 
+      <!-- ===== problems/0045-jump-game-ii ===== -->
+      <details class="question" data-tags="array greedy dynamic-programming bfs breadth-first-search jump levels">
+        <summary>
+          <span class="q-title">45. Jump Game II</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">Array</span>
+            <span class="tag">Greedy</span>
+            <span class="tag">Dynamic Programming</span>
+          </span>
+        </summary>
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> The indices reachable with <code>k</code>
+            jumps form a contiguous <strong>window</strong>. Scan it and track
+            <code>farthest = max(i + nums[i])</code>: that's where the window for
+            <code>k + 1</code> jumps ends. When <code>i</code> reaches the current
+            window's <code>end</code>, count a jump and set <code>end = farthest</code>.
+            Loop only up to <code>n − 2</code>. O(n) time, O(1) space.
+          </div>
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/jump-game-ii/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              You start at index 0 of <code>nums</code>. From index <code>i</code>
+              you can jump to any index from <code>i + 1</code> up to
+              <code>i + nums[i]</code>. Return the minimum number of jumps to reach
+              the last index.
+            </p>
+            <ul>
+              <li><code>1 &lt;= nums.length &lt;= 10⁴</code> and <code>0 &lt;= nums[i] &lt;= 1000</code>.</li>
+              <li>The last index is always reachable.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>[2,3,1,1,4]</code> → <code>2</code> (0 → 1 → 4);
+              <code>[2,3,0,1,4]</code> → <code>2</code>.
+            </p>
+          </section>
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[0]</code></td>
+                    <td><code>0</code></td>
+                    <td>You start on the last index. A greedy loop that also visits the last index counts a jump here and returns 1.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2,3,1,1,4]</code></td>
+                    <td><code>2</code></td>
+                    <td>Always taking the longest jump (to index 2) gives 3. The best first jump is the one that leads furthest <em>next</em>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2,3,0,1,4]</code></td>
+                    <td><code>2</code></td>
+                    <td>A 0 in the middle is a dead end; the path has to jump over it.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[3,2,1]</code></td>
+                    <td><code>1</code></td>
+                    <td>The first jump can go past the end: you only need to reach the last index, not land exactly on it.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,1,1,1]</code></td>
+                    <td><code>3</code></td>
+                    <td>Every jump is forced: n − 1 jumps.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,2]</code> / <code>[2,1]</code></td>
+                    <td><code>1</code> / <code>1</code></td>
+                    <td>Two elements: one jump, whatever the values.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,2,1,1,1]</code></td>
+                    <td><code>3</code></td>
+                    <td>The bigger value isn't at the start: 0 → 1 → 3 → 4.</td>
+                  </tr>
+                  <tr>
+                    <td>10⁴ ones</td>
+                    <td><code>9999</code></td>
+                    <td>The most jumps possible. Also: 10⁴ values of 1000 make the DP do about 10⁷ updates.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Dynamic Programming</h2>
+            <p class="intuition">
+              <code>dp[i]</code> is the fewest jumps to reach index <code>i</code>.
+              Going left to right, every index <code>i</code> can be reached in
+              <code>dp[i]</code> jumps, so everything it can jump to can be reached in
+              <code>dp[i] + 1</code>.
+            </p>
+            <ul>
+              <li>Start with <code>dp[0] = 0</code> and "infinity" everywhere else (n works: no answer is that large).</li>
+              <li>For each <code>j</code> in <code>i + 1 … i + nums[i]</code>: <code>dp[j] = min(dp[j], dp[i] + 1)</code>.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n · k), k = max(nums)</span>
+              <span><strong>Space</strong> O(n)</span>
+            </div>
+            <p class="note">
+              Correct and easy to reason about, but it updates the same indices
+              again and again. With 10⁴ values of 1000 it took 0.5 s in Python here
+              (27 ms in C++).
+            </p>
+            <div class="code-tabs" data-viz="0045-jump-game-ii/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5],"from":[6],"relax":[7,8],"return":[9]}'>
+                class Solution(object):
+                    def jump(self, nums):
+                        n = len(nums)
+                        dp = [n] * n  # dp[i]: fewest jumps to reach i (n means "not reached yet")
+                        dp[0] = 0
+                        for i in range(n):
+                            for j in range(i + 1, min(n - 1, i + nums[i]) + 1):  # every index one jump from i
+                                dp[j] = min(dp[j], dp[i] + 1)
+                        return dp[n - 1]
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8],"from":[9],"relax":[10,11],"return":[12]}'>
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    int jump(std::vector<int>& nums) {
+                        int n = (int)nums.size();
+                        std::vector<int> dp(n, n); // dp[i]: fewest jumps to reach i (n means "not reached yet")
+                        dp[0] = 0;
+                        for (int i = 0; i < n; ++i)
+                            for (int j = i + 1; j <= std::min(n - 1, i + nums[i]); ++j) // every index one jump from i
+                                dp[j] = std::min(dp[j], dp[i] + 1);
+                        return dp[n - 1];
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6,7],"from":[8],"relax":[9,10],"return":[11]}'>
+                import java.util.Arrays;
+                class Solution {
+                    public int jump(int[] nums) {
+                        int n = nums.length;
+                        int[] dp = new int[n]; // dp[i]: fewest jumps to reach i (n means "not reached yet")
+                        Arrays.fill(dp, n);
+                        dp[0] = 0;
+                        for (int i = 0; i < n; i++)
+                            for (int j = i + 1; j <= Math.min(n - 1, i + nums[i]); j++) // every index one jump from i
+                                dp[j] = Math.min(dp[j], dp[i] + 1);
+                        return dp[n - 1];
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>Approach 2: BFS</h2>
+            <p class="intuition">
+              Fewest jumps is a shortest path where every jump costs 1, which is what
+              BFS finds: indices come out of the queue in order of jumps used, so the
+              first time the last index comes out, that's the answer.
+            </p>
+            <ul>
+              <li>
+                From <code>i</code> you can reach a whole range, and everything up to
+                <code>reached</code> is already queued, so only push
+                <code>reached + 1 … i + nums[i]</code>. Each index is queued once.
+              </li>
+              <li>That keeps it O(n) instead of O(n · k).</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n)</span>
+              <span><strong>Space</strong> O(n)</span>
+            </div>
+            <p class="note">
+              The queue holds the indices one jump at a time: all the 1-jump indices,
+              then all the 2-jump ones. Those groups are exactly the windows the
+              greedy approach tracks without a queue.
+            </p>
+            <div class="code-tabs" data-viz="0045-jump-game-ii/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[5,6,7],"pop":[8,9],"done":[10,11],"push":[12,13,14,15]}'>
+                from collections import deque
+                class Solution(object):
+                    def jump(self, nums):
+                        n = len(nums)
+                        dist = [0] * n  # dist[i]: jumps used to reach i
+                        queue = deque([0])
+                        reached = 0  # the furthest index already in the queue
+                        while queue:
+                            i = queue.popleft()  # indices come out in order of jumps used
+                            if i == n - 1:  # the first time the last index comes out is the fewest jumps
+                                return dist[i]
+                            for j in range(reached + 1, min(n - 1, i + nums[i]) + 1):  # only indices nobody has queued yet
+                                dist[j] = dist[i] + 1
+                                queue.append(j)
+                            reached = max(reached, i + nums[i])
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[8,9,10,11],"pop":[12,13,14],"done":[15],"push":[16,17,18,20]}'>
+                #include <algorithm>
+                #include <queue>
+                #include <vector>
+                class Solution {
+                public:
+                    int jump(std::vector<int>& nums) {
+                        int n = (int)nums.size();
+                        std::vector<int> dist(n, 0); // dist[i]: jumps used to reach i
+                        std::queue<int> queue;
+                        queue.push(0);
+                        int reached = 0; // the furthest index already in the queue
+                        while (!queue.empty()) {
+                            int i = queue.front(); // indices come out in order of jumps used
+                            queue.pop();
+                            if (i == n - 1) return dist[i]; // the first time the last index comes out is the fewest jumps
+                            for (int j = reached + 1; j <= std::min(n - 1, i + nums[i]); ++j) { // only indices nobody has queued yet
+                                dist[j] = dist[i] + 1;
+                                queue.push(j);
+                            }
+                            reached = std::max(reached, i + nums[i]);
+                        }
+                        return -1; // not reached: the problem guarantees this can't happen
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[6,7,8,9],"pop":[10,11],"done":[12],"push":[13,14,15,17]}'>
+                import java.util.ArrayDeque;
+                import java.util.Deque;
+                class Solution {
+                    public int jump(int[] nums) {
+                        int n = nums.length;
+                        int[] dist = new int[n]; // dist[i]: jumps used to reach i
+                        Deque<Integer> queue = new ArrayDeque<>();
+                        queue.add(0);
+                        int reached = 0; // the furthest index already in the queue
+                        while (!queue.isEmpty()) {
+                            int i = queue.poll(); // indices come out in order of jumps used
+                            if (i == n - 1) return dist[i]; // the first time the last index comes out is the fewest jumps
+                            for (int j = reached + 1; j <= Math.min(n - 1, i + nums[i]); j++) { // only indices nobody has queued yet
+                                dist[j] = dist[i] + 1;
+                                queue.add(j);
+                            }
+                            reached = Math.max(reached, i + nums[i]);
+                        }
+                        return -1; // not reached: the problem guarantees this can't happen
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>
+              Approach 3: Greedy by Levels
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              BFS without the queue. The indices reachable with <code>k</code> jumps
+              are a window <code>[start, end]</code>. While scanning it, keep
+              <code>farthest</code>, the furthest any of them can jump: the next
+              window ends there.
+            </p>
+            <ul>
+              <li>When <code>i == end</code>, the window is done: <code>jumps += 1</code>, <code>end = farthest</code>.</li>
+              <li>
+                Loop to <code>n − 2</code>, not <code>n − 1</code>: once you can stand
+                on the last index you don't jump again. Including it gives one jump
+                too many (wrong on <code>[0]</code>, <code>[1,1]</code>, …).
+              </li>
+              <li>It never picks a specific landing spot; it just counts how many windows it takes.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              One pass and three variables: 0.7 ms in Python here for 10⁴ values. The
+              expected answer, and the same "how far can this level reach" idea as
+              Jump Game (55).
+            </p>
+            <div class="code-tabs" data-viz="0045-jump-game-ii/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"scan":[6,7],"level":[8,9,10],"return":[11]}'>
+                class Solution(object):
+                    def jump(self, nums):
+                        jumps = 0
+                        end = 0  # the last index reachable with `jumps` jumps
+                        farthest = 0  # the furthest index reachable with one more jump
+                        for i in range(len(nums) - 1):  # not the last index: standing there needs no more jumps
+                            farthest = max(farthest, i + nums[i])
+                            if i == end:  # every index of this jump count has been looked at
+                                jumps += 1  # take one more jump
+                                end = farthest  # it can land anywhere up to farthest
+                        return jumps
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8],"scan":[9,10],"level":[11,12,13],"return":[16]}'>
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    int jump(std::vector<int>& nums) {
+                        int jumps = 0;
+                        int end = 0; // the last index reachable with `jumps` jumps
+                        int farthest = 0; // the furthest index reachable with one more jump
+                        for (int i = 0; i + 1 < (int)nums.size(); ++i) { // not the last index: standing there needs no more jumps
+                            farthest = std::max(farthest, i + nums[i]);
+                            if (i == end) { // every index of this jump count has been looked at
+                                ++jumps; // take one more jump
+                                end = farthest; // it can land anywhere up to farthest
+                            }
+                        }
+                        return jumps;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5],"scan":[6,7],"level":[8,9,10],"return":[13]}'>
+                class Solution {
+                    public int jump(int[] nums) {
+                        int jumps = 0;
+                        int end = 0; // the last index reachable with `jumps` jumps
+                        int farthest = 0; // the furthest index reachable with one more jump
+                        for (int i = 0; i < nums.length - 1; i++) { // not the last index: standing there needs no more jumps
+                            farthest = Math.max(farthest, i + nums[i]);
+                            if (i == end) { // every index of this jump count has been looked at
+                                jumps++; // take one more jump
+                                end = farthest; // it can land anywhere up to farthest
+                            }
+                        }
+                        return jumps;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">No shortcut</span></h2>
+            <p>
+              No standard library function solves this. A graph library's shortest
+              path would work on the jump graph, but building that graph takes up to
+              n × 1000 edges, more work than the DP.
+            </p>
+            <p class="note">
+              Write Approach 3. Remember the two details: count a jump when
+              <code>i == end</code>, and stop the loop before the last index.
+            </p>
+          </section>
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Dynamic Programming</th>
+                    <td>dp[j] = min(dp[j], dp[i] + 1)</td>
+                    <td>O(n · k)</td>
+                    <td>O(n)</td>
+                    <td>0.5 s in Python at the limits</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">BFS</th>
+                    <td>Queue, push only unseen indices</td>
+                    <td>O(n)</td>
+                    <td>O(n)</td>
+                    <td>Shortest path view</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Greedy by Levels</th>
+                    <td>Window end and farthest</td>
+                    <td>O(n)</td>
+                    <td>O(1)</td>
+                    <td>Expected answer</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -17547,6 +17953,208 @@
             line: top < col.length - 1 ? ["trim", "return"] : "return",
             note: `${top < col.length - 1 ? "The top place is 0, so drop it. " : ""}Read the places from the top down: "${result}". Same O(m · n) as Approach 2, but only m + n carries instead of one per product.`,
             view: view({ done: col.length }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0045-jump-game-ii/approach1.visual.js -->
+    <script>
+      // DP: dp[i] = fewest jumps to reach i; from each i, every index it can jump to gets dp[i] + 1 if that's better.
+      DSAViz.register("0045-jump-game-ii/approach1", {
+        inputs: [{ name: "nums", type: "int[]", value: "[2, 3, 1, 1, 4]", minLength: 1, maxLength: 10, minValue: 0, maxValue: 6 }],
+        trace({ nums }) {
+          const n = nums.length;
+          let far = 0;
+          for (let i = 0; i < n; i++) {
+            if (i > far) throw new DSAViz.InputError(`The last index can't be reached (index ${i} is cut off). The problem guarantees it can; try [2, 3, 1, 1, 4].`);
+            far = Math.max(far, i + nums[i]);
+          }
+          const steps = [];
+          const dp = Array(n).fill(n);
+          dp[0] = 0;
+          let work = 0;
+          const show = (v) => (v >= n ? "∞" : String(v));
+          const view = (i, opts = {}) => {
+            const marks = {};
+            if (i !== undefined) {
+              for (let j = i + 1; j <= Math.min(n - 1, i + nums[i]); j++) marks[j] = "window";
+              marks[i] = "active";
+            }
+            const dmarks = {};
+            (opts.improved || []).forEach((j) => (dmarks[j] = "new"));
+            if (opts.final) dmarks[n - 1] = "match";
+            return [
+              { type: "array", label: "nums (shaded = one jump from i)", values: nums, marks, pointers: i !== undefined ? { i } : {} },
+              { type: "array", label: "dp[i]: fewest jumps to reach i", values: dp.map(show), marks: dmarks },
+              { type: "vars", items: [{ name: "updates tried", value: work }] },
+            ];
+          };
+
+          steps.push({ line: "init", note: "dp[0] = 0: you start there. Every other index is ∞ until something reaches it.", view: view() });
+          for (let i = 0; i < n; i++) {
+            const top = Math.min(n - 1, i + nums[i]);
+            const improved = [];
+            for (let j = i + 1; j <= top; j++) {
+              work++;
+              if (dp[i] + 1 < dp[j]) {
+                dp[j] = dp[i] + 1;
+                improved.push(j);
+              }
+            }
+            if (top <= i) {
+              steps.push({ line: "from", note: i === n - 1 ? `Index ${i} is the last index: nothing to jump to.` : `nums[${i}] = 0: no jumps from index ${i}.`, view: view(i) });
+              continue;
+            }
+            steps.push({
+              line: ["from", "relax"],
+              note:
+                top === i + 1
+                  ? `From index ${i} (dp = ${dp[i]}), one jump reaches index ${top}, in ${dp[i] + 1}. ${improved.length ? "That's better than before." : "That's no better than before."}`
+                  : `From index ${i} (dp = ${dp[i]}), one jump reaches ${i + 1}..${top}: each can be reached in ${dp[i] + 1}. ${improved.length ? `Better for ${improved.join(", ")}.` : "None of them improves."}`,
+              view: view(i, { improved }),
+            });
+          }
+          steps.push({
+            line: "return",
+            note: `Return dp[${n - 1}] = ${dp[n - 1]}. It tried ${work} updates: up to n × max(nums), O(n · k).`,
+            view: view(undefined, { final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0045-jump-game-ii/approach2.visual.js -->
+    <script>
+      // BFS: indices come out of the queue in order of jumps used; `reached` makes sure each index is queued once.
+      DSAViz.register("0045-jump-game-ii/approach2", {
+        inputs: [{ name: "nums", type: "int[]", value: "[2, 3, 1, 1, 4]", minLength: 1, maxLength: 10, minValue: 0, maxValue: 6 }],
+        trace({ nums }) {
+          const n = nums.length;
+          let far = 0;
+          for (let i = 0; i < n; i++) {
+            if (i > far) throw new DSAViz.InputError(`The last index can't be reached (index ${i} is cut off). The problem guarantees it can; try [2, 3, 1, 1, 4].`);
+            far = Math.max(far, i + nums[i]);
+          }
+          const steps = [];
+          const dist = Array(n).fill("");
+          dist[0] = 0;
+          const queue = [0];
+          const popped = new Set();
+          let reached = 0;
+          const view = (i, opts = {}) => {
+            const marks = {};
+            popped.forEach((k) => (marks[k] = "visited"));
+            queue.forEach((k) => (marks[k] = "compare"));
+            (opts.pushed || []).forEach((k) => (marks[k] = "new"));
+            if (i !== undefined) marks[i] = opts.done ? "match" : "active";
+            const pointers = {};
+            if (i !== undefined) pointers.i = i;
+            const r = Math.min(reached, n - 1);
+            pointers[pointers.i === r ? "i, reached" : "reached"] = r;
+            if (pointers["i, reached"] !== undefined) delete pointers.i;
+            return [
+              { type: "array", label: "nums (jumps used underneath; faded = done, orange = queued)", values: nums, sub: dist, marks, pointers },
+              { type: "array", label: "queue (front on the left)", values: queue.slice(), marks: opts.pushed ? Object.fromEntries(queue.map((k, idx) => [idx, opts.pushed.includes(k) ? "new" : ""])) : {} },
+            ];
+          };
+
+          steps.push({ line: "init", note: "Start with index 0 in the queue (0 jumps). reached = 0: the furthest index anyone has queued.", view: view() });
+          while (queue.length) {
+            const i = queue.shift();
+            if (i === n - 1) {
+              steps.push({ line: ["pop", "done"], note: `Pop index ${i}: it's the last index. BFS takes indices in order of jumps used, so ${dist[i]} is the fewest. Return ${dist[i]}.`, view: view(i, { done: true }) });
+              return steps;
+            }
+            const top = Math.min(n - 1, i + nums[i]);
+            const pushed = [];
+            for (let j = reached + 1; j <= top; j++) {
+              dist[j] = dist[i] + 1;
+              queue.push(j);
+              pushed.push(j);
+            }
+            reached = Math.max(reached, i + nums[i]);
+            popped.add(i);
+            steps.push({
+              line: ["pop", "push"],
+              note: pushed.length
+                ? `Pop index ${i} (${dist[i]} jump${dist[i] === 1 ? "" : "s"}). It reaches up to ${top}; indices ${pushed[0]}..${pushed[pushed.length - 1]} haven't been queued, so they get ${dist[i] + 1}. reached = ${Math.min(reached, n - 1)}.`
+                : `Pop index ${i}. It reaches up to ${top}, but everything up to ${Math.min(reached, n - 1)} is already queued: nothing new.`,
+              view: view(i, { pushed }),
+            });
+          }
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0045-jump-game-ii/approach3.visual.js -->
+    <script>
+      // Greedy by levels: the indices reachable with k jumps form a window; scanning it gives the next window's end.
+      DSAViz.register("0045-jump-game-ii/approach3", {
+        inputs: [{ name: "nums", type: "int[]", value: "[2, 3, 1, 1, 4]", minLength: 1, maxLength: 10, minValue: 0, maxValue: 6 }],
+        trace({ nums }) {
+          const n = nums.length;
+          let far = 0;
+          for (let i = 0; i < n; i++) {
+            if (i > far) throw new DSAViz.InputError(`The last index can't be reached (index ${i} is cut off). The problem guarantees it can; try [2, 3, 1, 1, 4].`);
+            far = Math.max(far, i + nums[i]);
+          }
+          const steps = [];
+          let jumps = 0;
+          let end = 0;
+          let start = 0; // first index of the current window, for the picture
+          let farthest = 0;
+          const view = (i, opts = {}) => {
+            const marks = {};
+            for (let k = 0; k < start; k++) marks[k] = "visited";
+            for (let k = start; k <= Math.min(end, n - 1); k++) marks[k] = "window";
+            if (i !== undefined) marks[i] = "active";
+            if (opts.final) marks[n - 1] = "match";
+            const pointers = {};
+            const add = (name, idx) => {
+              const key = Object.keys(pointers).find((k) => pointers[k] === idx);
+              if (key) {
+                delete pointers[key];
+                pointers[`${key}, ${name}`] = idx;
+              } else pointers[name] = idx;
+            };
+            if (i !== undefined) add("i", i);
+            add("end", Math.min(end, n - 1));
+            add("farthest", Math.min(farthest, n - 1));
+            return [
+              { type: "array", label: `nums (shaded = reachable with ${jumps} jump${jumps === 1 ? "" : "s"}; i + nums[i] underneath)`, values: nums, sub: nums.map((v, k) => k + v), marks, pointers },
+              { type: "vars", items: [{ name: "jumps", value: jumps, mark: opts.jumped ? "new" : "" }, { name: "end", value: end }, { name: "farthest", value: farthest }] },
+            ];
+          };
+
+          steps.push({ line: "init", note: "With 0 jumps you can only be at index 0, so the first window is just [0]. end = 0 is where it stops.", view: view() });
+          if (n === 1) {
+            steps.push({ line: "return", note: "There's only one index: you're already at the end. Return 0.", view: view(undefined, { final: true }) });
+            return steps;
+          }
+          for (let i = 0; i < n - 1; i++) {
+            const before = farthest;
+            farthest = Math.max(farthest, i + nums[i]);
+            steps.push({
+              line: "scan",
+              note: `Index ${i} can reach ${i + nums[i]}. farthest = max(${before}, ${i + nums[i]}) = ${farthest}: the furthest any index in this window gets with one more jump.`,
+              view: view(i),
+            });
+            if (i === end) {
+              jumps++;
+              start = end + 1;
+              end = farthest;
+              steps.push({
+                line: "level",
+                note: `i reached end: every index reachable with ${jumps - 1} jump${jumps - 1 === 1 ? "" : "s"} has been looked at. Take jump ${jumps}; it can land anywhere up to ${Math.min(end, n - 1)}${end >= n - 1 ? `, which covers the last index` : ""}.`,
+                view: view(i, { jumped: true }),
+              });
+            }
+          }
+          steps.push({
+            line: "return",
+            note: `The loop stops before the last index (standing there needs no jump). Return ${jumps}. One pass and three variables: O(n) time, O(1) space.`,
+            view: view(undefined, { final: true }),
           });
           return steps;
         },

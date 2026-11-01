@@ -1,0 +1,243 @@
+<details class="question" data-tags="array greedy dynamic-programming bfs breadth-first-search jump levels">
+  <summary>
+    <span class="q-title">45. Jump Game II</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Greedy</span>
+      <span class="tag">Dynamic Programming</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> The indices reachable with <code>k</code>
+      jumps form a contiguous <strong>window</strong>. Scan it and track
+      <code>farthest = max(i + nums[i])</code>: that's where the window for
+      <code>k + 1</code> jumps ends. When <code>i</code> reaches the current
+      window's <code>end</code>, count a jump and set <code>end = farthest</code>.
+      Loop only up to <code>n − 2</code>. O(n) time, O(1) space.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/jump-game-ii/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        You start at index 0 of <code>nums</code>. From index <code>i</code>
+        you can jump to any index from <code>i + 1</code> up to
+        <code>i + nums[i]</code>. Return the minimum number of jumps to reach
+        the last index.
+      </p>
+      <ul>
+        <li><code>1 &lt;= nums.length &lt;= 10⁴</code> and <code>0 &lt;= nums[i] &lt;= 1000</code>.</li>
+        <li>The last index is always reachable.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[2,3,1,1,4]</code> → <code>2</code> (0 → 1 → 4);
+        <code>[2,3,0,1,4]</code> → <code>2</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[0]</code></td>
+              <td><code>0</code></td>
+              <td>You start on the last index. A greedy loop that also visits the last index counts a jump here and returns 1.</td>
+            </tr>
+            <tr>
+              <td><code>[2,3,1,1,4]</code></td>
+              <td><code>2</code></td>
+              <td>Always taking the longest jump (to index 2) gives 3. The best first jump is the one that leads furthest <em>next</em>.</td>
+            </tr>
+            <tr>
+              <td><code>[2,3,0,1,4]</code></td>
+              <td><code>2</code></td>
+              <td>A 0 in the middle is a dead end; the path has to jump over it.</td>
+            </tr>
+            <tr>
+              <td><code>[3,2,1]</code></td>
+              <td><code>1</code></td>
+              <td>The first jump can go past the end: you only need to reach the last index, not land exactly on it.</td>
+            </tr>
+            <tr>
+              <td><code>[1,1,1,1]</code></td>
+              <td><code>3</code></td>
+              <td>Every jump is forced: n − 1 jumps.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2]</code> / <code>[2,1]</code></td>
+              <td><code>1</code> / <code>1</code></td>
+              <td>Two elements: one jump, whatever the values.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,1,1,1]</code></td>
+              <td><code>3</code></td>
+              <td>The bigger value isn't at the start: 0 → 1 → 3 → 4.</td>
+            </tr>
+            <tr>
+              <td>10⁴ ones</td>
+              <td><code>9999</code></td>
+              <td>The most jumps possible. Also: 10⁴ values of 1000 make the DP do about 10⁷ updates.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Dynamic Programming</h2>
+      <p class="intuition">
+        <code>dp[i]</code> is the fewest jumps to reach index <code>i</code>.
+        Going left to right, every index <code>i</code> can be reached in
+        <code>dp[i]</code> jumps, so everything it can jump to can be reached in
+        <code>dp[i] + 1</code>.
+      </p>
+      <ul>
+        <li>Start with <code>dp[0] = 0</code> and "infinity" everywhere else (n works: no answer is that large).</li>
+        <li>For each <code>j</code> in <code>i + 1 … i + nums[i]</code>: <code>dp[j] = min(dp[j], dp[i] + 1)</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · k), k = max(nums)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Correct and easy to reason about, but it updates the same indices
+        again and again. With 10⁴ values of 1000 it took 0.5 s in Python here
+        (27 ms in C++).
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: BFS</h2>
+      <p class="intuition">
+        Fewest jumps is a shortest path where every jump costs 1, which is what
+        BFS finds: indices come out of the queue in order of jumps used, so the
+        first time the last index comes out, that's the answer.
+      </p>
+      <ul>
+        <li>
+          From <code>i</code> you can reach a whole range, and everything up to
+          <code>reached</code> is already queued, so only push
+          <code>reached + 1 … i + nums[i]</code>. Each index is queued once.
+        </li>
+        <li>That keeps it O(n) instead of O(n · k).</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        The queue holds the indices one jump at a time: all the 1-jump indices,
+        then all the 2-jump ones. Those groups are exactly the windows the
+        greedy approach tracks without a queue.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Greedy by Levels
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        BFS without the queue. The indices reachable with <code>k</code> jumps
+        are a window <code>[start, end]</code>. While scanning it, keep
+        <code>farthest</code>, the furthest any of them can jump: the next
+        window ends there.
+      </p>
+      <ul>
+        <li>When <code>i == end</code>, the window is done: <code>jumps += 1</code>, <code>end = farthest</code>.</li>
+        <li>
+          Loop to <code>n − 2</code>, not <code>n − 1</code>: once you can stand
+          on the last index you don't jump again. Including it gives one jump
+          too many (wrong on <code>[0]</code>, <code>[1,1]</code>, …).
+        </li>
+        <li>It never picks a specific landing spot; it just counts how many windows it takes.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        One pass and three variables: 0.7 ms in Python here for 10⁴ values. The
+        expected answer, and the same "how far can this level reach" idea as
+        Jump Game (55).
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No standard library function solves this. A graph library's shortest
+        path would work on the jump graph, but building that graph takes up to
+        n × 1000 edges, more work than the DP.
+      </p>
+      <p class="note">
+        Write Approach 3. Remember the two details: count a jump when
+        <code>i == end</code>, and stop the loop before the last index.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Dynamic Programming</th>
+              <td>dp[j] = min(dp[j], dp[i] + 1)</td>
+              <td>O(n · k)</td>
+              <td>O(n)</td>
+              <td>0.5 s in Python at the limits</td>
+            </tr>
+            <tr>
+              <th scope="row">BFS</th>
+              <td>Queue, push only unseen indices</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Shortest path view</td>
+            </tr>
+            <tr>
+              <th scope="row">Greedy by Levels</th>
+              <td>Window end and farthest</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
