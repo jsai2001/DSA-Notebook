@@ -1,0 +1,246 @@
+<details class="question" data-tags="math string simulation big-integer multiplication carry digits">
+  <summary>
+    <span class="q-title">43. Multiply Strings</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Math</span>
+      <span class="tag">String</span>
+      <span class="tag">Simulation</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Do school multiplication in one array of
+      <code>m + n</code> places. The digit product
+      <code>num1[i] × num2[j]</code> belongs at places <code>i + j</code> and
+      <code>i + j + 1</code>: add it to <code>pos[i + j + 1]</code>, keep the
+      last digit there, carry the rest into <code>pos[i + j]</code>. Return
+      <code>"0"</code> early if either input is <code>"0"</code>, and drop
+      the one possible leading zero. O(m · n).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/multiply-strings/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given two non-negative integers <code>num1</code> and
+        <code>num2</code> written as strings, return their product, also as a
+        string.
+      </p>
+      <ul>
+        <li><code>1 &lt;= num1.length, num2.length &lt;= 200</code>, digits only.</li>
+        <li>No leading zeros, except the number <code>"0"</code> itself.</li>
+        <li>You must not use a big-integer library or convert the inputs to integers directly.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>"2"</code> × <code>"3"</code> → <code>"6"</code>;
+        <code>"123"</code> × <code>"456"</code> → <code>"56088"</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>"0"</code> × <code>"0"</code></td>
+              <td><code>"0"</code></td>
+              <td>Stripping every leading zero leaves an empty string; the answer must still be <code>"0"</code>.</td>
+            </tr>
+            <tr>
+              <td><code>"0"</code> × <code>"52"</code></td>
+              <td><code>"0"</code></td>
+              <td>Without an early check, the shifted rows of long multiplication give <code>"00"</code>.</td>
+            </tr>
+            <tr>
+              <td><code>"2"</code> × <code>"3"</code></td>
+              <td><code>"6"</code></td>
+              <td>The product has m + n − 1 digits, so the m + n array starts with a 0: <code>"06"</code> if it isn't dropped.</td>
+            </tr>
+            <tr>
+              <td><code>"9"</code> × <code>"9"</code></td>
+              <td><code>"81"</code></td>
+              <td>The product has the full m + n digits: nothing to drop, and the top place gets a carry.</td>
+            </tr>
+            <tr>
+              <td><code>"10"</code> × <code>"10"</code></td>
+              <td><code>"100"</code></td>
+              <td>Zeros <em>inside</em> and at the end of the answer must stay; only the front is trimmed.</td>
+            </tr>
+            <tr>
+              <td><code>"99"</code> × <code>"99"</code></td>
+              <td><code>"9801"</code></td>
+              <td>Carries chain across several places.</td>
+            </tr>
+            <tr>
+              <td><code>"123"</code> × <code>"456"</code></td>
+              <td><code>"56088"</code></td>
+              <td>The usual case, with a 0 in the middle of the answer.</td>
+            </tr>
+            <tr>
+              <td>200 nines × 200 nines</td>
+              <td>400 digits</td>
+              <td>The largest input: far past 64-bit integers (about 19 digits), which is why the problem exists.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Long Multiplication, Row by Row</h2>
+      <p class="intuition">
+        Exactly what you'd do on paper: multiply <code>num1</code> by each
+        digit of <code>num2</code>, shift each row one more place to the left
+        (append zeros), and add the rows up as strings.
+      </p>
+      <ul>
+        <li>Two helpers: a number times one digit, and Add Strings (LeetCode 415) for the running total.</li>
+        <li>A digit of 0 adds nothing, so its row can be skipped.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · (m + n))</span>
+        <span><strong>Space</strong> O(m + n) per row</span>
+      </div>
+      <p class="note">
+        Easy to trust because it's the method you already know, but it builds a
+        new string for every row and every addition. It was the slowest here:
+        21 ms in Python for 200 × 200 digits, against 6 ms for Approach 2.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: One Array of Places
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Skip the rows and add every digit product straight into the place it
+        belongs. With <code>pos</code> of length <code>m + n</code> and index 0
+        on the left, <code>num1[i] × num2[j]</code> covers
+        <code>pos[i + j]</code> (tens) and <code>pos[i + j + 1]</code> (ones).
+      </p>
+      <ul>
+        <li><code>total = num1[i] × num2[j] + pos[i + j + 1]</code></li>
+        <li><code>pos[i + j + 1] = total % 10</code>, <code>pos[i + j] += total / 10</code></li>
+        <li>
+          <code>pos[i + j]</code> can briefly go above 9; the next product that
+          lands there (or the final digits) carry it on, so the result is right.
+        </li>
+        <li>Only <code>pos[0]</code> can be a leading zero.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m · n)</span>
+        <span><strong>Space</strong> O(m + n)</span>
+      </div>
+      <p class="note">
+        The answer interviewers expect: one array, no string additions. The
+        index rule <code>i + j</code> / <code>i + j + 1</code> is the part to
+        remember.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Column Sums, Then One Carry Pass</h2>
+      <p class="intuition">
+        Separate the two jobs. First add up every digit product into its column
+        (place <code>i + j</code>, counting from the ones place) without
+        carrying. Then make one pass from the ones place up, turning each
+        column into a single digit and carrying the rest.
+      </p>
+      <ul>
+        <li>A column can hold up to 81 × 200 = 16,200 before carrying: no risk of overflow.</li>
+        <li>Then drop the unused top place, if it's 0.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m · n)</span>
+        <span><strong>Space</strong> O(m + n)</span>
+      </div>
+      <p class="note">
+        Same complexity as Approach 2 with only m + n carry steps instead of one
+        per product, so it was the fastest here in Python (2 ms for 200 × 200
+        digits). It's also how big-number libraries begin: the column sums are
+        a convolution, which faster methods (Karatsuba, FFT) speed up.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Day to day you'd never write this. Python's <code>int</code> has no size
+        limit, and Java has <code>BigInteger</code>. C++ has no standard big
+        integer (you'd use a library such as Boost.Multiprecision or GMP).
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> faster than O(m · n) for large numbers</span>
+        <span><strong>Space</strong> O(m + n)</span>
+      </div>
+      <p class="note">
+        Both pass on LeetCode's tests, but the problem statement forbids them,
+        so in an interview write Approach 2.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Long Multiplication, Row by Row</th>
+              <td>num1 × each digit, add the rows as strings</td>
+              <td>O(n · (m + n))</td>
+              <td>O(m + n)</td>
+              <td>Familiar; builds many strings</td>
+            </tr>
+            <tr>
+              <th scope="row">One Array of Places</th>
+              <td>Product into pos[i + j + 1], carry to pos[i + j]</td>
+              <td>O(m · n)</td>
+              <td>O(m + n)</td>
+              <td>Expected answer</td>
+            </tr>
+            <tr>
+              <th scope="row">Column Sums, Then One Carry Pass</th>
+              <td>Sum each place, carry once at the end</td>
+              <td>O(m · n)</td>
+              <td>O(m + n)</td>
+              <td>Fewest carry steps; fastest here in Python</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

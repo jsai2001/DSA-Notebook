@@ -9794,6 +9794,509 @@
         </div>
       </details>
 
+      <!-- ===== problems/0043-multiply-strings ===== -->
+      <details class="question" data-tags="math string simulation big-integer multiplication carry digits">
+        <summary>
+          <span class="q-title">43. Multiply Strings</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">Math</span>
+            <span class="tag">String</span>
+            <span class="tag">Simulation</span>
+          </span>
+        </summary>
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> Do school multiplication in one array of
+            <code>m + n</code> places. The digit product
+            <code>num1[i] × num2[j]</code> belongs at places <code>i + j</code> and
+            <code>i + j + 1</code>: add it to <code>pos[i + j + 1]</code>, keep the
+            last digit there, carry the rest into <code>pos[i + j]</code>. Return
+            <code>"0"</code> early if either input is <code>"0"</code>, and drop
+            the one possible leading zero. O(m · n).
+          </div>
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/multiply-strings/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              Given two non-negative integers <code>num1</code> and
+              <code>num2</code> written as strings, return their product, also as a
+              string.
+            </p>
+            <ul>
+              <li><code>1 &lt;= num1.length, num2.length &lt;= 200</code>, digits only.</li>
+              <li>No leading zeros, except the number <code>"0"</code> itself.</li>
+              <li>You must not use a big-integer library or convert the inputs to integers directly.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>"2"</code> × <code>"3"</code> → <code>"6"</code>;
+              <code>"123"</code> × <code>"456"</code> → <code>"56088"</code>.
+            </p>
+          </section>
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>"0"</code> × <code>"0"</code></td>
+                    <td><code>"0"</code></td>
+                    <td>Stripping every leading zero leaves an empty string; the answer must still be <code>"0"</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>"0"</code> × <code>"52"</code></td>
+                    <td><code>"0"</code></td>
+                    <td>Without an early check, the shifted rows of long multiplication give <code>"00"</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>"2"</code> × <code>"3"</code></td>
+                    <td><code>"6"</code></td>
+                    <td>The product has m + n − 1 digits, so the m + n array starts with a 0: <code>"06"</code> if it isn't dropped.</td>
+                  </tr>
+                  <tr>
+                    <td><code>"9"</code> × <code>"9"</code></td>
+                    <td><code>"81"</code></td>
+                    <td>The product has the full m + n digits: nothing to drop, and the top place gets a carry.</td>
+                  </tr>
+                  <tr>
+                    <td><code>"10"</code> × <code>"10"</code></td>
+                    <td><code>"100"</code></td>
+                    <td>Zeros <em>inside</em> and at the end of the answer must stay; only the front is trimmed.</td>
+                  </tr>
+                  <tr>
+                    <td><code>"99"</code> × <code>"99"</code></td>
+                    <td><code>"9801"</code></td>
+                    <td>Carries chain across several places.</td>
+                  </tr>
+                  <tr>
+                    <td><code>"123"</code> × <code>"456"</code></td>
+                    <td><code>"56088"</code></td>
+                    <td>The usual case, with a 0 in the middle of the answer.</td>
+                  </tr>
+                  <tr>
+                    <td>200 nines × 200 nines</td>
+                    <td>400 digits</td>
+                    <td>The largest input: far past 64-bit integers (about 19 digits), which is why the problem exists.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Long Multiplication, Row by Row</h2>
+            <p class="intuition">
+              Exactly what you'd do on paper: multiply <code>num1</code> by each
+              digit of <code>num2</code>, shift each row one more place to the left
+              (append zeros), and add the rows up as strings.
+            </p>
+            <ul>
+              <li>Two helpers: a number times one digit, and Add Strings (LeetCode 415) for the running total.</li>
+              <li>A digit of 0 adds nothing, so its row can be skipped.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n · (m + n))</span>
+              <span><strong>Space</strong> O(m + n) per row</span>
+            </div>
+            <p class="note">
+              Easy to trust because it's the method you already know, but it builds a
+              new string for every row and every addition. It was the slowest here:
+              21 ms in Python for 200 × 200 digits, against 6 ms for Approach 2.
+            </p>
+            <div class="code-tabs" data-viz="0043-multiply-strings/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"zero":[3,4],"init":[5],"digit":[6,7,8],"row":[9],"add":[10],"return":[11]}'>
+                class Solution(object):
+                    def multiply(self, num1, num2):
+                        if num1 == "0" or num2 == "0":  # anything times 0 is "0", not "000"
+                            return "0"
+                        total = "0"
+                        for k, d in enumerate(reversed(num2)):  # one digit of num2 at a time, from the right
+                            if d == "0":  # a zero digit adds nothing
+                                continue
+                            row = self.times_digit(num1, int(d)) + "0" * k  # num1 × digit, shifted k places
+                            total = self.add(total, row)
+                        return total
+
+                    def times_digit(self, num, d):  # a whole number times one digit (1-9)
+                        out, carry = [], 0
+                        for ch in reversed(num):
+                            carry, digit = divmod(int(ch) * d + carry, 10)
+                            out.append(str(digit))
+                        if carry:
+                            out.append(str(carry))
+                        return "".join(reversed(out))
+
+                    def add(self, a, b):  # two numbers as strings (Add Strings, LeetCode 415)
+                        out, carry = [], 0
+                        i, j = len(a) - 1, len(b) - 1
+                        while i >= 0 or j >= 0 or carry:
+                            s = carry + (int(a[i]) if i >= 0 else 0) + (int(b[j]) if j >= 0 else 0)
+                            carry, digit = divmod(s, 10)
+                            out.append(str(digit))
+                            i, j = i - 1, j - 1
+                        return "".join(reversed(out))
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"zero":[6],"init":[7],"digit":[8,9,10],"row":[11],"add":[12],"return":[14]}'>
+                #include <algorithm>
+                #include <string>
+                class Solution {
+                public:
+                    std::string multiply(std::string num1, std::string num2) {
+                        if (num1 == "0" || num2 == "0") return "0"; // anything times 0 is "0", not "000"
+                        std::string total = "0";
+                        for (int k = 0; k < (int)num2.size(); ++k) { // one digit of num2 at a time, from the right
+                            int d = num2[num2.size() - 1 - k] - '0';
+                            if (d == 0) continue; // a zero digit adds nothing
+                            std::string row = timesDigit(num1, d) + std::string(k, '0'); // num1 × digit, shifted k places
+                            total = add(total, row);
+                        }
+                        return total;
+                    }
+                private:
+                    std::string timesDigit(const std::string& num, int d) { // a whole number times one digit (1-9)
+                        std::string out;
+                        int carry = 0;
+                        for (int i = (int)num.size() - 1; i >= 0; --i) {
+                            int p = (num[i] - '0') * d + carry;
+                            out.push_back(char('0' + p % 10));
+                            carry = p / 10;
+                        }
+                        if (carry) out.push_back(char('0' + carry));
+                        std::reverse(out.begin(), out.end());
+                        return out;
+                    }
+                    std::string add(const std::string& a, const std::string& b) { // two numbers as strings (Add Strings, LeetCode 415)
+                        std::string out;
+                        int carry = 0;
+                        for (int i = (int)a.size() - 1, j = (int)b.size() - 1; i >= 0 || j >= 0 || carry; --i, --j) {
+                            int s = carry + (i >= 0 ? a[i] - '0' : 0) + (j >= 0 ? b[j] - '0' : 0);
+                            out.push_back(char('0' + s % 10));
+                            carry = s / 10;
+                        }
+                        std::reverse(out.begin(), out.end());
+                        return out;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"zero":[3],"init":[4],"digit":[5,6,7],"row":[8],"add":[9],"return":[11]}'>
+                class Solution {
+                    public String multiply(String num1, String num2) {
+                        if (num1.equals("0") || num2.equals("0")) return "0"; // anything times 0 is "0", not "000"
+                        String total = "0";
+                        for (int k = 0; k < num2.length(); k++) { // one digit of num2 at a time, from the right
+                            int d = num2.charAt(num2.length() - 1 - k) - '0';
+                            if (d == 0) continue; // a zero digit adds nothing
+                            String row = timesDigit(num1, d) + "0".repeat(k); // num1 × digit, shifted k places
+                            total = add(total, row);
+                        }
+                        return total;
+                    }
+
+                    private String timesDigit(String num, int d) { // a whole number times one digit (1-9)
+                        StringBuilder out = new StringBuilder();
+                        int carry = 0;
+                        for (int i = num.length() - 1; i >= 0; i--) {
+                            int p = (num.charAt(i) - '0') * d + carry;
+                            out.append(p % 10);
+                            carry = p / 10;
+                        }
+                        if (carry > 0) out.append(carry);
+                        return out.reverse().toString();
+                    }
+
+                    private String add(String a, String b) { // two numbers as strings (Add Strings, LeetCode 415)
+                        StringBuilder out = new StringBuilder();
+                        int carry = 0;
+                        for (int i = a.length() - 1, j = b.length() - 1; i >= 0 || j >= 0 || carry > 0; i--, j--) {
+                            int s = carry + (i >= 0 ? a.charAt(i) - '0' : 0) + (j >= 0 ? b.charAt(j) - '0' : 0);
+                            out.append(s % 10);
+                            carry = s / 10;
+                        }
+                        return out.reverse().toString();
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>
+              Approach 2: One Array of Places
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              Skip the rows and add every digit product straight into the place it
+              belongs. With <code>pos</code> of length <code>m + n</code> and index 0
+              on the left, <code>num1[i] × num2[j]</code> covers
+              <code>pos[i + j]</code> (tens) and <code>pos[i + j + 1]</code> (ones).
+            </p>
+            <ul>
+              <li><code>total = num1[i] × num2[j] + pos[i + j + 1]</code></li>
+              <li><code>pos[i + j + 1] = total % 10</code>, <code>pos[i + j] += total / 10</code></li>
+              <li>
+                <code>pos[i + j]</code> can briefly go above 9; the next product that
+                lands there (or the final digits) carry it on, so the result is right.
+              </li>
+              <li>Only <code>pos[0]</code> can be a leading zero.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(m · n)</span>
+              <span><strong>Space</strong> O(m + n)</span>
+            </div>
+            <p class="note">
+              The answer interviewers expect: one array, no string additions. The
+              index rule <code>i + j</code> / <code>i + j + 1</code> is the part to
+              remember.
+            </p>
+            <div class="code-tabs" data-viz="0043-multiply-strings/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"zero":[3,4],"init":[6],"mul":[7,8,10],"place":[11,12],"return":[13]}'>
+                class Solution(object):
+                    def multiply(self, num1, num2):
+                        if num1 == "0" or num2 == "0":  # anything times 0 is "0", not "000"
+                            return "0"
+                        m, n = len(num1), len(num2)
+                        pos = [0] * (m + n)  # the product has at most m + n digits; pos[0] is the leftmost
+                        for i in range(m - 1, -1, -1):
+                            for j in range(n - 1, -1, -1):
+                                # num1[i] × num2[j] lands on places i + j and i + j + 1
+                                total = int(num1[i]) * int(num2[j]) + pos[i + j + 1]
+                                pos[i + j + 1] = total % 10  # keep one digit here
+                                pos[i + j] += total // 10  # carry one place to the left
+                        return "".join(map(str, pos)).lstrip("0")  # only pos[0] can be a leading zero
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"zero":[6],"init":[8],"mul":[9,10,12],"place":[13,14],"return":[17,18,19,20]}'>
+                #include <string>
+                #include <vector>
+                class Solution {
+                public:
+                    std::string multiply(std::string num1, std::string num2) {
+                        if (num1 == "0" || num2 == "0") return "0"; // anything times 0 is "0", not "000"
+                        int m = (int)num1.size(), n = (int)num2.size();
+                        std::vector<int> pos(m + n, 0); // the product has at most m + n digits; pos[0] is the leftmost
+                        for (int i = m - 1; i >= 0; --i) {
+                            for (int j = n - 1; j >= 0; --j) {
+                                // num1[i] × num2[j] lands on places i + j and i + j + 1
+                                int total = (num1[i] - '0') * (num2[j] - '0') + pos[i + j + 1];
+                                pos[i + j + 1] = total % 10; // keep one digit here
+                                pos[i + j] += total / 10; // carry one place to the left
+                            }
+                        }
+                        std::string result;
+                        for (int d : pos)
+                            if (!(result.empty() && d == 0)) result.push_back(char('0' + d)); // skip the leading zero
+                        return result;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"zero":[3],"init":[5],"mul":[6,7,9],"place":[10,11],"return":[14,15,16,17]}'>
+                class Solution {
+                    public String multiply(String num1, String num2) {
+                        if (num1.equals("0") || num2.equals("0")) return "0"; // anything times 0 is "0", not "000"
+                        int m = num1.length(), n = num2.length();
+                        int[] pos = new int[m + n]; // the product has at most m + n digits; pos[0] is the leftmost
+                        for (int i = m - 1; i >= 0; i--) {
+                            for (int j = n - 1; j >= 0; j--) {
+                                // num1[i] × num2[j] lands on places i + j and i + j + 1
+                                int total = (num1.charAt(i) - '0') * (num2.charAt(j) - '0') + pos[i + j + 1];
+                                pos[i + j + 1] = total % 10; // keep one digit here
+                                pos[i + j] += total / 10; // carry one place to the left
+                            }
+                        }
+                        StringBuilder result = new StringBuilder();
+                        for (int d : pos)
+                            if (!(result.length() == 0 && d == 0)) result.append(d); // skip the leading zero
+                        return result.toString();
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>Approach 3: Column Sums, Then One Carry Pass</h2>
+            <p class="intuition">
+              Separate the two jobs. First add up every digit product into its column
+              (place <code>i + j</code>, counting from the ones place) without
+              carrying. Then make one pass from the ones place up, turning each
+              column into a single digit and carrying the rest.
+            </p>
+            <ul>
+              <li>A column can hold up to 81 × 200 = 16,200 before carrying: no risk of overflow.</li>
+              <li>Then drop the unused top place, if it's 0.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(m · n)</span>
+              <span><strong>Space</strong> O(m + n)</span>
+            </div>
+            <p class="note">
+              Same complexity as Approach 2 with only m + n carry steps instead of one
+              per product, so it was the fastest here in Python (2 ms for 200 × 200
+              digits). It's also how big-number libraries begin: the column sums are
+              a convolution, which faster methods (Karatsuba, FFT) speed up.
+            </p>
+            <div class="code-tabs" data-viz="0043-multiply-strings/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"zero":[3,4],"init":[5,6,7],"sum":[8,9,10],"carry":[11,12,13],"trim":[14,15],"return":[16]}'>
+                class Solution(object):
+                    def multiply(self, num1, num2):
+                        if num1 == "0" or num2 == "0":  # anything times 0 is "0", not "000"
+                            return "0"
+                        a = [int(c) for c in reversed(num1)]  # ones digit first
+                        b = [int(c) for c in reversed(num2)]
+                        col = [0] * (len(a) + len(b))  # col[k]: sum of every a[i] * b[j] with i + j = k
+                        for i, x in enumerate(a):
+                            for j, y in enumerate(b):
+                                col[i + j] += x * y  # no carrying yet
+                        carry = 0
+                        for k in range(len(col)):  # one carry pass, from the ones place up
+                            carry, col[k] = divmod(col[k] + carry, 10)
+                        while col[-1] == 0:  # drop the unused top place
+                            col.pop()
+                        return "".join(map(str, reversed(col)))
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"zero":[6],"init":[7,8],"sum":[9,10,11],"carry":[12,13,14,15,16],"trim":[18],"return":[19,20,21]}'>
+                #include <string>
+                #include <vector>
+                class Solution {
+                public:
+                    std::string multiply(std::string num1, std::string num2) {
+                        if (num1 == "0" || num2 == "0") return "0"; // anything times 0 is "0", not "000"
+                        int m = (int)num1.size(), n = (int)num2.size();
+                        std::vector<int> col(m + n, 0); // col[k]: sum of every digit product whose places add up to k (ones = 0)
+                        for (int i = 0; i < m; ++i)
+                            for (int j = 0; j < n; ++j)
+                                col[i + j] += (num1[m - 1 - i] - '0') * (num2[n - 1 - j] - '0'); // no carrying yet; at most 81 × 200
+                        int carry = 0;
+                        for (int k = 0; k < m + n; ++k) { // one carry pass, from the ones place up
+                            int v = col[k] + carry;
+                            col[k] = v % 10;
+                            carry = v / 10;
+                        }
+                        while (col.back() == 0) col.pop_back(); // drop the unused top place
+                        std::string result;
+                        for (int k = (int)col.size() - 1; k >= 0; --k) result.push_back(char('0' + col[k])); // most significant first
+                        return result;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"zero":[3],"init":[4,5],"sum":[6,7,8],"carry":[9,10,11,12,13],"trim":[15,16],"return":[17,18,19]}'>
+                class Solution {
+                    public String multiply(String num1, String num2) {
+                        if (num1.equals("0") || num2.equals("0")) return "0"; // anything times 0 is "0", not "000"
+                        int m = num1.length(), n = num2.length();
+                        int[] col = new int[m + n]; // col[k]: sum of every digit product whose places add up to k (ones = 0)
+                        for (int i = 0; i < m; i++)
+                            for (int j = 0; j < n; j++)
+                                col[i + j] += (num1.charAt(m - 1 - i) - '0') * (num2.charAt(n - 1 - j) - '0'); // no carrying yet; at most 81 × 200
+                        int carry = 0;
+                        for (int k = 0; k < m + n; k++) { // one carry pass, from the ones place up
+                            int v = col[k] + carry;
+                            col[k] = v % 10;
+                            carry = v / 10;
+                        }
+                        int top = m + n - 1;
+                        while (col[top] == 0) top--; // drop the unused top place
+                        StringBuilder result = new StringBuilder();
+                        for (int k = top; k >= 0; k--) result.append(col[k]); // most significant first
+                        return result.toString();
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">Built-ins</span></h2>
+            <p>
+              Day to day you'd never write this. Python's <code>int</code> has no size
+              limit, and Java has <code>BigInteger</code>. C++ has no standard big
+              integer (you'd use a library such as Boost.Multiprecision or GMP).
+            </p>
+            <div class="code-tabs">
+              <script type="text/plain" data-lang="Python">
+                class Solution(object):
+                    def multiply(self, num1, num2):
+                        return str(int(num1) * int(num2))  # Python's int has no size limit
+              </script>
+              <script type="text/plain" data-lang="Java">
+                import java.math.BigInteger;
+                class Solution {
+                    public String multiply(String num1, String num2) {
+                        return new BigInteger(num1).multiply(new BigInteger(num2)).toString(); // arbitrary-size integers
+                    }
+                }
+              </script>
+            </div>
+            <div class="complexity">
+              <span><strong>Time</strong> faster than O(m · n) for large numbers</span>
+              <span><strong>Space</strong> O(m + n)</span>
+            </div>
+            <p class="note">
+              Both pass on LeetCode's tests, but the problem statement forbids them,
+              so in an interview write Approach 2.
+            </p>
+          </section>
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Long Multiplication, Row by Row</th>
+                    <td>num1 × each digit, add the rows as strings</td>
+                    <td>O(n · (m + n))</td>
+                    <td>O(m + n)</td>
+                    <td>Familiar; builds many strings</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">One Array of Places</th>
+                    <td>Product into pos[i + j + 1], carry to pos[i + j]</td>
+                    <td>O(m · n)</td>
+                    <td>O(m + n)</td>
+                    <td>Expected answer</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Column Sums, Then One Carry Pass</th>
+                    <td>Sum each place, carry once at the end</td>
+                    <td>O(m · n)</td>
+                    <td>O(m + n)</td>
+                    <td>Fewest carry steps; fastest here in Python</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -16851,6 +17354,199 @@
             line: "return",
             note: `left and right meet at bar ${left}, the tallest bar, which holds no water. Return ${total}. One pass, and only a few variables: O(n) time, O(1) space.`,
             view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0043-multiply-strings/approach1.visual.js -->
+    <script>
+      // Long multiplication by hand: one row per digit of num2 (shifted), then add the rows as strings.
+      DSAViz.register("0043-multiply-strings/approach1", {
+        inputs: [
+          { name: "num1", type: "string", value: "123", maxLength: 4 },
+          { name: "num2", type: "string", value: "456", maxLength: 4 },
+        ],
+        trace({ num1, num2 }) {
+          for (const [name, s] of [["num1", num1], ["num2", num2]]) {
+            if (!/^(0|[1-9]\d*)$/.test(s)) throw new DSAViz.InputError(`${name} must be a whole number without leading zeros, like 123.`);
+          }
+          const steps = [];
+          const rows = [];
+          let total = "0";
+          const add = (a, b) => String(BigInt(a) + BigInt(b)); // the page shows the result; the code adds digit by digit
+          const view = (k, opts = {}) => {
+            const n2marks = {};
+            if (k !== undefined) {
+              for (let j = 0; j < num2.length; j++) if (num2.length - 1 - j < k) n2marks[j] = "visited";
+              n2marks[num2.length - 1 - k] = "active";
+            }
+            return [
+              { type: "array", label: "num1", values: [...num1] },
+              { type: "array", label: "num2 (one digit at a time, from the right)", values: [...num2], marks: n2marks },
+              { type: "array", label: "rows: num1 × digit, shifted", values: rows.slice(), wide: true, marks: opts.newRow ? { [rows.length - 1]: "new" } : {} },
+              { type: "vars", items: [{ name: "total", value: total, mark: opts.added ? "new" : "" }] },
+            ];
+          };
+
+          if (num1 === "0" || num2 === "0") {
+            steps.push({ line: "zero", note: `One of them is 0, so return "0". Without this check, "0" × "52" would come out as "00": the shifted rows add zeros.`, view: view() });
+            return steps;
+          }
+          steps.push({ line: "init", note: "Multiply the way you would on paper: num1 times each digit of num2, shifted one more place each time, and add the rows up.", view: view() });
+          for (let k = 0; k < num2.length; k++) {
+            const d = Number(num2[num2.length - 1 - k]);
+            if (d === 0) {
+              steps.push({ line: "digit", note: `Digit ${k + 1} from the right is 0: its row would be all zeros, so skip it.`, view: view(k) });
+              continue;
+            }
+            const row = String(BigInt(num1) * BigInt(d)) + "0".repeat(k);
+            rows.push(row);
+            steps.push({
+              line: ["digit", "row"],
+              note: `Digit ${d} (${k ? `${k} place${k === 1 ? "" : "s"} from the right` : "the ones place"}): ${num1} × ${d} = ${String(BigInt(num1) * BigInt(d))}${k ? `, plus ${k} zero${k === 1 ? "" : "s"} for the shift: ${row}` : ""}.`,
+              view: view(k, { newRow: true }),
+            });
+            const before = total;
+            total = add(total, row);
+            steps.push({ line: "add", note: `Add it to the total as strings, digit by digit with a carry: ${before} + ${row} = ${total}.`, view: view(k, { added: true }) });
+          }
+          steps.push({
+            line: "return",
+            note: `Return "${total}". Each row costs O(m) and each string addition O(m + n), for n rows: O(n · (m + n)), and every row is a new string.`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0043-multiply-strings/approach2.visual.js -->
+    <script>
+      // One result array: num1[i] × num2[j] lands on places i + j and i + j + 1; carry into the left place right away.
+      DSAViz.register("0043-multiply-strings/approach2", {
+        inputs: [
+          { name: "num1", type: "string", value: "123", maxLength: 4 },
+          { name: "num2", type: "string", value: "45", maxLength: 4 },
+        ],
+        trace({ num1, num2 }) {
+          for (const [name, s] of [["num1", num1], ["num2", num2]]) {
+            if (!/^(0|[1-9]\d*)$/.test(s)) throw new DSAViz.InputError(`${name} must be a whole number without leading zeros, like 123.`);
+          }
+          const m = num1.length;
+          const n = num2.length;
+          const steps = [];
+          const pos = Array(m + n).fill(0);
+          const view = (i, j, opts = {}) => {
+            const pmarks = {};
+            if (opts.lo !== undefined) pmarks[opts.lo] = opts.placed ? "new" : "active";
+            if (opts.hi !== undefined) pmarks[opts.hi] = opts.placed ? "new" : "compare";
+            if (opts.final) pos.forEach((_, k) => (pmarks[k] = k === 0 && pos[0] === 0 ? "ghost" : "match"));
+            return [
+              { type: "array", label: "num1", values: [...num1], marks: i !== undefined ? { [i]: "active" } : {}, pointers: i !== undefined ? { i } : {} },
+              { type: "array", label: "num2", values: [...num2], marks: j !== undefined ? { [j]: "active" } : {}, pointers: j !== undefined ? { j } : {} },
+              { type: "array", label: `pos (${m + n} places; index 0 is the leftmost)`, values: pos.slice(), marks: pmarks },
+              ...(opts.calc ? [{ type: "vars", items: [{ name: "total", value: opts.calc }] }] : []),
+            ];
+          };
+
+          if (num1 === "0" || num2 === "0") {
+            steps.push({ line: "zero", note: `One of them is 0, so return "0". Without this check the array would be all zeros, and stripping them would leave an empty string.`, view: view() });
+            return steps;
+          }
+          steps.push({
+            line: "init",
+            note: `An m-digit number times an n-digit number has at most m + n = ${m + n} digits. pos holds them; num1[i] × num2[j] belongs at places i + j and i + j + 1.`,
+            view: view(),
+          });
+          for (let i = m - 1; i >= 0; i--) {
+            for (let j = n - 1; j >= 0; j--) {
+              const lo = i + j + 1;
+              const hi = i + j;
+              const prod = Number(num1[i]) * Number(num2[j]);
+              const total = prod + pos[lo];
+              steps.push({
+                line: "mul",
+                note: `num1[${i}] × num2[${j}] = ${num1[i]} × ${num2[j]} = ${prod}, plus what's already in pos[${lo}] (${pos[lo]}): ${total}.`,
+                view: view(i, j, { lo, hi, calc: `${prod} + ${pos[lo]} = ${total}` }),
+              });
+              pos[lo] = total % 10;
+              pos[hi] += Math.floor(total / 10);
+              steps.push({
+                line: "place",
+                note: `Keep ${total % 10} in pos[${lo}] and carry ${Math.floor(total / 10)} into pos[${hi}] (now ${pos[hi]}). pos[${hi}] may go above 9 for a moment; the next product that lands there carries it on.`,
+                view: view(i, j, { lo, hi, placed: true }),
+              });
+            }
+          }
+          const result = pos.join("").replace(/^0+/, "");
+          steps.push({
+            line: "return",
+            note: `Join the places: ${pos.join("")}${pos[0] === 0 ? `, and drop the leading 0 (the product had only ${m + n - 1} digits)` : ""}. Return "${result}". m × n digit products, one array: O(m · n) time, O(m + n) space.`,
+            view: view(undefined, undefined, { final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0043-multiply-strings/approach3.visual.js -->
+    <script>
+      // Sum each column of digit products first (no carrying), then carry once from the ones place up.
+      DSAViz.register("0043-multiply-strings/approach3", {
+        inputs: [
+          { name: "num1", type: "string", value: "99", maxLength: 4 },
+          { name: "num2", type: "string", value: "99", maxLength: 4 },
+        ],
+        trace({ num1, num2 }) {
+          for (const [name, s] of [["num1", num1], ["num2", num2]]) {
+            if (!/^(0|[1-9]\d*)$/.test(s)) throw new DSAViz.InputError(`${name} must be a whole number without leading zeros, like 123.`);
+          }
+          const a = [...num1].reverse().map(Number);
+          const b = [...num2].reverse().map(Number);
+          const steps = [];
+          const col = Array(a.length + b.length).fill(0);
+          const place = (k) => (k === 0 ? "ones" : k === 1 ? "tens" : k === 2 ? "hundreds" : `10^${k}`);
+          const view = (opts = {}) => {
+            const cmarks = {};
+            if (opts.k !== undefined) cmarks[opts.k] = opts.mark || "active";
+            if (opts.done !== undefined) for (let k = 0; k < opts.done; k++) cmarks[k] = cmarks[k] || "match";
+            return [
+              { type: "array", label: "num1 digits, ones first", values: a, marks: opts.i !== undefined ? { [opts.i]: "active" } : {} },
+              { type: "array", label: "num2 digits, ones first", values: b, marks: opts.j !== undefined ? { [opts.j]: "active" } : {} },
+              { type: "array", label: "col[k]: total for place k (0 = ones)", values: col.slice(), marks: cmarks, wide: true },
+              ...(opts.carry !== undefined ? [{ type: "vars", items: [{ name: "carry", value: opts.carry }] }] : []),
+            ];
+          };
+
+          if (num1 === "0" || num2 === "0") {
+            steps.push({ line: "zero", note: `One of them is 0, so return "0".`, view: view() });
+            return steps;
+          }
+          steps.push({ line: "init", note: "Reverse both numbers so index = place (0 = ones). A digit in place i times a digit in place j lands in place i + j.", view: view() });
+          for (let i = 0; i < a.length; i++) {
+            for (let j = 0; j < b.length; j++) {
+              col[i + j] += a[i] * b[j];
+              steps.push({
+                line: "sum",
+                note: `${a[i]} (place ${i}) × ${b[j]} (place ${j}) = ${a[i] * b[j]}, added to col[${i + j}] (the ${place(i + j)} place): now ${col[i + j]}. No carrying yet.`,
+                view: view({ i, j, k: i + j, mark: "new" }),
+              });
+            }
+          }
+          let carry = 0;
+          steps.push({ line: "carry", note: "Every column is summed. Now one pass from the ones place up turns each column into a single digit.", view: view({ carry: 0 }) });
+          for (let k = 0; k < col.length; k++) {
+            const v = col[k] + carry;
+            col[k] = v % 10;
+            carry = Math.floor(v / 10);
+            steps.push({ line: "carry", note: `Place ${k}: ${v} → keep ${col[k]}, carry ${carry} into place ${k + 1}.`, view: view({ k, carry, done: k + 1 }) });
+          }
+          let top = col.length - 1;
+          while (col[top] === 0) top--;
+          const result = col.slice(0, top + 1).reverse().join("");
+          steps.push({
+            line: top < col.length - 1 ? ["trim", "return"] : "return",
+            note: `${top < col.length - 1 ? "The top place is 0, so drop it. " : ""}Read the places from the top down: "${result}". Same O(m · n) as Approach 2, but only m + n carries instead of one per product.`,
+            view: view({ done: col.length }),
           });
           return steps;
         },
