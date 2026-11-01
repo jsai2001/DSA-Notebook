@@ -10703,6 +10703,472 @@
         </div>
       </details>
 
+      <!-- ===== problems/0046-permutations ===== -->
+      <details class="question" data-tags="array backtracking recursion permutations swap">
+        <summary>
+          <span class="q-title">46. Permutations</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">Array</span>
+            <span class="tag">Backtracking</span>
+          </span>
+        </summary>
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> Fill the positions one at a time. At position
+            <code>k</code>, every number not placed yet gets a turn: swap it into
+            position <code>k</code>, recurse on <code>k + 1</code>, then
+            <strong>swap it back</strong>. When <code>k == n</code>, add a
+            <em>copy</em>. There are n! permutations, so O(n · n!) is the best
+            possible.
+          </div>
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/permutations/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              Given an array <code>nums</code> of distinct integers, return all the
+              possible permutations, in any order.
+            </p>
+            <ul>
+              <li><code>1 &lt;= nums.length &lt;= 6</code> and <code>-10 &lt;= nums[i] &lt;= 10</code>.</li>
+              <li>All the integers are different.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>[1,2,3]</code> →
+              <code>[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]</code>;
+              <code>[0,1]</code> → <code>[[0,1],[1,0]]</code>; <code>[1]</code> →
+              <code>[[1]]</code>.
+            </p>
+          </section>
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[1]</code></td>
+                    <td><code>[[1]]</code></td>
+                    <td>One number: a list containing one permutation, not <code>[1]</code> itself.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[0,1]</code></td>
+                    <td><code>[[0,1],[1,0]]</code></td>
+                    <td>The smallest case with a real choice. Also checks that 0 isn't treated as "empty" or "used".</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,2,3]</code></td>
+                    <td>6 permutations</td>
+                    <td>Adding <code>path</code> itself instead of a copy gives six empty lists here: they all point at the same list, which ends empty.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,2,3]</code> with swapping</td>
+                    <td>6 different ones</td>
+                    <td>Forget to swap back and the array drifts: you get repeats such as <code>[1,2,3]</code> twice and miss others.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[-1,0,1]</code></td>
+                    <td>6 permutations</td>
+                    <td>Negative values: they're just numbers to arrange; nothing about them is special.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[3,1,2]</code> with <code>std::next_permutation</code></td>
+                    <td>6 permutations</td>
+                    <td>It walks from the current order to the largest one. Without sorting first it finds only 2 of the 6.</td>
+                  </tr>
+                  <tr>
+                    <td>6 numbers</td>
+                    <td>720 permutations</td>
+                    <td>The largest input: 6! = 720 lists of 6. Small, but every approach has to produce all of them.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Backtracking with a Used Array</h2>
+            <p class="intuition">
+              Build the permutation in a separate <code>path</code>, one position at
+              a time. For the next position, try every number that isn't in the path
+              yet; <code>used[i]</code> answers that in O(1).
+            </p>
+            <ul>
+              <li>Mark, append, recurse, then pop and unmark: the undo is what lets the next number try the same position.</li>
+              <li>When the path is full, add a <strong>copy</strong> (<code>path[:]</code>, <code>new ArrayList&lt;&gt;(path)</code>).</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n · n!)</span>
+              <span><strong>Space</strong> O(n) besides the answer</span>
+            </div>
+            <p class="note">
+              The most common way to write it, and it extends directly to
+              Permutations II (sort, then skip a number equal to the previous unused
+              one).
+            </p>
+            <div class="code-tabs" data-viz="0046-permutations/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,17],"call":[5],"done":[6,7,8],"choose":[9,12,13,14],"skip":[10,11],"undo":[15,16],"return":[18]}'>
+                class Solution(object):
+                    def permute(self, nums):
+                        result, path = [], []
+                        used = [False] * len(nums)  # used[i]: nums[i] is already in path
+                        def backtrack():
+                            if len(path) == len(nums):  # every number placed
+                                result.append(path[:])  # a copy: path keeps changing
+                                return
+                            for i in range(len(nums)):  # try each number not used yet in the next position
+                                if used[i]:
+                                    continue
+                                used[i] = True
+                                path.append(nums[i])
+                                backtrack()
+                                path.pop()  # undo, so the next number can take this position
+                                used[i] = False
+                        backtrack()
+                        return result
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,6,7,8],"return":[9],"call":[15],"done":[16,17,18],"choose":[20,22,23,24],"skip":[21],"undo":[25,26]}'>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::vector<int>> permute(std::vector<int>& nums) {
+                        result.clear();
+                        path.clear();
+                        used.assign(nums.size(), false); // used[i]: nums[i] is already in path
+                        backtrack(nums);
+                        return result;
+                    }
+                private:
+                    std::vector<std::vector<int>> result;
+                    std::vector<int> path;
+                    std::vector<bool> used;
+                    void backtrack(const std::vector<int>& nums) {
+                        if (path.size() == nums.size()) { // every number placed
+                            result.push_back(path);
+                            return;
+                        }
+                        for (size_t i = 0; i < nums.size(); ++i) { // try each number not used yet in the next position
+                            if (used[i]) continue;
+                            used[i] = true;
+                            path.push_back(nums[i]);
+                            backtrack(nums);
+                            path.pop_back(); // undo, so the next number can take this position
+                            used[i] = false;
+                        }
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[8,9,10,11],"return":[12],"call":[14],"done":[15,16,17],"choose":[19,21,22,23],"skip":[20],"undo":[24,25]}'>
+                import java.util.ArrayList;
+                import java.util.List;
+                class Solution {
+                    private List<List<Integer>> result;
+                    private List<Integer> path;
+                    private boolean[] used;
+                    public List<List<Integer>> permute(int[] nums) {
+                        result = new ArrayList<>();
+                        path = new ArrayList<>();
+                        used = new boolean[nums.length]; // used[i]: nums[i] is already in path
+                        backtrack(nums);
+                        return result;
+                    }
+                    private void backtrack(int[] nums) {
+                        if (path.size() == nums.length) { // every number placed
+                            result.add(new ArrayList<>(path)); // a copy: path keeps changing
+                            return;
+                        }
+                        for (int i = 0; i < nums.length; i++) { // try each number not used yet in the next position
+                            if (used[i]) continue;
+                            used[i] = true;
+                            path.add(nums[i]);
+                            backtrack(nums);
+                            path.remove(path.size() - 1); // undo, so the next number can take this position
+                            used[i] = false;
+                        }
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>
+              Approach 2: Backtracking by Swapping
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              Use the array itself as the path. Positions <code>0..k−1</code> are
+              already decided; positions <code>k..n−1</code> hold the numbers still
+              available. Swap each of them into position <code>k</code> in turn.
+            </p>
+            <ul>
+              <li><code>swap(k, i)</code>, recurse on <code>k + 1</code>, <code>swap(k, i)</code> again to restore the order.</li>
+              <li>No <code>path</code> and no <code>used</code> array: "not used yet" is simply "at index k or later".</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n · n!)</span>
+              <span><strong>Space</strong> O(n) call stack</span>
+            </div>
+            <p class="note">
+              The least extra memory of the three. The permutations don't come out in
+              sorted order, which the problem allows.
+            </p>
+            <div class="code-tabs" data-viz="0046-permutations/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,13],"call":[5],"done":[6,7,8],"swap":[9,10,11],"undo":[12],"return":[14]}'>
+                class Solution(object):
+                    def permute(self, nums):
+                        nums = nums[:]  # work on a copy
+                        result = []
+                        def backtrack(k):  # positions 0..k-1 are fixed; choose what goes at position k
+                            if k == len(nums):
+                                result.append(nums[:])
+                                return
+                            for i in range(k, len(nums)):  # any number not fixed yet can go at k
+                                nums[k], nums[i] = nums[i], nums[k]  # bring nums[i] to position k
+                                backtrack(k + 1)
+                                nums[k], nums[i] = nums[i], nums[k]  # swap back, so the order is restored
+                        backtrack(0)
+                        return result
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7],"return":[8],"call":[12],"done":[13,14,15],"swap":[17,18,19],"undo":[20]}'>
+                #include <utility>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::vector<int>> permute(std::vector<int>& nums) {
+                        result.clear();
+                        backtrack(nums, 0);
+                        return result;
+                    }
+                private:
+                    std::vector<std::vector<int>> result;
+                    void backtrack(std::vector<int>& nums, size_t k) { // positions 0..k-1 are fixed; choose what goes at position k
+                        if (k == nums.size()) {
+                            result.push_back(nums);
+                            return;
+                        }
+                        for (size_t i = k; i < nums.size(); ++i) { // any number not fixed yet can go at k
+                            std::swap(nums[k], nums[i]); // bring nums[i] to position k
+                            backtrack(nums, k + 1);
+                            std::swap(nums[k], nums[i]); // swap back, so the order is restored
+                        }
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[6,7],"return":[8],"call":[10],"done":[11,12,13,14,15],"swap":[17,18,19],"undo":[20]}'>
+                import java.util.ArrayList;
+                import java.util.List;
+                class Solution {
+                    private List<List<Integer>> result;
+                    public List<List<Integer>> permute(int[] nums) {
+                        result = new ArrayList<>();
+                        backtrack(nums, 0);
+                        return result;
+                    }
+                    private void backtrack(int[] nums, int k) { // positions 0..k-1 are fixed; choose what goes at position k
+                        if (k == nums.length) {
+                            List<Integer> perm = new ArrayList<>();
+                            for (int x : nums) perm.add(x);
+                            result.add(perm);
+                            return;
+                        }
+                        for (int i = k; i < nums.length; i++) { // any number not fixed yet can go at k
+                            swap(nums, k, i); // bring nums[i] to position k
+                            backtrack(nums, k + 1);
+                            swap(nums, k, i); // swap back, so the order is restored
+                        }
+                    }
+                    private void swap(int[] a, int i, int j) {
+                        int t = a[i];
+                        a[i] = a[j];
+                        a[j] = t;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>Approach 3: Insert Each Number into Every Gap</h2>
+            <p class="intuition">
+              Build up from smaller answers. The permutations of the first
+              <code>k + 1</code> numbers are the permutations of the first
+              <code>k</code>, with the new number put in each of the
+              <code>k + 1</code> gaps.
+            </p>
+            <ul>
+              <li>Start from <code>[[]]</code>: one empty permutation.</li>
+              <li>Each round multiplies the count: 1, 1, 2, 6, 24, … (k!).</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n · n!)</span>
+              <span><strong>Space</strong> O(n · n!) for the lists being built</span>
+            </div>
+            <p class="note">
+              No recursion and easy to see why it's complete, but every round copies
+              every permutation into a new list.
+            </p>
+            <div class="code-tabs" data-viz="0046-permutations/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"next":[4,5,9],"insert":[6,7,8],"return":[10]}'>
+                class Solution(object):
+                    def permute(self, nums):
+                        perms = [[]]  # all permutations of the numbers seen so far (none yet: one empty one)
+                        for x in nums:
+                            grown = []
+                            for p in perms:
+                                for pos in range(len(p) + 1):  # put x in every gap: before, between, after
+                                    grown.append(p[:pos] + [x] + p[pos:])
+                            perms = grown  # k numbers -> k! permutations
+                        return perms
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"next":[6,7,15],"insert":[8,9,10,11,12],"return":[17]}'>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::vector<int>> permute(std::vector<int>& nums) {
+                        std::vector<std::vector<int>> perms{{}}; // all permutations of the numbers seen so far (none yet: one empty one)
+                        for (int x : nums) {
+                            std::vector<std::vector<int>> grown;
+                            for (const std::vector<int>& p : perms) {
+                                for (size_t pos = 0; pos <= p.size(); ++pos) { // put x in every gap: before, between, after
+                                    std::vector<int> q = p;
+                                    q.insert(q.begin() + pos, x);
+                                    grown.push_back(q);
+                                }
+                            }
+                            perms = grown; // k numbers -> k! permutations
+                        }
+                        return perms;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6],"next":[7,8,16],"insert":[9,10,11,12,13],"return":[18]}'>
+                import java.util.ArrayList;
+                import java.util.List;
+                class Solution {
+                    public List<List<Integer>> permute(int[] nums) {
+                        List<List<Integer>> perms = new ArrayList<>(); // all permutations of the numbers seen so far
+                        perms.add(new ArrayList<>()); // none yet: one empty one
+                        for (int x : nums) {
+                            List<List<Integer>> grown = new ArrayList<>();
+                            for (List<Integer> p : perms) {
+                                for (int pos = 0; pos <= p.size(); pos++) { // put x in every gap: before, between, after
+                                    List<Integer> q = new ArrayList<>(p);
+                                    q.add(pos, x);
+                                    grown.add(q);
+                                }
+                            }
+                            perms = grown; // k numbers -> k! permutations
+                        }
+                        return perms;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">Built-ins</span></h2>
+            <p>
+              Python has <code>itertools.permutations</code>, and C++ has
+              <code>std::next_permutation</code>, which steps an array to the next
+              larger order and returns <code>false</code> after the largest. Java has
+              nothing built in.
+            </p>
+            <div class="code-tabs">
+              <script type="text/plain" data-lang="Python">
+                from itertools import permutations
+                class Solution(object):
+                    def permute(self, nums):
+                        return [list(p) for p in permutations(nums)]  # tuples -> lists
+              </script>
+              <script type="text/plain" data-lang="C++">
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::vector<int>> permute(std::vector<int>& nums) {
+                        std::vector<std::vector<int>> result;
+                        std::sort(nums.begin(), nums.end()); // next_permutation walks orders from the smallest one
+                        do {
+                            result.push_back(nums);
+                        } while (std::next_permutation(nums.begin(), nums.end())); // false after the largest order
+                        return result;
+                    }
+                };
+              </script>
+            </div>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n · n!)</span>
+              <span><strong>Space</strong> O(n) besides the answer</span>
+            </div>
+            <p class="note">
+              Both pass. <code>next_permutation</code> must start from the sorted
+              order to visit every permutation; it also works with duplicates, where
+              it skips repeated orders (Permutations II).
+            </p>
+          </section>
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Used Array</th>
+                    <td>Path + used[i], choose / undo</td>
+                    <td>O(n · n!)</td>
+                    <td>O(n)</td>
+                    <td>Most common; extends to Permutations II</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Swapping</th>
+                    <td>Swap into position k, recurse, swap back</td>
+                    <td>O(n · n!)</td>
+                    <td>O(n) stack</td>
+                    <td>No extra arrays</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Insert into Every Gap</th>
+                    <td>Grow from k numbers to k + 1</td>
+                    <td>O(n · n!)</td>
+                    <td>O(n · n!)</td>
+                    <td>Iterative; copies every round</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -18155,6 +18621,172 @@
             line: "return",
             note: `The loop stops before the last index (standing there needs no jump). Return ${jumps}. One pass and three variables: O(n) time, O(1) space.`,
             view: view(undefined, { final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0046-permutations/approach1.visual.js -->
+    <script>
+      // Backtracking with a used array: fill the path one position at a time with any number not used yet.
+      DSAViz.register("0046-permutations/approach1", {
+        inputs: [{ name: "nums", type: "int[]", value: "[1, 2, 3]", minLength: 1, maxLength: 4, minValue: -10, maxValue: 10 }],
+        trace({ nums }) {
+          if (new Set(nums).size !== nums.length) throw new DSAViz.InputError("The numbers must all be different.");
+          const steps = [];
+          const result = [];
+          const path = [];
+          const used = nums.map(() => false);
+          const fmt = (a) => `[${a.join(", ")}]`;
+          const view = (i, opts = {}) => {
+            const marks = {};
+            used.forEach((u, k) => u && (marks[k] = "visited"));
+            if (i !== undefined) marks[i] = opts.skip ? "cut" : "active";
+            return [
+              { type: "array", label: "nums (faded = used in path)", values: nums, marks, pointers: i !== undefined ? { i } : {} },
+              { type: "array", label: "path", values: path.slice(), marks: opts.done ? Object.fromEntries(path.map((_, k) => [k, "match"])) : opts.added ? { [path.length - 1]: "new" } : {} },
+              { type: "array", label: `result (${result.length} of ${[...Array(nums.length).keys()].reduce((p, k) => p * (k + 1), 1)})`, values: result.map(fmt), wide: true, marks: opts.done ? { [result.length - 1]: "new" } : {} },
+            ];
+          };
+
+          steps.push({ line: "init", note: "Fill the path one position at a time. used[i] remembers which numbers are already in it.", view: view() });
+          function backtrack() {
+            if (path.length === nums.length) {
+              result.push(path.slice());
+              steps.push({ line: ["call", "done"], note: `Every position is filled: ${fmt(path)}. Add a copy to result.`, view: view(undefined, { done: true }) });
+              return;
+            }
+            steps.push({ line: "call", note: `Position ${path.length}: try each number that isn't in the path yet.`, view: view() });
+            for (let i = 0; i < nums.length; i++) {
+              if (used[i]) {
+                steps.push({ line: "skip", note: `${nums[i]} is already in the path: skip it.`, view: view(i, { skip: true }) });
+                continue;
+              }
+              used[i] = true;
+              path.push(nums[i]);
+              steps.push({ line: "choose", note: `Put ${nums[i]} at position ${path.length - 1}: path = ${fmt(path)}. Go deeper.`, view: view(i, { added: true }) });
+              backtrack();
+              path.pop();
+              used[i] = false;
+              steps.push({ line: "undo", note: `Back: take ${nums[i]} out again, path = ${fmt(path)}, so the next number can try this position.`, view: view(i) });
+            }
+          }
+          backtrack();
+          steps.push({
+            line: "return",
+            note: `Return all ${result.length} permutations. n! of them, each copied in O(n), plus the "is it used?" checks: O(n · n!).`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0046-permutations/approach2.visual.js -->
+    <script>
+      // Backtracking by swapping: positions 0..k-1 are fixed; swap each remaining number into position k, recurse, swap back.
+      DSAViz.register("0046-permutations/approach2", {
+        inputs: [{ name: "nums", type: "int[]", value: "[1, 2, 3]", minLength: 1, maxLength: 4, minValue: -10, maxValue: 10 }],
+        trace({ nums: input }) {
+          if (new Set(input).size !== input.length) throw new DSAViz.InputError("The numbers must all be different.");
+          const nums = input.slice();
+          const n = nums.length;
+          const steps = [];
+          const result = [];
+          const fmt = (a) => `[${a.join(", ")}]`;
+          const view = (k, opts = {}) => {
+            const marks = {};
+            for (let p = 0; p < Math.min(k ?? 0, n); p++) marks[p] = "match";
+            if (opts.swap) opts.swap.forEach((p) => (marks[p] = opts.back ? "compare" : "new"));
+            const pointers = {};
+            if (k !== undefined && k < n) pointers.k = k;
+            if (opts.i !== undefined && opts.i !== k) pointers.i = opts.i;
+            if (opts.i !== undefined && opts.i === k) pointers["k, i"] = k;
+            if (pointers["k, i"] !== undefined) delete pointers.k;
+            return [
+              { type: "array", label: "nums (green = fixed positions; the line splits fixed | still to arrange)", values: nums.slice(), marks, pointers, cut: k !== undefined && k > 0 && k < n ? k : undefined },
+              { type: "array", label: `result (${result.length})`, values: result.map(fmt), wide: true, marks: opts.done ? { [result.length - 1]: "new" } : {} },
+            ];
+          };
+
+          steps.push({ line: "init", note: "No extra path or used array: arrange nums in place. backtrack(k) decides which number sits at position k.", view: view(0) });
+          function backtrack(k) {
+            if (k === n) {
+              result.push(nums.slice());
+              steps.push({ line: ["call", "done"], note: `All ${n} positions are fixed: ${fmt(nums)}. Add a copy.`, view: view(n, { done: true }) });
+              return;
+            }
+            steps.push({ line: "call", note: `backtrack(${k}): positions 0..${k - 1 < 0 ? "none" : k - 1} are fixed. Each of nums[${k}..${n - 1}] gets a turn at position ${k}.`, view: view(k) });
+            for (let i = k; i < n; i++) {
+              [nums[k], nums[i]] = [nums[i], nums[k]];
+              steps.push({
+                line: "swap",
+                note: i === k ? `Keep nums[${k}] = ${nums[k]} at position ${k} (swap with itself) and go deeper.` : `Swap positions ${k} and ${i}: ${nums[k]} moves to position ${k}. nums = ${fmt(nums)}. Go deeper.`,
+                view: view(k, { i, swap: i === k ? [k] : [k, i] }),
+              });
+              backtrack(k + 1);
+              [nums[k], nums[i]] = [nums[i], nums[k]];
+              steps.push({
+                line: "undo",
+                note: i === k ? `Back at position ${k}: nothing to undo for a self-swap.` : `Back: swap positions ${k} and ${i} again, so nums is ${fmt(nums)} like before and the next number can have its turn.`,
+                view: view(k, { i, swap: i === k ? [k] : [k, i], back: true }),
+              });
+            }
+          }
+          backtrack(0);
+          steps.push({ line: "return", note: `Return all ${result.length}. The array was rearranged in place and restored after every swap: O(n · n!) time, only the O(n) call stack extra.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0046-permutations/approach3.visual.js -->
+    <script>
+      // Insertion: the permutations of k + 1 numbers are those of k numbers with the new one put in every gap.
+      DSAViz.register("0046-permutations/approach3", {
+        inputs: [{ name: "nums", type: "int[]", value: "[1, 2, 3]", minLength: 1, maxLength: 4, minValue: -10, maxValue: 10 }],
+        trace({ nums }) {
+          if (new Set(nums).size !== nums.length) throw new DSAViz.InputError("The numbers must all be different.");
+          const steps = [];
+          let perms = [[]];
+          let grown = [];
+          const fmt = (a) => `[${a.join(", ")}]`;
+          const view = (xi, opts = {}) => {
+            const marks = {};
+            if (xi !== undefined) {
+              for (let k = 0; k < xi; k++) marks[k] = "visited";
+              marks[xi] = "active";
+            } else if (opts.all) nums.forEach((_, k) => (marks[k] = "visited"));
+            const pmarks = {};
+            if (opts.from !== undefined) pmarks[opts.from] = "compare";
+            const gmarks = {};
+            if (opts.fresh) for (let k = grown.length - opts.fresh; k < grown.length; k++) gmarks[k] = "new";
+            return [
+              { type: "array", label: "nums", values: nums, marks, pointers: xi !== undefined ? { x: xi } : {} },
+              { type: "array", label: `perms (${perms.length})`, values: perms.map(fmt), wide: true, marks: pmarks },
+              ...(xi !== undefined ? [{ type: "array", label: `grown (${grown.length})`, values: grown.map(fmt), wide: true, marks: gmarks }] : []),
+            ];
+          };
+
+          steps.push({ line: "init", note: "Start with one empty permutation: the only arrangement of no numbers.", view: view() });
+          nums.forEach((x, xi) => {
+            grown = [];
+            steps.push({ line: "next", note: `Add ${x}. Each of the ${perms.length} permutation${perms.length === 1 ? "" : "s"} so far has ${xi + 1} gap${xi ? "s" : ""} to put it in.`, view: view(xi) });
+            perms.forEach((p, pi) => {
+              const made = [];
+              for (let pos = 0; pos <= p.length; pos++) made.push(p.slice(0, pos).concat([x], p.slice(pos)));
+              grown.push(...made);
+              steps.push({
+                line: "insert",
+                note: `${fmt(p)} with ${x} in each of its ${p.length + 1} gap${p.length ? "s" : ""}: ${made.map(fmt).join(", ")}.`,
+                view: view(xi, { from: pi, fresh: made.length }),
+              });
+            });
+            perms = grown;
+            steps.push({ line: "next", note: `${xi + 1} number${xi ? "s" : ""}: ${perms.length} permutations (${xi + 1}!).`, view: view(xi) });
+          });
+          steps.push({
+            line: "return",
+            note: `Return all ${perms.length}. No recursion, but every round builds a whole new list, so it keeps (n − 1)! permutations around while making n!.`,
+            view: view(undefined, { all: true }),
           });
           return steps;
         },

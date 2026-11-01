@@ -1,0 +1,232 @@
+<details class="question" data-tags="array backtracking recursion permutations swap">
+  <summary>
+    <span class="q-title">46. Permutations</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Backtracking</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Fill the positions one at a time. At position
+      <code>k</code>, every number not placed yet gets a turn: swap it into
+      position <code>k</code>, recurse on <code>k + 1</code>, then
+      <strong>swap it back</strong>. When <code>k == n</code>, add a
+      <em>copy</em>. There are n! permutations, so O(n · n!) is the best
+      possible.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/permutations/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given an array <code>nums</code> of distinct integers, return all the
+        possible permutations, in any order.
+      </p>
+      <ul>
+        <li><code>1 &lt;= nums.length &lt;= 6</code> and <code>-10 &lt;= nums[i] &lt;= 10</code>.</li>
+        <li>All the integers are different.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[1,2,3]</code> →
+        <code>[[1,2,3],[1,3,2],[2,1,3],[2,3,1],[3,1,2],[3,2,1]]</code>;
+        <code>[0,1]</code> → <code>[[0,1],[1,0]]</code>; <code>[1]</code> →
+        <code>[[1]]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[1]</code></td>
+              <td><code>[[1]]</code></td>
+              <td>One number: a list containing one permutation, not <code>[1]</code> itself.</td>
+            </tr>
+            <tr>
+              <td><code>[0,1]</code></td>
+              <td><code>[[0,1],[1,0]]</code></td>
+              <td>The smallest case with a real choice. Also checks that 0 isn't treated as "empty" or "used".</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3]</code></td>
+              <td>6 permutations</td>
+              <td>Adding <code>path</code> itself instead of a copy gives six empty lists here: they all point at the same list, which ends empty.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3]</code> with swapping</td>
+              <td>6 different ones</td>
+              <td>Forget to swap back and the array drifts: you get repeats such as <code>[1,2,3]</code> twice and miss others.</td>
+            </tr>
+            <tr>
+              <td><code>[-1,0,1]</code></td>
+              <td>6 permutations</td>
+              <td>Negative values: they're just numbers to arrange; nothing about them is special.</td>
+            </tr>
+            <tr>
+              <td><code>[3,1,2]</code> with <code>std::next_permutation</code></td>
+              <td>6 permutations</td>
+              <td>It walks from the current order to the largest one. Without sorting first it finds only 2 of the 6.</td>
+            </tr>
+            <tr>
+              <td>6 numbers</td>
+              <td>720 permutations</td>
+              <td>The largest input: 6! = 720 lists of 6. Small, but every approach has to produce all of them.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Backtracking with a Used Array</h2>
+      <p class="intuition">
+        Build the permutation in a separate <code>path</code>, one position at
+        a time. For the next position, try every number that isn't in the path
+        yet; <code>used[i]</code> answers that in O(1).
+      </p>
+      <ul>
+        <li>Mark, append, recurse, then pop and unmark: the undo is what lets the next number try the same position.</li>
+        <li>When the path is full, add a <strong>copy</strong> (<code>path[:]</code>, <code>new ArrayList&lt;&gt;(path)</code>).</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · n!)</span>
+        <span><strong>Space</strong> O(n) besides the answer</span>
+      </div>
+      <p class="note">
+        The most common way to write it, and it extends directly to
+        Permutations II (sort, then skip a number equal to the previous unused
+        one).
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Backtracking by Swapping
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Use the array itself as the path. Positions <code>0..k−1</code> are
+        already decided; positions <code>k..n−1</code> hold the numbers still
+        available. Swap each of them into position <code>k</code> in turn.
+      </p>
+      <ul>
+        <li><code>swap(k, i)</code>, recurse on <code>k + 1</code>, <code>swap(k, i)</code> again to restore the order.</li>
+        <li>No <code>path</code> and no <code>used</code> array: "not used yet" is simply "at index k or later".</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · n!)</span>
+        <span><strong>Space</strong> O(n) call stack</span>
+      </div>
+      <p class="note">
+        The least extra memory of the three. The permutations don't come out in
+        sorted order, which the problem allows.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Insert Each Number into Every Gap</h2>
+      <p class="intuition">
+        Build up from smaller answers. The permutations of the first
+        <code>k + 1</code> numbers are the permutations of the first
+        <code>k</code>, with the new number put in each of the
+        <code>k + 1</code> gaps.
+      </p>
+      <ul>
+        <li>Start from <code>[[]]</code>: one empty permutation.</li>
+        <li>Each round multiplies the count: 1, 1, 2, 6, 24, … (k!).</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · n!)</span>
+        <span><strong>Space</strong> O(n · n!) for the lists being built</span>
+      </div>
+      <p class="note">
+        No recursion and easy to see why it's complete, but every round copies
+        every permutation into a new list.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Python has <code>itertools.permutations</code>, and C++ has
+        <code>std::next_permutation</code>, which steps an array to the next
+        larger order and returns <code>false</code> after the largest. Java has
+        nothing built in.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · n!)</span>
+        <span><strong>Space</strong> O(n) besides the answer</span>
+      </div>
+      <p class="note">
+        Both pass. <code>next_permutation</code> must start from the sorted
+        order to visit every permutation; it also works with duplicates, where
+        it skips repeated orders (Permutations II).
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Used Array</th>
+              <td>Path + used[i], choose / undo</td>
+              <td>O(n · n!)</td>
+              <td>O(n)</td>
+              <td>Most common; extends to Permutations II</td>
+            </tr>
+            <tr>
+              <th scope="row">Swapping</th>
+              <td>Swap into position k, recurse, swap back</td>
+              <td>O(n · n!)</td>
+              <td>O(n) stack</td>
+              <td>No extra arrays</td>
+            </tr>
+            <tr>
+              <th scope="row">Insert into Every Gap</th>
+              <td>Grow from k numbers to k + 1</td>
+              <td>O(n · n!)</td>
+              <td>O(n · n!)</td>
+              <td>Iterative; copies every round</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
