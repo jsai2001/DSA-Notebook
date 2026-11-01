@@ -11169,6 +11169,397 @@
         </div>
       </details>
 
+      <!-- ===== problems/0048-rotate-image ===== -->
+      <details class="question" data-tags="array matrix math in-place rotate transpose">
+        <summary>
+          <span class="q-title">48. Rotate Image</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">Array</span>
+            <span class="tag">Matrix</span>
+            <span class="tag">Math</span>
+          </span>
+        </summary>
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> A clockwise turn is two flips you can do in
+            place: <strong>transpose</strong> (swap <code>m[i][j]</code> with
+            <code>m[j][i]</code>, only for <code>j &gt; i</code>), then
+            <strong>reverse every row</strong>. O(n²) time, O(1) extra space. The
+            cell at <code>[i][j]</code> ends up at <code>[j][n − 1 − i]</code>.
+          </div>
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/rotate-image/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              You're given an <code>n × n</code> matrix (an image). Rotate it by 90
+              degrees clockwise, <strong>in place</strong>: change the given matrix
+              directly, without allocating another 2D matrix.
+            </p>
+            <ul>
+              <li><code>1 &lt;= n &lt;= 20</code> and <code>-1000 &lt;= matrix[i][j] &lt;= 1000</code>.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>[[1,2,3],[4,5,6],[7,8,9]]</code> →
+              <code>[[7,4,1],[8,5,2],[9,6,3]]</code>;
+              <code>[[5,1,9,11],[2,4,8,10],[13,3,6,7],[15,14,12,16]]</code> →
+              <code>[[15,13,2,5],[14,3,4,1],[12,6,8,9],[16,7,10,11]]</code>.
+            </p>
+          </section>
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[[1]]</code></td>
+                    <td><code>[[1]]</code></td>
+                    <td>n = 1: no rings to turn and nothing to swap. The loops must simply not run.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[1,2],[3,4]]</code></td>
+                    <td><code>[[3,1],[4,2]]</code></td>
+                    <td>The smallest real rotation: one ring, one cycle of four.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[1,2,3],[4,5,6],[7,8,9]]</code></td>
+                    <td><code>[[7,4,1],[8,5,2],[9,6,3]]</code></td>
+                    <td>Odd n: the centre (5) stays. Transposing with <code>j</code> from 0 instead of <code>i + 1</code> swaps every pair twice, leaving only the row reversal: <code>[[3,2,1],[6,5,4],[9,8,7]]</code>, a mirror image.</td>
+                  </tr>
+                  <tr>
+                    <td>The 4 × 4 example</td>
+                    <td>See above</td>
+                    <td>Even n with two rings: the inner ring's corners are a different cycle from the outer ring's.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[7,7],[7,7]]</code></td>
+                    <td><code>[[7,7],[7,7]]</code></td>
+                    <td>All equal: looks unchanged even if the code is wrong. Test with distinct values.</td>
+                  </tr>
+                  <tr>
+                    <td>Python: <code>matrix = …</code></td>
+                    <td>Caller sees the change</td>
+                    <td>Assigning a new list to <code>matrix</code> only changes the local name; the caller's matrix stays as it was. Write into it: <code>matrix[:] = …</code>.</td>
+                  </tr>
+                  <tr>
+                    <td>Counter-clockwise by mistake</td>
+                    <td>Clockwise</td>
+                    <td>Transpose then reverse each <em>column</em>, or reverse each row <em>before</em> transposing, turns it counter-clockwise: <code>[[3,6,9],[2,5,8],[1,4,7]]</code>. Check a corner: top-left must go to top-right.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Copy into a New Matrix</h2>
+            <p class="intuition">
+              Work out where each cell goes and write it into a second grid. Turning
+              clockwise, row <code>i</code> becomes column <code>n − 1 − i</code>,
+              so <code>matrix[i][j]</code> lands at <code>rotated[j][n − 1 − i]</code>.
+            </p>
+            <ul>
+              <li>Then copy the result back into <code>matrix</code>: the caller only sees that one.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n²)</span>
+              <span><strong>Space</strong> O(n²)</span>
+            </div>
+            <p class="note">
+              The easiest way to get the mapping right, and useful for checking the
+              other two. But it allocates a second matrix, which the problem rules
+              out.
+            </p>
+            <div class="code-tabs" data-viz="0048-rotate-image/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4],"copy":[5,6,7],"back":[8,9]}'>
+                class Solution(object):
+                    def rotate(self, matrix):
+                        n = len(matrix)
+                        rotated = [[0] * n for _ in range(n)]  # a second n × n grid
+                        for i in range(n):
+                            for j in range(n):
+                                rotated[j][n - 1 - i] = matrix[i][j]  # row i becomes column n - 1 - i
+                        for i in range(n):  # copy back: the answer has to end up in matrix itself
+                            matrix[i][:] = rotated[i]
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"copy":[7,8,9],"back":[10]}'>
+                #include <vector>
+                class Solution {
+                public:
+                    void rotate(std::vector<std::vector<int>>& matrix) {
+                        int n = (int)matrix.size();
+                        std::vector<std::vector<int>> rotated(n, std::vector<int>(n)); // a second n × n grid
+                        for (int i = 0; i < n; ++i)
+                            for (int j = 0; j < n; ++j)
+                                rotated[j][n - 1 - i] = matrix[i][j]; // row i becomes column n - 1 - i
+                        matrix = rotated; // copy back: the answer has to end up in matrix itself
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4],"copy":[5,6,7],"back":[8,9]}'>
+                class Solution {
+                    public void rotate(int[][] matrix) {
+                        int n = matrix.length;
+                        int[][] rotated = new int[n][n]; // a second n × n grid
+                        for (int i = 0; i < n; i++)
+                            for (int j = 0; j < n; j++)
+                                rotated[j][n - 1 - i] = matrix[i][j]; // row i becomes column n - 1 - i
+                        for (int i = 0; i < n; i++) // copy back: the caller's matrix has to hold the answer
+                            System.arraycopy(rotated[i], 0, matrix[i], 0, n);
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>
+              Approach 2: Transpose, Then Reverse Each Row
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              A rotation is two reflections. Transposing flips the matrix over its
+              main diagonal (<code>[i][j] → [j][i]</code>); reversing each row flips
+              it left to right (<code>[j][i] → [j][n − 1 − i]</code>). Together:
+              <code>[i][j] → [j][n − 1 − i]</code>, exactly the clockwise turn.
+            </p>
+            <ul>
+              <li>Transpose only above the diagonal (<code>j</code> from <code>i + 1</code>): each pair is swapped once.</li>
+              <li>Both steps are plain swaps, so nothing extra is allocated.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n²)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              The answer to remember: two easy loops instead of index arithmetic.
+              For a counter-clockwise turn, transpose and then reverse each column
+              (or reverse each row first, then transpose).
+            </p>
+            <div class="code-tabs" data-viz="0048-rotate-image/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"transpose":[4,5,6],"reverse":[7,8]}'>
+                class Solution(object):
+                    def rotate(self, matrix):
+                        n = len(matrix)
+                        for i in range(n):  # 1. transpose: flip over the main diagonal
+                            for j in range(i + 1, n):  # only above the diagonal, or every pair swaps twice
+                                matrix[i][j], matrix[j][i] = matrix[j][i], matrix[i][j]
+                        for row in matrix:  # 2. reverse each row: flip left to right
+                            row.reverse()
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"transpose":[8,9,10],"reverse":[11,12]}'>
+                #include <algorithm>
+                #include <utility>
+                #include <vector>
+                class Solution {
+                public:
+                    void rotate(std::vector<std::vector<int>>& matrix) {
+                        int n = (int)matrix.size();
+                        for (int i = 0; i < n; ++i) // 1. transpose: flip over the main diagonal
+                            for (int j = i + 1; j < n; ++j) // only above the diagonal, or every pair swaps twice
+                                std::swap(matrix[i][j], matrix[j][i]);
+                        for (std::vector<int>& row : matrix) // 2. reverse each row: flip left to right
+                            std::reverse(row.begin(), row.end());
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"transpose":[4,5,6,7,8],"reverse":[10,11,12,13,14]}'>
+                class Solution {
+                    public void rotate(int[][] matrix) {
+                        int n = matrix.length;
+                        for (int i = 0; i < n; i++) // 1. transpose: flip over the main diagonal
+                            for (int j = i + 1; j < n; j++) { // only above the diagonal, or every pair swaps twice
+                                int t = matrix[i][j];
+                                matrix[i][j] = matrix[j][i];
+                                matrix[j][i] = t;
+                            }
+                        for (int[] row : matrix) // 2. reverse each row: flip left to right
+                            for (int l = 0, r = n - 1; l < r; l++, r--) {
+                                int t = row[l];
+                                row[l] = row[r];
+                                row[r] = t;
+                            }
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>Approach 3: Rotate Four Cells at a Time</h2>
+            <p class="intuition">
+              Under a 90° turn, cells move in cycles of four: top → right → bottom →
+              left → top. Go ring by ring from the outside in; on each ring, every
+              cell of the top side (except the last corner) starts one such cycle.
+            </p>
+            <ul>
+              <li>Save the top cell, then move left → top, bottom → left, right → bottom, and the saved top → right.</li>
+              <li>There are <code>n / 2</code> rings; an odd n's centre cell never moves.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n²)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              Every cell is moved exactly once (Approach 2 moves most cells twice),
+              but the four index expressions are easy to get wrong. Good to know;
+              Approach 2 is safer in an interview.
+            </p>
+            <div class="code-tabs" data-viz="0048-rotate-image/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"layer":[4,5],"cycle":[6,7],"move":[8,9,10,11]}'>
+                class Solution(object):
+                    def rotate(self, matrix):
+                        n = len(matrix)
+                        for layer in range(n // 2):  # rings from the outside in; an odd n's centre stays put
+                            first, last = layer, n - 1 - layer
+                            for k in range(last - first):  # each cell on the ring's top side starts a cycle of 4
+                                top = matrix[first][first + k]  # save top
+                                matrix[first][first + k] = matrix[last - k][first]  # left -> top
+                                matrix[last - k][first] = matrix[last][last - k]  # bottom -> left
+                                matrix[last][last - k] = matrix[first + k][last]  # right -> bottom
+                                matrix[first + k][last] = top  # saved top -> right
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"layer":[6,7],"cycle":[8,9],"move":[10,11,12,13]}'>
+                #include <vector>
+                class Solution {
+                public:
+                    void rotate(std::vector<std::vector<int>>& matrix) {
+                        int n = (int)matrix.size();
+                        for (int layer = 0; layer < n / 2; ++layer) { // rings from the outside in; an odd n's centre stays put
+                            int first = layer, last = n - 1 - layer;
+                            for (int k = 0; k < last - first; ++k) { // each cell on the ring's top side starts a cycle of 4
+                                int top = matrix[first][first + k]; // save top
+                                matrix[first][first + k] = matrix[last - k][first]; // left -> top
+                                matrix[last - k][first] = matrix[last][last - k]; // bottom -> left
+                                matrix[last][last - k] = matrix[first + k][last]; // right -> bottom
+                                matrix[first + k][last] = top; // saved top -> right
+                            }
+                        }
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"layer":[4,5],"cycle":[6,7],"move":[8,9,10,11]}'>
+                class Solution {
+                    public void rotate(int[][] matrix) {
+                        int n = matrix.length;
+                        for (int layer = 0; layer < n / 2; layer++) { // rings from the outside in; an odd n's centre stays put
+                            int first = layer, last = n - 1 - layer;
+                            for (int k = 0; k < last - first; k++) { // each cell on the ring's top side starts a cycle of 4
+                                int top = matrix[first][first + k]; // save top
+                                matrix[first][first + k] = matrix[last - k][first]; // left -> top
+                                matrix[last - k][first] = matrix[last][last - k]; // bottom -> left
+                                matrix[last][last - k] = matrix[first + k][last]; // right -> bottom
+                                matrix[first + k][last] = top; // saved top -> right
+                            }
+                        }
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">Built-ins</span></h2>
+            <p>
+              In Python, <code>zip(*matrix[::-1])</code> reads the rows bottom to top
+              and column by column, which is the rotated matrix. In C++,
+              <code>std::reverse</code> on the rows flips the matrix upside down (just
+              swapping row pointers), and a transpose finishes the turn. Java has
+              nothing built in for this.
+            </p>
+            <div class="code-tabs">
+              <script type="text/plain" data-lang="Python">
+                class Solution(object):
+                    def rotate(self, matrix):
+                        # rows bottom to top, then zip reads them column by column; [:] writes into the same list
+                        matrix[:] = [list(row) for row in zip(*matrix[::-1])]
+              </script>
+              <script type="text/plain" data-lang="C++">
+                #include <algorithm>
+                #include <utility>
+                #include <vector>
+                class Solution {
+                public:
+                    void rotate(std::vector<std::vector<int>>& matrix) {
+                        std::reverse(matrix.begin(), matrix.end()); // flip top to bottom (just swaps row pointers)
+                        for (size_t i = 0; i < matrix.size(); ++i) // then transpose
+                            for (size_t j = i + 1; j < matrix.size(); ++j) std::swap(matrix[i][j], matrix[j][i]);
+                    }
+                };
+              </script>
+            </div>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n²)</span>
+              <span><strong>Space</strong> O(n²) in Python, O(1) in C++</span>
+            </div>
+            <p class="note">
+              Both pass. The Python line builds new lists, so it isn't really in
+              place, and it must assign with <code>matrix[:] =</code>; plain
+              <code>matrix =</code> leaves the caller's matrix untouched.
+            </p>
+          </section>
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Copy into a New Matrix</th>
+                    <td>rotated[j][n − 1 − i] = matrix[i][j]</td>
+                    <td>O(n²)</td>
+                    <td>O(n²)</td>
+                    <td>Not in place; breaks the rules</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Transpose, Then Reverse Rows</th>
+                    <td>Two reflections</td>
+                    <td>O(n²)</td>
+                    <td>O(1)</td>
+                    <td>Expected answer; hard to get wrong</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Four Cells at a Time</th>
+                    <td>Ring by ring, cycles of four</td>
+                    <td>O(n²)</td>
+                    <td>O(1)</td>
+                    <td>Each cell moved once; fiddly indices</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -18788,6 +19179,142 @@
             note: `Return all ${perms.length}. No recursion, but every round builds a whole new list, so it keeps (n − 1)! permutations around while making n!.`,
             view: view(undefined, { all: true }),
           });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0048-rotate-image/approach1.visual.js -->
+    <script>
+      // Copy into a second grid: matrix[i][j] goes to rotated[j][n - 1 - i]; then copy the rows back.
+      DSAViz.register("0048-rotate-image/approach1", {
+        inputs: [{ name: "matrix", type: "int[][]", value: "[[1, 2, 3], [4, 5, 6], [7, 8, 9]]", maxRows: 5, maxCols: 5, minValue: -99, maxValue: 99 }],
+        trace({ matrix }) {
+          const n = matrix.length;
+          if (matrix.some((r) => r.length !== n)) throw new DSAViz.InputError("matrix must be square (n × n), like [[1, 2], [3, 4]].");
+          const m = matrix.map((r) => r.slice());
+          const rotated = m.map((r) => r.map(() => ""));
+          const steps = [];
+          const idx = [...Array(n).keys()];
+          const view = (opts = {}) => [
+            { type: "grid", label: "matrix", rows: idx, cols: idx, cells: m.map((r) => r.slice()), marks: opts.src ? { [opts.src]: "active" } : opts.final ? Object.fromEntries(idx.flatMap((i) => idx.map((j) => [`${i},${j}`, "match"]))) : {} },
+            { type: "grid", label: "rotated (extra n × n grid)", rows: idx, cols: idx, cells: rotated.map((r) => r.slice()), marks: opts.dst ? { [opts.dst]: "new" } : {} },
+          ];
+
+          steps.push({ line: "init", note: `Make a second ${n} × ${n} grid. Rotating clockwise, row i becomes column n − 1 − i: matrix[i][j] goes to rotated[j][${n - 1} − i].`, view: view() });
+          for (let i = 0; i < n; i++) {
+            for (let j = 0; j < n; j++) {
+              rotated[j][n - 1 - i] = m[i][j];
+              steps.push({
+                line: "copy",
+                note: `matrix[${i}][${j}] = ${m[i][j]} → rotated[${j}][${n - 1 - i}].${j === n - 1 ? ` Row ${i} is now column ${n - 1 - i}.` : ""}`,
+                view: view({ src: `${i},${j}`, dst: `${j},${n - 1 - i}` }),
+              });
+            }
+          }
+          rotated.forEach((r, i) => (m[i] = r.slice()));
+          steps.push({
+            line: "back",
+            note: `Copy the rows back into matrix, since the answer must be in matrix itself. Simple, but it used a whole second grid: O(n²) extra space, which the problem doesn't allow.`,
+            view: view({ final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0048-rotate-image/approach2.visual.js -->
+    <script>
+      // Transpose (swap across the main diagonal), then reverse every row: together that's a clockwise turn.
+      DSAViz.register("0048-rotate-image/approach2", {
+        inputs: [{ name: "matrix", type: "int[][]", value: "[[1, 2, 3], [4, 5, 6], [7, 8, 9]]", maxRows: 5, maxCols: 5, minValue: -99, maxValue: 99 }],
+        trace({ matrix }) {
+          const n = matrix.length;
+          if (matrix.some((r) => r.length !== n)) throw new DSAViz.InputError("matrix must be square (n × n), like [[1, 2], [3, 4]].");
+          const m = matrix.map((r) => r.slice());
+          const steps = [];
+          const idx = [...Array(n).keys()];
+          const view = (opts = {}) => {
+            const marks = {};
+            if (opts.diag) idx.forEach((k) => (marks[`${k},${k}`] = "visited"));
+            (opts.cells || []).forEach((c) => (marks[c] = opts.mark || "new"));
+            if (opts.final) idx.forEach((i) => idx.forEach((j) => (marks[`${i},${j}`] = "match")));
+            return [{ type: "grid", label: opts.label || "matrix", rows: idx, cols: idx, cells: m.map((r) => r.slice()), marks }];
+          };
+
+          steps.push({ line: "transpose", note: "Step 1, transpose: swap matrix[i][j] with matrix[j][i] above the main diagonal (grey). The diagonal stays where it is.", view: view({ diag: true }) });
+          for (let i = 0; i < n; i++) {
+            for (let j = i + 1; j < n; j++) {
+              [m[i][j], m[j][i]] = [m[j][i], m[i][j]];
+              steps.push({ line: "transpose", note: `Swap matrix[${i}][${j}] and matrix[${j}][${i}] (${m[j][i]} ↔ ${m[i][j]}).`, view: view({ diag: true, cells: [`${i},${j}`, `${j},${i}`] }) });
+            }
+          }
+          steps.push({ line: "transpose", note: "Transposed: rows became columns. Only pairs above the diagonal were swapped; looping over every j would swap each pair twice and undo it.", view: view({ label: "matrix (transposed)", diag: true }) });
+          for (let i = 0; i < n; i++) {
+            m[i].reverse();
+            steps.push({
+              line: "reverse",
+              note: `Step 2: reverse row ${i}: [${m[i].join(", ")}].`,
+              view: view({ cells: idx.map((j) => `${i},${j}`) }),
+            });
+          }
+          steps.push({ line: "reverse", note: "Done: that's the matrix turned 90° clockwise, in place. Each cell moved twice; O(n²) time, O(1) extra space.", view: view({ final: true }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0048-rotate-image/approach3.visual.js -->
+    <script>
+      // Ring by ring: each cell on a ring's top side starts a cycle of four cells that move one corner clockwise.
+      DSAViz.register("0048-rotate-image/approach3", {
+        inputs: [{ name: "matrix", type: "int[][]", value: "[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16]]", maxRows: 5, maxCols: 5, minValue: -99, maxValue: 99 }],
+        trace({ matrix }) {
+          const n = matrix.length;
+          if (matrix.some((r) => r.length !== n)) throw new DSAViz.InputError("matrix must be square (n × n), like [[1, 2], [3, 4]].");
+          const m = matrix.map((r) => r.slice());
+          const steps = [];
+          const idx = [...Array(n).keys()];
+          const view = (opts = {}) => {
+            const marks = {};
+            if (opts.ring !== undefined) {
+              const a = opts.ring;
+              const b = n - 1 - a;
+              for (let k = a; k <= b; k++) for (const c of [`${a},${k}`, `${b},${k}`, `${k},${a}`, `${k},${b}`]) marks[c] = "window";
+            }
+            if (opts.done) opts.done.forEach((c) => (marks[c] = "match"));
+            if (opts.four) opts.four.forEach((c, k) => (marks[c] = k === opts.hot ? "new" : "active"));
+            if (opts.final) idx.forEach((i) => idx.forEach((j) => (marks[`${i},${j}`] = "match")));
+            return [
+              { type: "grid", label: "matrix (shaded = the ring being turned)", rows: idx, cols: idx, cells: m.map((r) => r.slice()), marks },
+              ...(opts.top !== undefined ? [{ type: "vars", items: [{ name: "top (saved)", value: opts.top }] }] : []),
+            ];
+          };
+
+          steps.push({ line: "layer", note: `Turn the matrix one ring at a time, from the outside in. There are ${Math.floor(n / 2)} ring${Math.floor(n / 2) === 1 ? "" : "s"}${n % 2 ? `; the centre cell of an odd n stays put` : ""}.`, view: view() });
+          const done = [];
+          for (let layer = 0; layer < Math.floor(n / 2); layer++) {
+            const first = layer;
+            const last = n - 1 - layer;
+            steps.push({ line: "layer", note: `Ring ${layer}: rows and columns ${first} to ${last}. Its top side has ${last - first} cell${last - first === 1 ? "" : "s"} that start a cycle (the last corner belongs to the right side).`, view: view({ ring: layer, done }) });
+            for (let k = 0; k < last - first; k++) {
+              const T = `${first},${first + k}`;
+              const L = `${last - k},${first}`;
+              const B = `${last},${last - k}`;
+              const R = `${first + k},${last}`;
+              const four = [T, R, B, L];
+              const top = m[first][first + k];
+              steps.push({ line: "cycle", note: `Cycle of four: top (${first},${first + k}), right (${first + k},${last}), bottom (${last},${last - k}), left (${last - k},${first}). Save top = ${top}.`, view: view({ ring: layer, done, four, top }) });
+              m[first][first + k] = m[last - k][first];
+              m[last - k][first] = m[last][last - k];
+              m[last][last - k] = m[first + k][last];
+              m[first + k][last] = top;
+              done.push(...four);
+              steps.push({
+                line: "move",
+                note: `Left → top, bottom → left, right → bottom, saved top → right. All four moved one corner clockwise, with just one spare variable.`,
+                view: view({ ring: layer, done, four, top }),
+              });
+            }
+          }
+          steps.push({ line: "move", note: `Done: every cell was moved exactly once. O(n²) time, O(1) extra space, in one pass.`, view: view({ final: true }) });
           return steps;
         },
       });

@@ -1,0 +1,234 @@
+<details class="question" data-tags="array matrix math in-place rotate transpose">
+  <summary>
+    <span class="q-title">48. Rotate Image</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Matrix</span>
+      <span class="tag">Math</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> A clockwise turn is two flips you can do in
+      place: <strong>transpose</strong> (swap <code>m[i][j]</code> with
+      <code>m[j][i]</code>, only for <code>j &gt; i</code>), then
+      <strong>reverse every row</strong>. O(n²) time, O(1) extra space. The
+      cell at <code>[i][j]</code> ends up at <code>[j][n − 1 − i]</code>.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/rotate-image/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        You're given an <code>n × n</code> matrix (an image). Rotate it by 90
+        degrees clockwise, <strong>in place</strong>: change the given matrix
+        directly, without allocating another 2D matrix.
+      </p>
+      <ul>
+        <li><code>1 &lt;= n &lt;= 20</code> and <code>-1000 &lt;= matrix[i][j] &lt;= 1000</code>.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[[1,2,3],[4,5,6],[7,8,9]]</code> →
+        <code>[[7,4,1],[8,5,2],[9,6,3]]</code>;
+        <code>[[5,1,9,11],[2,4,8,10],[13,3,6,7],[15,14,12,16]]</code> →
+        <code>[[15,13,2,5],[14,3,4,1],[12,6,8,9],[16,7,10,11]]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[[1]]</code></td>
+              <td><code>[[1]]</code></td>
+              <td>n = 1: no rings to turn and nothing to swap. The loops must simply not run.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,2],[3,4]]</code></td>
+              <td><code>[[3,1],[4,2]]</code></td>
+              <td>The smallest real rotation: one ring, one cycle of four.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,2,3],[4,5,6],[7,8,9]]</code></td>
+              <td><code>[[7,4,1],[8,5,2],[9,6,3]]</code></td>
+              <td>Odd n: the centre (5) stays. Transposing with <code>j</code> from 0 instead of <code>i + 1</code> swaps every pair twice, leaving only the row reversal: <code>[[3,2,1],[6,5,4],[9,8,7]]</code>, a mirror image.</td>
+            </tr>
+            <tr>
+              <td>The 4 × 4 example</td>
+              <td>See above</td>
+              <td>Even n with two rings: the inner ring's corners are a different cycle from the outer ring's.</td>
+            </tr>
+            <tr>
+              <td><code>[[7,7],[7,7]]</code></td>
+              <td><code>[[7,7],[7,7]]</code></td>
+              <td>All equal: looks unchanged even if the code is wrong. Test with distinct values.</td>
+            </tr>
+            <tr>
+              <td>Python: <code>matrix = …</code></td>
+              <td>Caller sees the change</td>
+              <td>Assigning a new list to <code>matrix</code> only changes the local name; the caller's matrix stays as it was. Write into it: <code>matrix[:] = …</code>.</td>
+            </tr>
+            <tr>
+              <td>Counter-clockwise by mistake</td>
+              <td>Clockwise</td>
+              <td>Transpose then reverse each <em>column</em>, or reverse each row <em>before</em> transposing, turns it counter-clockwise: <code>[[3,6,9],[2,5,8],[1,4,7]]</code>. Check a corner: top-left must go to top-right.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Copy into a New Matrix</h2>
+      <p class="intuition">
+        Work out where each cell goes and write it into a second grid. Turning
+        clockwise, row <code>i</code> becomes column <code>n − 1 − i</code>,
+        so <code>matrix[i][j]</code> lands at <code>rotated[j][n − 1 − i]</code>.
+      </p>
+      <ul>
+        <li>Then copy the result back into <code>matrix</code>: the caller only sees that one.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(n²)</span>
+      </div>
+      <p class="note">
+        The easiest way to get the mapping right, and useful for checking the
+        other two. But it allocates a second matrix, which the problem rules
+        out.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Transpose, Then Reverse Each Row
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        A rotation is two reflections. Transposing flips the matrix over its
+        main diagonal (<code>[i][j] → [j][i]</code>); reversing each row flips
+        it left to right (<code>[j][i] → [j][n − 1 − i]</code>). Together:
+        <code>[i][j] → [j][n − 1 − i]</code>, exactly the clockwise turn.
+      </p>
+      <ul>
+        <li>Transpose only above the diagonal (<code>j</code> from <code>i + 1</code>): each pair is swapped once.</li>
+        <li>Both steps are plain swaps, so nothing extra is allocated.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        The answer to remember: two easy loops instead of index arithmetic.
+        For a counter-clockwise turn, transpose and then reverse each column
+        (or reverse each row first, then transpose).
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Rotate Four Cells at a Time</h2>
+      <p class="intuition">
+        Under a 90° turn, cells move in cycles of four: top → right → bottom →
+        left → top. Go ring by ring from the outside in; on each ring, every
+        cell of the top side (except the last corner) starts one such cycle.
+      </p>
+      <ul>
+        <li>Save the top cell, then move left → top, bottom → left, right → bottom, and the saved top → right.</li>
+        <li>There are <code>n / 2</code> rings; an odd n's centre cell never moves.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Every cell is moved exactly once (Approach 2 moves most cells twice),
+        but the four index expressions are easy to get wrong. Good to know;
+        Approach 2 is safer in an interview.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        In Python, <code>zip(*matrix[::-1])</code> reads the rows bottom to top
+        and column by column, which is the rotated matrix. In C++,
+        <code>std::reverse</code> on the rows flips the matrix upside down (just
+        swapping row pointers), and a transpose finishes the turn. Java has
+        nothing built in for this.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(n²) in Python, O(1) in C++</span>
+      </div>
+      <p class="note">
+        Both pass. The Python line builds new lists, so it isn't really in
+        place, and it must assign with <code>matrix[:] =</code>; plain
+        <code>matrix =</code> leaves the caller's matrix untouched.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Copy into a New Matrix</th>
+              <td>rotated[j][n − 1 − i] = matrix[i][j]</td>
+              <td>O(n²)</td>
+              <td>O(n²)</td>
+              <td>Not in place; breaks the rules</td>
+            </tr>
+            <tr>
+              <th scope="row">Transpose, Then Reverse Rows</th>
+              <td>Two reflections</td>
+              <td>O(n²)</td>
+              <td>O(1)</td>
+              <td>Expected answer; hard to get wrong</td>
+            </tr>
+            <tr>
+              <th scope="row">Four Cells at a Time</th>
+              <td>Ring by ring, cycles of four</td>
+              <td>O(n²)</td>
+              <td>O(1)</td>
+              <td>Each cell moved once; fiddly indices</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
