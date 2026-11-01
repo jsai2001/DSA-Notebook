@@ -8209,6 +8209,532 @@
         </div>
       </details>
 
+      <!-- ===== problems/0543-diameter-of-binary-tree ===== -->
+      <details class="question" data-tags="tree binary-tree dfs depth-first-search recursion post-order height stack">
+        <summary>
+          <span class="q-title">543. Diameter of Binary Tree</span>
+          <span class="q-meta">
+            <span class="badge easy">Easy</span>
+            <span class="tag">Tree</span>
+            <span class="tag">DFS</span>
+          </span>
+        </summary>
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> Every path has one highest node where it
+            <strong>bends</strong>: it goes down the left side and down the right
+            side. So the longest path bending at a node has
+            <code>height(left) + height(right)</code> edges. One post-order DFS
+            returns each node's height to its parent and, on the way, keeps the
+            largest <code>left + right</code> it sees. O(n).
+          </div>
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/diameter-of-binary-tree/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              Given the <code>root</code> of a binary tree, return the length of its
+              diameter: the longest path between any two nodes. The length is the
+              number of <strong>edges</strong> on the path, and the path may or may
+              not pass through the root.
+            </p>
+            <ul>
+              <li>The tree has between <code>1</code> and <code>10⁴</code> nodes.</li>
+              <li><code>-100 &lt;= Node.val &lt;= 100</code>.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>[1,2,3,4,5]</code> → <code>3</code> (4 – 2 – 1 – 3 or
+              5 – 2 – 1 – 3); <code>[1,2]</code> → <code>1</code>.
+            </p>
+          </section>
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[1]</code></td>
+                    <td><code>0</code></td>
+                    <td>One node, no edges. Counting nodes instead of edges gives 1.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,2]</code></td>
+                    <td><code>1</code></td>
+                    <td>The path ends at the root: one side has height 0.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,2,3,4,5]</code></td>
+                    <td><code>3</code></td>
+                    <td>The usual case: the path bends at the root.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,2,null,3,4,5,null,null,6]</code></td>
+                    <td><code>4</code></td>
+                    <td>The longest path (5 – 3 – 2 – 4 – 6) bends at 2 and skips the root. Only checking the root gives 3.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,2,null,3,null,4,null,5]</code></td>
+                    <td><code>4</code></td>
+                    <td>A chain: the path runs from the root straight down to the leaf.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,2,3,4,5,6,7]</code></td>
+                    <td><code>4</code></td>
+                    <td>A full tree: leaf to leaf through the root, 2 + 2 edges.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[-1,-2,-3]</code></td>
+                    <td><code>2</code></td>
+                    <td>The values don't matter, only the shape. Don't add up <code>val</code>s.</td>
+                  </tr>
+                  <tr>
+                    <td>A chain of 10⁴ nodes</td>
+                    <td><code>9999</code></td>
+                    <td>The deepest tree: recursion goes 10⁴ calls deep (over Python's default limit of 1,000), and recomputing heights at every node gets slow.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Brute Force (Heights from Scratch at Every Node)</h2>
+            <p class="intuition">
+              Try every node as the bend. For each one, compute the heights of its
+              two subtrees with a separate <code>height()</code> function and add
+              them. The answer is the largest sum, so also look inside the left and
+              right subtrees.
+            </p>
+            <ul>
+              <li><code>height(node)</code> = number of nodes on the longest path down (0 for an empty child).</li>
+              <li>
+                A path bending at a node goes down <code>height(left)</code> edges on
+                one side and <code>height(right)</code> on the other.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n²) worst case</span>
+              <span><strong>Space</strong> O(h) call stack</span>
+            </div>
+            <p class="note">
+              The same heights get worked out again and again. On a 10⁴-node chain
+              it took 7.4 s in Python here (about 0.4 s in C++ and 0.3 s in Java);
+              on a balanced tree it's only O(n log n).
+            </p>
+            <div class="code-tabs" data-viz="0543-diameter-of-binary-tree/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"call":[15],"empty":[16,17],"through":[18],"best":[19],"start":[20]}'>
+                # Definition for a binary tree node.
+                # class TreeNode(object):
+                #     def __init__(self, val=0, left=None, right=None):
+                #         self.val = val
+                #         self.left = left
+                #         self.right = right
+                import sys
+                class Solution(object):
+                    def diameterOfBinaryTree(self, root):
+                        sys.setrecursionlimit(50000)  # a one-sided tree can be 10^4 levels deep
+                        def height(node):  # nodes on the longest path down from node (0 for None)
+                            if not node:
+                                return 0
+                            return 1 + max(height(node.left), height(node.right))
+                        def diameter(node):
+                            if not node:
+                                return 0
+                            through = height(node.left) + height(node.right)  # edges on the longest path that bends at node
+                            return max(through, diameter(node.left), diameter(node.right))  # or it lies inside one subtree
+                        return diameter(root)
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"start":[16],"call":[23],"empty":[24],"through":[25],"best":[26]}'>
+                /**
+                 * Definition for a binary tree node.
+                 * struct TreeNode {
+                 *     int val;
+                 *     TreeNode *left;
+                 *     TreeNode *right;
+                 *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                 *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                 *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                 * };
+                 */
+                #include <algorithm>
+                class Solution {
+                public:
+                    int diameterOfBinaryTree(TreeNode* root) {
+                        return diameter(root);
+                    }
+                private:
+                    int height(TreeNode* node) { // nodes on the longest path down from node (0 for nullptr)
+                        if (!node) return 0;
+                        return 1 + std::max(height(node->left), height(node->right));
+                    }
+                    int diameter(TreeNode* node) {
+                        if (!node) return 0;
+                        int through = height(node->left) + height(node->right); // edges on the longest path that bends at node
+                        return std::max({through, diameter(node->left), diameter(node->right)}); // or it lies inside one subtree
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"start":[18],"call":[24],"empty":[25],"through":[26],"best":[27]}'>
+                /**
+                 * Definition for a binary tree node.
+                 * public class TreeNode {
+                 *     int val;
+                 *     TreeNode left;
+                 *     TreeNode right;
+                 *     TreeNode() {}
+                 *     TreeNode(int val) { this.val = val; }
+                 *     TreeNode(int val, TreeNode left, TreeNode right) {
+                 *         this.val = val;
+                 *         this.left = left;
+                 *         this.right = right;
+                 *     }
+                 * }
+                 */
+                class Solution {
+                    public int diameterOfBinaryTree(TreeNode root) {
+                        return diameter(root);
+                    }
+                    private int height(TreeNode node) { // nodes on the longest path down from node (0 for null)
+                        if (node == null) return 0;
+                        return 1 + Math.max(height(node.left), height(node.right));
+                    }
+                    private int diameter(TreeNode node) {
+                        if (node == null) return 0;
+                        int through = height(node.left) + height(node.right); // edges on the longest path that bends at node
+                        return Math.max(through, Math.max(diameter(node.left), diameter(node.right))); // or it lies inside one subtree
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>
+              Approach 2: One DFS That Returns Heights
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              A node's height needs its children's heights first, which is exactly
+              what the bend check needs too. So do both in one post-order DFS:
+              get <code>left</code> and <code>right</code>, update
+              <code>best</code> with <code>left + right</code>, and return
+              <code>1 + max(left, right)</code>.
+            </p>
+            <ul>
+              <li>The function <em>returns</em> a height but the answer is a <em>path</em>: keep the answer in a separate variable.</li>
+              <li>
+                A path can't go down both sides of a node and then continue up, which
+                is why the parent only gets <code>max(left, right)</code>, not the sum.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n)</span>
+              <span><strong>Space</strong> O(h) call stack</span>
+            </div>
+            <p class="note">
+              Every node is visited once. The Python version raises the recursion
+              limit, because a chain of 10⁴ nodes is 10⁴ calls deep. The same
+              "return one thing, track another" DFS solves Binary Tree Maximum Path
+              Sum and Balanced Binary Tree.
+            </p>
+            <div class="code-tabs" data-viz="0543-diameter-of-binary-tree/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[11],"call":[12],"empty":[13,14],"left":[15],"right":[16],"best":[17],"return":[18],"start":[19],"answer":[20]}'>
+                # Definition for a binary tree node.
+                # class TreeNode(object):
+                #     def __init__(self, val=0, left=None, right=None):
+                #         self.val = val
+                #         self.left = left
+                #         self.right = right
+                import sys
+                class Solution(object):
+                    def diameterOfBinaryTree(self, root):
+                        sys.setrecursionlimit(50000)  # a one-sided tree can be 10^4 levels deep
+                        self.best = 0  # longest path seen so far, in edges
+                        def height(node):  # returns nodes on the longest path down; updates best on the way
+                            if not node:
+                                return 0
+                            left = height(node.left)
+                            right = height(node.right)
+                            self.best = max(self.best, left + right)  # the path that bends here has left + right edges
+                            return 1 + max(left, right)  # node's height, for its parent
+                        height(root)
+                        return self.best
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[16],"start":[17],"answer":[18],"call":[22],"empty":[23],"left":[24],"right":[25],"best":[26],"return":[27]}'>
+                /**
+                 * Definition for a binary tree node.
+                 * struct TreeNode {
+                 *     int val;
+                 *     TreeNode *left;
+                 *     TreeNode *right;
+                 *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                 *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                 *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                 * };
+                 */
+                #include <algorithm>
+                class Solution {
+                public:
+                    int diameterOfBinaryTree(TreeNode* root) {
+                        best = 0; // longest path seen so far, in edges
+                        height(root);
+                        return best;
+                    }
+                private:
+                    int best = 0;
+                    int height(TreeNode* node) { // returns nodes on the longest path down; updates best on the way
+                        if (!node) return 0;
+                        int left = height(node->left);
+                        int right = height(node->right);
+                        best = std::max(best, left + right); // the path that bends here has left + right edges
+                        return 1 + std::max(left, right); // node's height, for its parent
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[19],"start":[20],"answer":[21],"call":[23],"empty":[24],"left":[25],"right":[26],"best":[27],"return":[28]}'>
+                /**
+                 * Definition for a binary tree node.
+                 * public class TreeNode {
+                 *     int val;
+                 *     TreeNode left;
+                 *     TreeNode right;
+                 *     TreeNode() {}
+                 *     TreeNode(int val) { this.val = val; }
+                 *     TreeNode(int val, TreeNode left, TreeNode right) {
+                 *         this.val = val;
+                 *         this.left = left;
+                 *         this.right = right;
+                 *     }
+                 * }
+                 */
+                class Solution {
+                    private int best;
+                    public int diameterOfBinaryTree(TreeNode root) {
+                        best = 0; // longest path seen so far, in edges
+                        height(root);
+                        return best;
+                    }
+                    private int height(TreeNode node) { // returns nodes on the longest path down; updates best on the way
+                        if (node == null) return 0;
+                        int left = height(node.left);
+                        int right = height(node.right);
+                        best = Math.max(best, left + right); // the path that bends here has left + right edges
+                        return 1 + Math.max(left, right); // node's height, for its parent
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>Approach 3: Iterative Post-Order with a Stack</h2>
+            <p class="intuition">
+              The same post-order work without recursion. Each node goes on the
+              stack twice: first to push its children, then (marked "back") to
+              finish it once both children have heights.
+            </p>
+            <ul>
+              <li>Push <code>(node, true)</code>, then the right child, then the left: the stack is last-in, first-out, so the left side runs first and the node finishes last.</li>
+              <li>A map holds each finished node's height, with an empty child counted as 0.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n)</span>
+              <span><strong>Space</strong> O(n)</span>
+            </div>
+            <p class="note">
+              No recursion limit to worry about, at the cost of a height map for
+              every node. Useful when a tree can be very deep.
+            </p>
+            <div class="code-tabs" data-viz="0543-diameter-of-binary-tree/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[9,10,11],"loop":[12,13],"skip":[14,15],"finish":[16,17,18,19],"push":[20,21,22,23],"return":[24]}'>
+                # Definition for a binary tree node.
+                # class TreeNode(object):
+                #     def __init__(self, val=0, left=None, right=None):
+                #         self.val = val
+                #         self.left = left
+                #         self.right = right
+                class Solution(object):
+                    def diameterOfBinaryTree(self, root):
+                        height = {None: 0}  # height of every finished node; an empty child has height 0
+                        best = 0
+                        stack = [(root, False)]  # (node, are its children finished?)
+                        while stack:
+                            node, children_done = stack.pop()
+                            if not node:
+                                continue
+                            if children_done:  # both subtrees are finished: work out this node
+                                left, right = height[node.left], height[node.right]
+                                best = max(best, left + right)
+                                height[node] = 1 + max(left, right)
+                            else:  # come back to node after its children
+                                stack.append((node, True))
+                                stack.append((node.right, False))
+                                stack.append((node.left, False))
+                        return best
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[19,20,21,22],"loop":[23,24,25],"skip":[26],"finish":[27,28,29,30],"push":[31,32,33,34],"return":[37]}'>
+                /**
+                 * Definition for a binary tree node.
+                 * struct TreeNode {
+                 *     int val;
+                 *     TreeNode *left;
+                 *     TreeNode *right;
+                 *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                 *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                 *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                 * };
+                 */
+                #include <algorithm>
+                #include <stack>
+                #include <unordered_map>
+                #include <utility>
+                class Solution {
+                public:
+                    int diameterOfBinaryTree(TreeNode* root) {
+                        std::unordered_map<TreeNode*, int> height{{nullptr, 0}}; // height of every finished node; an empty child has height 0
+                        int best = 0;
+                        std::stack<std::pair<TreeNode*, bool>> stack; // (node, are its children finished?)
+                        stack.push({root, false});
+                        while (!stack.empty()) {
+                            auto [node, childrenDone] = stack.top();
+                            stack.pop();
+                            if (!node) continue;
+                            if (childrenDone) { // both subtrees are finished: work out this node
+                                int left = height[node->left], right = height[node->right];
+                                best = std::max(best, left + right);
+                                height[node] = 1 + std::max(left, right);
+                            } else { // come back to node after its children
+                                stack.push({node, true});
+                                stack.push({node->right, false});
+                                stack.push({node->left, false});
+                            }
+                        }
+                        return best;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[22,23,24,25,26],"loop":[27,28,29],"skip":[30],"finish":[31,32,33,34],"push":[35,36,37,38],"return":[41]}'>
+                /**
+                 * Definition for a binary tree node.
+                 * public class TreeNode {
+                 *     int val;
+                 *     TreeNode left;
+                 *     TreeNode right;
+                 *     TreeNode() {}
+                 *     TreeNode(int val) { this.val = val; }
+                 *     TreeNode(int val, TreeNode left, TreeNode right) {
+                 *         this.val = val;
+                 *         this.left = left;
+                 *         this.right = right;
+                 *     }
+                 * }
+                 */
+                import java.util.ArrayDeque;
+                import java.util.Deque;
+                import java.util.HashMap;
+                import java.util.Map;
+                class Solution {
+                    public int diameterOfBinaryTree(TreeNode root) {
+                        Map<TreeNode, Integer> height = new HashMap<>(); // height of every finished node
+                        height.put(null, 0); // an empty child has height 0
+                        int best = 0;
+                        Deque<Object[]> stack = new ArrayDeque<>(); // {node, are its children finished?}
+                        stack.push(new Object[] {root, false});
+                        while (!stack.isEmpty()) {
+                            Object[] top = stack.pop();
+                            TreeNode node = (TreeNode) top[0];
+                            if (node == null) continue;
+                            if ((Boolean) top[1]) { // both subtrees are finished: work out this node
+                                int left = height.get(node.left), right = height.get(node.right);
+                                best = Math.max(best, left + right);
+                                height.put(node, 1 + Math.max(left, right));
+                            } else { // come back to node after its children
+                                stack.push(new Object[] {node, true}); // the stack is last-in, first-out: push node first
+                                stack.push(new Object[] {node.right, false});
+                                stack.push(new Object[] {node.left, false});
+                            }
+                        }
+                        return best;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">No shortcut</span></h2>
+            <p>
+              LeetCode's <code>TreeNode</code> is a bare class, so there's no library
+              function for a tree's diameter. Graph libraries (like NetworkX's
+              <code>diameter</code>) would need the tree turned into a graph first.
+            </p>
+            <p class="note">
+              Write Approach 2. The pattern to remember: when the answer at a node
+              combines both children but the parent only needs one of them, return
+              one value and keep the answer in a variable.
+            </p>
+          </section>
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Brute Force</th>
+                    <td>height(left) + height(right) at every node</td>
+                    <td>O(n²)</td>
+                    <td>O(h)</td>
+                    <td>Recomputes heights; 7.4 s in Python on a 10⁴ chain</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">One DFS That Returns Heights</th>
+                    <td>Post-order; return height, track best</td>
+                    <td>O(n)</td>
+                    <td>O(h)</td>
+                    <td>Expected answer</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Iterative Post-Order</th>
+                    <td>Stack of (node, back?) and a height map</td>
+                    <td>O(n)</td>
+                    <td>O(n)</td>
+                    <td>No recursion depth limit</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0994-rotting-oranges ===== -->
       <details class="question" data-tags="matrix grid bfs breadth-first-search multi-source-bfs queue simulation graph">
         <summary>
@@ -13561,6 +14087,289 @@
             line: "return",
             note: `Return dp[${amount}] = ${dp[amount]}. Because coins were added one at a time, each combination is counted once, in coin order (1+2+2 and 2+1+2 are the same).`,
             view: view({ final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0543-diameter-of-binary-tree/approach1.visual.js -->
+    <script>
+      // Brute force: at every node, compute both subtree heights from scratch; the best left + right is the answer.
+      DSAViz.register("0543-diameter-of-binary-tree/approach1", {
+        inputs: [{ name: "root", type: "tree", value: "[1, 2, 3, 4, 5]", maxLength: 15 }],
+        trace({ root: values }) {
+          const { root, nodes } = DSAViz.buildTree(values);
+          const steps = [];
+          const H = {}; // true heights, used for the notes and the final path
+          const height = (id) => (id < 0 ? 0 : (H[id] = 1 + Math.max(height(nodes[id].left), height(nodes[id].right))));
+          height(root);
+          const size = (id) => (id < 0 ? 0 : 1 + size(nodes[id].left) + size(nodes[id].right));
+          const down = (id) => {
+            const path = [];
+            while (id >= 0) {
+              path.push(id);
+              const { left, right } = nodes[id];
+              id = (H[left] || 0) >= (H[right] || 0) ? left : right;
+            }
+            return path;
+          };
+          const captions = {}; // id -> left + right at that node
+          const marks = {};
+          let best = 0;
+          let bend = -1;
+          let work = 0; // nodes visited by height() so far
+          const view = (current, opts = {}) => {
+            const m = { ...marks };
+            if (opts.sub) opts.sub.forEach((id) => (m[id] = "window"));
+            if (opts.path) opts.path.forEach((id) => (m[id] = "match"));
+            if (current !== undefined) m[current] = opts.mark || "active";
+            return [
+              { type: "tree", label: "tree (caption = edges on the longest path bending there)", values, marks: m, captions: { ...captions } },
+              {
+                type: "vars",
+                items: [
+                  { name: "best", value: `${best} edge${best === 1 ? "" : "s"}`, mark: opts.improved ? "new" : "" },
+                  { name: "height() visits so far", value: String(work), mark: opts.counted ? "new" : "" },
+                ],
+              },
+            ];
+          };
+          const subtree = (id) => (id < 0 ? [] : [id, ...subtree(nodes[id].left), ...subtree(nodes[id].right)]);
+
+          steps.push({
+            line: "start",
+            note: "The longest path bends at some node: it goes down that node's left side and down its right side. Try every node as the bend.",
+            view: view(),
+          });
+          function diameter(id) {
+            const node = nodes[id];
+            steps.push({ line: "call", note: `diameter(${node.val}): try ${node.val} as the bend.`, view: view(id) });
+            const l = H[node.left] || 0;
+            const r = H[node.right] || 0;
+            const cost = size(node.left) + size(node.right);
+            work += cost;
+            const through = l + r;
+            const improved = through > best;
+            if (improved) {
+              best = through;
+              bend = id;
+            }
+            captions[id] = String(through);
+            marks[id] = "visited";
+            steps.push({
+              line: "through",
+              note: `height(left) = ${l}, height(right) = ${r}, so the path bending here has ${through} edge${through === 1 ? "" : "s"}. Working out those heights walked all ${cost} node${cost === 1 ? "" : "s"} below ${node.val} (shaded) again.`,
+              view: view(id, { sub: subtree(node.left).concat(subtree(node.right)), counted: cost > 0, improved, mark: improved ? "match" : "compare" }),
+            });
+            for (const side of ["left", "right"]) {
+              const child = node[side];
+              if (child < 0) steps.push({ line: ["best", "empty"], note: `${node.val} has no ${side} child: diameter(None) = 0.`, view: view(id) });
+              else {
+                steps.push({ line: "best", note: `Is the longest path inside ${node.val}'s ${side} subtree? Ask diameter(${nodes[child].val}).`, view: view(id) });
+                diameter(child);
+              }
+            }
+            steps.push({ line: "best", note: `Back at ${node.val}: the best below and through it is ${best}.`, view: view(id) });
+          }
+          diameter(root);
+          const path = bend < 0 ? [root] : down(nodes[bend].left).reverse().concat([bend], down(nodes[bend].right));
+          const n = Object.keys(nodes).length;
+          steps.push({
+            line: "start",
+            note:
+              best === 0
+                ? `Return 0: a single node has no edges.`
+                : `Return ${best}, the path (green) bending at ${nodes[bend].val}: ${path.map((id) => nodes[id].val).join(" – ")}. height() made ${work} visits for ${n} nodes: on a long chain that grows like n², O(n²).`,
+            view: view(undefined, { path }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0543-diameter-of-binary-tree/approach2.visual.js -->
+    <script>
+      // One pass: a post-order DFS returns each node's height; at every node, left + right is the longest path that bends there.
+      DSAViz.register("0543-diameter-of-binary-tree/approach2", {
+        inputs: [{ name: "root", type: "tree", value: "[1, 2, 3, 4, 5]", maxLength: 15 }],
+        trace({ root: values }) {
+          const { root, nodes } = DSAViz.buildTree(values);
+          const steps = [];
+          const captions = {}; // id -> "h N" once the node's height is known
+          const marks = {};
+          const stack = [];
+          const heights = {};
+          let best = 0;
+          let bend = -1; // node where the best path bends
+          // the longest path down from id (following the taller child), for highlighting the answer
+          const down = (id) => {
+            const path = [];
+            while (id >= 0) {
+              path.push(id);
+              const { left, right } = nodes[id];
+              id = (heights[left] || 0) >= (heights[right] || 0) ? left : right;
+            }
+            return path;
+          };
+          const view = (current, opts = {}) => {
+            const m = { ...marks };
+            if (opts.path) opts.path.forEach((id) => (m[id] = "match"));
+            if (current !== undefined) m[current] = opts.mark || "active";
+            return [
+              { type: "tree", label: "tree (caption = height: nodes on the longest path down)", values, marks: m, captions: { ...captions } },
+              { type: "array", label: "call stack (bottom → top)", values: stack.slice(), wide: true, marks: stack.length ? { [stack.length - 1]: "active" } : {} },
+              {
+                type: "vars",
+                items: [
+                  { name: "best", value: `${best} edge${best === 1 ? "" : "s"}`, mark: opts.improved ? "new" : "" },
+                  ...(opts.lr ? [{ name: "left + right", value: `${opts.lr[0]} + ${opts.lr[1]} = ${opts.lr[0] + opts.lr[1]}` }] : []),
+                ],
+              },
+            ];
+          };
+
+          steps.push({
+            line: ["init", "start"],
+            note: "best = 0. height(node) counts the nodes on the longest path down from node, and on the way it tries the path that bends at node.",
+            view: view(),
+          });
+          function height(id) {
+            const node = nodes[id];
+            stack.push(`height(${node.val})`);
+            steps.push({ line: "call", note: `height(${node.val}): first get both children's heights.`, view: view(id) });
+            const h = {};
+            for (const side of ["left", "right"]) {
+              const child = node[side];
+              if (child < 0) {
+                h[side] = 0;
+                steps.push({ line: [side, "empty"], note: `${node.val} has no ${side} child: height(None) = 0.`, view: view(id) });
+              } else {
+                steps.push({ line: side, note: `Go ${side} to ${nodes[child].val}.`, view: view(id) });
+                h[side] = height(child);
+                steps.push({ line: side, note: `Back at ${node.val}: its ${side} height is ${h[side]}.`, view: view(id) });
+              }
+            }
+            const through = h.left + h.right;
+            const improved = through > best;
+            if (improved) {
+              best = through;
+              bend = id;
+            }
+            steps.push({
+              line: "best",
+              note: `The longest path that bends at ${node.val} has ${h.left} + ${h.right} = ${through} edge${through === 1 ? "" : "s"}. ${improved ? `That's the longest so far: best = ${best}.` : `Not longer than best (${best}).`}`,
+              view: view(id, { mark: improved ? "match" : "compare", improved, lr: [h.left, h.right] }),
+            });
+            heights[id] = 1 + Math.max(h.left, h.right);
+            captions[id] = `h ${heights[id]}`;
+            marks[id] = "visited";
+            steps.push({ line: "return", note: `Return 1 + max(${h.left}, ${h.right}) = ${heights[id]} to ${stack.length > 1 ? "the parent" : "the start"}.`, view: view(id) });
+            stack.pop();
+            return heights[id];
+          }
+          height(root);
+          const path = bend < 0 ? [root] : down(nodes[bend].left).reverse().concat([bend], down(nodes[bend].right));
+          steps.push({
+            line: "answer",
+            note:
+              best === 0
+                ? "Return best = 0: a single node has no edges."
+                : `Return best = ${best}. The path (green) bends at ${nodes[bend].val}: ${path.map((id) => nodes[id].val).join(" – ")}${bend === root ? "" : ". It doesn't pass through the root"}. Each node was visited once: O(n).`,
+            view: view(undefined, { path }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0543-diameter-of-binary-tree/approach3.visual.js -->
+    <script>
+      // Iterative post-order: an explicit stack of (node, children finished?) replaces recursion; heights go in a map.
+      DSAViz.register("0543-diameter-of-binary-tree/approach3", {
+        inputs: [{ name: "root", type: "tree", value: "[1, 2, 3, 4, 5]", maxLength: 15 }],
+        trace({ root: values }) {
+          const { root, nodes } = DSAViz.buildTree(values);
+          const steps = [];
+          const heights = {};
+          const captions = {};
+          const marks = {};
+          let best = 0;
+          let bend = -1;
+          const stack = [[root, false]];
+          const label = ([id, done]) => (id < 0 ? "null" : done ? `${nodes[id].val} (back)` : String(nodes[id].val));
+          const down = (id) => {
+            const path = [];
+            while (id >= 0) {
+              path.push(id);
+              const { left, right } = nodes[id];
+              id = (heights[left] || 0) >= (heights[right] || 0) ? left : right;
+            }
+            return path;
+          };
+          const view = (current, opts = {}) => {
+            const m = { ...marks };
+            if (opts.path) opts.path.forEach((id) => (m[id] = "match"));
+            if (current !== undefined && current >= 0) m[current] = opts.mark || "active";
+            const smarks = {};
+            if (opts.pushed) for (let i = stack.length - opts.pushed; i < stack.length; i++) smarks[i] = "new";
+            return [
+              { type: "tree", label: "tree (caption = height, once both children are done)", values, marks: m, captions: { ...captions } },
+              { type: "array", label: "stack (bottom → top; \"back\" = children already done)", values: stack.map(label), wide: true, marks: smarks },
+              {
+                type: "vars",
+                items: [
+                  { name: "best", value: `${best} edge${best === 1 ? "" : "s"}`, mark: opts.improved ? "new" : "" },
+                  ...(opts.popped ? [{ name: "popped", value: opts.popped }] : []),
+                ],
+              },
+            ];
+          };
+
+          steps.push({
+            line: "init",
+            note: "No recursion: a stack of (node, children done?) pairs. A node is pushed twice: once to go down into its children, once to finish it after them.",
+            view: view(),
+          });
+          while (stack.length) {
+            const top = stack.pop();
+            const [id, done] = top;
+            if (id < 0) {
+              steps.push({ line: ["loop", "skip"], note: "Pop null: an empty child, nothing to do (its height is 0).", view: view(undefined, { popped: "null" }) });
+              continue;
+            }
+            const node = nodes[id];
+            if (done) {
+              const l = heights[node.left] || 0;
+              const r = heights[node.right] || 0;
+              const through = l + r;
+              const improved = through > best;
+              if (improved) {
+                best = through;
+                bend = id;
+              }
+              heights[id] = 1 + Math.max(l, r);
+              captions[id] = `h ${heights[id]}`;
+              marks[id] = "visited";
+              steps.push({
+                line: ["loop", "finish"],
+                note: `Pop ${node.val} (back): both children are done, with heights ${l} and ${r}. The path bending here has ${through} edge${through === 1 ? "" : "s"}${improved ? `: best = ${best}` : ` (best stays ${best})`}. height[${node.val}] = ${heights[id]}.`,
+                view: view(id, { popped: label(top), improved, mark: improved ? "match" : "compare" }),
+              });
+            } else {
+              stack.push([id, true], [node.right, false], [node.left, false]);
+              steps.push({
+                line: ["loop", "push"],
+                note: `Pop ${node.val} for the first time. Push it back marked "back", then its right and left children, so the left side is handled first and ${node.val} is finished last.`,
+                view: view(id, { popped: label(top), pushed: 3 }),
+              });
+            }
+          }
+          const path = bend < 0 ? [root] : down(nodes[bend].left).reverse().concat([bend], down(nodes[bend].right));
+          steps.push({
+            line: "return",
+            note:
+              best === 0
+                ? "The stack is empty: return 0 (a single node has no edges)."
+                : `The stack is empty: return ${best}, the path (green) ${path.map((id) => nodes[id].val).join(" – ")}. Same O(n) work as the recursion, but the stack lives on the heap, so a 10⁴-deep tree can't overflow it.`,
+            view: view(undefined, { path }),
           });
           return steps;
         },

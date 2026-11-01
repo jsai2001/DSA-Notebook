@@ -1,0 +1,241 @@
+<details class="question" data-tags="tree binary-tree dfs depth-first-search recursion post-order height stack">
+  <summary>
+    <span class="q-title">543. Diameter of Binary Tree</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Tree</span>
+      <span class="tag">DFS</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Every path has one highest node where it
+      <strong>bends</strong>: it goes down the left side and down the right
+      side. So the longest path bending at a node has
+      <code>height(left) + height(right)</code> edges. One post-order DFS
+      returns each node's height to its parent and, on the way, keeps the
+      largest <code>left + right</code> it sees. O(n).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/diameter-of-binary-tree/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given the <code>root</code> of a binary tree, return the length of its
+        diameter: the longest path between any two nodes. The length is the
+        number of <strong>edges</strong> on the path, and the path may or may
+        not pass through the root.
+      </p>
+      <ul>
+        <li>The tree has between <code>1</code> and <code>10⁴</code> nodes.</li>
+        <li><code>-100 &lt;= Node.val &lt;= 100</code>.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[1,2,3,4,5]</code> → <code>3</code> (4 – 2 – 1 – 3 or
+        5 – 2 – 1 – 3); <code>[1,2]</code> → <code>1</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[1]</code></td>
+              <td><code>0</code></td>
+              <td>One node, no edges. Counting nodes instead of edges gives 1.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2]</code></td>
+              <td><code>1</code></td>
+              <td>The path ends at the root: one side has height 0.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3,4,5]</code></td>
+              <td><code>3</code></td>
+              <td>The usual case: the path bends at the root.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,null,3,4,5,null,null,6]</code></td>
+              <td><code>4</code></td>
+              <td>The longest path (5 – 3 – 2 – 4 – 6) bends at 2 and skips the root. Only checking the root gives 3.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,null,3,null,4,null,5]</code></td>
+              <td><code>4</code></td>
+              <td>A chain: the path runs from the root straight down to the leaf.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3,4,5,6,7]</code></td>
+              <td><code>4</code></td>
+              <td>A full tree: leaf to leaf through the root, 2 + 2 edges.</td>
+            </tr>
+            <tr>
+              <td><code>[-1,-2,-3]</code></td>
+              <td><code>2</code></td>
+              <td>The values don't matter, only the shape. Don't add up <code>val</code>s.</td>
+            </tr>
+            <tr>
+              <td>A chain of 10⁴ nodes</td>
+              <td><code>9999</code></td>
+              <td>The deepest tree: recursion goes 10⁴ calls deep (over Python's default limit of 1,000), and recomputing heights at every node gets slow.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Brute Force (Heights from Scratch at Every Node)</h2>
+      <p class="intuition">
+        Try every node as the bend. For each one, compute the heights of its
+        two subtrees with a separate <code>height()</code> function and add
+        them. The answer is the largest sum, so also look inside the left and
+        right subtrees.
+      </p>
+      <ul>
+        <li><code>height(node)</code> = number of nodes on the longest path down (0 for an empty child).</li>
+        <li>
+          A path bending at a node goes down <code>height(left)</code> edges on
+          one side and <code>height(right)</code> on the other.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²) worst case</span>
+        <span><strong>Space</strong> O(h) call stack</span>
+      </div>
+      <p class="note">
+        The same heights get worked out again and again. On a 10⁴-node chain
+        it took 7.4 s in Python here (about 0.4 s in C++ and 0.3 s in Java);
+        on a balanced tree it's only O(n log n).
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: One DFS That Returns Heights
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        A node's height needs its children's heights first, which is exactly
+        what the bend check needs too. So do both in one post-order DFS:
+        get <code>left</code> and <code>right</code>, update
+        <code>best</code> with <code>left + right</code>, and return
+        <code>1 + max(left, right)</code>.
+      </p>
+      <ul>
+        <li>The function <em>returns</em> a height but the answer is a <em>path</em>: keep the answer in a separate variable.</li>
+        <li>
+          A path can't go down both sides of a node and then continue up, which
+          is why the parent only gets <code>max(left, right)</code>, not the sum.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(h) call stack</span>
+      </div>
+      <p class="note">
+        Every node is visited once. The Python version raises the recursion
+        limit, because a chain of 10⁴ nodes is 10⁴ calls deep. The same
+        "return one thing, track another" DFS solves Binary Tree Maximum Path
+        Sum and Balanced Binary Tree.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Iterative Post-Order with a Stack</h2>
+      <p class="intuition">
+        The same post-order work without recursion. Each node goes on the
+        stack twice: first to push its children, then (marked "back") to
+        finish it once both children have heights.
+      </p>
+      <ul>
+        <li>Push <code>(node, true)</code>, then the right child, then the left: the stack is last-in, first-out, so the left side runs first and the node finishes last.</li>
+        <li>A map holds each finished node's height, with an empty child counted as 0.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        No recursion limit to worry about, at the cost of a height map for
+        every node. Useful when a tree can be very deep.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        LeetCode's <code>TreeNode</code> is a bare class, so there's no library
+        function for a tree's diameter. Graph libraries (like NetworkX's
+        <code>diameter</code>) would need the tree turned into a graph first.
+      </p>
+      <p class="note">
+        Write Approach 2. The pattern to remember: when the answer at a node
+        combines both children but the parent only needs one of them, return
+        one value and keep the answer in a variable.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Brute Force</th>
+              <td>height(left) + height(right) at every node</td>
+              <td>O(n²)</td>
+              <td>O(h)</td>
+              <td>Recomputes heights; 7.4 s in Python on a 10⁴ chain</td>
+            </tr>
+            <tr>
+              <th scope="row">One DFS That Returns Heights</th>
+              <td>Post-order; return height, track best</td>
+              <td>O(n)</td>
+              <td>O(h)</td>
+              <td>Expected answer</td>
+            </tr>
+            <tr>
+              <th scope="row">Iterative Post-Order</th>
+              <td>Stack of (node, back?) and a height map</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>No recursion depth limit</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
