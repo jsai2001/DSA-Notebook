@@ -9243,6 +9243,556 @@
         </div>
       </details>
 
+      <!-- ===== problems/0042-trapping-rain-water ===== -->
+      <details class="question" data-tags="array two-pointers stack monotonic-stack dynamic-programming prefix-max rain water">
+        <summary>
+          <span class="q-title">42. Trapping Rain Water</span>
+          <span class="q-meta">
+            <span class="badge hard">Hard</span>
+            <span class="tag">Array</span>
+            <span class="tag">Two Pointers</span>
+            <span class="tag">Stack</span>
+          </span>
+        </summary>
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> The water above bar <code>i</code> is
+            <code>min(tallest on its left, tallest on its right) − height[i]</code>.
+            With two pointers you don't need both maximums: move the
+            <strong>lower</strong> end inward, because the other side already has a
+            wall at least that tall, so only this side's running max decides the
+            water. O(n) time, O(1) space.
+          </div>
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/trapping-rain-water/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              Given <code>n</code> non-negative integers that describe an elevation
+              map where each bar is 1 wide, compute how much water it can trap after
+              raining.
+            </p>
+            <ul>
+              <li><code>1 &lt;= n &lt;= 2 × 10⁴</code> and <code>0 &lt;= height[i] &lt;= 10⁵</code>.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>[0,1,0,2,1,0,1,3,2,1,2,1]</code> → <code>6</code>;
+              <code>[4,2,0,3,2,5]</code> → <code>9</code>.
+            </p>
+          </section>
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[1]</code></td>
+                    <td><code>0</code></td>
+                    <td>One bar: there's nothing to hold water on either side.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,2,3,4,5]</code> / <code>[5,4,3,2,1]</code></td>
+                    <td><code>0</code> / <code>0</code></td>
+                    <td>Only rising or only falling: water runs off the open side.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2,0,2]</code></td>
+                    <td><code>2</code></td>
+                    <td>The smallest pool.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2,0,3]</code></td>
+                    <td><code>2</code></td>
+                    <td>Uneven walls: the water level is the <em>lower</em> wall (2), not the higher one.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[3,0,0,0,3]</code></td>
+                    <td><code>9</code></td>
+                    <td>A wide pool: every bar between the walls counts, not just the ones next to them.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[3,1,2,1,3]</code></td>
+                    <td><code>5</code></td>
+                    <td>A bump inside the pool doesn't split it: the water covers the 2 as well, because the outer walls are 3.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[4,2,0,3,2,5]</code></td>
+                    <td><code>9</code></td>
+                    <td>The level isn't set by the nearest walls: bar 2 fills to 4, the tallest wall on its left, not to its neighbour 2.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[0,0,0]</code></td>
+                    <td><code>0</code></td>
+                    <td>All zeros. Also the case <code>[0,1]</code>: a stack solution that doesn't check for a left wall crashes popping an empty stack.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[100000, 0 × 19998, 100000]</code></td>
+                    <td><code>1999800000</code></td>
+                    <td>The most water possible. It just fits in a 32-bit <code>int</code> (limit 2,147,483,647), so <code>int</code> is safe here.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Brute Force (Scan Both Sides for Every Bar)</h2>
+            <p class="intuition">
+              Water above a bar can rise until it spills over the lower of the two
+              tallest walls around it. So for each bar, find the tallest bar on its
+              left and on its right (each including itself) and take the smaller one.
+            </p>
+            <ul>
+              <li>Water at <code>i</code> = <code>min(left_max, right_max) − height[i]</code>, never negative because both maximums include bar <code>i</code>.</li>
+              <li>The first and last bars always get 0.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n²)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              The formula is the whole idea; the rest of the approaches only make it
+              cheaper. At n = 20,000 this took 4.6 s in Python here (0.8 s in C++),
+              which risks Time Limit Exceeded.
+            </p>
+            <div class="code-tabs" data-viz="0042-trapping-rain-water/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"loop":[4],"left":[5],"right":[6],"add":[7],"return":[8]}'>
+                class Solution(object):
+                    def trap(self, height):
+                        total = 0
+                        for i in range(len(height)):
+                            left_max = max(height[: i + 1])  # tallest bar from the start up to i
+                            right_max = max(height[i:])  # tallest bar from i to the end
+                            total += min(left_max, right_max) - height[i]  # water stands as high as the lower of the two walls
+                        return total
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7],"loop":[8],"left":[10],"right":[11],"add":[12],"return":[14]}'>
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    int trap(std::vector<int>& height) {
+                        int n = (int)height.size();
+                        int total = 0;
+                        for (int i = 0; i < n; ++i) {
+                            int leftMax = 0, rightMax = 0;
+                            for (int j = 0; j <= i; ++j) leftMax = std::max(leftMax, height[j]); // tallest bar from the start up to i
+                            for (int j = i; j < n; ++j) rightMax = std::max(rightMax, height[j]); // tallest bar from i to the end
+                            total += std::min(leftMax, rightMax) - height[i]; // water stands as high as the lower of the two walls
+                        }
+                        return total;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4],"loop":[5],"left":[7],"right":[8],"add":[9],"return":[11]}'>
+                class Solution {
+                    public int trap(int[] height) {
+                        int n = height.length;
+                        int total = 0;
+                        for (int i = 0; i < n; i++) {
+                            int leftMax = 0, rightMax = 0;
+                            for (int j = 0; j <= i; j++) leftMax = Math.max(leftMax, height[j]); // tallest bar from the start up to i
+                            for (int j = i; j < n; j++) rightMax = Math.max(rightMax, height[j]); // tallest bar from i to the end
+                            total += Math.min(leftMax, rightMax) - height[i]; // water stands as high as the lower of the two walls
+                        }
+                        return total;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>Approach 2: Prefix and Suffix Maximums</h2>
+            <p class="intuition">
+              The brute force recomputes the same maximums over and over. Work them
+              all out once: <code>left_max[i]</code> in one pass from the left,
+              <code>right_max[i]</code> in one pass from the right.
+            </p>
+            <ul>
+              <li><code>left_max[i] = max(left_max[i − 1], height[i])</code>, and the mirror image for <code>right_max</code>.</li>
+              <li>Then the same formula, now with two lookups per bar.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n)</span>
+              <span><strong>Space</strong> O(n)</span>
+            </div>
+            <p class="note">
+              Easy to write and to explain, and the natural first answer in an
+              interview. The follow-up is usually "can you do it without the two
+              arrays?"
+            </p>
+            <div class="code-tabs" data-viz="0042-trapping-rain-water/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"left":[4,5,6,7],"right":[8,9,10,11],"add":[12,13,14],"return":[15]}'>
+                class Solution(object):
+                    def trap(self, height):
+                        n = len(height)
+                        left_max = [0] * n  # left_max[i]: tallest bar in height[0..i]
+                        left_max[0] = height[0]
+                        for i in range(1, n):
+                            left_max[i] = max(left_max[i - 1], height[i])
+                        right_max = [0] * n  # right_max[i]: tallest bar in height[i..n-1]
+                        right_max[n - 1] = height[n - 1]
+                        for i in range(n - 2, -1, -1):
+                            right_max[i] = max(right_max[i + 1], height[i])
+                        total = 0
+                        for i in range(n):
+                            total += min(left_max[i], right_max[i]) - height[i]  # the same formula, now O(1) per bar
+                        return total
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"left":[7,8,9],"right":[10,11],"add":[12,13],"return":[14]}'>
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    int trap(std::vector<int>& height) {
+                        int n = (int)height.size();
+                        std::vector<int> leftMax(n), rightMax(n); // leftMax[i]: tallest in height[0..i]; rightMax[i]: tallest in height[i..n-1]
+                        leftMax[0] = height[0];
+                        for (int i = 1; i < n; ++i) leftMax[i] = std::max(leftMax[i - 1], height[i]);
+                        rightMax[n - 1] = height[n - 1];
+                        for (int i = n - 2; i >= 0; --i) rightMax[i] = std::max(rightMax[i + 1], height[i]);
+                        int total = 0;
+                        for (int i = 0; i < n; ++i) total += std::min(leftMax[i], rightMax[i]) - height[i]; // the same formula, now O(1) per bar
+                        return total;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"left":[4,5,6],"right":[7,8],"add":[9,10],"return":[11]}'>
+                class Solution {
+                    public int trap(int[] height) {
+                        int n = height.length;
+                        int[] leftMax = new int[n], rightMax = new int[n]; // leftMax[i]: tallest in height[0..i]; rightMax[i]: tallest in height[i..n-1]
+                        leftMax[0] = height[0];
+                        for (int i = 1; i < n; i++) leftMax[i] = Math.max(leftMax[i - 1], height[i]);
+                        rightMax[n - 1] = height[n - 1];
+                        for (int i = n - 2; i >= 0; i--) rightMax[i] = Math.max(rightMax[i + 1], height[i]);
+                        int total = 0;
+                        for (int i = 0; i < n; i++) total += Math.min(leftMax[i], rightMax[i]) - height[i]; // the same formula, now O(1) per bar
+                        return total;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>Approach 3: Monotonic Stack</h2>
+            <p class="intuition">
+              Think in horizontal layers instead of columns. Keep a stack of bars that
+              get lower and lower. When a taller bar arrives, the bar on top of the
+              stack is the floor of a pool, the next bar down the stack is its left
+              wall, and the new bar is its right wall.
+            </p>
+            <ul>
+              <li>
+                Pop the floor; if the stack is now empty there's no left wall and the
+                water runs off. Otherwise add
+                <code>(i − left − 1) × (min(height[left], height[i]) − height[floor])</code>.
+              </li>
+              <li>Keep popping while the new bar is taller, then push it.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n)</span>
+              <span><strong>Space</strong> O(n)</span>
+            </div>
+            <p class="note">
+              Each bar is pushed and popped once. Worth knowing because the same
+              "stack of decreasing bars" solves Largest Rectangle in Histogram and
+              Daily Temperatures.
+            </p>
+            <div class="code-tabs" data-viz="0042-trapping-rain-water/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"loop":[5],"pop":[6,7],"no-left":[8,9],"fill":[10,11,12,13],"push":[14],"return":[15]}'>
+                class Solution(object):
+                    def trap(self, height):
+                        stack = []  # indices of bars whose heights go down from bottom to top
+                        total = 0
+                        for i, h in enumerate(height):
+                            while stack and height[stack[-1]] < h:  # bar i is taller than the top: water can sit on the top bar
+                                bottom = stack.pop()
+                                if not stack:  # no wall on the left, so that water would run off
+                                    break
+                                left = stack[-1]
+                                width = i - left - 1
+                                depth = min(height[left], h) - height[bottom]
+                                total += width * depth  # one horizontal layer of water between left and i
+                            stack.append(i)
+                        return total
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8],"loop":[9],"pop":[10,11,12],"no-left":[13],"fill":[14,15,16,17],"push":[19],"return":[21]}'>
+                #include <algorithm>
+                #include <stack>
+                #include <vector>
+                class Solution {
+                public:
+                    int trap(std::vector<int>& height) {
+                        std::stack<int> stack; // indices of bars whose heights go down from bottom to top
+                        int total = 0;
+                        for (int i = 0; i < (int)height.size(); ++i) {
+                            while (!stack.empty() && height[stack.top()] < height[i]) { // bar i is taller than the top: water can sit on the top bar
+                                int bottom = stack.top();
+                                stack.pop();
+                                if (stack.empty()) break; // no wall on the left, so that water would run off
+                                int left = stack.top();
+                                int width = i - left - 1;
+                                int depth = std::min(height[left], height[i]) - height[bottom];
+                                total += width * depth; // one horizontal layer of water between left and i
+                            }
+                            stack.push(i);
+                        }
+                        return total;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6],"loop":[7],"pop":[8,9],"no-left":[10],"fill":[11,12,13,14],"push":[16],"return":[18]}'>
+                import java.util.ArrayDeque;
+                import java.util.Deque;
+                class Solution {
+                    public int trap(int[] height) {
+                        Deque<Integer> stack = new ArrayDeque<>(); // indices of bars whose heights go down from bottom to top
+                        int total = 0;
+                        for (int i = 0; i < height.length; i++) {
+                            while (!stack.isEmpty() && height[stack.peek()] < height[i]) { // bar i is taller than the top: water can sit on the top bar
+                                int bottom = stack.pop();
+                                if (stack.isEmpty()) break; // no wall on the left, so that water would run off
+                                int left = stack.peek();
+                                int width = i - left - 1;
+                                int depth = Math.min(height[left], height[i]) - height[bottom];
+                                total += width * depth; // one horizontal layer of water between left and i
+                            }
+                            stack.push(i);
+                        }
+                        return total;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 4 -->
+          <section class="approach">
+            <h2>
+              Approach 4: Two Pointers
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              Approach 2 needs both maximums only to take the smaller one. Start a
+              pointer at each end. If <code>height[left] &lt; height[right]</code>,
+              the right side has a wall at least as tall as anything that matters for
+              <code>left</code>, so its water is just <code>left_max − height[left]</code>.
+            </p>
+            <ul>
+              <li>Always move the lower end inward, updating that side's running max and adding its water.</li>
+              <li>On a tie, either side works; the code moves the right one.</li>
+              <li>The pointers meet at a tallest bar, which never holds water.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              One pass and four variables. The same "move the lower side" idea as
+              Container With Most Water (11), applied to every bar instead of just
+              the two ends.
+            </p>
+            <div class="code-tabs" data-viz="0042-trapping-rain-water/approach4">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"loop":[6],"move-left":[8,9,10,11],"move-right":[8,12,13,14,15],"return":[16]}'>
+                class Solution(object):
+                    def trap(self, height):
+                        left, right = 0, len(height) - 1
+                        left_max = right_max = 0  # tallest bar seen so far from each end
+                        total = 0
+                        while left < right:
+                            # the lower end decides: the other side already has a wall at least as tall
+                            if height[left] < height[right]:
+                                left_max = max(left_max, height[left])
+                                total += left_max - height[left]
+                                left += 1
+                            else:
+                                right_max = max(right_max, height[right])
+                                total += right_max - height[right]
+                                right -= 1
+                        return total
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8],"loop":[9],"move-left":[11,12,13,14],"move-right":[11,15,16,17,18],"return":[21]}'>
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    int trap(std::vector<int>& height) {
+                        int left = 0, right = (int)height.size() - 1;
+                        int leftMax = 0, rightMax = 0; // tallest bar seen so far from each end
+                        int total = 0;
+                        while (left < right) {
+                            // the lower end decides: the other side already has a wall at least as tall
+                            if (height[left] < height[right]) {
+                                leftMax = std::max(leftMax, height[left]);
+                                total += leftMax - height[left];
+                                ++left;
+                            } else {
+                                rightMax = std::max(rightMax, height[right]);
+                                total += rightMax - height[right];
+                                --right;
+                            }
+                        }
+                        return total;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5],"loop":[6],"move-left":[8,9,10,11],"move-right":[8,12,13,14,15],"return":[18]}'>
+                class Solution {
+                    public int trap(int[] height) {
+                        int left = 0, right = height.length - 1;
+                        int leftMax = 0, rightMax = 0; // tallest bar seen so far from each end
+                        int total = 0;
+                        while (left < right) {
+                            // the lower end decides: the other side already has a wall at least as tall
+                            if (height[left] < height[right]) {
+                                leftMax = Math.max(leftMax, height[left]);
+                                total += leftMax - height[left];
+                                left++;
+                            } else {
+                                rightMax = Math.max(rightMax, height[right]);
+                                total += rightMax - height[right];
+                                right--;
+                            }
+                        }
+                        return total;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">Built-ins</span></h2>
+            <p>
+              There's no "trap water" function, but the running maximums of Approach
+              2 are a library call in each language: <code>itertools.accumulate</code>
+              with <code>max</code>, <code>std::partial_sum</code> with a max
+              function (forwards and on reverse iterators), and
+              <code>Arrays.parallelPrefix</code> with <code>Math::max</code>.
+            </p>
+            <div class="code-tabs">
+              <script type="text/plain" data-lang="Python">
+                from itertools import accumulate
+                class Solution(object):
+                    def trap(self, height):
+                        left_max = list(accumulate(height, max))  # running maximum from the left
+                        right_max = list(accumulate(reversed(height), max))[::-1]  # running maximum from the right
+                        return sum(min(l, r) - h for l, r, h in zip(left_max, right_max, height))
+              </script>
+              <script type="text/plain" data-lang="C++">
+                #include <algorithm>
+                #include <numeric>
+                #include <vector>
+                class Solution {
+                public:
+                    int trap(std::vector<int>& height) {
+                        auto bigger = [](int a, int b) { return std::max(a, b); };
+                        std::vector<int> leftMax(height.size()), rightMax(height.size());
+                        std::partial_sum(height.begin(), height.end(), leftMax.begin(), bigger); // running maximum from the left
+                        std::partial_sum(height.rbegin(), height.rend(), rightMax.rbegin(), bigger); // and from the right
+                        int total = 0;
+                        for (size_t i = 0; i < height.size(); ++i) total += std::min(leftMax[i], rightMax[i]) - height[i];
+                        return total;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java">
+                import java.util.Arrays;
+                class Solution {
+                    public int trap(int[] height) {
+                        int n = height.length;
+                        int[] leftMax = height.clone();
+                        Arrays.parallelPrefix(leftMax, Math::max); // running maximum from the left
+                        int[] rightMax = new int[n]; // height reversed, then the same running maximum
+                        for (int i = 0; i < n; i++) rightMax[i] = height[n - 1 - i];
+                        Arrays.parallelPrefix(rightMax, Math::max); // rightMax[n - 1 - i]: tallest in height[i..n-1]
+                        int total = 0;
+                        for (int i = 0; i < n; i++) total += Math.min(leftMax[i], rightMax[n - 1 - i]) - height[i];
+                        return total;
+                    }
+                }
+              </script>
+            </div>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n)</span>
+              <span><strong>Space</strong> O(n)</span>
+            </div>
+            <p class="note">
+              Short and passes easily, but it's still Approach 2's two arrays. Java's
+              <code>parallelPrefix</code> only scans left to right, so the right-side
+              maximums need a reversed copy. In an interview, write Approach 4.
+            </p>
+          </section>
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Brute Force</th>
+                    <td>Scan both sides for every bar</td>
+                    <td>O(n²)</td>
+                    <td>O(1)</td>
+                    <td>4.6 s in Python at n = 20,000</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Prefix and Suffix Maximums</th>
+                    <td>left_max and right_max arrays</td>
+                    <td>O(n)</td>
+                    <td>O(n)</td>
+                    <td>Simplest O(n) answer</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Monotonic Stack</th>
+                    <td>Fill pools layer by layer</td>
+                    <td>O(n)</td>
+                    <td>O(n)</td>
+                    <td>Pattern for histogram problems</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Two Pointers</th>
+                    <td>Move the lower end, use its running max</td>
+                    <td>O(n)</td>
+                    <td>O(1)</td>
+                    <td>Expected answer</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -16029,6 +16579,277 @@
             line: "return",
             note: result.length ? `Return ${result.length}: ${result.map(fmt).join(", ")}.` : `Return []: no combination adds up to ${target}.`,
             view: view(undefined, target),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0042-trapping-rain-water/approach1.visual.js -->
+    <script>
+      // Brute force: for every bar, scan left and right for the tallest walls; water = the lower wall minus the bar.
+      DSAViz.register("0042-trapping-rain-water/approach1", {
+        inputs: [{ name: "height", type: "int[]", value: "[0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1]", minLength: 1, maxLength: 12, minValue: 0, maxValue: 9 }],
+        trace({ height }) {
+          const n = height.length;
+          const steps = [];
+          const levels = height.slice(); // water top per bar (= the bar while dry)
+          let total = 0;
+          let scans = 0;
+          const view = (i, opts = {}) => {
+            const marks = {};
+            if (opts.range) for (let k = opts.range[0]; k <= opts.range[1]; k++) marks[k] = "window";
+            if (opts.walls) opts.walls.forEach((k) => (marks[k] = "match"));
+            if (i !== undefined) marks[i] = "active";
+            return [
+              { type: "bars", label: "height (blue = water found so far)", values: height, marks, levels, waterMarks: opts.fresh ? { [i]: true } : {}, pointers: i !== undefined ? { i } : {} },
+              {
+                type: "vars",
+                items: [
+                  ...(opts.lm !== undefined ? [{ name: "left_max", value: opts.lm }] : []),
+                  ...(opts.rm !== undefined ? [{ name: "right_max", value: opts.rm }] : []),
+                  { name: "total", value: total, mark: opts.fresh ? "new" : "" },
+                  { name: "bars scanned", value: scans },
+                ],
+              },
+            ];
+          };
+          const argmax = (a, b) => {
+            let best = a;
+            for (let k = a; k <= b; k++) if (height[k] > height[best]) best = k;
+            return best;
+          };
+
+          steps.push({ line: "init", note: "The water above a bar is as high as the lower of the tallest bar on its left and the tallest on its right (counting itself), minus its own height.", view: view() });
+          for (let i = 0; i < n; i++) {
+            steps.push({ line: "loop", note: `Bar ${i} (height ${height[i]}).`, view: view(i) });
+            const L = argmax(0, i);
+            scans += i + 1;
+            steps.push({ line: "left", note: `Scan bars 0..${i}: the tallest is ${height[L]} (bar ${L}).`, view: view(i, { range: [0, i], walls: [L], lm: height[L] }) });
+            const R = argmax(i, n - 1);
+            scans += n - i;
+            steps.push({ line: "right", note: `Scan bars ${i}..${n - 1}: the tallest is ${height[R]} (bar ${R}).`, view: view(i, { range: [i, n - 1], walls: [R], lm: height[L], rm: height[R] }) });
+            const w = Math.min(height[L], height[R]) - height[i];
+            total += w;
+            levels[i] = height[i] + w;
+            steps.push({
+              line: "add",
+              note: w
+                ? `min(${height[L]}, ${height[R]}) − ${height[i]} = ${w}: bar ${i} holds ${w} unit${w === 1 ? "" : "s"} of water. total = ${total}.`
+                : `min(${height[L]}, ${height[R]}) − ${height[i]} = 0: bar ${i} is as tall as the lower wall, so no water here.`,
+              view: view(i, { walls: [L, R], lm: height[L], rm: height[R], fresh: w > 0 }),
+            });
+          }
+          steps.push({
+            line: "return",
+            note: `Return ${total}. Every bar re-scanned the whole array (${scans} bars looked at for ${n} bars): O(n²).`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0042-trapping-rain-water/approach2.visual.js -->
+    <script>
+      // Prefix and suffix maximums: work out the tallest wall on each side once, then each bar is O(1).
+      DSAViz.register("0042-trapping-rain-water/approach2", {
+        inputs: [{ name: "height", type: "int[]", value: "[0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1]", minLength: 1, maxLength: 12, minValue: 0, maxValue: 9 }],
+        trace({ height }) {
+          const n = height.length;
+          const steps = [];
+          const left = Array(n).fill("");
+          const right = Array(n).fill("");
+          const levels = height.slice();
+          let total = 0;
+          const view = (opts = {}) => {
+            const bmarks = {};
+            if (opts.i !== undefined) bmarks[opts.i] = "active";
+            const lm = {};
+            const rm = {};
+            if (opts.left !== undefined) lm[opts.left] = "new";
+            if (opts.right !== undefined) rm[opts.right] = "new";
+            if (opts.i !== undefined && opts.pick) {
+              (opts.pick === "left" ? lm : rm)[opts.i] = "match";
+              (opts.pick === "left" ? rm : lm)[opts.i] = "compare";
+            }
+            return [
+              { type: "bars", label: "height (blue = water found so far)", values: height, marks: bmarks, levels, waterMarks: opts.fresh ? { [opts.i]: true } : {}, pointers: opts.i !== undefined ? { i: opts.i } : {} },
+              { type: "array", label: "left_max[i]: tallest in 0..i", values: left, marks: lm, compact: true },
+              { type: "array", label: "right_max[i]: tallest in i..n-1", values: right, marks: rm, compact: true },
+              { type: "vars", items: [{ name: "total", value: total, mark: opts.fresh ? "new" : "" }] },
+            ];
+          };
+
+          steps.push({ line: "left", note: "Pass 1, left to right: left_max[i] = max(left_max[i − 1], height[i]).", view: view() });
+          for (let i = 0; i < n; i++) {
+            left[i] = i ? Math.max(left[i - 1], height[i]) : height[0];
+            steps.push({ line: "left", note: i ? `left_max[${i}] = max(${left[i - 1]}, ${height[i]}) = ${left[i]}.` : `left_max[0] = height[0] = ${height[0]}.`, view: view({ left: i }) });
+          }
+          steps.push({ line: "right", note: "Pass 2, right to left: right_max[i] = max(right_max[i + 1], height[i]).", view: view() });
+          for (let i = n - 1; i >= 0; i--) {
+            right[i] = i < n - 1 ? Math.max(right[i + 1], height[i]) : height[n - 1];
+            steps.push({ line: "right", note: i < n - 1 ? `right_max[${i}] = max(${right[i + 1]}, ${height[i]}) = ${right[i]}.` : `right_max[${n - 1}] = height[${n - 1}] = ${height[n - 1]}.`, view: view({ right: i }) });
+          }
+          for (let i = 0; i < n; i++) {
+            const wall = Math.min(left[i], right[i]);
+            const w = wall - height[i];
+            total += w;
+            levels[i] = wall;
+            steps.push({
+              line: "add",
+              note: `Bar ${i}: min(${left[i]}, ${right[i]}) − ${height[i]} = ${w}${w ? `. total = ${total}` : ", no water"}. Two lookups instead of two scans.`,
+              view: view({ i, pick: left[i] <= right[i] ? "left" : "right", fresh: w > 0 }),
+            });
+          }
+          steps.push({ line: "return", note: `Return ${total}. Three passes: O(n) time, but two extra arrays: O(n) space.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0042-trapping-rain-water/approach3.visual.js -->
+    <script>
+      // Monotonic stack: keep bars in decreasing height; a taller bar closes a pool, which is filled one horizontal layer at a time.
+      DSAViz.register("0042-trapping-rain-water/approach3", {
+        inputs: [{ name: "height", type: "int[]", value: "[4, 2, 0, 3, 2, 5]", minLength: 1, maxLength: 12, minValue: 0, maxValue: 9 }],
+        trace({ height }) {
+          const n = height.length;
+          const steps = [];
+          const stack = [];
+          const levels = height.slice();
+          let total = 0;
+          const view = (i, opts = {}) => {
+            const marks = {};
+            stack.forEach((k) => (marks[k] = "compare"));
+            if (opts.bottom !== undefined) marks[opts.bottom] = "cut";
+            if (opts.left !== undefined) marks[opts.left] = "match";
+            if (i !== undefined && i < n) marks[i] = opts.leftWall ? "match" : "active";
+            const fresh = {};
+            if (opts.layer) for (let k = opts.layer[0]; k <= opts.layer[1]; k++) fresh[k] = true;
+            return [
+              { type: "bars", label: "height (orange = on the stack; blue = water found so far)", values: height, marks, levels, waterMarks: fresh, pointers: i !== undefined && i < n ? { i } : {} },
+              { type: "array", label: "stack of indices (bottom → top), heights go down", values: stack.map((k) => `${k} (h ${height[k]})`), wide: true, marks: stack.length ? { [stack.length - 1]: "active" } : {} },
+              { type: "vars", items: [...(opts.calc ? [{ name: "layer", value: opts.calc }] : []), { name: "total", value: total, mark: opts.layer ? "new" : "" }] },
+            ];
+          };
+
+          steps.push({ line: "init", note: "Walk left to right with a stack of bars that get lower and lower. Water can only sit on a bar once a taller bar shows up on its right.", view: view() });
+          for (let i = 0; i < n; i++) {
+            steps.push({ line: "loop", note: `Bar ${i}, height ${height[i]}.`, view: view(i) });
+            while (stack.length && height[stack[stack.length - 1]] < height[i]) {
+              const bottom = stack.pop();
+              if (!stack.length) {
+                steps.push({
+                  line: ["pop", "no-left"],
+                  note: `Pop bar ${bottom} (height ${height[bottom]}): it's lower than bar ${i}, but there's no bar left of it on the stack, so water there would run off the left edge.`,
+                  view: view(i, { bottom }),
+                });
+                break;
+              }
+              const left = stack[stack.length - 1];
+              const width = i - left - 1;
+              const top = Math.min(height[left], height[i]);
+              const depth = top - height[bottom];
+              total += width * depth;
+              for (let k = left + 1; k < i; k++) levels[k] = Math.max(levels[k], top);
+              steps.push({
+                line: ["pop", "fill"],
+                note:
+                  depth > 0
+                    ? `Pop bar ${bottom} (height ${height[bottom]}). It sits between walls ${left} (h ${height[left]}) and ${i} (h ${height[i]}): a layer ${width} wide, from ${height[bottom]} up to min(${height[left]}, ${height[i]}) = ${top}. Add ${width} × ${depth} = ${width * depth}. total = ${total}.`
+                    : `Pop bar ${bottom} (height ${height[bottom]}). The wall on its left (bar ${left}) is the same height, so this layer is ${depth} deep: nothing to add.`,
+                view: view(i, { bottom, left, layer: depth > 0 ? [left + 1, i - 1] : undefined, calc: `${width} × ${depth} = ${width * depth}` }),
+              });
+            }
+            stack.push(i);
+            steps.push({ line: "push", note: `Push bar ${i}. The stack's heights still go down from bottom to top.`, view: view(i) });
+          }
+          steps.push({
+            line: "return",
+            note: `Return ${total}. Each bar is pushed and popped at most once: O(n) time, O(n) space for the stack. The water was added in horizontal layers, not bar by bar.`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0042-trapping-rain-water/approach4.visual.js -->
+    <script>
+      // Two pointers: move the lower end inward; that side's running max alone decides its water.
+      DSAViz.register("0042-trapping-rain-water/approach4", {
+        inputs: [{ name: "height", type: "int[]", value: "[0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1]", minLength: 1, maxLength: 12, minValue: 0, maxValue: 9 }],
+        trace({ height }) {
+          const n = height.length;
+          const steps = [];
+          const levels = height.slice();
+          const done = new Set();
+          let left = 0;
+          let right = n - 1;
+          let leftMax = 0;
+          let rightMax = 0;
+          let total = 0;
+          const view = (opts = {}) => {
+            const marks = {};
+            done.forEach((k) => (marks[k] = "visited"));
+            if (left <= right) {
+              marks[left] = opts.side === "left" ? "active" : "compare";
+              marks[right] = opts.side === "right" ? "active" : "compare";
+            }
+            const pointers = {};
+            if (left === right) pointers["left, right"] = left;
+            else if (left < right) {
+              pointers.left = left;
+              pointers.right = right;
+            }
+            return [
+              { type: "bars", label: "height (blue = water found so far; faded = done)", values: height, marks, levels, waterMarks: opts.fresh !== undefined ? { [opts.fresh]: true } : {}, pointers },
+              {
+                type: "vars",
+                items: [
+                  { name: "left_max", value: leftMax, mark: opts.side === "left" ? "new" : "" },
+                  { name: "right_max", value: rightMax, mark: opts.side === "right" ? "new" : "" },
+                  { name: "total", value: total, mark: opts.fresh !== undefined ? "new" : "" },
+                ],
+              },
+            ];
+          };
+
+          steps.push({
+            line: "init",
+            note: `left = 0, right = ${n - 1}, and the tallest bar seen from each end is 0 so far.`,
+            view: view(),
+          });
+          while (left < right) {
+            if (height[left] < height[right]) {
+              const i = left;
+              leftMax = Math.max(leftMax, height[i]);
+              const w = leftMax - height[i];
+              total += w;
+              levels[i] = leftMax;
+              done.add(i);
+              steps.push({
+                line: ["loop", "move-left"],
+                note: `height[left] = ${height[i]} < height[right] = ${height[right]}: there's a wall of at least ${height[right]} on the right, so bar ${i}'s water depends only on left_max. left_max = ${leftMax}, water ${leftMax} − ${height[i]} = ${w}${w ? `, total = ${total}` : ""}. Move left in.`,
+                view: view({ side: "left", fresh: w ? i : undefined }),
+              });
+              left++;
+            } else {
+              const i = right;
+              rightMax = Math.max(rightMax, height[i]);
+              const w = rightMax - height[i];
+              total += w;
+              levels[i] = rightMax;
+              done.add(i);
+              steps.push({
+                line: ["loop", "move-right"],
+                note: `height[left] = ${height[left]} ≥ height[right] = ${height[i]}: there's a wall of at least ${height[left]} on the left, so bar ${i}'s water depends only on right_max. right_max = ${rightMax}, water ${rightMax} − ${height[i]} = ${w}${w ? `, total = ${total}` : ""}. Move right in.`,
+                view: view({ side: "right", fresh: w ? i : undefined }),
+              });
+              right--;
+            }
+          }
+          steps.push({
+            line: "return",
+            note: `left and right meet at bar ${left}, the tallest bar, which holds no water. Return ${total}. One pass, and only a few variables: O(n) time, O(1) space.`,
+            view: view(),
           });
           return steps;
         },

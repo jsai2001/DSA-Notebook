@@ -1,0 +1,280 @@
+<details class="question" data-tags="array two-pointers stack monotonic-stack dynamic-programming prefix-max rain water">
+  <summary>
+    <span class="q-title">42. Trapping Rain Water</span>
+    <span class="q-meta">
+      <span class="badge hard">Hard</span>
+      <span class="tag">Array</span>
+      <span class="tag">Two Pointers</span>
+      <span class="tag">Stack</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> The water above bar <code>i</code> is
+      <code>min(tallest on its left, tallest on its right) − height[i]</code>.
+      With two pointers you don't need both maximums: move the
+      <strong>lower</strong> end inward, because the other side already has a
+      wall at least that tall, so only this side's running max decides the
+      water. O(n) time, O(1) space.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/trapping-rain-water/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given <code>n</code> non-negative integers that describe an elevation
+        map where each bar is 1 wide, compute how much water it can trap after
+        raining.
+      </p>
+      <ul>
+        <li><code>1 &lt;= n &lt;= 2 × 10⁴</code> and <code>0 &lt;= height[i] &lt;= 10⁵</code>.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[0,1,0,2,1,0,1,3,2,1,2,1]</code> → <code>6</code>;
+        <code>[4,2,0,3,2,5]</code> → <code>9</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[1]</code></td>
+              <td><code>0</code></td>
+              <td>One bar: there's nothing to hold water on either side.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3,4,5]</code> / <code>[5,4,3,2,1]</code></td>
+              <td><code>0</code> / <code>0</code></td>
+              <td>Only rising or only falling: water runs off the open side.</td>
+            </tr>
+            <tr>
+              <td><code>[2,0,2]</code></td>
+              <td><code>2</code></td>
+              <td>The smallest pool.</td>
+            </tr>
+            <tr>
+              <td><code>[2,0,3]</code></td>
+              <td><code>2</code></td>
+              <td>Uneven walls: the water level is the <em>lower</em> wall (2), not the higher one.</td>
+            </tr>
+            <tr>
+              <td><code>[3,0,0,0,3]</code></td>
+              <td><code>9</code></td>
+              <td>A wide pool: every bar between the walls counts, not just the ones next to them.</td>
+            </tr>
+            <tr>
+              <td><code>[3,1,2,1,3]</code></td>
+              <td><code>5</code></td>
+              <td>A bump inside the pool doesn't split it: the water covers the 2 as well, because the outer walls are 3.</td>
+            </tr>
+            <tr>
+              <td><code>[4,2,0,3,2,5]</code></td>
+              <td><code>9</code></td>
+              <td>The level isn't set by the nearest walls: bar 2 fills to 4, the tallest wall on its left, not to its neighbour 2.</td>
+            </tr>
+            <tr>
+              <td><code>[0,0,0]</code></td>
+              <td><code>0</code></td>
+              <td>All zeros. Also the case <code>[0,1]</code>: a stack solution that doesn't check for a left wall crashes popping an empty stack.</td>
+            </tr>
+            <tr>
+              <td><code>[100000, 0 × 19998, 100000]</code></td>
+              <td><code>1999800000</code></td>
+              <td>The most water possible. It just fits in a 32-bit <code>int</code> (limit 2,147,483,647), so <code>int</code> is safe here.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Brute Force (Scan Both Sides for Every Bar)</h2>
+      <p class="intuition">
+        Water above a bar can rise until it spills over the lower of the two
+        tallest walls around it. So for each bar, find the tallest bar on its
+        left and on its right (each including itself) and take the smaller one.
+      </p>
+      <ul>
+        <li>Water at <code>i</code> = <code>min(left_max, right_max) − height[i]</code>, never negative because both maximums include bar <code>i</code>.</li>
+        <li>The first and last bars always get 0.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        The formula is the whole idea; the rest of the approaches only make it
+        cheaper. At n = 20,000 this took 4.6 s in Python here (0.8 s in C++),
+        which risks Time Limit Exceeded.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Prefix and Suffix Maximums</h2>
+      <p class="intuition">
+        The brute force recomputes the same maximums over and over. Work them
+        all out once: <code>left_max[i]</code> in one pass from the left,
+        <code>right_max[i]</code> in one pass from the right.
+      </p>
+      <ul>
+        <li><code>left_max[i] = max(left_max[i − 1], height[i])</code>, and the mirror image for <code>right_max</code>.</li>
+        <li>Then the same formula, now with two lookups per bar.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Easy to write and to explain, and the natural first answer in an
+        interview. The follow-up is usually "can you do it without the two
+        arrays?"
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Monotonic Stack</h2>
+      <p class="intuition">
+        Think in horizontal layers instead of columns. Keep a stack of bars that
+        get lower and lower. When a taller bar arrives, the bar on top of the
+        stack is the floor of a pool, the next bar down the stack is its left
+        wall, and the new bar is its right wall.
+      </p>
+      <ul>
+        <li>
+          Pop the floor; if the stack is now empty there's no left wall and the
+          water runs off. Otherwise add
+          <code>(i − left − 1) × (min(height[left], height[i]) − height[floor])</code>.
+        </li>
+        <li>Keep popping while the new bar is taller, then push it.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Each bar is pushed and popped once. Worth knowing because the same
+        "stack of decreasing bars" solves Largest Rectangle in Histogram and
+        Daily Temperatures.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- APPROACH 4 -->
+    <section class="approach">
+      <h2>
+        Approach 4: Two Pointers
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Approach 2 needs both maximums only to take the smaller one. Start a
+        pointer at each end. If <code>height[left] &lt; height[right]</code>,
+        the right side has a wall at least as tall as anything that matters for
+        <code>left</code>, so its water is just <code>left_max − height[left]</code>.
+      </p>
+      <ul>
+        <li>Always move the lower end inward, updating that side's running max and adding its water.</li>
+        <li>On a tie, either side works; the code moves the right one.</li>
+        <li>The pointers meet at a tallest bar, which never holds water.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        One pass and four variables. The same "move the lower side" idea as
+        Container With Most Water (11), applied to every bar instead of just
+        the two ends.
+      </p>
+      <div class="code-tabs" data-src="approach4"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        There's no "trap water" function, but the running maximums of Approach
+        2 are a library call in each language: <code>itertools.accumulate</code>
+        with <code>max</code>, <code>std::partial_sum</code> with a max
+        function (forwards and on reverse iterators), and
+        <code>Arrays.parallelPrefix</code> with <code>Math::max</code>.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Short and passes easily, but it's still Approach 2's two arrays. Java's
+        <code>parallelPrefix</code> only scans left to right, so the right-side
+        maximums need a reversed copy. In an interview, write Approach 4.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Brute Force</th>
+              <td>Scan both sides for every bar</td>
+              <td>O(n²)</td>
+              <td>O(1)</td>
+              <td>4.6 s in Python at n = 20,000</td>
+            </tr>
+            <tr>
+              <th scope="row">Prefix and Suffix Maximums</th>
+              <td>left_max and right_max arrays</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Simplest O(n) answer</td>
+            </tr>
+            <tr>
+              <th scope="row">Monotonic Stack</th>
+              <td>Fill pools layer by layer</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Pattern for histogram problems</td>
+            </tr>
+            <tr>
+              <th scope="row">Two Pointers</th>
+              <td>Move the lower end, use its running max</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

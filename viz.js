@@ -25,7 +25,8 @@
 //     (level-order like LeetCode; node id = index in values; DSAViz.buildTree(values)
 //      gives { root, nodes: { id: { val, left, right, depth } } } for traces)
 //   { type: "bars",  label, values: [1, 8, 6], pointers: { l: 0 }, marks: { 0: "active" }, water: [0, 2] }
-//     (bar chart; water shades between bars l and r up to the shorter one)
+//     (bar chart; water shades between bars l and r up to the shorter one; or
+//      levels: [..] gives the water's top above each bar, waterMarks: { i: true } highlights it)
 //   { type: "set",   label, items: ["a", "b"], marks: { a: "new" } }
 //   { type: "vars",  items: [{ name, value, mark }] }
 //
@@ -430,6 +431,18 @@
             class: "viz-water", x: x(l) + BW / 2, y: y(level), width: x(r) - x(l), height: base - y(level),
           }));
         }
+      }
+      // Water standing on each bar: levels[i] is the water's top (no water when <= the bar).
+      // Each column fills its whole slot, so neighbouring columns join into one pool.
+      if (w.levels) {
+        vals.forEach((v, i) => {
+          const level = w.levels[i];
+          if (level === undefined || level === null || level <= v) return;
+          const fresh = w.waterMarks && w.waterMarks[i];
+          svg.append(make("rect", {
+            class: "viz-water" + (fresh ? " is-new" : ""), x: x(i) - GAP / 2, y: y(level), width: BW + GAP, height: y(v) - y(level),
+          }));
+        });
       }
       vals.forEach((v, i) => {
         const g = make("g", { class: "viz-bar" + markClass(w.marks && w.marks[i]) });
