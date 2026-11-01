@@ -7760,6 +7760,511 @@
         </div>
       </details>
 
+      <!-- ===== problems/0033-search-in-rotated-sorted-array ===== -->
+      <details class="question" data-tags="array binary-search rotated-array pivot">
+        <summary>
+          <span class="q-title">33. Search in Rotated Sorted Array</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">Array</span>
+            <span class="tag">Binary Search</span>
+          </span>
+        </summary>
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> Cut the range at <code>mid</code> and
+            <strong>one half is always sorted</strong>. If
+            <code>nums[lo] &lt;= nums[mid]</code> the left half is sorted, otherwise
+            the right half is. A sorted half holds exactly the values between its
+            two ends, so one comparison tells you whether the target can be in it:
+            keep that half, or else the other. O(log n).
+          </div>
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/search-in-rotated-sorted-array/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              An array sorted in ascending order with <strong>distinct</strong> values
+              may have been rotated at an unknown index (for example,
+              <code>[0,1,2,4,5,6,7]</code> becomes <code>[4,5,6,7,0,1,2]</code>).
+              Given the array <code>nums</code> and a <code>target</code>, return the
+              index of <code>target</code>, or <code>-1</code> if it's not there.
+            </p>
+            <ul>
+              <li><code>1 &lt;= nums.length &lt;= 5000</code> and <code>-10⁴ &lt;= nums[i], target &lt;= 10⁴</code>.</li>
+              <li>All values are different, and <code>nums</code> is a sorted array that may be rotated.</li>
+              <li>Your algorithm must run in <strong>O(log n)</strong> time.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>[4,5,6,7,0,1,2]</code>, target <code>0</code> →
+              <code>4</code>; target <code>3</code> → <code>-1</code>;
+              <code>[1]</code>, target <code>0</code> → <code>-1</code>.
+            </p>
+          </section>
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[1]</code>, target <code>1</code> / <code>0</code></td>
+                    <td><code>0</code> / <code>-1</code></td>
+                    <td>One element: <code>lo</code>, <code>mid</code> and <code>hi</code> are all the same index.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[3,1]</code>, target <code>1</code></td>
+                    <td><code>1</code></td>
+                    <td>The classic trap: <code>lo == mid</code>. Testing "is the left half sorted?" with <code>&lt;</code> instead of <code>&lt;=</code> returns <code>-1</code> here.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,3]</code>, target <code>3</code></td>
+                    <td><code>1</code></td>
+                    <td>Two elements, not rotated: the target is in the last cell.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[4,5,6,7,0,1,2]</code>, target <code>0</code></td>
+                    <td><code>4</code></td>
+                    <td>The target is the smallest value, right where the rotation starts.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[4,5,6,7,0,1,2]</code>, target <code>3</code></td>
+                    <td><code>-1</code></td>
+                    <td>Missing, but between the smallest and largest values: the search must still end cleanly.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,2,3,4,5]</code>, target <code>4</code></td>
+                    <td><code>3</code></td>
+                    <td>Not rotated at all: "may be rotated" includes zero. The code shouldn't assume a drop exists.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[5,1,2,3,4]</code>, target <code>5</code></td>
+                    <td><code>0</code></td>
+                    <td>The left part is a single value and holds the largest one.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2,3,4,5,1]</code>, target <code>1</code></td>
+                    <td><code>4</code></td>
+                    <td>The rotation point is the very last index.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[4,5,1,2,3]</code>, target <code>6</code> / <code>0</code></td>
+                    <td><code>-1</code> / <code>-1</code></td>
+                    <td>Larger than everything / smaller than everything.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Linear Scan</h2>
+            <p class="intuition">
+              Look at every value until you find the target.
+            </p>
+            <ul>
+              <li>Always correct, rotated or not.</li>
+              <li>It ignores that the array is sorted in two pieces.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              LeetCode would accept it (n ≤ 5000), but the problem asks for
+              O(log n), so in an interview it doesn't count as a solution.
+            </p>
+            <div class="code-tabs" data-viz="0033-search-in-rotated-sorted-array/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"loop":[3],"check":[4],"found":[5],"missing":[6]}'>
+                class Solution(object):
+                    def search(self, nums, target):
+                        for i, x in enumerate(nums):  # look at every value, left to right
+                            if x == target:
+                                return i
+                        return -1  # not in the array
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"loop":[5],"check":[6],"found":[6],"missing":[8]}'>
+                #include <vector>
+                class Solution {
+                public:
+                    int search(std::vector<int>& nums, int target) {
+                        for (int i = 0; i < (int)nums.size(); ++i) { // look at every value, left to right
+                            if (nums[i] == target) return i;
+                        }
+                        return -1; // not in the array
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"loop":[3],"check":[4],"found":[4],"missing":[6]}'>
+                class Solution {
+                    public int search(int[] nums, int target) {
+                        for (int i = 0; i < nums.length; i++) { // look at every value, left to right
+                            if (nums[i] == target) return i;
+                        }
+                        return -1; // not in the array
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>Approach 2: Find the Rotation Point, Then Binary Search</h2>
+            <p class="intuition">
+              A rotated array is two sorted runs. Find where the second run starts
+              (the smallest value), decide which run could hold the target, and do
+              an ordinary binary search there.
+            </p>
+            <ul>
+              <li>
+                Finding the smallest: if <code>nums[mid] &gt; nums[hi]</code>, the
+                values drop after <code>mid</code>, so <code>lo = mid + 1</code>;
+                otherwise <code>mid..hi</code> is sorted and <code>hi = mid</code>.
+                (This is Find Minimum in Rotated Sorted Array, LeetCode 153.)
+              </li>
+              <li>
+                If <code>nums[pivot] &lt;= target &lt;= nums[n - 1]</code>, search
+                <code>[pivot, n - 1]</code>; otherwise search <code>[0, pivot - 1]</code>.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(log n)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              Two simple binary searches, each easy to get right on its own. It
+              also leaves you with the rotation point, which some follow-ups ask for.
+            </p>
+            <div class="code-tabs" data-viz="0033-search-in-rotated-sorted-array/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"pivot":[4,5,6],"pivot-right":[7,8],"pivot-left":[7,9,10],"side":[11],"side-right":[12,13],"side-left":[12,14,15],"search":[16,17],"found":[18,19],"higher":[18,20,21],"lower":[18,20,22,23],"missing":[24]}'>
+                class Solution(object):
+                    def search(self, nums, target):
+                        n = len(nums)
+                        lo, hi = 0, n - 1  # step 1: find the smallest value, where the rotation starts
+                        while lo < hi:
+                            mid = (lo + hi) // 2
+                            if nums[mid] > nums[hi]:  # the drop is to the right of mid
+                                lo = mid + 1
+                            else:  # mid could be the smallest, or the drop is to its left
+                                hi = mid
+                        pivot = lo  # nums[pivot:] and nums[:pivot] are both sorted
+                        if nums[pivot] <= target <= nums[n - 1]:  # step 2: which sorted part could hold target?
+                            lo, hi = pivot, n - 1
+                        else:
+                            lo, hi = 0, pivot - 1
+                        while lo <= hi:  # step 3: an ordinary binary search on that part
+                            mid = (lo + hi) // 2
+                            if nums[mid] == target:
+                                return mid
+                            if nums[mid] < target:
+                                lo = mid + 1
+                            else:
+                                hi = mid - 1
+                        return -1
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"pivot":[6,7,8],"pivot-right":[9],"pivot-left":[10],"side":[12],"side-right":[13,14,15],"side-left":[13,16,17,18],"search":[20,21],"found":[22],"higher":[23],"lower":[24],"missing":[26]}'>
+                #include <vector>
+                class Solution {
+                public:
+                    int search(std::vector<int>& nums, int target) {
+                        int n = (int)nums.size();
+                        int lo = 0, hi = n - 1; // step 1: find the smallest value, where the rotation starts
+                        while (lo < hi) {
+                            int mid = lo + (hi - lo) / 2;
+                            if (nums[mid] > nums[hi]) lo = mid + 1; // the drop is to the right of mid
+                            else hi = mid; // mid could be the smallest, or the drop is to its left
+                        }
+                        int pivot = lo; // nums[pivot..] and nums[..pivot-1] are both sorted
+                        if (nums[pivot] <= target && target <= nums[n - 1]) { // step 2: which sorted part could hold target?
+                            lo = pivot;
+                            hi = n - 1;
+                        } else {
+                            lo = 0;
+                            hi = pivot - 1;
+                        }
+                        while (lo <= hi) { // step 3: an ordinary binary search on that part
+                            int mid = lo + (hi - lo) / 2;
+                            if (nums[mid] == target) return mid;
+                            if (nums[mid] < target) lo = mid + 1;
+                            else hi = mid - 1;
+                        }
+                        return -1;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"pivot":[4,5,6],"pivot-right":[7],"pivot-left":[8],"side":[10],"side-right":[11,12,13],"side-left":[11,14,15,16],"search":[18,19],"found":[20],"higher":[21],"lower":[22],"missing":[24]}'>
+                class Solution {
+                    public int search(int[] nums, int target) {
+                        int n = nums.length;
+                        int lo = 0, hi = n - 1; // step 1: find the smallest value, where the rotation starts
+                        while (lo < hi) {
+                            int mid = lo + (hi - lo) / 2;
+                            if (nums[mid] > nums[hi]) lo = mid + 1; // the drop is to the right of mid
+                            else hi = mid; // mid could be the smallest, or the drop is to its left
+                        }
+                        int pivot = lo; // nums[pivot..] and nums[..pivot-1] are both sorted
+                        if (nums[pivot] <= target && target <= nums[n - 1]) { // step 2: which sorted part could hold target?
+                            lo = pivot;
+                            hi = n - 1;
+                        } else {
+                            lo = 0;
+                            hi = pivot - 1;
+                        }
+                        while (lo <= hi) { // step 3: an ordinary binary search on that part
+                            int mid = lo + (hi - lo) / 2;
+                            if (nums[mid] == target) return mid;
+                            if (nums[mid] < target) lo = mid + 1;
+                            else hi = mid - 1;
+                        }
+                        return -1;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>
+              Approach 3: One Binary Search, Pick the Sorted Half
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              No need to find the rotation point first. Whatever <code>mid</code>
+              is, the drop is in at most one of the two halves, so the other half is
+              sorted, and a sorted half tells you its range from its two ends.
+            </p>
+            <ul>
+              <li>
+                <code>nums[lo] &lt;= nums[mid]</code>: the left half is sorted. If
+                <code>nums[lo] &lt;= target &lt; nums[mid]</code>, go left; else go
+                right.
+              </li>
+              <li>
+                Otherwise the right half is sorted. If
+                <code>nums[mid] &lt; target &lt;= nums[hi]</code>, go right; else go
+                left.
+              </li>
+              <li>
+                The <code>&lt;=</code> in <code>nums[lo] &lt;= nums[mid]</code>
+                matters: when <code>lo == mid</code> the "left half" is one cell,
+                which is sorted. With <code>&lt;</code>, it failed 76 of the test
+                cases here, starting with <code>[3,1]</code>, target 1.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(log n)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              One loop and the expected answer. At n = 5,000 it took at most 13
+              rounds. It relies on the values being distinct; with duplicates
+              (Search in Rotated Sorted Array II, LeetCode 81) you can't always tell
+              which half is sorted.
+            </p>
+            <div class="code-tabs" data-viz="0033-search-in-rotated-sorted-array/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"loop":[4,5],"found":[6,7],"left-sorted":[9],"in-left":[10,11],"not-left":[10,12,13],"right-sorted":[14],"in-right":[15,16],"not-right":[15,17,18],"missing":[19]}'>
+                class Solution(object):
+                    def search(self, nums, target):
+                        lo, hi = 0, len(nums) - 1
+                        while lo <= hi:
+                            mid = (lo + hi) // 2
+                            if nums[mid] == target:
+                                return mid
+                            # one of the two halves is always sorted; <= so that lo == mid counts as sorted
+                            if nums[lo] <= nums[mid]:  # the left half lo..mid is sorted
+                                if nums[lo] <= target < nums[mid]:  # target fits inside it
+                                    hi = mid - 1
+                                else:
+                                    lo = mid + 1
+                            else:  # the right half mid..hi is sorted
+                                if nums[mid] < target <= nums[hi]:  # target fits inside it
+                                    lo = mid + 1
+                                else:
+                                    hi = mid - 1
+                        return -1
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"loop":[6,7],"found":[8],"left-sorted":[10],"in-left":[11],"not-left":[12],"right-sorted":[13],"in-right":[14],"not-right":[15],"missing":[18]}'>
+                #include <vector>
+                class Solution {
+                public:
+                    int search(std::vector<int>& nums, int target) {
+                        int lo = 0, hi = (int)nums.size() - 1;
+                        while (lo <= hi) {
+                            int mid = lo + (hi - lo) / 2;
+                            if (nums[mid] == target) return mid;
+                            // one of the two halves is always sorted; <= so that lo == mid counts as sorted
+                            if (nums[lo] <= nums[mid]) { // the left half lo..mid is sorted
+                                if (nums[lo] <= target && target < nums[mid]) hi = mid - 1; // target fits inside it
+                                else lo = mid + 1;
+                            } else { // the right half mid..hi is sorted
+                                if (nums[mid] < target && target <= nums[hi]) lo = mid + 1; // target fits inside it
+                                else hi = mid - 1;
+                            }
+                        }
+                        return -1;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"loop":[4,5],"found":[6],"left-sorted":[8],"in-left":[9],"not-left":[10],"right-sorted":[11],"in-right":[12],"not-right":[13],"missing":[16]}'>
+                class Solution {
+                    public int search(int[] nums, int target) {
+                        int lo = 0, hi = nums.length - 1;
+                        while (lo <= hi) {
+                            int mid = lo + (hi - lo) / 2;
+                            if (nums[mid] == target) return mid;
+                            // one of the two halves is always sorted; <= so that lo == mid counts as sorted
+                            if (nums[lo] <= nums[mid]) { // the left half lo..mid is sorted
+                                if (nums[lo] <= target && target < nums[mid]) hi = mid - 1; // target fits inside it
+                                else lo = mid + 1;
+                            } else { // the right half mid..hi is sorted
+                                if (nums[mid] < target && target <= nums[hi]) lo = mid + 1; // target fits inside it
+                                else hi = mid - 1;
+                            }
+                        }
+                        return -1;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">Built-ins</span></h2>
+            <p>
+              There's no built-in search for a <em>rotated</em> array:
+              <code>nums.index</code>, <code>std::find</code> and friends are O(n).
+              But once you know where the rotation starts, each part is plainly
+              sorted, so the library's binary search can do step 3 of Approach 2:
+              <code>bisect_left</code>, <code>std::lower_bound</code> or
+              <code>Arrays.binarySearch</code> with a start and end index.
+            </p>
+            <div class="code-tabs">
+              <script type="text/plain" data-lang="Python">
+                from bisect import bisect_left
+                class Solution(object):
+                    def search(self, nums, target):
+                        lo, hi = 0, len(nums) - 1
+                        while lo < hi:  # find where the rotation starts (the smallest value)
+                            mid = (lo + hi) // 2
+                            if nums[mid] > nums[hi]:
+                                lo = mid + 1
+                            else:
+                                hi = mid
+                        # nums[:lo] holds the values >= nums[0]; nums[lo:] holds the smaller ones
+                        start, end = (0, lo) if lo > 0 and target >= nums[0] else (lo, len(nums))
+                        i = bisect_left(nums, target, start, end)  # the library's binary search on that part
+                        return i if i < end and nums[i] == target else -1
+              </script>
+              <script type="text/plain" data-lang="C++">
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    int search(std::vector<int>& nums, int target) {
+                        int lo = 0, hi = (int)nums.size() - 1;
+                        while (lo < hi) { // find where the rotation starts (the smallest value)
+                            int mid = lo + (hi - lo) / 2;
+                            if (nums[mid] > nums[hi]) lo = mid + 1;
+                            else hi = mid;
+                        }
+                        // nums[0..lo-1] holds the values >= nums[0]; nums[lo..] holds the smaller ones
+                        auto first = nums.begin(), last = nums.end();
+                        if (lo > 0 && target >= nums[0]) last = nums.begin() + lo;
+                        else first = nums.begin() + lo;
+                        auto it = std::lower_bound(first, last, target); // the library's binary search on that part
+                        return it != last && *it == target ? (int)(it - nums.begin()) : -1;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java">
+                import java.util.Arrays;
+                class Solution {
+                    public int search(int[] nums, int target) {
+                        int lo = 0, hi = nums.length - 1;
+                        while (lo < hi) { // find where the rotation starts (the smallest value)
+                            int mid = lo + (hi - lo) / 2;
+                            if (nums[mid] > nums[hi]) lo = mid + 1;
+                            else hi = mid;
+                        }
+                        // nums[0..lo-1] holds the values >= nums[0]; nums[lo..] holds the smaller ones
+                        boolean left = lo > 0 && target >= nums[0];
+                        int i = left ? Arrays.binarySearch(nums, 0, lo, target) // the library's binary search on that part
+                                     : Arrays.binarySearch(nums, lo, nums.length, target);
+                        return i >= 0 ? i : -1; // a negative result means "not found"
+                    }
+                }
+              </script>
+            </div>
+            <div class="complexity">
+              <span><strong>Time</strong> O(log n)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              Java's <code>Arrays.binarySearch</code> returns a negative number when
+              the value is missing, not <code>-1</code>, so map it to
+              <code>-1</code> yourself. In an interview, write Approach 3.
+            </p>
+          </section>
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Linear Scan</th>
+                    <td>Check every value</td>
+                    <td>O(n)</td>
+                    <td>O(1)</td>
+                    <td>Doesn't meet the O(log n) requirement</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Rotation Point, Then Binary Search</th>
+                    <td>Find the minimum, search one sorted part</td>
+                    <td>O(log n)</td>
+                    <td>O(1)</td>
+                    <td>Two simple searches; also gives the pivot</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">One Binary Search</th>
+                    <td>One half is sorted: does target fit in it?</td>
+                    <td>O(log n)</td>
+                    <td>O(1)</td>
+                    <td>Expected answer; mind <code>&lt;=</code> when lo == mid</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -13827,6 +14332,257 @@
             });
           }
           steps[steps.length - 1].note += " Each node was flipped once, with a few pointers of extra memory: O(n) time, O(1) space.";
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0033-search-in-rotated-sorted-array/approach1.visual.js -->
+    <script>
+      // Linear scan: check every value from left to right.
+      DSAViz.register("0033-search-in-rotated-sorted-array/approach1", {
+        inputs: [
+          { name: "nums", type: "int[]", value: "[4, 5, 6, 7, 0, 1, 2]", minLength: 1, maxLength: 10, minValue: -99, maxValue: 99 },
+          { name: "target", type: "int", value: "0", min: -99, max: 99 },
+        ],
+        trace({ nums, target }) {
+          const n = nums.length;
+          if (new Set(nums).size !== n) throw new DSAViz.InputError("The values in nums must all be different.");
+          const drops = nums.filter((v, i) => i > 0 && v < nums[i - 1]).length;
+          if (drops > 1 || (drops === 1 && nums[n - 1] > nums[0])) {
+            throw new DSAViz.InputError("nums must be a sorted array rotated once, like [4, 5, 6, 7, 0, 1, 2].");
+          }
+          const steps = [];
+          const view = (i, found) => {
+            const marks = {};
+            for (let k = 0; k < (i ?? n); k++) marks[k] = "visited";
+            if (i !== undefined && i < n) marks[i] = found ? "match" : "active";
+            return [
+              { type: "array", label: "nums", values: nums, marks, pointers: i !== undefined && i < n ? { i } : {} },
+              { type: "vars", items: [{ name: "target", value: target }, { name: "checked", value: `${Math.min(i ?? n, n) + (found ? 1 : 0)} of ${n}` }] },
+            ];
+          };
+          for (let i = 0; i < n; i++) {
+            if (nums[i] === target) {
+              steps.push({ line: "found", note: `nums[${i}] = ${nums[i]} is the target: return ${i}. It took ${i + 1} look${i ? "s" : ""}; in the worst case it's all n.`, view: view(i, true) });
+              return steps;
+            }
+            steps.push({ line: ["loop", "check"], note: `nums[${i}] = ${nums[i]} ≠ ${target}: keep going.`, view: view(i) });
+          }
+          steps.push({ line: "missing", note: `Checked all ${n} values and none is ${target}: return -1. O(n), and it never uses the fact that the array is (almost) sorted.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0033-search-in-rotated-sorted-array/approach2.visual.js -->
+    <script>
+      // Two binary searches: first find where the rotation starts, then search the one sorted part that can hold target.
+      DSAViz.register("0033-search-in-rotated-sorted-array/approach2", {
+        inputs: [
+          { name: "nums", type: "int[]", value: "[4, 5, 6, 7, 0, 1, 2]", minLength: 1, maxLength: 10, minValue: -99, maxValue: 99 },
+          { name: "target", type: "int", value: "0", min: -99, max: 99 },
+        ],
+        trace({ nums, target }) {
+          const n = nums.length;
+          if (new Set(nums).size !== n) throw new DSAViz.InputError("The values in nums must all be different.");
+          const drops = nums.filter((v, i) => i > 0 && v < nums[i - 1]).length;
+          if (drops > 1 || (drops === 1 && nums[n - 1] > nums[0])) {
+            throw new DSAViz.InputError("nums must be a sorted array rotated once, like [4, 5, 6, 7, 0, 1, 2].");
+          }
+          const steps = [];
+          let pivot; // known after step 1
+          // opts.part: [a, b] the sorted part chosen in step 2; opts.found: mid is the answer
+          const view = (lo, hi, mid, opts = {}) => {
+            const marks = {};
+            nums.forEach((_, k) => {
+              if (k < lo || k > hi) marks[k] = "ghost";
+              else if (opts.part) marks[k] = "window";
+            });
+            if (mid !== undefined) marks[mid] = opts.found ? "match" : opts.pivot ? "new" : "active";
+            const pointers = {};
+            const put = (name, idx) => {
+              if (idx < 0 || idx >= n) return;
+              const same = Object.keys(pointers).find((k) => pointers[k] === idx);
+              if (same) {
+                delete pointers[same];
+                pointers[`${same}, ${name}`] = idx;
+              } else pointers[name] = idx;
+            };
+            if (lo <= hi) {
+              put("lo", lo);
+              if (mid !== undefined) put("mid", mid);
+              put("hi", hi);
+            }
+            return [
+              {
+                type: "array",
+                label: pivot === undefined ? "nums (step 1: find the smallest value)" : "nums (the line is where the rotation starts; faded = ruled out)",
+                values: nums,
+                marks,
+                pointers,
+                cut: pivot > 0 ? pivot : undefined,
+              },
+              {
+                type: "vars",
+                items: [{ name: "target", value: target }, ...(pivot === undefined ? [] : [{ name: "pivot", value: `${pivot} (nums[${pivot}] = ${nums[pivot]})` }])],
+              },
+            ];
+          };
+
+          let lo = 0;
+          let hi = n - 1;
+          steps.push({ line: "pivot", note: "Step 1: find the smallest value. Everything from there to the end is sorted, and so is everything before it.", view: view(lo, hi) });
+          while (lo < hi) {
+            const mid = Math.floor((lo + hi) / 2);
+            if (nums[mid] > nums[hi]) {
+              steps.push({
+                line: "pivot-right",
+                note: `mid = ${mid}: nums[mid] = ${nums[mid]} > nums[hi] = ${nums[hi]}, so the values drop somewhere after mid. The smallest is to the right: lo = ${mid + 1}.`,
+                view: view(lo, hi, mid),
+              });
+              lo = mid + 1;
+            } else {
+              steps.push({
+                line: "pivot-left",
+                note: `mid = ${mid}: nums[mid] = ${nums[mid]} ≤ nums[hi] = ${nums[hi]}, so mid..hi is sorted. The smallest is mid or to its left: hi = ${mid}.`,
+                view: view(lo, hi, mid),
+              });
+              hi = mid;
+            }
+          }
+          pivot = lo;
+          steps.push({
+            line: "side",
+            note: pivot === 0 ? `lo = hi = 0: nums[0] = ${nums[0]} is the smallest, so the array isn't rotated at all.` : `lo = hi = ${pivot}: the smallest value is nums[${pivot}] = ${nums[pivot]}. The rotation starts there.`,
+            view: view(pivot, pivot, pivot, { pivot: true }),
+          });
+          if (nums[pivot] <= target && target <= nums[n - 1]) {
+            lo = pivot;
+            hi = n - 1;
+            steps.push({ line: "side-right", note: `Step 2: ${nums[pivot]} ≤ ${target} ≤ ${nums[n - 1]}, so only the part [${pivot}..${n - 1}] can hold it.`, view: view(lo, hi, undefined, { part: true }) });
+          } else {
+            lo = 0;
+            hi = pivot - 1;
+            steps.push({
+              line: "side-left",
+              note:
+                pivot === 0
+                  ? `Step 2: ${target} is outside ${nums[0]}..${nums[n - 1]}, the whole array's range. The other part is empty, so it can't be anywhere.`
+                  : `Step 2: ${target} isn't in ${nums[pivot]}..${nums[n - 1]}, so only the part [0..${pivot - 1}] (${nums[0]}..${nums[pivot - 1]}) can hold it.`,
+              view: view(lo, hi, undefined, { part: true }),
+            });
+          }
+          while (lo <= hi) {
+            const mid = Math.floor((lo + hi) / 2);
+            if (nums[mid] === target) {
+              steps.push({ line: ["search", "found"], note: `Step 3: mid = ${mid}, nums[mid] = ${nums[mid]} is the target. Return ${mid}.`, view: view(lo, hi, mid, { part: true, found: true }) });
+              return steps;
+            }
+            if (nums[mid] < target) {
+              steps.push({ line: ["search", "higher"], note: `Step 3: mid = ${mid}, nums[mid] = ${nums[mid]} < ${target}: go right, lo = ${mid + 1}.`, view: view(lo, hi, mid, { part: true }) });
+              lo = mid + 1;
+            } else {
+              steps.push({ line: ["search", "lower"], note: `Step 3: mid = ${mid}, nums[mid] = ${nums[mid]} > ${target}: go left, hi = ${mid - 1}.`, view: view(lo, hi, mid, { part: true }) });
+              hi = mid - 1;
+            }
+          }
+          steps.push({ line: "missing", note: `lo > hi: ${target} isn't in nums. Return -1. Two binary searches, O(log n) each.`, view: view(lo, hi) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0033-search-in-rotated-sorted-array/approach3.visual.js -->
+    <script>
+      // One binary search: one half of [lo, hi] is always sorted; check if target fits in it, and keep the right half.
+      DSAViz.register("0033-search-in-rotated-sorted-array/approach3", {
+        inputs: [
+          { name: "nums", type: "int[]", value: "[4, 5, 6, 7, 0, 1, 2]", minLength: 1, maxLength: 10, minValue: -99, maxValue: 99 },
+          { name: "target", type: "int", value: "0", min: -99, max: 99 },
+        ],
+        trace({ nums, target }) {
+          const n = nums.length;
+          if (new Set(nums).size !== n) throw new DSAViz.InputError("The values in nums must all be different.");
+          const drops = nums.filter((v, i) => i > 0 && v < nums[i - 1]).length;
+          if (drops > 1 || (drops === 1 && nums[n - 1] > nums[0])) {
+            throw new DSAViz.InputError("nums must be a sorted array rotated once, like [4, 5, 6, 7, 0, 1, 2].");
+          }
+          const pivot = nums.indexOf(Math.min(...nums)); // where the rotation starts, for the divider line
+          const steps = [];
+          // opts.sorted: [a, b] range to shade as the sorted half; opts.found: mid is the answer
+          const view = (lo, hi, mid, opts = {}) => {
+            const marks = {};
+            nums.forEach((_, k) => {
+              if (k < lo || k > hi) marks[k] = "ghost";
+              else if (opts.sorted && k >= opts.sorted[0] && k <= opts.sorted[1]) marks[k] = "window";
+            });
+            if (mid !== undefined) marks[mid] = opts.found ? "match" : "active";
+            const pointers = {};
+            const put = (name, idx) => {
+              if (idx < 0 || idx >= n) return;
+              const same = Object.keys(pointers).find((k) => pointers[k] === idx);
+              if (same) {
+                delete pointers[same];
+                pointers[`${same}, ${name}`] = idx;
+              } else pointers[name] = idx;
+            };
+            if (lo <= hi) {
+              put("lo", lo);
+              if (mid !== undefined) put("mid", mid);
+              put("hi", hi);
+            }
+            return [
+              { type: "array", label: "nums (the line is where the rotation starts; faded = ruled out)", values: nums, marks, pointers, cut: pivot > 0 ? pivot : undefined },
+              { type: "vars", items: [{ name: "target", value: target }, { name: "lo", value: lo }, { name: "hi", value: hi }] },
+            ];
+          };
+
+          let lo = 0;
+          let hi = n - 1;
+          let round = 0;
+          steps.push({ line: "init", note: `Search all of nums: lo = 0, hi = ${n - 1}.`, view: view(lo, hi) });
+          while (lo <= hi) {
+            round++;
+            const mid = Math.floor((lo + hi) / 2);
+            if (nums[mid] === target) {
+              steps.push({
+                line: ["loop", "found"],
+                note: `mid = (${lo} + ${hi}) / 2 = ${mid}, and nums[${mid}] = ${nums[mid]} is the target: return ${mid}. ${round} round${round === 1 ? "" : "s"}.`,
+                view: view(lo, hi, mid, { found: true }),
+              });
+              return steps;
+            }
+            steps.push({ line: "loop", note: `mid = (${lo} + ${hi}) / 2 = ${mid}: nums[${mid}] = ${nums[mid]}, not the target.`, view: view(lo, hi, mid) });
+            if (nums[lo] <= nums[mid]) {
+              const inside = nums[lo] <= target && target < nums[mid];
+              steps.push({
+                line: "left-sorted",
+                note: `nums[lo] = ${nums[lo]} ≤ nums[mid] = ${nums[mid]}${lo === mid ? " (lo and mid are the same cell, which still counts)" : ""}: the left half [${lo}..${mid}] is sorted, so it holds exactly the values from ${nums[lo]} up to ${nums[mid]}.`,
+                view: view(lo, hi, mid, { sorted: [lo, mid] }),
+              });
+              if (inside) {
+                steps.push({ line: "in-left", note: `${nums[lo]} ≤ ${target} < ${nums[mid]}: the target can only be in that half. hi = mid - 1 = ${mid - 1}.`, view: view(lo, mid - 1) });
+                hi = mid - 1;
+              } else {
+                const why = lo === mid ? `The sorted half is just ${nums[lo]}, already checked` : `${target} isn't in ${nums[lo]} ≤ x < ${nums[mid]}, so it's not in the sorted half`;
+                steps.push({ line: "not-left", note: `${why}: look right. lo = mid + 1 = ${mid + 1}.`, view: view(mid + 1, hi) });
+                lo = mid + 1;
+              }
+            } else {
+              const inside = nums[mid] < target && target <= nums[hi];
+              steps.push({
+                line: "right-sorted",
+                note: `nums[lo] = ${nums[lo]} > nums[mid] = ${nums[mid]}: the drop is in the left half, so the right half [${mid}..${hi}] is sorted (${nums[mid]} up to ${nums[hi]}).`,
+                view: view(lo, hi, mid, { sorted: [mid, hi] }),
+              });
+              if (inside) {
+                steps.push({ line: "in-right", note: `${nums[mid]} < ${target} ≤ ${nums[hi]}: the target can only be in that half. lo = mid + 1 = ${mid + 1}.`, view: view(mid + 1, hi) });
+                lo = mid + 1;
+              } else {
+                steps.push({ line: "not-right", note: `${target} isn't in ${nums[mid]} < x ≤ ${nums[hi]}, so it's not in the sorted half: look left. hi = mid - 1 = ${mid - 1}.`, view: view(lo, mid - 1) });
+                hi = mid - 1;
+              }
+            }
+          }
+          steps.push({ line: "missing", note: `lo = ${lo} > hi = ${hi}: nothing left to search, so ${target} isn't in nums. Return -1 after ${round} round${round === 1 ? "" : "s"}: each round halves the range, O(log n).`, view: view(lo, hi) });
           return steps;
         },
       });

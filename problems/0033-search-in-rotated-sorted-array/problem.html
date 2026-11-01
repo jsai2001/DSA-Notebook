@@ -1,0 +1,267 @@
+<details class="question" data-tags="array binary-search rotated-array pivot">
+  <summary>
+    <span class="q-title">33. Search in Rotated Sorted Array</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Binary Search</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Cut the range at <code>mid</code> and
+      <strong>one half is always sorted</strong>. If
+      <code>nums[lo] &lt;= nums[mid]</code> the left half is sorted, otherwise
+      the right half is. A sorted half holds exactly the values between its
+      two ends, so one comparison tells you whether the target can be in it:
+      keep that half, or else the other. O(log n).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/search-in-rotated-sorted-array/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        An array sorted in ascending order with <strong>distinct</strong> values
+        may have been rotated at an unknown index (for example,
+        <code>[0,1,2,4,5,6,7]</code> becomes <code>[4,5,6,7,0,1,2]</code>).
+        Given the array <code>nums</code> and a <code>target</code>, return the
+        index of <code>target</code>, or <code>-1</code> if it's not there.
+      </p>
+      <ul>
+        <li><code>1 &lt;= nums.length &lt;= 5000</code> and <code>-10⁴ &lt;= nums[i], target &lt;= 10⁴</code>.</li>
+        <li>All values are different, and <code>nums</code> is a sorted array that may be rotated.</li>
+        <li>Your algorithm must run in <strong>O(log n)</strong> time.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[4,5,6,7,0,1,2]</code>, target <code>0</code> →
+        <code>4</code>; target <code>3</code> → <code>-1</code>;
+        <code>[1]</code>, target <code>0</code> → <code>-1</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[1]</code>, target <code>1</code> / <code>0</code></td>
+              <td><code>0</code> / <code>-1</code></td>
+              <td>One element: <code>lo</code>, <code>mid</code> and <code>hi</code> are all the same index.</td>
+            </tr>
+            <tr>
+              <td><code>[3,1]</code>, target <code>1</code></td>
+              <td><code>1</code></td>
+              <td>The classic trap: <code>lo == mid</code>. Testing "is the left half sorted?" with <code>&lt;</code> instead of <code>&lt;=</code> returns <code>-1</code> here.</td>
+            </tr>
+            <tr>
+              <td><code>[1,3]</code>, target <code>3</code></td>
+              <td><code>1</code></td>
+              <td>Two elements, not rotated: the target is in the last cell.</td>
+            </tr>
+            <tr>
+              <td><code>[4,5,6,7,0,1,2]</code>, target <code>0</code></td>
+              <td><code>4</code></td>
+              <td>The target is the smallest value, right where the rotation starts.</td>
+            </tr>
+            <tr>
+              <td><code>[4,5,6,7,0,1,2]</code>, target <code>3</code></td>
+              <td><code>-1</code></td>
+              <td>Missing, but between the smallest and largest values: the search must still end cleanly.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3,4,5]</code>, target <code>4</code></td>
+              <td><code>3</code></td>
+              <td>Not rotated at all: "may be rotated" includes zero. The code shouldn't assume a drop exists.</td>
+            </tr>
+            <tr>
+              <td><code>[5,1,2,3,4]</code>, target <code>5</code></td>
+              <td><code>0</code></td>
+              <td>The left part is a single value and holds the largest one.</td>
+            </tr>
+            <tr>
+              <td><code>[2,3,4,5,1]</code>, target <code>1</code></td>
+              <td><code>4</code></td>
+              <td>The rotation point is the very last index.</td>
+            </tr>
+            <tr>
+              <td><code>[4,5,1,2,3]</code>, target <code>6</code> / <code>0</code></td>
+              <td><code>-1</code> / <code>-1</code></td>
+              <td>Larger than everything / smaller than everything.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Linear Scan</h2>
+      <p class="intuition">
+        Look at every value until you find the target.
+      </p>
+      <ul>
+        <li>Always correct, rotated or not.</li>
+        <li>It ignores that the array is sorted in two pieces.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        LeetCode would accept it (n ≤ 5000), but the problem asks for
+        O(log n), so in an interview it doesn't count as a solution.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Find the Rotation Point, Then Binary Search</h2>
+      <p class="intuition">
+        A rotated array is two sorted runs. Find where the second run starts
+        (the smallest value), decide which run could hold the target, and do
+        an ordinary binary search there.
+      </p>
+      <ul>
+        <li>
+          Finding the smallest: if <code>nums[mid] &gt; nums[hi]</code>, the
+          values drop after <code>mid</code>, so <code>lo = mid + 1</code>;
+          otherwise <code>mid..hi</code> is sorted and <code>hi = mid</code>.
+          (This is Find Minimum in Rotated Sorted Array, LeetCode 153.)
+        </li>
+        <li>
+          If <code>nums[pivot] &lt;= target &lt;= nums[n - 1]</code>, search
+          <code>[pivot, n - 1]</code>; otherwise search <code>[0, pivot - 1]</code>.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Two simple binary searches, each easy to get right on its own. It
+        also leaves you with the rotation point, which some follow-ups ask for.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: One Binary Search, Pick the Sorted Half
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        No need to find the rotation point first. Whatever <code>mid</code>
+        is, the drop is in at most one of the two halves, so the other half is
+        sorted, and a sorted half tells you its range from its two ends.
+      </p>
+      <ul>
+        <li>
+          <code>nums[lo] &lt;= nums[mid]</code>: the left half is sorted. If
+          <code>nums[lo] &lt;= target &lt; nums[mid]</code>, go left; else go
+          right.
+        </li>
+        <li>
+          Otherwise the right half is sorted. If
+          <code>nums[mid] &lt; target &lt;= nums[hi]</code>, go right; else go
+          left.
+        </li>
+        <li>
+          The <code>&lt;=</code> in <code>nums[lo] &lt;= nums[mid]</code>
+          matters: when <code>lo == mid</code> the "left half" is one cell,
+          which is sorted. With <code>&lt;</code>, it failed 76 of the test
+          cases here, starting with <code>[3,1]</code>, target 1.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        One loop and the expected answer. At n = 5,000 it took at most 13
+        rounds. It relies on the values being distinct; with duplicates
+        (Search in Rotated Sorted Array II, LeetCode 81) you can't always tell
+        which half is sorted.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        There's no built-in search for a <em>rotated</em> array:
+        <code>nums.index</code>, <code>std::find</code> and friends are O(n).
+        But once you know where the rotation starts, each part is plainly
+        sorted, so the library's binary search can do step 3 of Approach 2:
+        <code>bisect_left</code>, <code>std::lower_bound</code> or
+        <code>Arrays.binarySearch</code> with a start and end index.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Java's <code>Arrays.binarySearch</code> returns a negative number when
+        the value is missing, not <code>-1</code>, so map it to
+        <code>-1</code> yourself. In an interview, write Approach 3.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Linear Scan</th>
+              <td>Check every value</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Doesn't meet the O(log n) requirement</td>
+            </tr>
+            <tr>
+              <th scope="row">Rotation Point, Then Binary Search</th>
+              <td>Find the minimum, search one sorted part</td>
+              <td>O(log n)</td>
+              <td>O(1)</td>
+              <td>Two simple searches; also gives the pivot</td>
+            </tr>
+            <tr>
+              <th scope="row">One Binary Search</th>
+              <td>One half is sorted: does target fit in it?</td>
+              <td>O(log n)</td>
+              <td>O(1)</td>
+              <td>Expected answer; mind <code>&lt;=</code> when lo == mid</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
