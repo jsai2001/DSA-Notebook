@@ -8724,6 +8724,518 @@
         </div>
       </details>
 
+      <!-- ===== problems/0040-combination-sum-ii ===== -->
+      <details class="question" data-tags="array backtracking recursion combinations duplicates">
+        <summary>
+          <span class="q-title">40. Combination Sum II</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">Array</span>
+            <span class="tag">Backtracking</span>
+          </span>
+        </summary>
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> Combination Sum with two changes. Each number
+            is used <strong>once</strong>, so recurse with <code>i + 1</code>. The
+            input has <strong>duplicates</strong>, so sort it and, in the loop,
+            skip a value equal to the previous one <em>at the same level</em>:
+            <code>if i &gt; start and nums[i] == nums[i - 1]: continue</code>. Equal
+            numbers can still be used together, just not started from twice.
+          </div>
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/combination-sum-ii/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              Given a list of numbers <code>candidates</code> (which may contain
+              duplicates) and a <code>target</code>, return every unique combination
+              that adds up to <code>target</code>. Each number in the list may be
+              used <strong>only once</strong> in a combination, and the answer must
+              not contain the same combination twice.
+            </p>
+            <ul>
+              <li><code>1 &lt;= candidates.length &lt;= 100</code> and <code>1 &lt;= candidates[i] &lt;= 50</code>.</li>
+              <li><code>1 &lt;= target &lt;= 30</code>.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>[10,1,2,7,6,1,5]</code>, target <code>8</code> →
+              <code>[[1,1,6],[1,2,5],[1,7],[2,6]]</code>;
+              <code>[2,5,2,1,2]</code>, target <code>5</code> →
+              <code>[[1,2,2],[5]]</code>.
+            </p>
+          </section>
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[1,1]</code>, target <code>1</code></td>
+                    <td><code>[[1]]</code></td>
+                    <td>The duplicate trap: either 1 makes <code>[1]</code>, but it should be listed once.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,1]</code>, target <code>2</code></td>
+                    <td><code>[[1,1]]</code></td>
+                    <td>Over-skipping: equal numbers may be used <em>together</em>. Skipping with <code>i &gt; 0</code> instead of <code>i &gt; start</code> returns <code>[]</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,2,1]</code>, target <code>3</code></td>
+                    <td><code>[[1,2]]</code></td>
+                    <td>Unsorted input. Without sorting, a set sees <code>[1,2]</code> and <code>[2,1]</code> as different.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2]</code>, target <code>4</code></td>
+                    <td><code>[]</code></td>
+                    <td>Each number only once: unlike Combination Sum, <code>[2,2]</code> isn't allowed. Recursing with <code>i</code> gives it.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2]</code>, target <code>1</code></td>
+                    <td><code>[]</code></td>
+                    <td>Nothing fits.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[10,1,2,7,6,1,5]</code>, target <code>8</code></td>
+                    <td><code>[[1,1,6],[1,2,5],[1,7],[2,6]]</code></td>
+                    <td>The usual case: <code>[1,7]</code> must appear once even though there are two 1s.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2,5,2,1,2]</code>, target <code>5</code></td>
+                    <td><code>[[1,2,2],[5]]</code></td>
+                    <td>Three 2s, two used together.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[50]</code>, target <code>30</code></td>
+                    <td><code>[]</code></td>
+                    <td>The only candidate is bigger than the target.</td>
+                  </tr>
+                  <tr>
+                    <td>100 ones, target <code>30</code></td>
+                    <td><code>[[1, …, 1]]</code> (thirty 1s)</td>
+                    <td>One answer, but take-or-skip with a set tries every way to choose 30 of the 100 ones.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Take or Skip, Then Drop Repeats with a Set</h2>
+            <p class="intuition">
+              For each number, take it or skip it, and collect every path that adds
+              up to the target in a set. Sorting first makes equal combinations come
+              out in the same order, so the set can recognise repeats.
+            </p>
+            <ul>
+              <li>Recurse with <code>i + 1</code> after taking: each copy is used at most once.</li>
+              <li>A set of tuples (C++ <code>std::set</code>, Java <code>HashSet&lt;List&gt;</code>) keeps one of each.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(2ⁿ · n)</span>
+              <span><strong>Space</strong> O(n) recursion, plus the set</span>
+            </div>
+            <p class="note">
+              It finds every repeat and then throws it away. With many equal
+              numbers that's hopeless: on 22 ones with target 11 it made 4.9 million
+              calls here, against 12 for Approach 2, and 100 ones would never finish.
+            </p>
+            <div class="code-tabs" data-viz="0040-combination-sum-ii/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"sort":[3,4],"call":[5],"done":[6,7,8],"dead":[9,10],"take":[11,12],"undo":[13],"skip":[14],"start":[15],"return":[16]}'>
+                class Solution(object):
+                    def combinationSum2(self, candidates, target):
+                        candidates = sorted(candidates)  # sorted, so equal combinations become equal tuples
+                        found, path = set(), []  # a set throws away combinations it has already seen
+                        def dfs(i, remaining):  # decide about candidates[i]
+                            if remaining == 0:
+                                found.add(tuple(path))
+                                return
+                            if i == len(candidates) or remaining < 0:  # no candidates left, or overshot
+                                return
+                            path.append(candidates[i])  # take it (once), then move on
+                            dfs(i + 1, remaining - candidates[i])
+                            path.pop()
+                            dfs(i + 1, remaining)  # skip it
+                        dfs(0, target)
+                        return [list(combo) for combo in found]
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"sort":[7,8,9],"start":[10],"return":[11],"call":[16],"done":[17,18,19],"dead":[21],"take":[22,23],"undo":[24],"skip":[25]}'>
+                #include <algorithm>
+                #include <set>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::vector<int>> combinationSum2(std::vector<int>& candidates, int target) {
+                        std::sort(candidates.begin(), candidates.end()); // sorted, so equal combinations become equal vectors
+                        found.clear(); // a set throws away combinations it has already seen
+                        path.clear();
+                        dfs(candidates, 0, target);
+                        return std::vector<std::vector<int>>(found.begin(), found.end());
+                    }
+                private:
+                    std::set<std::vector<int>> found;
+                    std::vector<int> path;
+                    void dfs(const std::vector<int>& candidates, int i, int remaining) { // decide about candidates[i]
+                        if (remaining == 0) {
+                            found.insert(path);
+                            return;
+                        }
+                        if (i == (int)candidates.size() || remaining < 0) return; // no candidates left, or overshot
+                        path.push_back(candidates[i]); // take it (once), then move on
+                        dfs(candidates, i + 1, remaining - candidates[i]);
+                        path.pop_back();
+                        dfs(candidates, i + 1, remaining); // skip it
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"sort":[10,11,12],"start":[13],"return":[14],"call":[16],"done":[17,18,19],"dead":[21],"take":[22,23],"undo":[24],"skip":[25]}'>
+                import java.util.ArrayList;
+                import java.util.Arrays;
+                import java.util.HashSet;
+                import java.util.List;
+                import java.util.Set;
+                class Solution {
+                    private Set<List<Integer>> found;
+                    private List<Integer> path;
+                    public List<List<Integer>> combinationSum2(int[] candidates, int target) {
+                        Arrays.sort(candidates); // sorted, so equal combinations become equal lists
+                        found = new HashSet<>(); // a set throws away combinations it has already seen
+                        path = new ArrayList<>();
+                        dfs(candidates, 0, target);
+                        return new ArrayList<>(found);
+                    }
+                    private void dfs(int[] candidates, int i, int remaining) { // decide about candidates[i]
+                        if (remaining == 0) {
+                            found.add(new ArrayList<>(path));
+                            return;
+                        }
+                        if (i == candidates.length || remaining < 0) return; // no candidates left, or overshot
+                        path.add(candidates[i]); // take it (once), then move on
+                        dfs(candidates, i + 1, remaining - candidates[i]);
+                        path.remove(path.size() - 1);
+                        dfs(candidates, i + 1, remaining); // skip it
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>
+              Approach 2: Sort and Skip Repeats at the Same Level
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              Build each combination in sorted order. At one level of the recursion
+              (one position in the combination), trying the value 1 a second time
+              would just repeat everything the first 1 already built, so skip it.
+            </p>
+            <ul>
+              <li>
+                <code>if i &gt; start and nums[i] == nums[i - 1]: continue</code>. It's
+                <code>i &gt; start</code>, not <code>i &gt; 0</code>: the first copy at
+                this level is always allowed, which is how <code>[1,1,6]</code> uses
+                two 1s.
+              </li>
+              <li>Recurse with <code>i + 1</code>: each copy is used at most once.</li>
+              <li>Break as soon as a number is bigger than what's left (it's sorted).</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(2ⁿ · n) worst case</span>
+              <span><strong>Space</strong> O(n) recursion</span>
+            </div>
+            <p class="note">
+              Every combination is built exactly once, so no set is needed. All 503
+              large tests here (up to 100 candidates) took about 1 s in Python
+              together. The "skip equal values at the same level" line is the same
+              one used in 3Sum, Subsets II and Permutations II.
+            </p>
+            <div class="code-tabs" data-viz="0040-combination-sum-ii/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"sort":[3,4],"call":[5],"done":[6,7,8],"choose":[9,14,15],"same":[10,11],"prune":[12,13],"undo":[16],"start":[17],"return":[18]}'>
+                class Solution(object):
+                    def combinationSum2(self, candidates, target):
+                        candidates = sorted(candidates)  # equal values sit next to each other
+                        result, path = [], []
+                        def backtrack(start, remaining):
+                            if remaining == 0:
+                                result.append(path[:])
+                                return
+                            for i in range(start, len(candidates)):
+                                if i > start and candidates[i] == candidates[i - 1]:  # same value as the one just tried here
+                                    continue  # it would build the same combinations again
+                                if candidates[i] > remaining:  # this one and every later one are too big
+                                    break
+                                path.append(candidates[i])
+                                backtrack(i + 1, remaining - candidates[i])  # i + 1: each number is used at most once
+                                path.pop()
+                        backtrack(0, target)
+                        return result
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"sort":[6,7,8],"start":[9],"return":[10],"call":[15],"done":[16,17,18],"choose":[20,23,24],"same":[21],"prune":[22],"undo":[25]}'>
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::vector<int>> combinationSum2(std::vector<int>& candidates, int target) {
+                        std::sort(candidates.begin(), candidates.end()); // equal values sit next to each other
+                        result.clear();
+                        path.clear();
+                        backtrack(candidates, 0, target);
+                        return result;
+                    }
+                private:
+                    std::vector<std::vector<int>> result;
+                    std::vector<int> path;
+                    void backtrack(const std::vector<int>& candidates, int start, int remaining) {
+                        if (remaining == 0) {
+                            result.push_back(path);
+                            return;
+                        }
+                        for (int i = start; i < (int)candidates.size(); ++i) {
+                            if (i > start && candidates[i] == candidates[i - 1]) continue; // same value as the one just tried here
+                            if (candidates[i] > remaining) break; // this one and every later one are too big
+                            path.push_back(candidates[i]);
+                            backtrack(candidates, i + 1, remaining - candidates[i]); // i + 1: each number is used at most once
+                            path.pop_back();
+                        }
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"sort":[8,9,10],"start":[11],"return":[12],"call":[14],"done":[15,16,17],"choose":[19,22,23],"same":[20],"prune":[21],"undo":[24]}'>
+                import java.util.ArrayList;
+                import java.util.Arrays;
+                import java.util.List;
+                class Solution {
+                    private List<List<Integer>> result;
+                    private List<Integer> path;
+                    public List<List<Integer>> combinationSum2(int[] candidates, int target) {
+                        Arrays.sort(candidates); // equal values sit next to each other
+                        result = new ArrayList<>();
+                        path = new ArrayList<>();
+                        backtrack(candidates, 0, target);
+                        return result;
+                    }
+                    private void backtrack(int[] candidates, int start, int remaining) {
+                        if (remaining == 0) {
+                            result.add(new ArrayList<>(path));
+                            return;
+                        }
+                        for (int i = start; i < candidates.length; i++) {
+                            if (i > start && candidates[i] == candidates[i - 1]) continue; // same value as the one just tried here
+                            if (candidates[i] > remaining) break; // this one and every later one are too big
+                            path.add(candidates[i]);
+                            backtrack(candidates, i + 1, remaining - candidates[i]); // i + 1: each number is used at most once
+                            path.remove(path.size() - 1);
+                        }
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>Approach 3: Count Each Value, Choose How Many Copies</h2>
+            <p class="intuition">
+              Equal numbers are interchangeable, so treat them as one choice: for
+              each distinct value, use 0, 1, 2, … copies, up to how many exist and
+              how many fit.
+            </p>
+            <ul>
+              <li>Count the values (<code>Counter</code>, <code>std::map</code>, <code>TreeMap</code>) and sort them.</li>
+              <li>
+                At value <code>k</code>, try using none, then add one copy at a time
+                and recurse to <code>k + 1</code>. Afterwards take the copies off again.
+              </li>
+              <li>Stop when the value is bigger than what's left: all later values are bigger too.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(2ⁿ · n) worst case</span>
+              <span><strong>Space</strong> O(n) recursion</span>
+            </div>
+            <p class="note">
+              Same speed as Approach 2, and duplicates are impossible by design
+              instead of skipped. The recursion depth is the number of
+              <em>distinct</em> values, which helps when there are many repeats.
+            </p>
+            <div class="code-tabs" data-viz="0040-combination-sum-ii/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"count":[4,5],"call":[6],"done":[7,8,9],"dead":[10,11],"none":[12,13,14],"copies":[15,16,17],"undo":[18],"start":[19],"return":[20]}'>
+                from collections import Counter
+                class Solution(object):
+                    def combinationSum2(self, candidates, target):
+                        counts = sorted(Counter(candidates).items())  # (value, how many times it appears), smallest first
+                        result, path = [], []
+                        def backtrack(k, remaining):  # decide how many copies of the k-th distinct value to use
+                            if remaining == 0:
+                                result.append(path[:])
+                                return
+                            if k == len(counts) or counts[k][0] > remaining:  # no values left, or this and every later one too big
+                                return
+                            value, count = counts[k]
+                            most = min(count, remaining // value)  # can't use more copies than exist, or than fit
+                            backtrack(k + 1, remaining)  # use no copies of value
+                            for used in range(1, most + 1):  # then 1 copy, 2 copies, ... most copies
+                                path.append(value)
+                                backtrack(k + 1, remaining - used * value)
+                            del path[len(path) - most:]  # take those copies off again
+                        backtrack(0, target)
+                        return result
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"count":[8,9,10,11,12],"start":[13],"return":[14],"call":[20],"done":[21,22,23],"dead":[25],"none":[26,27,28],"copies":[29,30,31],"undo":[33]}'>
+                #include <algorithm>
+                #include <map>
+                #include <utility>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::vector<int>> combinationSum2(std::vector<int>& candidates, int target) {
+                        std::map<int, int> tally; // value -> how many times it appears; a map keeps the values sorted
+                        for (int c : candidates) tally[c]++;
+                        counts.assign(tally.begin(), tally.end());
+                        result.clear();
+                        path.clear();
+                        backtrack(0, target);
+                        return result;
+                    }
+                private:
+                    std::vector<std::pair<int, int>> counts; // (value, how many), smallest first
+                    std::vector<std::vector<int>> result;
+                    std::vector<int> path;
+                    void backtrack(int k, int remaining) { // decide how many copies of the k-th distinct value to use
+                        if (remaining == 0) {
+                            result.push_back(path);
+                            return;
+                        }
+                        if (k == (int)counts.size() || counts[k].first > remaining) return; // no values left, or this and every later one too big
+                        int value = counts[k].first;
+                        int most = std::min(counts[k].second, remaining / value); // can't use more copies than exist, or than fit
+                        backtrack(k + 1, remaining); // use no copies of value
+                        for (int used = 1; used <= most; ++used) { // then 1 copy, 2 copies, ... most copies
+                            path.push_back(value);
+                            backtrack(k + 1, remaining - used * value);
+                        }
+                        path.resize(path.size() - most); // take those copies off again
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"count":[10,11,12,13,14,15,16,17,19,20],"start":[21],"return":[22],"call":[24],"done":[25,26,27],"dead":[29],"none":[30,31,32],"copies":[33,34,35],"undo":[37]}'>
+                import java.util.ArrayList;
+                import java.util.List;
+                import java.util.Map;
+                import java.util.TreeMap;
+                class Solution {
+                    private int[] values, counts; // the k-th distinct value and how many times it appears, smallest first
+                    private List<List<Integer>> result;
+                    private List<Integer> path;
+                    public List<List<Integer>> combinationSum2(int[] candidates, int target) {
+                        TreeMap<Integer, Integer> tally = new TreeMap<>(); // value -> how many; a TreeMap keeps the values sorted
+                        for (int c : candidates) tally.merge(c, 1, Integer::sum);
+                        values = new int[tally.size()];
+                        counts = new int[tally.size()];
+                        int k = 0;
+                        for (Map.Entry<Integer, Integer> e : tally.entrySet()) {
+                            values[k] = e.getKey();
+                            counts[k++] = e.getValue();
+                        }
+                        result = new ArrayList<>();
+                        path = new ArrayList<>();
+                        backtrack(0, target);
+                        return result;
+                    }
+                    private void backtrack(int k, int remaining) { // decide how many copies of the k-th distinct value to use
+                        if (remaining == 0) {
+                            result.add(new ArrayList<>(path));
+                            return;
+                        }
+                        if (k == values.length || values[k] > remaining) return; // no values left, or this and every later one too big
+                        int value = values[k];
+                        int most = Math.min(counts[k], remaining / value); // can't use more copies than exist, or than fit
+                        backtrack(k + 1, remaining); // use no copies of value
+                        for (int used = 1; used <= most; used++) { // then 1 copy, 2 copies, ... most copies
+                            path.add(value);
+                            backtrack(k + 1, remaining - used * value);
+                        }
+                        for (int used = 0; used < most; used++) path.remove(path.size() - 1); // take those copies off again
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">No shortcut</span></h2>
+            <p>
+              Python's <code>itertools.combinations</code> tries every subset of a
+              given size, but repeated values produce repeated combinations, and
+              going through every size of up to 100 numbers is far too slow. C++
+              and Java have nothing built in.
+            </p>
+            <p class="note">
+              Write Approach 2. Three things change from Combination Sum: sort,
+              recurse with <code>i + 1</code>, and skip a value that equals the
+              previous one when <code>i &gt; start</code>.
+            </p>
+          </section>
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Take or Skip + Set</th>
+                    <td>Build everything, drop repeats</td>
+                    <td>O(2ⁿ · n)</td>
+                    <td>O(n) + set</td>
+                    <td>Blows up on many equal numbers</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Skip Repeats at the Same Level</th>
+                    <td>Sort; <code>i &gt; start</code> and equal → skip; <code>i + 1</code></td>
+                    <td>O(2ⁿ · n) worst</td>
+                    <td>O(n)</td>
+                    <td>Expected answer; each combination built once</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Choose How Many Copies</th>
+                    <td>Counter of values, 0..k copies each</td>
+                    <td>O(2ⁿ · n) worst</td>
+                    <td>O(distinct values)</td>
+                    <td>No duplicates by design</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -15267,6 +15779,249 @@
               ? `Return dp[${target}]: ${dp[target].map(fmt).join(", ")}. Because the candidates are the outer loop, ${cands[0]}s are always added before later candidates, so no combination appears twice. The table also keeps every smaller amount's answers.`
               : `Return dp[${target}] = []: no combination adds up to ${target}.`,
             view: view(undefined, { final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0040-combination-sum-ii/approach1.visual.js -->
+    <script>
+      // Take or skip each number once, and let a set throw away combinations that come up more than once.
+      DSAViz.register("0040-combination-sum-ii/approach1", {
+        inputs: [
+          { name: "candidates", type: "int[]", value: "[2, 1, 2, 3]", minLength: 1, maxLength: 6, minValue: 1, maxValue: 50 },
+          { name: "target", type: "int", value: "5", min: 1, max: 12 },
+        ],
+        trace({ candidates: raw, target }) {
+          const cands = raw.slice().sort((a, b) => a - b);
+          const steps = [];
+          const found = [];
+          const path = [];
+          let calls = 0;
+          let repeats = 0;
+          const fmt = (arr) => `[${arr.join(", ")}]`;
+          const view = (i, remaining, opts = {}) => {
+            const marks = {};
+            if (i !== undefined) cands.forEach((_, k) => k < i && (marks[k] = "ghost"));
+            if (i !== undefined && i < cands.length) marks[i] = opts.mark || "active";
+            const fmarks = {};
+            if (opts.hit !== undefined) fmarks[opts.hit] = opts.repeat ? "cut" : "new";
+            return [
+              { type: "array", label: "candidates (sorted; faded = already decided)", values: cands, marks, pointers: i !== undefined && i < cands.length ? { i } : {} },
+              { type: "array", label: "path", values: path.slice(), marks: opts.done ? Object.fromEntries(path.map((_, k) => [k, "match"])) : opts.added ? { [path.length - 1]: "new" } : {} },
+              {
+                type: "vars",
+                items: [
+                  { name: "remaining", value: remaining, mark: remaining === 0 ? "match" : remaining < 0 ? "cut" : "" },
+                  { name: "calls", value: calls },
+                  { name: "repeats thrown away", value: repeats, mark: opts.repeat ? "cut" : "" },
+                ],
+              },
+              { type: "array", label: `found (a set: ${found.length})`, values: found.slice(), wide: true, marks: fmarks },
+            ];
+          };
+
+          steps.push({ line: "sort", note: `Sort: ${fmt(cands)}. Then the same combination always comes out in the same order, so the set can spot repeats.`, view: view(0, target) });
+          steps.push({ line: "start", note: `dfs(0, ${target}): take or skip each number, once.`, view: view(0, target) });
+          function dfs(i, remaining) {
+            calls++;
+            if (remaining === 0) {
+              const key = fmt(path);
+              const at = found.indexOf(key);
+              if (at >= 0) {
+                repeats++;
+                steps.push({
+                  line: ["call", "done"],
+                  note: `${key} adds up to ${target}, but it's already in the set (built from a different copy of an equal number). Thrown away: wasted work.`,
+                  view: view(i, 0, { done: true, hit: at, repeat: true }),
+                });
+              } else {
+                found.push(key);
+                steps.push({ line: ["call", "done"], note: `${key} adds up to ${target}: add it to the set.`, view: view(i, 0, { done: true, hit: found.length - 1 }) });
+              }
+              return;
+            }
+            if (i === cands.length || remaining < 0) {
+              steps.push({
+                line: ["call", "dead"],
+                note: remaining < 0 ? `Overshot: path ${fmt(path)} is past ${target}. Dead end.` : `No numbers left, still ${remaining} short. Dead end.`,
+                view: view(i, remaining, { mark: "cut" }),
+              });
+              return;
+            }
+            path.push(cands[i]);
+            steps.push({ line: ["call", "take"], note: `Take cands[${i}] = ${cands[i]}: path = ${fmt(path)}. Move on to i = ${i + 1}; this copy is used up.`, view: view(i, remaining - cands[i], { added: true }) });
+            dfs(i + 1, remaining - cands[i]);
+            path.pop();
+            steps.push({ line: ["undo", "skip"], note: `Back: undo it, then skip cands[${i}] = ${cands[i]}.`, view: view(i + 1, remaining) });
+            dfs(i + 1, remaining);
+          }
+          dfs(0, target);
+          steps.push({
+            line: "return",
+            note: `${found.length ? `Return ${found.join(", ")}` : "Return []"}. ${calls} calls${repeats ? `, and ${repeats} combination${repeats === 1 ? " was" : "s were"} built twice and thrown away` : ""}. With many equal numbers this blows up: 22 ones with target 11 take 4.9 million calls.`,
+            view: view(undefined, target),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0040-combination-sum-ii/approach2.visual.js -->
+    <script>
+      // Sorted backtracking: each number once (recurse with i + 1), and skip a value already tried at this position.
+      DSAViz.register("0040-combination-sum-ii/approach2", {
+        inputs: [
+          { name: "candidates", type: "int[]", value: "[10, 1, 2, 7, 6, 1, 5]", minLength: 1, maxLength: 8, minValue: 1, maxValue: 50 },
+          { name: "target", type: "int", value: "8", min: 1, max: 12 },
+        ],
+        trace({ candidates: raw, target }) {
+          const cands = raw.slice().sort((a, b) => a - b);
+          const steps = [];
+          const result = [];
+          const path = [];
+          const fmt = (arr) => `[${arr.join(", ")}]`;
+          const view = (start, i, remaining, opts = {}) => {
+            const marks = {};
+            cands.forEach((_, k) => {
+              if (start !== undefined && k < start) marks[k] = "ghost";
+              else if (opts.pruned !== undefined && k >= opts.pruned) marks[k] = "cut";
+            });
+            if (i !== undefined && i < cands.length && opts.pruned === undefined) marks[i] = opts.mark || "active";
+            const pointers = {};
+            if (start !== undefined && start < cands.length) pointers[i === start ? "start, i" : "start"] = start;
+            if (i !== undefined && i !== start && i < cands.length) pointers.i = i;
+            return [
+              { type: "array", label: "candidates (sorted; faded = before start)", values: cands, marks, pointers },
+              { type: "array", label: "path", values: path.slice(), marks: opts.done ? Object.fromEntries(path.map((_, k) => [k, "match"])) : opts.added ? { [path.length - 1]: "new" } : {} },
+              { type: "vars", items: [{ name: "remaining", value: remaining, mark: remaining === 0 ? "match" : "" }] },
+              { type: "array", label: `result (${result.length})`, values: result.map(fmt), wide: true, marks: opts.done ? { [result.length - 1]: "new" } : {} },
+            ];
+          };
+
+          steps.push({ line: "sort", note: `Sort: ${fmt(cands)}. Equal values now sit side by side, and a too-big value means everything after it is too big.`, view: view(0, undefined, target) });
+          steps.push({ line: "start", note: `backtrack(0, ${target}).`, view: view(0, undefined, target) });
+          function backtrack(start, remaining) {
+            if (remaining === 0) {
+              result.push(path.slice());
+              steps.push({ line: "done", note: `remaining = 0: ${fmt(path)} adds up to ${target}. Add a copy to result.`, view: view(start, undefined, 0, { done: true }) });
+              return;
+            }
+            steps.push({ line: "call", note: `backtrack(${start}, ${remaining}): path ${fmt(path)}. Pick the next number from index ${start} on.`, view: view(start, undefined, remaining) });
+            for (let i = start; i < cands.length; i++) {
+              if (i > start && cands[i] === cands[i - 1]) {
+                steps.push({
+                  line: "same",
+                  note: `cands[${i}] = ${cands[i]} equals the ${cands[i]} just tried in this position. Starting with it again would build the same combinations: skip.`,
+                  view: view(start, i, remaining, { mark: "visited" }),
+                });
+                continue;
+              }
+              if (cands[i] > remaining) {
+                steps.push({ line: "prune", note: `${cands[i]} > ${remaining}: too big, and so is everything after it. Stop.`, view: view(start, i, remaining, { pruned: i }) });
+                break;
+              }
+              path.push(cands[i]);
+              steps.push({
+                line: "choose",
+                note: `Take cands[${i}] = ${cands[i]}: path = ${fmt(path)}, ${remaining - cands[i]} left. Recurse from i + 1 = ${i + 1}: this copy can't be used again${i + 1 < cands.length && cands[i + 1] === cands[i] ? `, but the next ${cands[i]} still can` : ""}.`,
+                view: view(start, i, remaining - cands[i], { added: true }),
+              });
+              backtrack(i + 1, remaining - cands[i]);
+              path.pop();
+              steps.push({ line: "undo", note: `Back: remove ${cands[i]}, path = ${fmt(path)}.`, view: view(start, i, remaining, { mark: "visited" }) });
+            }
+          }
+          backtrack(0, target);
+          steps.push({
+            line: "return",
+            note: result.length
+              ? `Return ${result.length}: ${result.map(fmt).join(", ")}. Each was built exactly once, so no set was needed.`
+              : `Return []: no combination adds up to ${target}.`,
+            view: view(undefined, undefined, target),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0040-combination-sum-ii/approach3.visual.js -->
+    <script>
+      // Group equal numbers: for each distinct value, choose how many of its copies to use (0, 1, ... up to what exists and fits).
+      DSAViz.register("0040-combination-sum-ii/approach3", {
+        inputs: [
+          { name: "candidates", type: "int[]", value: "[2, 5, 2, 1, 2]", minLength: 1, maxLength: 8, minValue: 1, maxValue: 50 },
+          { name: "target", type: "int", value: "5", min: 1, max: 12 },
+        ],
+        trace({ candidates: raw, target }) {
+          const tally = new Map();
+          raw.forEach((v) => tally.set(v, (tally.get(v) || 0) + 1));
+          const counts = [...tally.entries()].sort((a, b) => a[0] - b[0]);
+          const steps = [];
+          const result = [];
+          const path = [];
+          const fmt = (arr) => `[${arr.join(", ")}]`;
+          const view = (k, remaining, opts = {}) => {
+            const marks = {};
+            if (k !== undefined) counts.forEach((_, j) => j < k && (marks[j] = "ghost"));
+            if (k !== undefined && k < counts.length) marks[k] = opts.mark || "active";
+            const items = [{ name: "remaining", value: remaining, mark: remaining === 0 ? "match" : "" }];
+            if (opts.used !== undefined) items.push({ name: `copies of ${counts[k][0]}`, value: `${opts.used} of ${opts.most}` });
+            return [
+              { type: "array", label: "distinct values × how many times each appears", values: counts.map(([v, c]) => `${v} ×${c}`), wide: true, marks, pointers: k !== undefined && k < counts.length ? { k } : {} },
+              { type: "array", label: "path", values: path.slice(), marks: opts.done ? Object.fromEntries(path.map((_, j) => [j, "match"])) : opts.added ? { [path.length - 1]: "new" } : {} },
+              { type: "vars", items },
+              { type: "array", label: `result (${result.length})`, values: result.map(fmt), wide: true, marks: opts.done ? { [result.length - 1]: "new" } : {} },
+            ];
+          };
+
+          steps.push({
+            line: "count",
+            note: `Count each value: ${counts.map(([v, c]) => `${v} ×${c}`).join(", ")}. Equal numbers are now one choice, "how many?", so duplicates can't arise.`,
+            view: view(0, target),
+          });
+          steps.push({ line: "start", note: `backtrack(0, ${target}): start with the smallest value.`, view: view(0, target) });
+          function backtrack(k, remaining) {
+            if (remaining === 0) {
+              result.push(path.slice());
+              steps.push({ line: ["call", "done"], note: `remaining = 0: ${fmt(path)} adds up to ${target}. Add it.`, view: view(k, 0, { done: true }) });
+              return;
+            }
+            if (k === counts.length || counts[k][0] > remaining) {
+              steps.push({
+                line: ["call", "dead"],
+                note: k === counts.length ? `No values left, still ${remaining} short. Dead end.` : `${counts[k][0]} > ${remaining}: this value and every bigger one are too big. Dead end.`,
+                view: view(k, remaining, { mark: "cut" }),
+              });
+              return;
+            }
+            const [value, count] = counts[k];
+            const most = Math.min(count, Math.floor(remaining / value));
+            steps.push({
+              line: ["call", "none"],
+              note: `Value ${value}: there are ${count}, and ${Math.floor(remaining / value)} would fit in ${remaining}, so use 0 to ${most}. First, use none.`,
+              view: view(k, remaining, { used: 0, most }),
+            });
+            backtrack(k + 1, remaining);
+            for (let used = 1; used <= most; used++) {
+              path.push(value);
+              steps.push({
+                line: "copies",
+                note: `Use ${used} cop${used === 1 ? "y" : "ies"} of ${value}: path = ${fmt(path)}, ${remaining - used * value} left. Go on to the next value.`,
+                view: view(k, remaining - used * value, { used, most, added: true }),
+              });
+              backtrack(k + 1, remaining - used * value);
+            }
+            path.splice(path.length - most, most);
+            steps.push({
+              line: "undo",
+              note: most ? `Done with ${value}: take its ${most} cop${most === 1 ? "y" : "ies"} off the path, path = ${fmt(path)}.` : `Done with ${value}: no copies fit, so there's nothing to take off.`,
+              view: view(k, remaining),
+            });
+          }
+          backtrack(0, target);
+          steps.push({
+            line: "return",
+            note: result.length ? `Return ${result.length}: ${result.map(fmt).join(", ")}.` : `Return []: no combination adds up to ${target}.`,
+            view: view(undefined, target),
           });
           return steps;
         },

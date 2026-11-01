@@ -1,0 +1,252 @@
+<details class="question" data-tags="array backtracking recursion combinations duplicates">
+  <summary>
+    <span class="q-title">40. Combination Sum II</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Backtracking</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Combination Sum with two changes. Each number
+      is used <strong>once</strong>, so recurse with <code>i + 1</code>. The
+      input has <strong>duplicates</strong>, so sort it and, in the loop,
+      skip a value equal to the previous one <em>at the same level</em>:
+      <code>if i &gt; start and nums[i] == nums[i - 1]: continue</code>. Equal
+      numbers can still be used together, just not started from twice.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/combination-sum-ii/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given a list of numbers <code>candidates</code> (which may contain
+        duplicates) and a <code>target</code>, return every unique combination
+        that adds up to <code>target</code>. Each number in the list may be
+        used <strong>only once</strong> in a combination, and the answer must
+        not contain the same combination twice.
+      </p>
+      <ul>
+        <li><code>1 &lt;= candidates.length &lt;= 100</code> and <code>1 &lt;= candidates[i] &lt;= 50</code>.</li>
+        <li><code>1 &lt;= target &lt;= 30</code>.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[10,1,2,7,6,1,5]</code>, target <code>8</code> →
+        <code>[[1,1,6],[1,2,5],[1,7],[2,6]]</code>;
+        <code>[2,5,2,1,2]</code>, target <code>5</code> →
+        <code>[[1,2,2],[5]]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[1,1]</code>, target <code>1</code></td>
+              <td><code>[[1]]</code></td>
+              <td>The duplicate trap: either 1 makes <code>[1]</code>, but it should be listed once.</td>
+            </tr>
+            <tr>
+              <td><code>[1,1]</code>, target <code>2</code></td>
+              <td><code>[[1,1]]</code></td>
+              <td>Over-skipping: equal numbers may be used <em>together</em>. Skipping with <code>i &gt; 0</code> instead of <code>i &gt; start</code> returns <code>[]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,1]</code>, target <code>3</code></td>
+              <td><code>[[1,2]]</code></td>
+              <td>Unsorted input. Without sorting, a set sees <code>[1,2]</code> and <code>[2,1]</code> as different.</td>
+            </tr>
+            <tr>
+              <td><code>[2]</code>, target <code>4</code></td>
+              <td><code>[]</code></td>
+              <td>Each number only once: unlike Combination Sum, <code>[2,2]</code> isn't allowed. Recursing with <code>i</code> gives it.</td>
+            </tr>
+            <tr>
+              <td><code>[2]</code>, target <code>1</code></td>
+              <td><code>[]</code></td>
+              <td>Nothing fits.</td>
+            </tr>
+            <tr>
+              <td><code>[10,1,2,7,6,1,5]</code>, target <code>8</code></td>
+              <td><code>[[1,1,6],[1,2,5],[1,7],[2,6]]</code></td>
+              <td>The usual case: <code>[1,7]</code> must appear once even though there are two 1s.</td>
+            </tr>
+            <tr>
+              <td><code>[2,5,2,1,2]</code>, target <code>5</code></td>
+              <td><code>[[1,2,2],[5]]</code></td>
+              <td>Three 2s, two used together.</td>
+            </tr>
+            <tr>
+              <td><code>[50]</code>, target <code>30</code></td>
+              <td><code>[]</code></td>
+              <td>The only candidate is bigger than the target.</td>
+            </tr>
+            <tr>
+              <td>100 ones, target <code>30</code></td>
+              <td><code>[[1, …, 1]]</code> (thirty 1s)</td>
+              <td>One answer, but take-or-skip with a set tries every way to choose 30 of the 100 ones.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Take or Skip, Then Drop Repeats with a Set</h2>
+      <p class="intuition">
+        For each number, take it or skip it, and collect every path that adds
+        up to the target in a set. Sorting first makes equal combinations come
+        out in the same order, so the set can recognise repeats.
+      </p>
+      <ul>
+        <li>Recurse with <code>i + 1</code> after taking: each copy is used at most once.</li>
+        <li>A set of tuples (C++ <code>std::set</code>, Java <code>HashSet&lt;List&gt;</code>) keeps one of each.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(2ⁿ · n)</span>
+        <span><strong>Space</strong> O(n) recursion, plus the set</span>
+      </div>
+      <p class="note">
+        It finds every repeat and then throws it away. With many equal
+        numbers that's hopeless: on 22 ones with target 11 it made 4.9 million
+        calls here, against 12 for Approach 2, and 100 ones would never finish.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Sort and Skip Repeats at the Same Level
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Build each combination in sorted order. At one level of the recursion
+        (one position in the combination), trying the value 1 a second time
+        would just repeat everything the first 1 already built, so skip it.
+      </p>
+      <ul>
+        <li>
+          <code>if i &gt; start and nums[i] == nums[i - 1]: continue</code>. It's
+          <code>i &gt; start</code>, not <code>i &gt; 0</code>: the first copy at
+          this level is always allowed, which is how <code>[1,1,6]</code> uses
+          two 1s.
+        </li>
+        <li>Recurse with <code>i + 1</code>: each copy is used at most once.</li>
+        <li>Break as soon as a number is bigger than what's left (it's sorted).</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(2ⁿ · n) worst case</span>
+        <span><strong>Space</strong> O(n) recursion</span>
+      </div>
+      <p class="note">
+        Every combination is built exactly once, so no set is needed. All 503
+        large tests here (up to 100 candidates) took about 1 s in Python
+        together. The "skip equal values at the same level" line is the same
+        one used in 3Sum, Subsets II and Permutations II.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Count Each Value, Choose How Many Copies</h2>
+      <p class="intuition">
+        Equal numbers are interchangeable, so treat them as one choice: for
+        each distinct value, use 0, 1, 2, … copies, up to how many exist and
+        how many fit.
+      </p>
+      <ul>
+        <li>Count the values (<code>Counter</code>, <code>std::map</code>, <code>TreeMap</code>) and sort them.</li>
+        <li>
+          At value <code>k</code>, try using none, then add one copy at a time
+          and recurse to <code>k + 1</code>. Afterwards take the copies off again.
+        </li>
+        <li>Stop when the value is bigger than what's left: all later values are bigger too.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(2ⁿ · n) worst case</span>
+        <span><strong>Space</strong> O(n) recursion</span>
+      </div>
+      <p class="note">
+        Same speed as Approach 2, and duplicates are impossible by design
+        instead of skipped. The recursion depth is the number of
+        <em>distinct</em> values, which helps when there are many repeats.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        Python's <code>itertools.combinations</code> tries every subset of a
+        given size, but repeated values produce repeated combinations, and
+        going through every size of up to 100 numbers is far too slow. C++
+        and Java have nothing built in.
+      </p>
+      <p class="note">
+        Write Approach 2. Three things change from Combination Sum: sort,
+        recurse with <code>i + 1</code>, and skip a value that equals the
+        previous one when <code>i &gt; start</code>.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Take or Skip + Set</th>
+              <td>Build everything, drop repeats</td>
+              <td>O(2ⁿ · n)</td>
+              <td>O(n) + set</td>
+              <td>Blows up on many equal numbers</td>
+            </tr>
+            <tr>
+              <th scope="row">Skip Repeats at the Same Level</th>
+              <td>Sort; <code>i &gt; start</code> and equal → skip; <code>i + 1</code></td>
+              <td>O(2ⁿ · n) worst</td>
+              <td>O(n)</td>
+              <td>Expected answer; each combination built once</td>
+            </tr>
+            <tr>
+              <th scope="row">Choose How Many Copies</th>
+              <td>Counter of values, 0..k copies each</td>
+              <td>O(2ⁿ · n) worst</td>
+              <td>O(distinct values)</td>
+              <td>No duplicates by design</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
