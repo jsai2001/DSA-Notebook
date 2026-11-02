@@ -17,6 +17,8 @@ problems/
     approach2.visual.js optional step-by-step visualizer for approach 2
   0002-add-two-numbers/
   ...
+  groups.json           the pattern groups (Sliding Window, Trees, ...) in page order;
+                        each card names its group with data-group="..."
 designs/                System Design cards, same rules as problems/
   0001-how-uber-finds-a-driver/
     problem.html        the card: key idea, problem, one section per step
@@ -25,7 +27,8 @@ designs/                System Design cards, same rules as problems/
 template.html           shared page shell for both tabs (header with the tab bar and
                         difficulty/topic filters, theme toggle fixed at the top right,
                         bottom dock with search and Surprise me)
-app.js                  search + filters, code tabs, accordion, theme, Surprise me,
+app.js                  pattern groups ("By pattern" / "By number"),
+                        search + filters, code tabs, accordion, theme, Surprise me,
                         each card's jump bar and "Same pattern" links (built from its
                         sections and tags), links in the address bar, keyboard shortcuts
 viz.js                  visualizer engine (widgets, controls, line highlighting)
@@ -43,8 +46,8 @@ The generated pages are committed, so the site still works by opening them direc
 
 ## Adding a problem
 
-1. Create a folder in `problems/` named `NNNN-slug`, using the LeetCode number (4 digits) and the slug from the problem URL, e.g. `problems/0005-longest-palindromic-substring/`. Problems are listed in folder-name order.
-2. Copy `problem.html` from an existing problem and fill in the title, difficulty (`easy` / `medium` / `hard`), tags, `data-tags` (used by search), key idea, LeetCode link, problem statement, **Edge cases**, approaches, the **In practice** section and the comparison table.
+1. Create a folder in `problems/` named `NNNN-slug`, using the LeetCode number (4 digits) and the slug from the problem URL, e.g. `problems/0005-longest-palindromic-substring/`. Problems are listed in folder-name order inside their group (and in "By number" view).
+2. Copy `problem.html` from an existing problem and fill in the pattern group (`data-group`, an `id` from `problems/groups.json`; add a new group there if none fits), title, difficulty (`easy` / `medium` / `hard`), tags, `data-tags` (used by search), key idea, LeetCode link, problem statement, **Edge cases**, approaches, the **In practice** section and the comparison table.
    - **Edge cases** sits right after the problem statement: a table of input, expected output, and why it's tricky (empty input, limits, overflow, duplicates, the answer at the very end, ...). Run every solution against them before adding a row, so the expected answers are known to be right.
    - **In practice** is what you'd write day to day with standard-library built-ins (`builtin.py` / `.cpp` / `.java` behind a `data-src="builtin"` placeholder), with its hidden cost and whether it passes LeetCode. If there's no useful built-in, say so in a line or two and point to the approach you'd actually use. It isn't a numbered approach and isn't in the comparison table.
 3. In each approach, keep the code placeholder and give it a name:
@@ -101,10 +104,11 @@ Any approach can have a step-by-step visualizer. It shows up as a **Visualize** 
 
 ## Checking the build
 
-`python3 build.py --check` exits with an error if `index.html` or `system-design.html` is out of date, without changing anything. The build also stops with a clear message if a placeholder has no code files, a code file isn't used by any placeholder, a folder is misnamed, or code contains `</script` (or a card's `style.css` contains `</style`).
+`python3 build.py --check` exits with an error if `index.html` or `system-design.html` is out of date, without changing anything. The build also stops with a clear message if a placeholder has no code files, a code file isn't used by any placeholder, a folder is misnamed, a card's `data-group` is missing or not in `groups.json`, or code contains `</script` (or a card's `style.css` contains `</style`).
 
 Edit page-wide things (header, buttons, scripts) in `template.html`, `app.js` and `solutions.css`, then rebuild.
 ## Using the page
+- Coding Solutions opens **By pattern**: one closed group per pattern, with its problem count and difficulties. Click a group to open it (one group at a time, like the cards; opening a problem closes the other groups). **By number** shows the plain list. Search, the filter chips, Surprise me and card links open the right group by themselves.
 - Opening a card puts its link in the address bar (`#q-15-3sum`; jump-bar sections give `#q-15-3sum-approach-3`), so a refresh or bookmark comes back to the same place.
 - **Same pattern** at the end of a card lists other cards with the same pattern tag. It's built from the tags, so a new problem joins automatically; the broad tags Array, String and Math are left out.
 - Keyboard: `/` opens search and `Esc` closes it (from anywhere on the page), `r` Surprise me, `←` / `→` step the visualizer on screen.

@@ -30,9 +30,18 @@ Visualizer line markers:
 
 Cards are ordered by folder name, so keep the 4-digit prefix (the LeetCode number
 for problems/, a running number for designs/).
+
+Pattern groups (optional, per page folder):
+    problems/groups.json           [{"id": "sliding-window", "name": "Sliding Window",
+                                     "hint": "one line"}, ...] in the order shown on the page.
+    When the file exists, every card must name its group on its first line:
+    <details class="question" data-group="sliding-window" ...>. The cards are then
+    wrapped in one <details class="pattern-group"> per group (groups with no cards
+    are left out), and app.js adds the "By pattern / By number" switch.
 No third-party dependencies; needs Python 3.8+.
 """
 
+import html as htmllib
 import json
 import re
 import sys
@@ -216,6 +225,59 @@ def replace_marker(html, name, render):
     return html[: marker.start()] + text + html[end:]
 
 
+GROUP_ATTR = re.compile(r'data-group="([^"]*)"')
+GROUP_ID = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+
+
+def load_groups(base, cards):
+    """Return [(group, [(where, card), ...]), ...] from base/groups.json, or None if there's no file."""
+    path = base / "groups.json"
+    if not path.exists():
+        return None
+    where_file = path.relative_to(ROOT)
+    try:
+        groups = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as e:
+        raise BuildError(f"{where_file}: not valid JSON ({e})")
+    if not isinstance(groups, list) or not groups:
+        raise BuildError(f"{where_file}: must be a non-empty list of groups")
+    members = {}
+    for g in groups:
+        if not isinstance(g, dict) or set(g) != {"id", "name", "hint"} or not all(isinstance(v, str) and v.strip() for v in g.values()):
+            raise BuildError(f"{where_file}: each group needs exactly a non-empty \"id\", \"name\" and \"hint\": {g!r}")
+        if not GROUP_ID.match(g["id"]):
+            raise BuildError(f"{where_file}: group id {g['id']!r} must look like sliding-window")
+        if g["id"] in members:
+            raise BuildError(f"{where_file}: group id {g['id']!r} is used twice")
+        members[g["id"]] = []
+    for where, card in cards:
+        found = GROUP_ATTR.findall(card.split("\n", 1)[0])
+        if len(found) != 1:
+            raise BuildError(f"{where}/problem.html: the first line needs one data-group=\"...\" (see {where_file})")
+        if found[0] not in members:
+            raise BuildError(f"{where}/problem.html: unknown group {found[0]!r}; add it to {where_file}")
+        members[found[0]].append((where, card))
+    return [(g, members[g["id"]]) for g in groups if members[g["id"]]]
+
+
+def render_group(pad, group, cards):
+    count = len(cards)
+    esc = htmllib.escape
+    inner = pad + "    "
+    body = "\n\n".join(f"{inner}<!-- ===== {where} ===== -->\n" + indent(card, inner) for where, card in cards)
+    return (
+        f"{pad}<!-- ===== group: {group['id']} ===== -->\n"
+        f'{pad}<details class="pattern-group" id="g-{group["id"]}">\n'
+        f"{pad}  <summary>\n"
+        f'{pad}    <span class="g-name">{esc(group["name"])}</span>\n'
+        f'{pad}    <span class="g-count"><span class="g-total">{count} problem{"" if count == 1 else "s"}</span></span>\n'
+        f'{pad}    <span class="g-hint">{esc(group["hint"])}</span>\n'
+        f"{pad}  </summary>\n"
+        f'{pad}  <div class="g-body">\n{body}\n{pad}  </div>\n'
+        f"{pad}</details>"
+    )
+
+
 def script_block(pad, comment, script):
     return f"{pad}<!-- {comment} -->\n{pad}<script>\n{indent(script, pad + '  ')}\n{pad}</script>"
 
@@ -260,11 +322,12 @@ def build_page(template, page):
             f"{pad}<!-- {name} -->\n{pad}<style>\n{indent(css, pad + '  ')}\n{pad}</style>" for name, css in styles
         ),
     )
-    html = replace_marker(
-        html,
-        "PROBLEMS",
-        lambda pad: "\n\n".join(f"{pad}<!-- ===== {where} ===== -->\n" + indent(card, pad) for where, card in cards),
-    )
+    groups = load_groups(base, cards)
+    if groups is None:
+        render_list = lambda pad: "\n\n".join(f"{pad}<!-- ===== {where} ===== -->\n" + indent(card, pad) for where, card in cards)
+    else:
+        render_list = lambda pad: "\n\n".join(render_group(pad, g, members) for g, members in groups)
+    html = replace_marker(html, "PROBLEMS", render_list)
     html = replace_marker(
         html,
         "VISUALS",

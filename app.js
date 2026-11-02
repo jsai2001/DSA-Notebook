@@ -11,6 +11,9 @@ const difficultyOf = (q) => {
 };
 const topicsOf = (q) => [...q.querySelectorAll(".q-meta .tag")].map((t) => t.textContent.trim());
 
+// Set by the pattern-groups code below, so the group counts follow the filters.
+let afterFilter = () => {};
+
 function applyFilters() {
   const term = search.value.trim().toLowerCase();
   let visible = 0;
@@ -26,6 +29,7 @@ function applyFilters() {
   noResults.hidden = visible !== 0;
   const active = term || filters.difficulty || filters.topic;
   filterCount.textContent = active ? `Showing ${visible} of ${questions.length}` : "";
+  afterFilter();
 }
 
 search.addEventListener("input", () => {
@@ -112,6 +116,146 @@ search.addEventListener("keydown", (e) => {
   }
 });
 
+// ---------- Pattern groups: "By pattern" (default) or "By number" ----------
+// build.py wraps the cards in <details class="pattern-group"> when the page has
+// a groups.json. Pages without groups (System Design) skip all of this.
+const questionList = document.getElementById("question-list");
+const groupBoxes = [...questionList.querySelectorAll(":scope > .pattern-group")];
+const groupOf = (q) => q.closest(".pattern-group");
+const isFiltering = () => !!(search.value.trim() || filters.difficulty || filters.topic);
+
+// Open the group a card is in, so the card can be seen (links, Surprise me, ...).
+function revealCard(q) {
+  const g = groupOf(q);
+  if (g && !g.open) g.open = true;
+}
+
+// Accordion for groups: one group open at a time, like the cards. While a search
+// or filter is on, every group with a match stays open so all results show.
+function closeOtherGroups(keep) {
+  if (isFiltering()) return;
+  groupBoxes.forEach((g) => {
+    if (g !== keep) g.open = false;
+  });
+}
+
+if (groupBoxes.length) {
+  const home = new Map(); // card -> its group's body, to put it back after "By number"
+  groupBoxes.forEach((g) => g.querySelectorAll(".question").forEach((q) => home.set(q, g.querySelector(".g-body"))));
+  const numberOf = (q) => parseInt(q.querySelector(".q-title").textContent, 10);
+  const byNumber = [...home.keys()].sort((a, b) => numberOf(a) - numberOf(b));
+
+  // A card opening anywhere (click, link, Surprise me, Present mode) opens its
+  // group and closes the other groups.
+  questions.forEach((q) =>
+    q.addEventListener("toggle", () => {
+      if (!q.open) return;
+      revealCard(q);
+      closeOtherGroups(groupOf(q));
+    })
+  );
+
+  // --- the switch above the list ---
+  const bar = document.createElement("div");
+  bar.className = "view-bar";
+  bar.innerHTML =
+    '<div class="view-switch" role="group" aria-label="Show the questions">' +
+    '<button type="button" data-view="groups" aria-pressed="true">By pattern</button>' +
+    '<button type="button" data-view="list" aria-pressed="false">By number</button>' +
+    "</div>" +
+    '<button type="button" class="view-all">Open all groups</button>';
+  questionList.before(bar);
+  questionList.style.marginTop = "1rem";
+  const allBtn = bar.querySelector(".view-all");
+  let view = "groups";
+
+  function updateAllButton() {
+    const shown = groupBoxes.filter((g) => !g.hidden);
+    allBtn.textContent = shown.some((g) => !g.open) ? "Open all groups" : "Close all groups";
+    allBtn.hidden = view !== "groups";
+  }
+
+  function setView(next) {
+    if (next === view) return;
+    view = next;
+    bar.querySelectorAll("[data-view]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === view)));
+    const open = [...questions].find((q) => q.open);
+    if (view === "list") {
+      groupBoxes.forEach((g) => g.remove());
+      byNumber.forEach((q) => questionList.append(q));
+    } else {
+      groupBoxes.forEach((g) => questionList.append(g));
+      home.forEach((body, q) => body.append(q));
+      if (open) revealCard(open);
+    }
+    updateAllButton();
+    if (open) requestAnimationFrame(() => open.scrollIntoView({ block: "start" }));
+  }
+
+  bar.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    if (b.dataset.view) setView(b.dataset.view);
+    else {
+      const anyClosed = groupBoxes.some((g) => !g.hidden && !g.open);
+      groupBoxes.forEach((g) => {
+        if (!g.hidden) g.open = anyClosed;
+      });
+      updateAllButton();
+    }
+  });
+
+  // --- counts follow the filters; matching groups open while filtering ---
+  let openBeforeFilter = null; // which groups were open before a search/filter began
+  afterFilter = () => {
+    const filtering = isFiltering();
+    if (filtering && !openBeforeFilter) openBeforeFilter = new Set(groupBoxes.filter((g) => g.open));
+    groupBoxes.forEach((g) => {
+      const shown = [...g.querySelectorAll(".question")].filter((q) => !q.hidden);
+      g.hidden = shown.length === 0;
+      const tally = { easy: 0, medium: 0, hard: 0 };
+      shown.forEach((q) => tally[difficultyOf(q) || "medium"]++);
+      const count = g.querySelector(".g-count");
+      count.replaceChildren();
+      const total = document.createElement("span");
+      total.className = "g-total";
+      total.textContent = `${shown.length} problem${shown.length === 1 ? "" : "s"}`;
+      count.append(total);
+      ["easy", "medium", "hard"].forEach((d) => {
+        if (!tally[d]) return;
+        const dot = document.createElement("span");
+        dot.className = `g-dot ${d}`;
+        dot.textContent = String(tally[d]);
+        dot.title = `${tally[d]} ${d}`;
+        dot.setAttribute("aria-label", `${tally[d]} ${d}`);
+        count.append(dot);
+      });
+      if (filtering && shown.length) g.open = true;
+    });
+    if (!filtering && openBeforeFilter) {
+      // Filters cleared: back to how the groups were. If a card is open, only its group stays open.
+      const openCard = [...questions].find((q) => q.open);
+      groupBoxes.forEach((g) => (g.open = openCard ? g === groupOf(openCard) : openBeforeFilter.has(g)));
+      openBeforeFilter = null;
+    }
+    updateAllButton();
+  };
+
+  groupBoxes.forEach((g) => {
+    // Clicking a closed group's header opens it and closes the others.
+    g.querySelector(":scope > summary").addEventListener("click", () => {
+      if (!g.open) closeOtherGroups(g);
+    });
+    g.addEventListener("toggle", () => {
+      // A closed group also closes the card open inside it.
+      if (!g.open) g.querySelectorAll(".question[open]").forEach((q) => (q.open = false));
+      updateAllButton();
+    });
+  });
+
+  afterFilter();
+}
+
 // ---------- Accordion: only one question open at a time ----------
 questions.forEach((q) => {
   q.addEventListener("toggle", () => {
@@ -147,6 +291,7 @@ surpriseBtn.addEventListener("click", () => {
 
   // Collapse the others BEFORE scrolling, so the layout doesn't shift
   // under the scroll and leave the picked question off-screen.
+  revealCard(pick); // open its pattern group first
   all.forEach((q) => {
     q.open = q === pick;
   });
@@ -622,6 +767,7 @@ function openFromHash(hash) {
     search.value = "";
     applyFilters();
   }
+  revealCard(q); // open its pattern group first, so the scroll lands on it
   setAddress(id);
   if (q.open) {
     requestAnimationFrame(() => target.scrollIntoView({ block: "start" }));
