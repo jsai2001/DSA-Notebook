@@ -1,0 +1,240 @@
+<details class="question" data-tags="array backtracking recursion n-queens chess diagonals bitmask bit-manipulation">
+  <summary>
+    <span class="q-title">51. N-Queens</span>
+    <span class="q-meta">
+      <span class="badge hard">Hard</span>
+      <span class="tag">Array</span>
+      <span class="tag">Backtracking</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> One queen per row, so place them row by row
+      and backtrack. A square <code>(r, c)</code> is attacked when its
+      <strong>column</strong>, its <strong>r − c</strong> (the down-right
+      diagonal) or its <strong>r + c</strong> (the down-left diagonal) is
+      already taken. Keep those three in sets, so every check is O(1), and give
+      up on a row as soon as it has no safe square.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/n-queens/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Place <code>n</code> queens on an <code>n × n</code> chessboard so that
+        no two attack each other (no two share a row, a column or a diagonal).
+        Return every distinct solution, each as a list of strings where
+        <code>'Q'</code> is a queen and <code>'.'</code> an empty square, in
+        any order.
+      </p>
+      <ul>
+        <li><code>1 &lt;= n &lt;= 9</code>.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>n = 4</code> →
+        <code>[[".Q..","...Q","Q...","..Q."],["..Q.","Q...","...Q",".Q.."]]</code>;
+        <code>n = 1</code> → <code>[["Q"]]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>n = 1</code></td>
+              <td><code>[["Q"]]</code></td>
+              <td>The smallest board: one queen, one solution.</td>
+            </tr>
+            <tr>
+              <td><code>n = 2</code> / <code>n = 3</code></td>
+              <td><code>[]</code> / <code>[]</code></td>
+              <td>No solution at all: return an empty list, not <code>None</code> or a partial board.</td>
+            </tr>
+            <tr>
+              <td><code>n = 4</code></td>
+              <td>2 boards</td>
+              <td>Leaving out the <code>r + c</code> check (one of the two diagonals) gives 7 boards here, and 2,113 instead of 92 for n = 8.</td>
+            </tr>
+            <tr>
+              <td><code>n = 5</code> / <code>n = 6</code></td>
+              <td>10 / 4 boards</td>
+              <td>The count isn't monotonic: n = 6 has fewer solutions than n = 5. Don't sanity-check by "more for bigger n".</td>
+            </tr>
+            <tr>
+              <td><code>n = 8</code></td>
+              <td>92 boards</td>
+              <td>The classic eight queens. In C++ and Java, indexing the diagonal array with <code>r − c</code> without adding <code>n − 1</code> reads index −1: out of bounds (Java throws <code>ArrayIndexOutOfBoundsException</code>).</td>
+            </tr>
+            <tr>
+              <td><code>n = 9</code></td>
+              <td>352 boards</td>
+              <td>The largest input. Trying every column order without early checks means 9! = 362,880 full boards.</td>
+            </tr>
+            <tr>
+              <td>Python board <code>[['.'] * n] * n</code></td>
+              <td>Separate rows</td>
+              <td>That makes n references to <em>one</em> row: placing queens at columns 1, 3, 0, 2 turns every row into <code>"QQQQ"</code>. Build each row on its own.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Every Column Order, Check at the End</h2>
+      <p class="intuition">
+        One queen per row and one per column means a solution is a permutation
+        of the columns. Try all n! of them, and keep the ones where no two
+        queens share a diagonal.
+      </p>
+      <ul>
+        <li>Two queens in rows i and j share a diagonal when <code>|cols[i] − cols[j]| == j − i</code>.</li>
+        <li>The check runs only on full boards, so hopeless boards are built all the way down.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n! · n²)</span>
+        <span><strong>Space</strong> O(n) besides the answer</span>
+      </div>
+      <p class="note">
+        Passes for n ≤ 9 (0.43 s in Python here at n = 9), but it checks every
+        one of the 362,880 full boards, even those that went wrong in row 1.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Backtracking with Column and Diagonal Sets
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Check while placing instead of at the end. Every square on a
+        down-right diagonal has the same <code>r − c</code>, and every square
+        on a down-left diagonal the same <code>r + c</code>. So three sets say
+        in O(1) whether a square is attacked.
+      </p>
+      <ul>
+        <li>Skip attacked squares; if a row has no safe square, that branch dies right there.</li>
+        <li>After the recursive call, remove the queen and its three entries: that's the backtrack.</li>
+        <li>
+          In C++ and Java, use arrays of size 2n − 1 and store <code>r − c</code>
+          at index <code>r − c + n − 1</code>, since it can be negative.
+          (A Python list happens to work without the offset: the negative
+          indices wrap into the other half of the list. Sets avoid the question.)
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n!) upper bound</span>
+        <span><strong>Space</strong> O(n) besides the answer</span>
+      </div>
+      <p class="note">
+        Far fewer squares are visited: 0.01 s in Python at n = 9 here, and 0.92 s
+        even at n = 12 (14,200 solutions). The same "choose, recurse, undo"
+        shape as Permutations and Sudoku Solver.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Backtracking with Bitmasks</h2>
+      <p class="intuition">
+        The same search, with the three sets packed into three n-bit numbers
+        for the current row: bit c is set if column c is attacked. The safe
+        columns are <code>~(cols | diag | anti)</code> in one step.
+      </p>
+      <ul>
+        <li><code>free &amp; −free</code> gives the lowest safe column; subtract it to move on.</li>
+        <li>
+          Going one row down, a down-right attack moves one column right
+          (<code>&lt;&lt; 1</code>, then <code>&amp; full</code> to drop what
+          falls off the board) and a down-left attack one column left
+          (<code>&gt;&gt; 1</code>).
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n!) upper bound</span>
+        <span><strong>Space</strong> O(n) besides the answer</span>
+      </div>
+      <p class="note">
+        No per-square checks at all: about 3× faster than the sets here (0.27 s
+        vs 0.92 s at n = 12). Worth knowing; Approach 2 is easier to explain in
+        an interview.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No library solves N-Queens. Python's <code>itertools.permutations</code>
+        and C++'s <code>std::next_permutation</code> can list the column
+        orders, but that's Approach 1: every order is built in full before it's
+        checked.
+      </p>
+      <p class="note">
+        Write Approach 2. The three things to remember: one queen per row,
+        <code>r − c</code> and <code>r + c</code> for the diagonals, and undo
+        after the recursive call.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Every Column Order</th>
+              <td>All permutations, check diagonals at the end</td>
+              <td>O(n! · n²)</td>
+              <td>O(n)</td>
+              <td>Builds all 362,880 boards at n = 9</td>
+            </tr>
+            <tr>
+              <th scope="row">Column and Diagonal Sets</th>
+              <td>Row by row; columns, r − c, r + c</td>
+              <td>O(n!) bound</td>
+              <td>O(n)</td>
+              <td>Expected answer</td>
+            </tr>
+            <tr>
+              <th scope="row">Bitmasks</th>
+              <td>Three n-bit masks, shifted per row</td>
+              <td>O(n!) bound</td>
+              <td>O(n)</td>
+              <td>About 3× faster than sets</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
