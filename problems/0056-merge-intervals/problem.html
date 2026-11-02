@@ -1,0 +1,249 @@
+<details class="question" data-tags="array sorting intervals merge sweep-line">
+  <summary>
+    <span class="q-title">56. Merge Intervals</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Sorting</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> <strong>Sort by start.</strong> Then an
+      interval overlaps something before it only if it overlaps the
+      <em>last</em> merged interval. If <code>start &lt;= last.end</code>,
+      set <code>last.end = max(last.end, end)</code>; otherwise start a new
+      merged interval. O(n log n) time.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/merge-intervals/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given an array of <code>intervals</code> where
+        <code>intervals[i] = [start, end]</code>, merge all overlapping
+        intervals and return the non-overlapping intervals that cover exactly
+        the same numbers.
+      </p>
+      <ul>
+        <li><code>1 &lt;= intervals.length &lt;= 10⁴</code> and <code>0 &lt;= start &lt;= end &lt;= 10⁴</code>.</li>
+        <li>Intervals that touch, like <code>[1,4]</code> and <code>[4,5]</code>, count as overlapping.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[[1,3],[2,6],[8,10],[15,18]]</code> →
+        <code>[[1,6],[8,10],[15,18]]</code>; <code>[[1,4],[4,5]]</code> →
+        <code>[[1,5]]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[[1,4],[4,5]]</code></td>
+              <td><code>[[1,5]]</code></td>
+              <td>They only touch, which counts. Checking <code>start &lt; last.end</code> instead of <code>&lt;=</code> keeps them apart.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,4],[5,6]]</code></td>
+              <td><code>[[1,4],[5,6]]</code></td>
+              <td>No shared number: 4 and 5 are next to each other but don't overlap.</td>
+            </tr>
+            <tr>
+              <td><code>[[4,7],[1,4]]</code></td>
+              <td><code>[[1,7]]</code></td>
+              <td>Not sorted. Merging in the given order returns <code>[[4,7]]</code>: [1,4] is "merged" into [4,7] and its start is lost.</td>
+            </tr>
+            <tr>
+              <td><code>[[2,3],[4,5],[1,10]]</code></td>
+              <td><code>[[1,10]]</code></td>
+              <td>The last interval covers everything. Without sorting you get <code>[[2,3],[4,10]]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,10],[2,3],[4,5]]</code></td>
+              <td><code>[[1,10]]</code></td>
+              <td>Nested: [2,3] sits inside [1,10]. Setting <code>last.end = end</code> without <code>max</code> shrinks it: <code>[[1,3],[4,5]]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,4],[0,0]]</code></td>
+              <td><code>[[0,0],[1,4]]</code></td>
+              <td>A single point, 0, is a valid interval. Sorting moves it to the front.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,1],[1,1]]</code></td>
+              <td><code>[[1,1]]</code></td>
+              <td>Duplicates merge into one.</td>
+            </tr>
+            <tr>
+              <td><code>[[0,0]]</code></td>
+              <td><code>[[0,0]]</code></td>
+              <td>One interval: return it as it is.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Absorb Overlaps, No Sorting</h2>
+      <p class="intuition">
+        Keep a list of disjoint merged intervals. For each new interval,
+        compare it with every merged one: absorb each one it overlaps (take
+        the smaller start and the larger end), keep the rest, then add the
+        grown interval.
+      </p>
+      <ul>
+        <li>Two intervals overlap when <code>s &lt;= end and start &lt;= e</code>: neither ends before the other starts.</li>
+        <li>The list stays disjoint after every step, so one pass over it per interval is enough.</li>
+        <li>Sort the result at the end, only so it comes out in order.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Correct, but slow when few intervals overlap: 10⁴ separate points
+        took 4.6 s in Python here (0.14 s in C++). Useful if intervals arrive
+        one at a time and you can't sort them all up front.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Sort by Start, Then One Pass
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        After sorting by start, the merged intervals come out left to right.
+        The next interval can only overlap the last merged one: every earlier
+        merged interval ended before that one began.
+      </p>
+      <ul>
+        <li><code>start &lt;= last.end</code>: it overlaps (or touches), so <code>last.end = max(last.end, end)</code>.</li>
+        <li>Otherwise there's a gap: add it as a new merged interval.</li>
+        <li>
+          Add a <em>new</em> pair, not the input's own list or array. Otherwise
+          <code>last.end = …</code> later writes into the input:
+          <code>[[1,3],[2,6]]</code> becomes <code>[[1,6],[2,6]]</code>.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(n) for the sorted copy</span>
+      </div>
+      <p class="note">
+        The expected answer. Sorting in place (<code>intervals.sort()</code>)
+        saves the copy but reorders the caller's list; LeetCode doesn't mind.
+        In Java, compare with <code>Integer.compare(a[0], b[0])</code>:
+        <code>a[0] - b[0]</code> is fine for these values but can overflow
+        for numbers near ±2³¹.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Count Starts and Ends, Then Sweep</h2>
+      <p class="intuition">
+        The values are small whole numbers (at most 10⁴), so you can skip the
+        sort. Count how many intervals start and end at each number, then
+        sweep from 0 upward, keeping <code>active</code>, the number of
+        intervals covering the current point.
+      </p>
+      <ul>
+        <li>When <code>active</code> goes from 0 to positive, a merged interval begins.</li>
+        <li>When it drops back to 0 at a point where something ends, the merged interval closes.</li>
+        <li>
+          Count both the starts and the ends at a point before checking for a
+          close. Checking between them splits <code>[[1,4],[4,5]]</code> into
+          <code>[[1,4],[1,5]]</code>.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n + V)</span>
+        <span><strong>Space</strong> O(V), V = the largest end</span>
+      </div>
+      <p class="note">
+        As fast as Approach 2 here, and the result comes out sorted. But it
+        only works because the values are small integers. With values up to
+        10⁹, or decimals, the counting arrays don't fit; sort instead.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No standard library merges intervals. The built-in part is the sort:
+        <code>sorted(intervals, key=lambda x: x[0])</code> in Python,
+        <code>std::sort</code> with a comparator in C++,
+        <code>Arrays.sort</code> with a comparator in Java. The pass after it
+        is yours to write.
+      </p>
+      <p class="note">
+        Write Approach 2. The three things to remember: sort by start, use
+        <code>&lt;=</code> so touching intervals merge, and take the
+        <code>max</code> of the ends.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Absorb Overlaps</th>
+              <td>Compare with every merged interval</td>
+              <td>O(n²)</td>
+              <td>O(n)</td>
+              <td>4.6 s in Python at the limits</td>
+            </tr>
+            <tr>
+              <th scope="row">Sort, Then One Pass</th>
+              <td>Only the last merged interval can overlap</td>
+              <td>O(n log n)</td>
+              <td>O(n)</td>
+              <td>Expected answer</td>
+            </tr>
+            <tr>
+              <th scope="row">Count and Sweep</th>
+              <td>Starts and ends per number</td>
+              <td>O(n + V)</td>
+              <td>O(V)</td>
+              <td>Small integer values only</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

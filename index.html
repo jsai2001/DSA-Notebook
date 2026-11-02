@@ -14212,6 +14212,448 @@
         </div>
       </details>
 
+      <!-- ===== problems/0056-merge-intervals ===== -->
+      <details class="question" data-tags="array sorting intervals merge sweep-line">
+        <summary>
+          <span class="q-title">56. Merge Intervals</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">Array</span>
+            <span class="tag">Sorting</span>
+          </span>
+        </summary>
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> <strong>Sort by start.</strong> Then an
+            interval overlaps something before it only if it overlaps the
+            <em>last</em> merged interval. If <code>start &lt;= last.end</code>,
+            set <code>last.end = max(last.end, end)</code>; otherwise start a new
+            merged interval. O(n log n) time.
+          </div>
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/merge-intervals/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              Given an array of <code>intervals</code> where
+              <code>intervals[i] = [start, end]</code>, merge all overlapping
+              intervals and return the non-overlapping intervals that cover exactly
+              the same numbers.
+            </p>
+            <ul>
+              <li><code>1 &lt;= intervals.length &lt;= 10⁴</code> and <code>0 &lt;= start &lt;= end &lt;= 10⁴</code>.</li>
+              <li>Intervals that touch, like <code>[1,4]</code> and <code>[4,5]</code>, count as overlapping.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>[[1,3],[2,6],[8,10],[15,18]]</code> →
+              <code>[[1,6],[8,10],[15,18]]</code>; <code>[[1,4],[4,5]]</code> →
+              <code>[[1,5]]</code>.
+            </p>
+          </section>
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[[1,4],[4,5]]</code></td>
+                    <td><code>[[1,5]]</code></td>
+                    <td>They only touch, which counts. Checking <code>start &lt; last.end</code> instead of <code>&lt;=</code> keeps them apart.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[1,4],[5,6]]</code></td>
+                    <td><code>[[1,4],[5,6]]</code></td>
+                    <td>No shared number: 4 and 5 are next to each other but don't overlap.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[4,7],[1,4]]</code></td>
+                    <td><code>[[1,7]]</code></td>
+                    <td>Not sorted. Merging in the given order returns <code>[[4,7]]</code>: [1,4] is "merged" into [4,7] and its start is lost.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[2,3],[4,5],[1,10]]</code></td>
+                    <td><code>[[1,10]]</code></td>
+                    <td>The last interval covers everything. Without sorting you get <code>[[2,3],[4,10]]</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[1,10],[2,3],[4,5]]</code></td>
+                    <td><code>[[1,10]]</code></td>
+                    <td>Nested: [2,3] sits inside [1,10]. Setting <code>last.end = end</code> without <code>max</code> shrinks it: <code>[[1,3],[4,5]]</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[1,4],[0,0]]</code></td>
+                    <td><code>[[0,0],[1,4]]</code></td>
+                    <td>A single point, 0, is a valid interval. Sorting moves it to the front.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[1,1],[1,1]]</code></td>
+                    <td><code>[[1,1]]</code></td>
+                    <td>Duplicates merge into one.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[0,0]]</code></td>
+                    <td><code>[[0,0]]</code></td>
+                    <td>One interval: return it as it is.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Absorb Overlaps, No Sorting</h2>
+            <p class="intuition">
+              Keep a list of disjoint merged intervals. For each new interval,
+              compare it with every merged one: absorb each one it overlaps (take
+              the smaller start and the larger end), keep the rest, then add the
+              grown interval.
+            </p>
+            <ul>
+              <li>Two intervals overlap when <code>s &lt;= end and start &lt;= e</code>: neither ends before the other starts.</li>
+              <li>The list stays disjoint after every step, so one pass over it per interval is enough.</li>
+              <li>Sort the result at the end, only so it comes out in order.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n²)</span>
+              <span><strong>Space</strong> O(n)</span>
+            </div>
+            <p class="note">
+              Correct, but slow when few intervals overlap: 10⁴ separate points
+              took 4.6 s in Python here (0.14 s in C++). Useful if intervals arrive
+              one at a time and you can't sort them all up front.
+            </p>
+            <div class="code-tabs" data-viz="0056-merge-intervals/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"each":[4,5],"check":[6,7,9,10],"absorb":[8],"add":[11],"return":[12]}'>
+                class Solution(object):
+                    def merge(self, intervals):
+                        merged = []  # disjoint intervals so far, in no particular order
+                        for start, end in intervals:
+                            keep = []  # the ones the new interval doesn't touch
+                            for s, e in merged:
+                                if s <= end and start <= e:  # they overlap (touching counts)
+                                    start, end = min(start, s), max(end, e)  # absorb it
+                                else:
+                                    keep.append([s, e])
+                            merged = keep + [[start, end]]
+                        return sorted(merged)  # in order of start, like the other approaches
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"each":[7,8,9],"check":[10,11,14,15],"absorb":[12,13],"add":[18,19],"return":[21,22]}'>
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::vector<int>> merge(std::vector<std::vector<int>>& intervals) {
+                        std::vector<std::vector<int>> merged; // disjoint intervals so far, in no particular order
+                        for (const auto& in : intervals) {
+                            int start = in[0], end = in[1];
+                            std::vector<std::vector<int>> keep; // the ones the new interval doesn't touch
+                            for (auto& m : merged) {
+                                if (m[0] <= end && start <= m[1]) { // they overlap (touching counts)
+                                    start = std::min(start, m[0]); // absorb it
+                                    end = std::max(end, m[1]);
+                                } else {
+                                    keep.push_back(std::move(m)); // moved, not copied: merged is replaced below
+                                }
+                            }
+                            keep.push_back({start, end});
+                            merged = std::move(keep);
+                        }
+                        std::sort(merged.begin(), merged.end()); // in order of start, like the other approaches
+                        return merged;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5],"each":[6,7,8],"check":[9,10,13,14],"absorb":[11,12],"add":[17,18],"return":[20,21]}'>
+                import java.util.ArrayList;
+                import java.util.List;
+                class Solution {
+                    public int[][] merge(int[][] intervals) {
+                        List<int[]> merged = new ArrayList<>(); // disjoint intervals so far, in no particular order
+                        for (int[] in : intervals) {
+                            int start = in[0], end = in[1];
+                            List<int[]> keep = new ArrayList<>(); // the ones the new interval doesn't touch
+                            for (int[] m : merged) {
+                                if (m[0] <= end && start <= m[1]) { // they overlap (touching counts)
+                                    start = Math.min(start, m[0]); // absorb it
+                                    end = Math.max(end, m[1]);
+                                } else {
+                                    keep.add(m);
+                                }
+                            }
+                            keep.add(new int[] {start, end});
+                            merged = keep;
+                        }
+                        merged.sort((a, b) -> Integer.compare(a[0], b[0])); // in order of start, like the other approaches
+                        return merged.toArray(new int[0][]);
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>
+              Approach 2: Sort by Start, Then One Pass
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              After sorting by start, the merged intervals come out left to right.
+              The next interval can only overlap the last merged one: every earlier
+              merged interval ended before that one began.
+            </p>
+            <ul>
+              <li><code>start &lt;= last.end</code>: it overlaps (or touches), so <code>last.end = max(last.end, end)</code>.</li>
+              <li>Otherwise there's a gap: add it as a new merged interval.</li>
+              <li>
+                Add a <em>new</em> pair, not the input's own list or array. Otherwise
+                <code>last.end = …</code> later writes into the input:
+                <code>[[1,3],[2,6]]</code> becomes <code>[[1,6],[2,6]]</code>.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n log n)</span>
+              <span><strong>Space</strong> O(n) for the sorted copy</span>
+            </div>
+            <p class="note">
+              The expected answer. Sorting in place (<code>intervals.sort()</code>)
+              saves the copy but reorders the caller's list; LeetCode doesn't mind.
+              In Java, compare with <code>Integer.compare(a[0], b[0])</code>:
+              <code>a[0] - b[0]</code> is fine for these values but can overflow
+              for numbers near ±2³¹.
+            </p>
+            <div class="code-tabs" data-viz="0056-merge-intervals/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"sort":[3,4],"each":[5],"extend":[6,7],"new":[8,9],"return":[10]}'>
+                class Solution(object):
+                    def merge(self, intervals):
+                        intervals = sorted(intervals, key=lambda x: x[0])  # by start (a sorted copy)
+                        merged = []
+                        for start, end in intervals:
+                            if merged and start <= merged[-1][1]:  # overlaps (or touches) the last merged one
+                                merged[-1][1] = max(merged[-1][1], end)  # max: it may sit entirely inside
+                            else:
+                                merged.append([start, end])  # a new list, so the input's lists aren't changed
+                        return merged
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"sort":[6,7,8],"each":[9],"extend":[10,11],"new":[12,13],"return":[16]}'>
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::vector<int>> merge(std::vector<std::vector<int>>& intervals) {
+                        std::vector<std::vector<int>> sorted = intervals; // a copy, so the caller's order is kept
+                        std::sort(sorted.begin(), sorted.end(), [](const std::vector<int>& a, const std::vector<int>& b) { return a[0] < b[0]; }); // by start
+                        std::vector<std::vector<int>> merged;
+                        for (const auto& in : sorted) {
+                            if (!merged.empty() && in[0] <= merged.back()[1]) { // overlaps (or touches) the last merged one
+                                merged.back()[1] = std::max(merged.back()[1], in[1]); // max: it may sit entirely inside
+                            } else {
+                                merged.push_back(in); // a copy of the pair
+                            }
+                        }
+                        return merged;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"sort":[6,7,8],"each":[9,10],"extend":[11,12],"new":[13,14],"return":[17]}'>
+                import java.util.ArrayList;
+                import java.util.Arrays;
+                import java.util.List;
+                class Solution {
+                    public int[][] merge(int[][] intervals) {
+                        int[][] sorted = intervals.clone(); // a copy, so the caller's order is kept
+                        Arrays.sort(sorted, (a, b) -> Integer.compare(a[0], b[0])); // by start
+                        List<int[]> merged = new ArrayList<>();
+                        for (int[] in : sorted) {
+                            int[] last = merged.isEmpty() ? null : merged.get(merged.size() - 1);
+                            if (last != null && in[0] <= last[1]) { // overlaps (or touches) the last merged one
+                                last[1] = Math.max(last[1], in[1]); // max: it may sit entirely inside
+                            } else {
+                                merged.add(new int[] {in[0], in[1]}); // a new array: adding `in` itself would let last[1] = ... change the input
+                            }
+                        }
+                        return merged.toArray(new int[0][]);
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>Approach 3: Count Starts and Ends, Then Sweep</h2>
+            <p class="intuition">
+              The values are small whole numbers (at most 10⁴), so you can skip the
+              sort. Count how many intervals start and end at each number, then
+              sweep from 0 upward, keeping <code>active</code>, the number of
+              intervals covering the current point.
+            </p>
+            <ul>
+              <li>When <code>active</code> goes from 0 to positive, a merged interval begins.</li>
+              <li>When it drops back to 0 at a point where something ends, the merged interval closes.</li>
+              <li>
+                Count both the starts and the ends at a point before checking for a
+                close. Checking between them splits <code>[[1,4],[4,5]]</code> into
+                <code>[[1,4],[1,5]]</code>.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n + V)</span>
+              <span><strong>Space</strong> O(V), V = the largest end</span>
+            </div>
+            <p class="note">
+              As fast as Approach 2 here, and the result comes out sorted. But it
+              only works because the values are small integers. With values up to
+              10⁹, or decimals, the counting arrays don't fit; sort instead.
+            </p>
+            <div class="code-tabs" data-viz="0056-merge-intervals/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"count":[6,7,8],"prep":[9],"sweep":[10,13,14],"begin":[11,12],"close":[15,16],"return":[17]}'>
+                class Solution(object):
+                    def merge(self, intervals):
+                        top = max(e for _, e in intervals)
+                        starts = [0] * (top + 1)  # starts[x]: how many intervals begin at x
+                        ends = [0] * (top + 1)  # ends[x]: how many intervals finish at x
+                        for s, e in intervals:
+                            starts[s] += 1
+                            ends[e] += 1
+                        merged, active, begin = [], 0, 0  # active: intervals open right now
+                        for x in range(top + 1):  # sweep left to right
+                            if active == 0 and starts[x]:  # nothing was open: a merged interval begins here
+                                begin = x
+                            active += starts[x]  # count every start and end at x before checking for a close
+                            active -= ends[x]
+                            if active == 0 and ends[x]:  # the last open interval just closed
+                                merged.append([begin, x])
+                        return merged
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8,9],"count":[10,11,12],"prep":[14,15],"sweep":[16,18,19],"begin":[17],"close":[20],"return":[22]}'>
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<std::vector<int>> merge(std::vector<std::vector<int>>& intervals) {
+                        int top = 0;
+                        for (const auto& in : intervals) top = std::max(top, in[1]);
+                        std::vector<int> starts(top + 1, 0); // starts[x]: how many intervals begin at x
+                        std::vector<int> ends(top + 1, 0); // ends[x]: how many intervals finish at x
+                        for (const auto& in : intervals) {
+                            ++starts[in[0]];
+                            ++ends[in[1]];
+                        }
+                        std::vector<std::vector<int>> merged;
+                        int active = 0, begin = 0; // active: intervals open right now
+                        for (int x = 0; x <= top; ++x) { // sweep left to right
+                            if (active == 0 && starts[x] > 0) begin = x; // nothing was open: a merged interval begins here
+                            active += starts[x]; // count every start and end at x before checking for a close
+                            active -= ends[x];
+                            if (active == 0 && ends[x] > 0) merged.push_back({begin, x}); // the last open interval just closed
+                        }
+                        return merged;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6,7,8],"count":[9,10,11],"prep":[13,14],"sweep":[15,17,18],"begin":[16],"close":[19],"return":[21]}'>
+                import java.util.ArrayList;
+                import java.util.List;
+                class Solution {
+                    public int[][] merge(int[][] intervals) {
+                        int top = 0;
+                        for (int[] in : intervals) top = Math.max(top, in[1]);
+                        int[] starts = new int[top + 1]; // starts[x]: how many intervals begin at x
+                        int[] ends = new int[top + 1]; // ends[x]: how many intervals finish at x
+                        for (int[] in : intervals) {
+                            starts[in[0]]++;
+                            ends[in[1]]++;
+                        }
+                        List<int[]> merged = new ArrayList<>();
+                        int active = 0, begin = 0; // active: intervals open right now
+                        for (int x = 0; x <= top; x++) { // sweep left to right
+                            if (active == 0 && starts[x] > 0) begin = x; // nothing was open: a merged interval begins here
+                            active += starts[x]; // count every start and end at x before checking for a close
+                            active -= ends[x];
+                            if (active == 0 && ends[x] > 0) merged.add(new int[] {begin, x}); // the last open interval just closed
+                        }
+                        return merged.toArray(new int[0][]);
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">No shortcut</span></h2>
+            <p>
+              No standard library merges intervals. The built-in part is the sort:
+              <code>sorted(intervals, key=lambda x: x[0])</code> in Python,
+              <code>std::sort</code> with a comparator in C++,
+              <code>Arrays.sort</code> with a comparator in Java. The pass after it
+              is yours to write.
+            </p>
+            <p class="note">
+              Write Approach 2. The three things to remember: sort by start, use
+              <code>&lt;=</code> so touching intervals merge, and take the
+              <code>max</code> of the ends.
+            </p>
+          </section>
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Absorb Overlaps</th>
+                    <td>Compare with every merged interval</td>
+                    <td>O(n²)</td>
+                    <td>O(n)</td>
+                    <td>4.6 s in Python at the limits</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Sort, Then One Pass</th>
+                    <td>Only the last merged interval can overlap</td>
+                    <td>O(n log n)</td>
+                    <td>O(n)</td>
+                    <td>Expected answer</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Count and Sweep</th>
+                    <td>Starts and ends per number</td>
+                    <td>O(n + V)</td>
+                    <td>O(V)</td>
+                    <td>Small integer values only</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -23192,6 +23634,221 @@
             });
           }
           steps.push({ line: "return", note: `Every index was within reach, including the last one. Return true. One pass, one variable: O(n) time, O(1) space.`, view: view(undefined, { done: true, final: true }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0056-merge-intervals/approach1.visual.js -->
+    <script>
+      // No sorting: each new interval absorbs every merged interval it overlaps, and the rest are kept as they are.
+      DSAViz.register("0056-merge-intervals/approach1", {
+        inputs: [{ name: "intervals", type: "int[][]", value: "[[2, 3], [6, 7], [1, 1], [3, 6]]", maxRows: 6, maxCols: 2, minValue: 0, maxValue: 9 }],
+        trace({ intervals }) {
+          if (intervals.some((r) => r.length !== 2 || r[0] > r[1])) throw new DSAViz.InputError("Each interval must be [start, end] with start ≤ end, like [[1, 3], [2, 6]].");
+          const top = Math.max(...intervals.map((r) => r[1]));
+          const cols = [...Array(top + 1).keys()];
+          const show = (r) => `[${r[0]},${r[1]}]`;
+          const timeline = (label, list, rowMark) => {
+            const marks = {};
+            list.forEach((iv, r) => cols.forEach((x) => (marks[`${r},${x}`] = x >= iv[0] && x <= iv[1] ? rowMark(r) : "ghost")));
+            return { type: "grid", label, rows: list.map(show), cols, cells: list.map(() => cols.map(() => "")), marks, corner: "" };
+          };
+          let merged = [];
+          const steps = [];
+          let checks = 0;
+          const view = (i, o = {}) => [
+            timeline("intervals, in the order given (dark = current)", intervals, (r) => (r === i ? "active" : r < (i ?? (o.final ? intervals.length : 0)) ? "visited" : "window")),
+            merged.length
+              ? timeline(o.final ? "merged, sorted" : "merged so far (yellow = overlaps the current one)", merged, (r) => (o.hit && o.hit.has(r) ? "compare" : o.fresh === r ? "new" : o.final ? "match" : "visited"))
+              : { type: "array", label: "merged so far", values: [], marks: {} },
+            { type: "vars", items: [{ name: "[start, end]", value: o.cur ? show(o.cur) : "-", mark: o.grew ? "new" : "" }, { name: "overlap checks", value: checks }] },
+          ];
+          steps.push({ line: "init", note: "merged holds disjoint intervals, in no particular order. Each new interval swallows whatever it overlaps.", view: view(undefined) });
+          intervals.forEach((iv, i) => {
+            let [start, end] = iv;
+            steps.push({ line: "each", note: merged.length ? `Next: ${show(iv)}. Compare it with all ${merged.length} merged interval${merged.length === 1 ? "" : "s"}.` : `Next: ${show(iv)}. merged is empty, so there is nothing to compare it with.`, view: view(i, { cur: [start, end] }) });
+            const hit = new Set();
+            const keep = [];
+            merged.forEach((m, r) => {
+              checks++;
+              if (m[0] <= end && start <= m[1]) {
+                hit.add(r);
+                start = Math.min(start, m[0]);
+                end = Math.max(end, m[1]);
+              } else keep.push(m);
+            });
+            if (merged.length) {
+              steps.push({
+                line: hit.size ? ["check", "absorb"] : "check",
+                note: hit.size
+                  ? `It overlaps ${[...hit].map((r) => show(merged[r])).join(", ")} (touching counts). Absorb ${hit.size === 1 ? "it" : "them"}: [start, end] grows to ${show([start, end])}.`
+                  : `No overlap with any of them: each one ends before ${start} or starts after ${end}.`,
+                view: view(i, { cur: [start, end], hit, grew: hit.size > 0 }),
+              });
+            }
+            merged = keep.concat([[start, end]]);
+            steps.push({
+              line: "add",
+              note: hit.size
+                ? `Drop the ${hit.size} absorbed interval${hit.size === 1 ? "" : "s"} and add ${show([start, end])}. merged is still disjoint.`
+                : `Add ${show([start, end])} as it is.`,
+              view: view(i, { fresh: merged.length - 1, cur: [start, end] }),
+            });
+          });
+          merged.sort((a, b) => a[0] - b[0]);
+          steps.push({
+            line: "return",
+            note: `${merged.length === 1 ? "Return the 1 merged interval" : `Sort the ${merged.length} merged intervals by start and return them`}. ${checks} overlap check${checks === 1 ? "" : "s"}: up to n per interval, so O(n²) in the worst case (all disjoint).`,
+            view: view(undefined, { final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0056-merge-intervals/approach2.visual.js -->
+    <script>
+      // Sort by start, then each interval either extends the last merged one (it starts inside it) or begins a new one.
+      DSAViz.register("0056-merge-intervals/approach2", {
+        inputs: [{ name: "intervals", type: "int[][]", value: "[[2, 6], [1, 3], [8, 9], [5, 7]]", maxRows: 6, maxCols: 2, minValue: 0, maxValue: 9 }],
+        trace({ intervals }) {
+          if (intervals.some((r) => r.length !== 2 || r[0] > r[1])) throw new DSAViz.InputError("Each interval must be [start, end] with start ≤ end, like [[1, 3], [2, 6]].");
+          const top = Math.max(...intervals.map((r) => r[1]));
+          const cols = [...Array(top + 1).keys()];
+          const show = (r) => `[${r[0]},${r[1]}]`;
+          // A timeline: one row per interval, a cell per number it covers.
+          const timeline = (label, list, rowMark) => {
+            const marks = {};
+            list.forEach((iv, r) => cols.forEach((x) => (marks[`${r},${x}`] = x >= iv[0] && x <= iv[1] ? rowMark(r) : "ghost")));
+            return { type: "grid", label, rows: list.map(show), cols, cells: list.map(() => cols.map(() => "")), marks, corner: "" };
+          };
+          const sorted = intervals.slice().sort((a, b) => a[0] - b[0]);
+          const merged = [];
+          const steps = [];
+          const view = (i, o = {}) => [
+            timeline("sorted by start (dark = current, grey = done)", sorted, (r) => (r === i ? "active" : r < (i ?? 0) || o.done ? "visited" : "window")),
+            ...(merged.length
+              ? [timeline("merged", merged, (r) => (r === merged.length - 1 && o.changed ? "new" : o.final ? "match" : "visited"))]
+              : [{ type: "array", label: "merged", values: [], marks: {} }]),
+            ...(merged.length && !o.final ? [{ type: "vars", items: [{ name: "last merged end", value: merged[merged.length - 1][1], mark: o.changed === "extend" ? "new" : "" }]}] : []),
+          ];
+          steps.push({
+            line: "sort",
+            note: `Sort by start: ${sorted.map(show).join(", ")}. Now anything that overlaps the last merged interval comes right after it, so only the last one needs checking.`,
+            view: view(undefined),
+          });
+          sorted.forEach((iv, i) => {
+            const last = merged[merged.length - 1];
+            if (last && iv[0] <= last[1]) {
+              const old = last[1];
+              last[1] = Math.max(last[1], iv[1]);
+              steps.push({
+                line: ["each", "extend"],
+                note:
+                  last[1] > old
+                    ? `${show(iv)} starts at ${iv[0]} ≤ ${old}, inside (or touching) the last merged interval. Extend it: end = max(${old}, ${iv[1]}) = ${last[1]}.`
+                    : `${show(iv)} starts at ${iv[0]} ≤ ${old} and ends at ${iv[1]} ≤ ${old}: it sits entirely inside. max keeps the end at ${old}; plain end = ${iv[1]} would shrink it.`,
+                view: view(i, { changed: "extend" }),
+              });
+            } else {
+              merged.push([iv[0], iv[1]]);
+              steps.push({
+                line: ["each", "extend", "new"],
+                note: last
+                  ? `${show(iv)} starts at ${iv[0]} > ${last[1]}, after the last merged interval ends: a gap. Start a new merged interval ${show(iv)}.`
+                  : `merged is empty, so ${show(iv)} starts the first merged interval.`,
+                view: view(i, { changed: "new" }),
+              });
+            }
+          });
+          steps.push({
+            line: "return",
+            note: `${intervals.length} interval${intervals.length === 1 ? "" : "s"} merged into ${merged.length}: ${merged.map(show).join(", ")}. Sorting is O(n log n); the pass after it is O(n).`,
+            view: view(undefined, { done: true, final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0056-merge-intervals/approach3.visual.js -->
+    <script>
+      // Count where intervals start and end, then sweep the number line keeping track of how many are open.
+      DSAViz.register("0056-merge-intervals/approach3", {
+        inputs: [{ name: "intervals", type: "int[][]", value: "[[1, 3], [2, 4], [4, 5], [7, 8]]", maxRows: 6, maxCols: 2, minValue: 0, maxValue: 9 }],
+        trace({ intervals }) {
+          if (intervals.some((r) => r.length !== 2 || r[0] > r[1])) throw new DSAViz.InputError("Each interval must be [start, end] with start ≤ end, like [[1, 3], [2, 6]].");
+          const top = Math.max(...intervals.map((r) => r[1]));
+          const cols = [...Array(top + 1).keys()];
+          const show = (r) => `[${r[0]},${r[1]}]`;
+          const starts = Array(top + 1).fill(0);
+          const ends = Array(top + 1).fill(0);
+          const merged = [];
+          let active = 0;
+          let begin = null;
+          let counted = false;
+          const steps = [];
+          const view = (x, o = {}) => {
+            const marks = {};
+            intervals.forEach((iv, r) =>
+              cols.forEach((c) => (marks[`${r},${c}`] = c >= iv[0] && c <= iv[1] ? (c === x ? "active" : x !== undefined && c < x ? "visited" : "window") : c === x ? "compare" : "ghost"))
+            );
+            // The two counter rows sit under the intervals, lined up with the same columns.
+            const n = intervals.length;
+            cols.forEach((c) => {
+              const m = c === x ? "active" : o.counting && (starts[c] || ends[c]) ? "new" : x !== undefined && c < x ? "visited" : "";
+              if (!m) return;
+              marks[`${n},${c}`] = m;
+              marks[`${n + 1},${c}`] = m;
+            });
+            const cells = intervals.map(() => cols.map(() => ""));
+            cells.push(cols.map((c) => (counted ? starts[c] : 0)), cols.map((c) => (counted ? ends[c] : 0)));
+            return [
+              { type: "grid", label: "intervals on the number line, with the counters under them (column x = where the sweep is)", rows: [...intervals.map(show), "starts", "ends"], cols, cells, marks, corner: "" },
+              {
+                type: "vars",
+                items: [
+                  { name: "active", value: active, mark: o.hot === "active" ? "new" : "" },
+                  { name: "begin", value: begin === null ? "-" : begin, mark: o.hot === "begin" ? "new" : "" },
+                ],
+              },
+              { type: "array", label: "merged", values: merged.map(show), wide: true, marks: o.fresh ? { [merged.length - 1]: "new" } : o.final ? Object.fromEntries(merged.map((_, k) => [k, "match"])) : {} },
+            ];
+          };
+          steps.push({ line: "init", note: `The largest end is ${top}, so make two counters for each number 0..${top}.`, view: view(undefined) });
+          intervals.forEach(([s, e]) => {
+            starts[s]++;
+            ends[e]++;
+          });
+          counted = true;
+          steps.push({ line: "count", note: `For each interval, add 1 to starts at its start and 1 to ends at its end. Nothing else about the intervals is needed now.`, view: view(undefined, { counting: true }) });
+          steps.push({ line: "prep", note: `Sweep from 0 to ${top}. active counts the intervals that cover the current point; while it's above 0 we're inside a merged interval.`, view: view(undefined) });
+          for (let x = 0; x <= top; x++) {
+            const wasZero = active === 0;
+            const opens = wasZero && starts[x] > 0;
+            if (opens) begin = x;
+            active += starts[x];
+            active -= ends[x];
+            const closes = active === 0 && ends[x] > 0;
+            if (closes) merged.push([begin, x]);
+            const lines = ["sweep"];
+            if (opens) lines.unshift("begin");
+            if (closes) lines.push("close");
+            let note;
+            if (!starts[x] && !ends[x]) note = active ? `x = ${x}: nothing starts or ends; still inside (active = ${active}).` : `x = ${x}: nothing starts or ends, and nothing is open: a gap.`;
+            else {
+              note = `x = ${x}: ${starts[x]} start${starts[x] === 1 ? "" : "s"}, ${ends[x]} end${ends[x] === 1 ? "" : "s"}. `;
+              if (opens) note += `Nothing was open, so a merged interval begins here: begin = ${x}. `;
+              note += `active = ${active}. `;
+              if (closes) note += `It's back to 0 with an end here: close [${begin}, ${x}].`;
+              else if (ends[x] && starts[x] && !wasZero) note += `An interval ends where another starts, but both are counted before the check, so active never hits 0: they join.`;
+              else if (ends[x]) note += `Something is still open, so the merged interval carries on.`;
+            }
+            steps.push({ line: lines, note: note.trim(), view: view(x, { hot: opens ? "begin" : starts[x] || ends[x] ? "active" : "", fresh: closes }) });
+          }
+          steps.push({
+            line: "return",
+            note: `merged comes out already sorted: ${merged.map(show).join(", ")}. O(n + V) time and O(V) space, V = the largest end (at most 10⁴ here).`,
+            view: view(undefined, { final: true }),
+          });
           return steps;
         },
       });
