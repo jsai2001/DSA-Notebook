@@ -12001,6 +12001,416 @@
         </div>
       </details>
 
+      <!-- ===== problems/0050-powx-n ===== -->
+      <details class="question" data-tags="math recursion binary-exponentiation fast-power exponent bits divide-and-conquer">
+        <summary>
+          <span class="q-title">50. Pow(x, n)</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">Math</span>
+            <span class="tag">Recursion</span>
+          </span>
+        </summary>
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> Don't multiply n times. Read n in
+            <strong>binary</strong>: keep squaring <code>x</code> (x, x², x⁴, x⁸, …)
+            and multiply it into the result whenever the current bit of n is 1.
+            That's one round per bit: O(log n), at most 32 rounds. For negative n,
+            use <code>1/x</code> and <code>−n</code>, and keep −n in a 64-bit
+            integer, because −(−2³¹) doesn't fit in an <code>int</code>.
+          </div>
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/powx-n/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>Implement <code>pow(x, n)</code>: x raised to the power n.</p>
+            <ul>
+              <li><code>-100.0 &lt; x &lt; 100.0</code>, and n is a 32-bit integer (<code>-2³¹ &lt;= n &lt;= 2³¹ − 1</code>).</li>
+              <li>Either x isn't 0 or n is positive, and <code>-10⁴ &lt;= xⁿ &lt;= 10⁴</code>.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>x = 2.00000, n = 10</code> → <code>1024.00000</code>;
+              <code>x = 2.10000, n = 3</code> → <code>9.26100</code>;
+              <code>x = 2.00000, n = -2</code> → <code>0.25000</code>.
+            </p>
+          </section>
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>x = 5, n = 0</code></td>
+                    <td><code>1</code></td>
+                    <td>Anything to the power 0 is 1: the loop must not run, and the result must start at 1, not x.</td>
+                  </tr>
+                  <tr>
+                    <td><code>x = 2, n = -2</code></td>
+                    <td><code>0.25</code></td>
+                    <td>Negative n means 1 / x^|n|. Forgetting it, or using integer division, gives 4 or 0.</td>
+                  </tr>
+                  <tr>
+                    <td><code>x = -2, n = 3</code> / <code>n = 2</code></td>
+                    <td><code>-8</code> / <code>4</code></td>
+                    <td>A negative base: the sign depends on whether n is odd.</td>
+                  </tr>
+                  <tr>
+                    <td><code>x = 0, n = 5</code></td>
+                    <td><code>0</code></td>
+                    <td>A zero base with positive n is allowed (0 with n ≤ 0 isn't).</td>
+                  </tr>
+                  <tr>
+                    <td><code>x = 2, n = -2147483648</code></td>
+                    <td><code>0</code></td>
+                    <td>−n = 2³¹ doesn't fit in an <code>int</code>. In Java it stays −2³¹, the loop is skipped and you get <code>1.0</code>; in C++ it's undefined behaviour (the checker here stops with "negation of -2147483648 cannot be represented"). Use <code>long</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>x = 1, n = -2147483648</code></td>
+                    <td><code>1</code></td>
+                    <td>The same −2³¹, where a wrong answer of 1.0 happens to be right: test with x = 2 as well.</td>
+                  </tr>
+                  <tr>
+                    <td><code>x = -1, n = 2147483647</code></td>
+                    <td><code>-1</code></td>
+                    <td>The largest n: multiplying one at a time is 2.1 billion multiplications.</td>
+                  </tr>
+                  <tr>
+                    <td><code>x = 0.00001, n = 2147483647</code></td>
+                    <td><code>0</code></td>
+                    <td>The true value is far below the smallest double, so the answer rounds to 0. Squaring underflows to 0 early and stays there; that's fine.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Multiply n Times</h2>
+            <p class="intuition">
+              The definition: start at 1 and multiply by x, |n| times. For negative
+              n, first turn x into 1/x.
+            </p>
+            <ul>
+              <li>Negate n into a 64-bit integer, so n = −2³¹ works.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(|n|)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              Correct but far too slow for a 32-bit n: one call with n = 2³¹ − 1 took
+              2.8 s in optimised C++ here, and about a minute in Python.
+            </p>
+            <div class="code-tabs" data-viz="0050-powx-n/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"flip":[3,4],"init":[5],"loop":[6,7],"return":[8]}'>
+                class Solution(object):
+                    def myPow(self, x, n):
+                        if n < 0:  # x^-n = (1/x)^n
+                            x, n = 1 / x, -n
+                        result = 1.0
+                        for _ in range(n):  # multiply by x, n times
+                            result *= x
+                        return result
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"flip":[4,5,6,7],"init":[9],"loop":[10],"return":[11]}'>
+                class Solution {
+                public:
+                    double myPow(double x, int n) {
+                        long long N = n; // long long: -(-2^31) doesn't fit in an int
+                        if (N < 0) { // x^-n = (1/x)^n
+                            x = 1 / x;
+                            N = -N;
+                        }
+                        double result = 1.0;
+                        for (long long i = 0; i < N; ++i) result *= x; // multiply by x, n times
+                        return result;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"flip":[3,4,5,6],"init":[8],"loop":[9],"return":[10]}'>
+                class Solution {
+                    public double myPow(double x, int n) {
+                        long N = n; // long: -(-2^31) doesn't fit in an int
+                        if (N < 0) { // x^-n = (1/x)^n
+                            x = 1 / x;
+                            N = -N;
+                        }
+                        double result = 1.0;
+                        for (long i = 0; i < N; i++) result *= x; // multiply by x, n times
+                        return result;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>Approach 2: Recursive Halving</h2>
+            <p class="intuition">
+              x^n = (x^(n/2))² when n is even, and (x^(n/2))² × x when n is odd. So
+              work out the half once, square it, and the exponent halves at every
+              level.
+            </p>
+            <ul>
+              <li>Base case: x^0 = 1.</li>
+              <li>
+                Store the half in a variable. Calling <code>power(x, n / 2)</code>
+                twice brings back O(n): for n = 2²⁰ it made 4,194,303 calls here
+                instead of 22.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(log n)</span>
+              <span><strong>Space</strong> O(log n) call stack</span>
+            </div>
+            <p class="note">
+              At most 33 levels deep, so the recursion is never a problem. The same
+              idea as merge sort's "solve half, combine".
+            </p>
+            <div class="code-tabs" data-viz="0050-powx-n/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"flip":[3,4],"start":[5],"call":[7],"base":[8,9],"half":[10],"even":[11,12],"odd":[11,13]}'>
+                class Solution(object):
+                    def myPow(self, x, n):
+                        if n < 0:  # x^-n = (1/x)^n
+                            x, n = 1 / x, -n
+                        return self.power(x, n)
+
+                    def power(self, x, n):  # x^n for n >= 0
+                        if n == 0:
+                            return 1.0
+                        half = self.power(x, n // 2)  # x^(n // 2), computed once and reused
+                        if n % 2 == 0:
+                            return half * half
+                        return half * half * x  # odd n: one extra x
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"flip":[4,5,6,7],"start":[9],"call":[12],"base":[13],"half":[14],"even":[15],"odd":[15,16]}'>
+                class Solution {
+                public:
+                    double myPow(double x, int n) {
+                        long long N = n; // long long: -(-2^31) doesn't fit in an int
+                        if (N < 0) { // x^-n = (1/x)^n
+                            x = 1 / x;
+                            N = -N;
+                        }
+                        return power(x, N);
+                    }
+                private:
+                    double power(double x, long long n) { // x^n for n >= 0
+                        if (n == 0) return 1.0;
+                        double half = power(x, n / 2); // x^(n / 2), computed once and reused
+                        if (n % 2 == 0) return half * half;
+                        return half * half * x; // odd n: one extra x
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"flip":[3,4,5,6],"start":[8],"call":[11],"base":[12],"half":[13],"even":[14],"odd":[14,15]}'>
+                class Solution {
+                    public double myPow(double x, int n) {
+                        long N = n; // long: -(-2^31) doesn't fit in an int
+                        if (N < 0) { // x^-n = (1/x)^n
+                            x = 1 / x;
+                            N = -N;
+                        }
+                        return power(x, N);
+                    }
+
+                    private double power(double x, long n) { // x^n for n >= 0
+                        if (n == 0) return 1.0;
+                        double half = power(x, n / 2); // x^(n / 2), computed once and reused
+                        if (n % 2 == 0) return half * half;
+                        return half * half * x; // odd n: one extra x
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>
+              Approach 3: Binary Exponentiation
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              Write n in binary, for example 13 = 1101₂ = 8 + 4 + 1, so x¹³ = x⁸ · x⁴
+              · x¹. Walk the bits from the lowest: keep squaring <code>x</code> so it
+              is x^(2^k) at bit k, and multiply it into the result when that bit is 1.
+            </p>
+            <ul>
+              <li><code>if n &amp; 1: result *= x</code>, then <code>x *= x</code> and <code>n &gt;&gt;= 1</code>.</li>
+              <li>No recursion: the same O(log n) work in a loop with O(1) memory.</li>
+              <li>
+                Rounding: each squaring's tiny error gets raised to the remaining
+                power. With |x| within about 10⁻⁸ of 1 and n near 2³¹, the answer was
+                off by up to 2.3 × 10⁻⁷ (relative) here. The library
+                <code>pow</code> stayed within 2 × 10⁻¹⁶. On 105,334 ordinary inputs
+                (|n| ≤ 60) the worst error was 1 × 10⁻¹⁴.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(log n)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              The expected answer. The same loop computes powers modulo a number
+              (<code>a^b mod m</code>), which shows up in many other problems.
+            </p>
+            <div class="code-tabs" data-viz="0050-powx-n/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"flip":[3,4],"init":[5],"loop":[6],"bit":[7,8],"square":[9,10],"return":[11]}'>
+                class Solution(object):
+                    def myPow(self, x, n):
+                        if n < 0:  # x^-n = (1/x)^n
+                            x, n = 1 / x, -n
+                        result = 1.0
+                        while n:  # one round per bit of n, lowest bit first
+                            if n & 1:  # this bit is set: x (now x^(2^k)) is part of the answer
+                                result *= x
+                            x *= x  # x^(2^k) -> x^(2^(k+1))
+                            n >>= 1
+                        return result
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"flip":[4,5,6,7],"init":[9],"loop":[10],"bit":[11],"square":[12,13],"return":[15]}'>
+                class Solution {
+                public:
+                    double myPow(double x, int n) {
+                        long long N = n; // long long: -(-2^31) doesn't fit in an int
+                        if (N < 0) { // x^-n = (1/x)^n
+                            x = 1 / x;
+                            N = -N;
+                        }
+                        double result = 1.0;
+                        while (N > 0) { // one round per bit of n, lowest bit first
+                            if (N & 1) result *= x; // this bit is set: x (now x^(2^k)) is part of the answer
+                            x *= x; // x^(2^k) -> x^(2^(k+1))
+                            N >>= 1;
+                        }
+                        return result;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"flip":[3,4,5,6],"init":[8],"loop":[9],"bit":[10],"square":[11,12],"return":[14]}'>
+                class Solution {
+                    public double myPow(double x, int n) {
+                        long N = n; // long: -(-2^31) doesn't fit in an int
+                        if (N < 0) { // x^-n = (1/x)^n
+                            x = 1 / x;
+                            N = -N;
+                        }
+                        double result = 1.0;
+                        while (N > 0) { // one round per bit of n, lowest bit first
+                            if ((N & 1) == 1) result *= x; // this bit is set: x (now x^(2^k)) is part of the answer
+                            x *= x; // x^(2^k) -> x^(2^(k+1))
+                            N >>= 1;
+                        }
+                        return result;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">Built-ins</span></h2>
+            <p>
+              Every language has it: Python's <code>x ** n</code> (or
+              <code>pow</code>), C++'s <code>std::pow</code>, Java's
+              <code>Math.pow</code>. They handle negative exponents and n = −2³¹ on
+              their own, because n is converted to a floating-point number.
+            </p>
+            <div class="code-tabs">
+              <script type="text/plain" data-lang="Python">
+                class Solution(object):
+                    def myPow(self, x, n):
+                        return x ** n  # the same as pow(x, n); negative n gives 1 / x^|n|
+              </script>
+              <script type="text/plain" data-lang="C++">
+                #include <cmath>
+                class Solution {
+                public:
+                    double myPow(double x, int n) {
+                        return std::pow(x, n); // n is converted to double, so -2^31 is fine
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java">
+                class Solution {
+                    public double myPow(double x, int n) {
+                        return Math.pow(x, n); // n is widened to double, so -2^31 is fine
+                    }
+                }
+              </script>
+            </div>
+            <div class="complexity">
+              <span><strong>Time</strong> O(1)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              The most accurate option: within 2 × 10⁻¹⁶ of the exact value on all
+              4,168 test cases here. But the problem asks you to implement pow, so in
+              an interview write Approach 3.
+            </p>
+          </section>
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Multiply n Times</th>
+                    <td>Loop |n| times</td>
+                    <td>O(|n|)</td>
+                    <td>O(1)</td>
+                    <td>2.8 s in C++ for n = 2³¹ − 1</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Recursive Halving</th>
+                    <td>x^n = (x^(n/2))², times x if odd</td>
+                    <td>O(log n)</td>
+                    <td>O(log n)</td>
+                    <td>Store the half; don't recurse twice</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Binary Exponentiation</th>
+                    <td>Square x, use it for each set bit</td>
+                    <td>O(log n)</td>
+                    <td>O(1)</td>
+                    <td>Expected answer</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -19931,6 +20341,223 @@
           });
           const out = [...groups.values()].map((g) => `[${g.map(show).join(", ")}]`);
           steps.push({ line: "return", note: `Return the map's groups: ${out.join(", ")}. O(k) per word (plus the 26-entry key): O(n · k).`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0050-powx-n/approach1.visual.js -->
+    <script>
+      // Brute force: multiply by x, |n| times (after turning a negative n into 1/x).
+      DSAViz.register("0050-powx-n/approach1", {
+        inputs: [
+          { name: "x", type: "string", value: "2", maxLength: 9 },
+          { name: "n", type: "int", value: "10", min: -12, max: 12 },
+        ],
+        trace({ x: xText, n }) {
+          if (!/^-?\d{1,2}(\.\d{1,5})?$/.test(xText.trim())) throw new DSAViz.InputError("x must be a number between -100 and 100 with up to 5 decimals, like 2 or -1.5.");
+          const x0 = Number(xText);
+          if (x0 === 0 && n <= 0) throw new DSAViz.InputError("0 to a power of 0 or less isn't defined (the problem rules it out).");
+          if (Math.abs(Math.pow(x0, n)) > 1e4) throw new DSAViz.InputError("x^n must be between -10⁴ and 10⁴, as in the problem.");
+          const fmt = (v) => (v === 0 ? "0" : Number.isInteger(v) && Math.abs(v) < 1e15 ? String(v) : String(Number(v.toPrecision(7))));
+          const steps = [];
+          let x = x0;
+          let N = n;
+          let result = 1;
+          const values = [];
+          const view = (i, opts = {}) => [
+            { type: "array", label: "result after each multiplication", values: values.map(fmt), wide: true, marks: opts.fresh ? { [values.length - 1]: "new" } : opts.final && values.length ? { [values.length - 1]: "match" } : {} },
+            {
+              type: "vars",
+              items: [
+                { name: "x", value: fmt(x) },
+                { name: "n", value: N },
+                ...(i !== undefined ? [{ name: "i", value: i }] : []),
+                { name: "result", value: fmt(result), mark: opts.fresh ? "new" : opts.final ? "match" : "" },
+                { name: "multiplications", value: values.length },
+              ],
+            },
+          ];
+
+          if (n < 0) {
+            steps.push({ line: "flip", note: `n = ${n} is negative: x^${n} = (1/x)^${-n}. So x becomes 1/${fmt(x0)} = ${fmt(1 / x0)} and n becomes ${-n}.`, view: view() });
+            x = 1 / x0;
+            N = -n;
+          }
+          steps.push({ line: "init", note: N ? `Start with result = 1 and multiply by ${fmt(x)}, ${N} time${N === 1 ? "" : "s"}.` : "n = 0: the loop never runs, and anything to the power 0 is 1.", view: view() });
+          for (let i = 0; i < N; i++) {
+            result *= x;
+            values.push(result);
+            steps.push({ line: "loop", note: `Multiplication ${i + 1}: result = ${fmt(result)} (that's ${fmt(x)}^${i + 1}).`, view: view(i, { fresh: true }) });
+          }
+          steps.push({
+            line: "return",
+            note: `Return ${fmt(result)}. It took ${values.length} multiplication${values.length === 1 ? "" : "s"}, one per unit of |n|: for n = 2³¹ − 1 that's 2.1 billion, about 2.8 s in C++ for one call.`,
+            view: view(undefined, { final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0050-powx-n/approach2.visual.js -->
+    <script>
+      // Recursive halving: x^n = (x^(n/2))², times one more x when n is odd. The half is computed once.
+      DSAViz.register("0050-powx-n/approach2", {
+        inputs: [
+          { name: "x", type: "string", value: "2", maxLength: 9 },
+          { name: "n", type: "int", value: "13", min: -2147483648, max: 2147483647 },
+        ],
+        trace({ x: xText, n }) {
+          if (!/^-?\d{1,2}(\.\d{1,5})?$/.test(xText.trim())) throw new DSAViz.InputError("x must be a number between -100 and 100 with up to 5 decimals, like 2 or -1.5.");
+          const x0 = Number(xText);
+          if (x0 === 0 && n <= 0) throw new DSAViz.InputError("0 to a power of 0 or less isn't defined (the problem rules it out).");
+          if (Math.abs(Math.pow(x0, n)) > 1e4) throw new DSAViz.InputError("x^n must be between -10⁴ and 10⁴, as in the problem.");
+          const fmt = (v) => (v === 0 ? "0" : Number.isInteger(v) && Math.abs(v) < 1e15 ? String(v) : String(Number(v.toPrecision(7))));
+          const steps = [];
+          let x = x0;
+          let N = n;
+          const stack = []; // exponents of the calls still waiting
+          const returned = {}; // exponent -> value, once known
+          let calls = 0;
+          const chain = [];
+          for (let k = N < 0 ? -N : N; ; k = Math.floor(k / 2)) {
+            chain.push(k);
+            if (k === 0) break;
+          }
+          const view = (k, opts = {}) => {
+            const cmarks = {};
+            chain.forEach((e, idx) => {
+              if (returned[e] !== undefined) cmarks[idx] = "match";
+              else if (stack.includes(e)) cmarks[idx] = "compare";
+            });
+            if (k !== undefined) cmarks[chain.indexOf(k)] = opts.mark || "active";
+            return [
+              { type: "array", label: "exponents on the way down: n, n / 2, n / 4, … (value underneath once returned)", values: chain, sub: chain.map((e) => (returned[e] !== undefined ? fmt(returned[e]) : "")), marks: cmarks, wide: true },
+              { type: "array", label: "call stack: power(x, k), newest on the right", values: stack.map((e) => `k = ${e}`), wide: true, marks: stack.length ? { [stack.length - 1]: "active" } : {} },
+              { type: "vars", items: [{ name: "x", value: fmt(x) }, ...(opts.half !== undefined ? [{ name: "half", value: fmt(opts.half) }] : []), { name: "calls", value: calls }] },
+            ];
+          };
+
+          if (n < 0) {
+            steps.push({ line: "flip", note: `n = ${n} is negative: x^${n} = (1/x)^${-n}. x becomes ${fmt(1 / x0)} and n becomes ${-n}${n === -2147483648 ? " (2³¹, which needs a 64-bit integer)" : ""}.`, view: view() });
+            x = 1 / x0;
+            N = -n;
+          }
+          steps.push({ line: "start", note: `power(x, ${N}): each call halves the exponent, so there are only ${chain.length} calls.`, view: view() });
+          function power(k) {
+            calls++;
+            stack.push(k);
+            if (k === 0) {
+              steps.push({ line: ["call", "base"], note: `power(x, 0) = 1: the bottom of the recursion.`, view: view(k) });
+              returned[0] = 1;
+              stack.pop();
+              return 1;
+            }
+            steps.push({ line: ["call", "half"], note: `power(x, ${k}): first get the half, power(x, ${Math.floor(k / 2)}).`, view: view(k) });
+            const half = power(Math.floor(k / 2));
+            const value = k % 2 === 0 ? half * half : half * half * x;
+            returned[k] = value;
+            steps.push({
+              line: k % 2 === 0 ? "even" : "odd",
+              note:
+                k % 2 === 0
+                  ? `Back in power(x, ${k}): ${k} is even, so x^${k} = half² = ${fmt(half)}² = ${fmt(value)}.`
+                  : `Back in power(x, ${k}): ${k} is odd, so x^${k} = half² × x = ${fmt(half)}² × ${fmt(x)} = ${fmt(value)}.`,
+              view: view(k, { half, mark: "match" }),
+            });
+            stack.pop();
+            return value;
+          }
+          const answer = power(N);
+          steps.push({
+            line: "start",
+            note: `Return ${fmt(answer)}. ${calls} calls for n = ${N}: O(log n). Calling power(x, k / 2) twice instead of storing it would make this O(n) again: for n = 2²⁰ that's 4,194,303 calls instead of 22.`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0050-powx-n/approach3.visual.js -->
+    <script>
+      // Binary exponentiation: read n's bits from the lowest; x keeps squaring (x, x², x⁴, x⁸, …) and set bits multiply into result.
+      DSAViz.register("0050-powx-n/approach3", {
+        inputs: [
+          { name: "x", type: "string", value: "2", maxLength: 9 },
+          { name: "n", type: "int", value: "13", min: -2147483648, max: 2147483647 },
+        ],
+        trace({ x: xText, n }) {
+          if (!/^-?\d{1,2}(\.\d{1,5})?$/.test(xText.trim())) throw new DSAViz.InputError("x must be a number between -100 and 100 with up to 5 decimals, like 2 or -1.5.");
+          const x0 = Number(xText);
+          if (x0 === 0 && n <= 0) throw new DSAViz.InputError("0 to a power of 0 or less isn't defined (the problem rules it out).");
+          if (Math.abs(Math.pow(x0, n)) > 1e4) throw new DSAViz.InputError("x^n must be between -10⁴ and 10⁴, as in the problem.");
+          const fmt = (v) => (v === 0 ? "0" : Number.isInteger(v) && Math.abs(v) < 1e15 ? String(v) : String(Number(v.toPrecision(7))));
+          const steps = [];
+          let x = x0;
+          let N = n < 0 ? -n : n; // a JS number holds 2^31 exactly
+          const bits = N === 0 ? ["0"] : N.toString(2).split("");
+          const L = bits.length;
+          let result = 1;
+          let used = 0; // exponent collected in result so far
+          let k = 0; // current bit, counted from the right
+          let rest = N;
+          const view = (opts = {}) => {
+            const marks = {};
+            for (let j = 0; j < L; j++) {
+              const bitIndex = L - 1 - j; // display left to right = high to low
+              if (bitIndex < k) marks[j] = bits[j] === "1" ? "match" : "visited";
+            }
+            if (opts.at !== undefined && opts.at < L) marks[L - 1 - opts.at] = opts.mark || "active";
+            return [
+              {
+                type: "array",
+                label: `n = ${N} in binary (bold number = bit k; bit 0, the lowest, is on the right)`,
+                values: bits,
+                sub: bits.map((_, j) => String(L - 1 - j)),
+                marks,
+                compact: L > 12,
+              },
+              {
+                type: "vars",
+                items: [
+                  { name: "x (= b^(2^k))", value: fmt(x), mark: opts.squared ? "new" : "" },
+                  { name: "result", value: `${fmt(result)}${used ? ` = b^${used}` : ""}`, mark: opts.took ? "new" : "" },
+                  { name: "n left", value: rest },
+                ],
+              },
+            ];
+          };
+
+          if (n < 0) {
+            steps.push({ line: "flip", note: `n = ${n} is negative: x^${n} = (1/x)^${-n}. x becomes ${fmt(1 / x0)} and n becomes ${-n}${n === -2147483648 ? ", which is 2³¹ and only fits in a 64-bit integer: that's why the code uses long" : ""}.`, view: view() });
+            x = 1 / x0;
+          }
+          steps.push({
+            line: "init",
+            note: N ? `${N} in binary is ${bits.join("")}, so b^${N} is the product of b^(2^k) for each set bit k, where b = ${n < 0 ? `1/${fmt(x0)}` : fmt(x0)}. result = 1; x starts at b and is squared each round: b, b², b⁴, …` : "n = 0: no bits to read, the answer is 1.",
+            view: view(),
+          });
+          while (rest > 0) {
+            if (rest % 2 === 1) {
+              result *= x;
+              used += 2 ** k;
+              steps.push({ line: ["loop", "bit"], note: `Bit ${k} is 1: multiply result by x (b^${2 ** k}). result = ${fmt(result)} = b^${used}.`, view: view({ at: k, mark: "new", took: true }) });
+            } else {
+              steps.push({ line: ["loop", "bit"], note: `Bit ${k} is 0: b^${2 ** k} isn't part of the answer, so result stays ${fmt(result)}.`, view: view({ at: k, mark: "compare" }) });
+            }
+            x *= x;
+            rest = Math.floor(rest / 2);
+            k++;
+            steps.push({
+              line: "square",
+              note: `Square x for the next bit: x = b^${2 ** k} = ${fmt(x)}. Shift n right: ${rest} left.${rest === 0 ? " No bits left." : ""}`,
+              view: view({ at: k, squared: true }),
+            });
+          }
+          steps.push({
+            line: "return",
+            note: `Return ${fmt(result)}. ${k} round${k === 1 ? "" : "s"}, one per bit of n: O(log n) time, O(1) space. Even n = 2³¹ − 1 needs only 31.`,
+            view: view(),
+          });
           return steps;
         },
       });
