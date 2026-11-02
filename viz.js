@@ -93,7 +93,9 @@
       const maxLength = spec.maxLength ?? 12;
       if (values.length < minLength || values.length > maxLength) {
         throw new InputError(
-          `${name} needs between ${minLength} and ${maxLength} numbers (kept small so the steps stay readable).`
+          minLength === maxLength
+            ? `${name} needs exactly ${minLength} numbers.`
+            : `${name} needs between ${minLength} and ${maxLength} numbers (kept small so the steps stay readable).`
         );
       }
       const minValue = spec.minValue ?? -1e6;

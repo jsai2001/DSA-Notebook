@@ -1,0 +1,248 @@
+<details class="question" data-tags="array intervals merge binary-search">
+  <summary>
+    <span class="q-title">57. Insert Interval</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> The list is already sorted with no overlaps,
+      so it splits into three runs: intervals that <strong>end before</strong>
+      the new one starts (copy them), intervals that <strong>start before</strong>
+      it ends (absorb them: <code>min</code> of starts, <code>max</code> of
+      ends), and the rest (copy them). One pass, O(n), no sort.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/insert-interval/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>intervals</code> is sorted by start and has no overlapping
+        intervals. Insert <code>newInterval</code> so that the list is still
+        sorted with no overlaps, merging where needed, and return the new list.
+      </p>
+      <ul>
+        <li><code>0 &lt;= intervals.length &lt;= 10⁴</code>: the list can be empty.</li>
+        <li><code>0 &lt;= start &lt;= end &lt;= 10⁵</code> for every interval, including <code>newInterval</code>.</li>
+        <li>Touching intervals, like <code>[1,3]</code> and <code>[3,4]</code>, count as overlapping.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[[1,3],[6,9]]</code> + <code>[2,5]</code> →
+        <code>[[1,5],[6,9]]</code>;
+        <code>[[1,2],[3,5],[6,7],[8,10],[12,16]]</code> + <code>[4,8]</code> →
+        <code>[[1,2],[3,10],[12,16]]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[]</code> + <code>[5,7]</code></td>
+              <td><code>[[5,7]]</code></td>
+              <td>An empty list: none of the loops run, but the new interval must still be added.</td>
+            </tr>
+            <tr>
+              <td><code>[[3,5]]</code> + <code>[1,2]</code></td>
+              <td><code>[[1,2],[3,5]]</code></td>
+              <td>It goes first, before everything.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,2]]</code> + <code>[3,4]</code></td>
+              <td><code>[[1,2],[3,4]]</code></td>
+              <td>It goes last: every interval ends before it starts, so the first run copies them all and nothing is left to overlap.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,2],[6,7]]</code> + <code>[3,4]</code></td>
+              <td><code>[[1,2],[3,4],[6,7]]</code></td>
+              <td>It fits in a gap without touching anything.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,3]]</code> + <code>[3,4]</code></td>
+              <td><code>[[1,4]]</code></td>
+              <td>Touching on the left. Copying intervals while <code>end &lt;= start</code> (instead of <code>&lt;</code>) keeps [1,3] apart: <code>[[1,3],[3,4]]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[[4,5]]</code> + <code>[1,4]</code></td>
+              <td><code>[[1,5]]</code></td>
+              <td>Touching on the right. Absorbing only while <code>start &lt; end</code> (instead of <code>&lt;=</code>) gives <code>[[1,4],[4,5]]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,2],[5,6]]</code> + <code>[2,5]</code></td>
+              <td><code>[[1,6]]</code></td>
+              <td>It touches both neighbours and joins them into one.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,10]]</code> + <code>[3,4]</code></td>
+              <td><code>[[1,10]]</code></td>
+              <td>Already covered. Without <code>min</code> on the start you get <code>[[3,10]]</code>; without <code>max</code> on the end, <code>[[1,4]]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[[2,3],[4,5]]</code> + <code>[1,9]</code></td>
+              <td><code>[[1,9]]</code></td>
+              <td>It swallows everything. Setting <code>end = interval.end</code> instead of the <code>max</code> shrinks it to 3, so [4,5] no longer overlaps: <code>[[1,3],[4,5]]</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Add It, Sort, Merge</h2>
+      <p class="intuition">
+        Reuse Merge Intervals (56): append <code>newInterval</code>, sort by
+        start, and merge in one pass. It doesn't use the fact that the list
+        was already sorted.
+      </p>
+      <ul>
+        <li>Merge as usual: extend the last merged interval when <code>start &lt;= last.end</code>, otherwise start a new one.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        A fine answer if you just solved 56. In practice it's quick: Python's
+        sort is fast on a nearly sorted list (1.3 ms for 10⁴ intervals here,
+        against 1.0 ms for Approach 2). But an interviewer will ask for O(n).
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: One Pass in Three Phases
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Walk the sorted list once. Because nothing overlaps and everything is
+        sorted, the intervals come in three runs, in this order, relative to
+        <code>[start, end]</code>.
+      </p>
+      <ul>
+        <li><strong>Before:</strong> while <code>interval.end &lt; start</code>, copy it.</li>
+        <li><strong>Overlap:</strong> while <code>interval.start &lt;= end</code>, absorb it: <code>start = min(...)</code>, <code>end = max(...)</code>.</li>
+        <li>Add <code>[start, end]</code>, then copy everything that's left.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n) for the answer</span>
+      </div>
+      <p class="note">
+        The expected answer. The two conditions mirror each other:
+        <code>&lt;</code> for "ends before", <code>&lt;=</code> for "starts
+        before it ends", so touching intervals land in the overlap run. The
+        result copies each interval, so it doesn't share lists with the input.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Binary Search the Overlap</h2>
+      <p class="intuition">
+        The intervals that overlap the new one form one block,
+        <code>intervals[left..right − 1]</code>. Both ends of it can be found
+        by binary search, since starts and ends are both increasing.
+      </p>
+      <ul>
+        <li><code>left</code>: the first interval with <code>end &gt;= start</code>.</li>
+        <li><code>right</code>: the first interval with <code>start &gt; end</code>; search from <code>left</code>.</li>
+        <li>Only the block's first start and last end matter for the merge. Then the answer is <code>before + [start, end] + after</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n): O(log n) to search, O(n) to copy</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Only O(log n) comparisons, but the answer is a new list, so copying
+        it still costs O(n). The search alone is worth knowing when you only
+        need to ask which intervals overlap, without building a new list.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Approach 3 with the standard binary searches. Python's
+        <code>bisect_left</code> / <code>bisect_right</code> take a
+        <code>key</code> since 3.10, and C++ has <code>std::lower_bound</code>
+        / <code>std::upper_bound</code> with a comparator. Java's
+        <code>Arrays.binarySearch</code> can't search on one field of an
+        <code>int[][]</code> as simply, so write the loop there.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Both pass every test here. The Python version slices
+        <code>intervals</code>, so the result shares the untouched inner lists
+        with the input: changing <code>result[0][1]</code> afterwards changes
+        <code>intervals[0][1]</code> too.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Add It, Sort, Merge</th>
+              <td>Merge Intervals (56) again</td>
+              <td>O(n log n)</td>
+              <td>O(n)</td>
+              <td>Ignores that the input is sorted</td>
+            </tr>
+            <tr>
+              <th scope="row">One Pass in Three Phases</th>
+              <td>Before / overlap / after</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Expected answer</td>
+            </tr>
+            <tr>
+              <th scope="row">Binary Search the Overlap</th>
+              <td>Find left and right, splice</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>O(log n) comparisons; copying dominates</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
