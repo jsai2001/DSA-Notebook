@@ -13394,6 +13394,452 @@
         </div>
       </details>
 
+      <!-- ===== problems/0054-spiral-matrix ===== -->
+      <details class="question" data-tags="array matrix simulation spiral boundaries">
+        <summary>
+          <span class="q-title">54. Spiral Matrix</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">Array</span>
+            <span class="tag">Matrix</span>
+            <span class="tag">Simulation</span>
+          </span>
+        </summary>
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> Keep four boundaries, <code>top</code>,
+            <code>bottom</code>, <code>left</code>, <code>right</code>. Take the top
+            row, the right column, the bottom row, the left column, moving each
+            boundary inward after its side. Before the bottom row and the left
+            column, <strong>check the rectangle isn't already empty</strong>, or a
+            single leftover row or column is read twice. O(m·n) time, O(1) extra
+            space.
+          </div>
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/spiral-matrix/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              Given an <code>m × n</code> matrix, return all of its elements in
+              spiral order: along the top row to the right, down the right side, back
+              along the bottom, up the left side, and then the same again on the
+              ring inside, until every element is listed.
+            </p>
+            <ul>
+              <li><code>1 &lt;= m, n &lt;= 10</code> and <code>-100 &lt;= matrix[i][j] &lt;= 100</code>.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>[[1,2,3],[4,5,6],[7,8,9]]</code> →
+              <code>[1,2,3,6,9,8,7,4,5]</code>;
+              <code>[[1,2,3,4],[5,6,7,8],[9,10,11,12]]</code> →
+              <code>[1,2,3,4,8,12,11,10,9,5,6,7]</code>.
+            </p>
+          </section>
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[[1]]</code></td>
+                    <td><code>[1]</code></td>
+                    <td>One cell: take it, and every later side must be empty or skipped.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[1,2,3]]</code></td>
+                    <td><code>[1,2,3]</code></td>
+                    <td>A single row. Without the <code>top &lt;= bottom</code> check, the bottom row is the same row read backwards: <code>[1,2,3,2,1]</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[1],[2],[3]]</code></td>
+                    <td><code>[1,2,3]</code></td>
+                    <td>A single column. Without the <code>left &lt;= right</code> check, the left column is the same column read upwards: <code>[1,2,3,2]</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[1,2],[3,4]]</code></td>
+                    <td><code>[1,2,4,3]</code></td>
+                    <td>One ring and nothing inside: after the bottom row, the left column has no rows left to take.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[1,2,3],[4,5,6],[7,8,9]]</code></td>
+                    <td><code>[1,2,3,6,9,8,7,4,5]</code></td>
+                    <td>Odd square: the last ring is the single centre cell. Turning only at the grid's edges (not at taken cells) loops back to the start: <code>[1,2,3,6,9,8,7,4,1]</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[1,2,3,4],[5,6,7,8],[9,10,11,12]]</code></td>
+                    <td><code>[1,2,3,4,8,12,11,10,9,5,6,7]</code></td>
+                    <td>Wider than tall: the inside is the single row <code>5,6,7</code>. Without the bottom-row check, 6 is read again: 13 values instead of 12.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[1,2],[3,4],[5,6],[7,8]]</code></td>
+                    <td><code>[1,2,4,6,8,7,5,3]</code></td>
+                    <td>Taller than wide: everything is on the outer ring, and the inside (rows 1–2, no columns) is empty.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[[7,7],[7,7]]</code></td>
+                    <td><code>[7,7,7,7]</code></td>
+                    <td>All equal: a wrong order looks right. Test with distinct values, and count that there are exactly m·n of them.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Walk and Turn Right</h2>
+            <p class="intuition">
+              Do exactly what the spiral looks like. Keep walking in one direction;
+              when the next cell is off the grid or already taken, turn right
+              (right → down → left → up → right). A <code>seen</code> grid remembers
+              what's taken.
+            </p>
+            <ul>
+              <li>Run the loop exactly m·n times, so it can't stop early or run forever.</li>
+              <li>One turn is always enough: after turning, the next cell is free until the very last one.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(m·n)</span>
+              <span><strong>Space</strong> O(m·n) for <code>seen</code></span>
+            </div>
+            <p class="note">
+              Hard to get wrong, and it works for any "walk and turn" grid problem.
+              Both conditions matter: turning only at the edges goes back over the
+              outer ring. You could mark taken cells inside <code>matrix</code>
+              instead of <code>seen</code>, but that changes the caller's matrix.
+            </p>
+            <div class="code-tabs" data-viz="0054-spiral-matrix/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5,6,7],"take":[8,9,10],"look":[11,15],"turn":[12,13,14],"return":[16]}'>
+                class Solution(object):
+                    def spiralOrder(self, matrix):
+                        m, n = len(matrix), len(matrix[0])
+                        seen = [[False] * n for _ in range(m)]
+                        dr, dc = [0, 1, 0, -1], [1, 0, -1, 0]  # right, down, left, up
+                        r = c = d = 0
+                        result = []
+                        for _ in range(m * n):  # every cell exactly once
+                            result.append(matrix[r][c])
+                            seen[r][c] = True
+                            nr, nc = r + dr[d], c + dc[d]  # the next cell in this direction
+                            if not (0 <= nr < m and 0 <= nc < n) or seen[nr][nc]:  # off the edge, or already taken: turn right
+                                d = (d + 1) % 4
+                                nr, nc = r + dr[d], c + dc[d]
+                            r, c = nr, nc
+                        return result
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8,9],"take":[10,11,12],"look":[13,19,20],"turn":[14,15,16,17],"return":[22]}'>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<int> spiralOrder(std::vector<std::vector<int>>& matrix) {
+                        int m = (int)matrix.size(), n = (int)matrix[0].size();
+                        std::vector<std::vector<bool>> seen(m, std::vector<bool>(n, false));
+                        const int dr[4] = {0, 1, 0, -1}, dc[4] = {1, 0, -1, 0}; // right, down, left, up
+                        int r = 0, c = 0, d = 0;
+                        std::vector<int> result;
+                        for (int k = 0; k < m * n; ++k) { // every cell exactly once
+                            result.push_back(matrix[r][c]);
+                            seen[r][c] = true;
+                            int nr = r + dr[d], nc = c + dc[d]; // the next cell in this direction
+                            if (nr < 0 || nr >= m || nc < 0 || nc >= n || seen[nr][nc]) { // off the edge, or already taken: turn right
+                                d = (d + 1) % 4;
+                                nr = r + dr[d];
+                                nc = c + dc[d];
+                            }
+                            r = nr;
+                            c = nc;
+                        }
+                        return result;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[6,7,8,9],"take":[10,11,12],"look":[13,19,20],"turn":[14,15,16,17],"return":[22]}'>
+                import java.util.ArrayList;
+                import java.util.List;
+                class Solution {
+                    public List<Integer> spiralOrder(int[][] matrix) {
+                        int m = matrix.length, n = matrix[0].length;
+                        boolean[][] seen = new boolean[m][n];
+                        int[] dr = {0, 1, 0, -1}, dc = {1, 0, -1, 0}; // right, down, left, up
+                        int r = 0, c = 0, d = 0;
+                        List<Integer> result = new ArrayList<>();
+                        for (int k = 0; k < m * n; k++) { // every cell exactly once
+                            result.add(matrix[r][c]);
+                            seen[r][c] = true;
+                            int nr = r + dr[d], nc = c + dc[d]; // the next cell in this direction
+                            if (nr < 0 || nr >= m || nc < 0 || nc >= n || seen[nr][nc]) { // off the edge, or already taken: turn right
+                                d = (d + 1) % 4;
+                                nr = r + dr[d];
+                                nc = c + dc[d];
+                            }
+                            r = nr;
+                            c = nc;
+                        }
+                        return result;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>
+              Approach 2: Shrink Four Boundaries
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              The cells not taken yet always form a rectangle: rows
+              <code>top..bottom</code>, columns <code>left..right</code>. Take its
+              four sides in order, and after each side move that boundary one step
+              inward.
+            </p>
+            <ul>
+              <li>Top row left to right, then <code>top += 1</code>; right column top to bottom, then <code>right -= 1</code>.</li>
+              <li>Bottom row right to left only if <code>top &lt;= bottom</code>; left column bottom to top only if <code>left &lt;= right</code>.</li>
+              <li>Those two checks are for the last ring being a single row or column, which the first two sides already took.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(m·n)</span>
+              <span><strong>Space</strong> O(1) besides the answer</span>
+            </div>
+            <p class="note">
+              The answer to give in an interview: no extra grid and no copying.
+              The first two sides need no check, because the <code>while</code>
+              condition already says the rectangle has a row and a column; an empty
+              range just takes nothing.
+            </p>
+            <div class="code-tabs" data-viz="0054-spiral-matrix/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"ring":[6],"top":[7,8,9],"right":[10,11,12],"bottom":[13,14,15,16],"left":[17,18,19,20],"return":[21]}'>
+                class Solution(object):
+                    def spiralOrder(self, matrix):
+                        top, bottom = 0, len(matrix) - 1  # the rows and columns not taken yet
+                        left, right = 0, len(matrix[0]) - 1
+                        result = []
+                        while top <= bottom and left <= right:  # one ring per round
+                            for c in range(left, right + 1):  # top row, left to right
+                                result.append(matrix[top][c])
+                            top += 1
+                            for r in range(top, bottom + 1):  # right column, top to bottom
+                                result.append(matrix[r][right])
+                            right -= 1
+                            if top <= bottom:  # a row is still left (not the one just taken)
+                                for c in range(right, left - 1, -1):  # bottom row, right to left
+                                    result.append(matrix[bottom][c])
+                                bottom -= 1
+                            if left <= right:  # a column is still left
+                                for r in range(bottom, top - 1, -1):  # left column, bottom to top
+                                    result.append(matrix[r][left])
+                                left += 1
+                        return result
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,6,7],"ring":[8],"top":[9,10],"right":[11,12],"bottom":[13,14,15],"left":[17,18,19],"return":[22]}'>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<int> spiralOrder(std::vector<std::vector<int>>& matrix) {
+                        int top = 0, bottom = (int)matrix.size() - 1; // the rows and columns not taken yet
+                        int left = 0, right = (int)matrix[0].size() - 1;
+                        std::vector<int> result;
+                        while (top <= bottom && left <= right) { // one ring per round
+                            for (int c = left; c <= right; ++c) result.push_back(matrix[top][c]); // top row, left to right
+                            ++top;
+                            for (int r = top; r <= bottom; ++r) result.push_back(matrix[r][right]); // right column, top to bottom
+                            --right;
+                            if (top <= bottom) { // a row is still left (not the one just taken)
+                                for (int c = right; c >= left; --c) result.push_back(matrix[bottom][c]); // bottom row, right to left
+                                --bottom;
+                            }
+                            if (left <= right) { // a column is still left
+                                for (int r = bottom; r >= top; --r) result.push_back(matrix[r][left]); // left column, bottom to top
+                                ++left;
+                            }
+                        }
+                        return result;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6,7],"ring":[8],"top":[9,10],"right":[11,12],"bottom":[13,14,15],"left":[17,18,19],"return":[22]}'>
+                import java.util.ArrayList;
+                import java.util.List;
+                class Solution {
+                    public List<Integer> spiralOrder(int[][] matrix) {
+                        int top = 0, bottom = matrix.length - 1; // the rows and columns not taken yet
+                        int left = 0, right = matrix[0].length - 1;
+                        List<Integer> result = new ArrayList<>();
+                        while (top <= bottom && left <= right) { // one ring per round
+                            for (int c = left; c <= right; c++) result.add(matrix[top][c]); // top row, left to right
+                            top++;
+                            for (int r = top; r <= bottom; r++) result.add(matrix[r][right]); // right column, top to bottom
+                            right--;
+                            if (top <= bottom) { // a row is still left (not the one just taken)
+                                for (int c = right; c >= left; c--) result.add(matrix[bottom][c]); // bottom row, right to left
+                                bottom--;
+                            }
+                            if (left <= right) { // a column is still left
+                                for (int r = bottom; r >= top; r--) result.add(matrix[r][left]); // left column, bottom to top
+                                left++;
+                            }
+                        }
+                        return result;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>Approach 3: Peel the Top Row, Then Turn</h2>
+            <p class="intuition">
+              The spiral's next stretch is always the first row. Take it, then turn
+              the rest of the matrix a quarter counter-clockwise: its right column
+              becomes the new first row, in exactly the order the spiral goes down
+              it. Repeat until nothing is left.
+            </p>
+            <ul>
+              <li>Python: <code>[list(row) for row in zip(*matrix)][::-1]</code> is the counter-clockwise turn (transpose, then reverse the rows).</li>
+              <li>Without the <code>[::-1]</code> it's just a transpose, and the order goes wrong from the second side: <code>[1,2,3,4,7,5,6,8,9]</code> for the 3 × 3 example.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(m·n·min(m, n))</span>
+              <span><strong>Space</strong> O(m·n)</span>
+            </div>
+            <p class="note">
+              Neat, and short in Python, but every turn copies everything that's
+              left. For a 10 × 10 matrix that's 615 copies to list 100 values; for
+              n × n it grows like ⅔·n³.
+            </p>
+            <div class="code-tabs" data-viz="0054-spiral-matrix/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"peel":[5,6],"rotate":[8],"return":[9]}'>
+                class Solution(object):
+                    def spiralOrder(self, matrix):
+                        matrix = [row[:] for row in matrix]  # work on a copy
+                        result = []
+                        while matrix:
+                            result += matrix.pop(0)  # take the whole first row
+                            # turn what's left a quarter counter-clockwise: its right column becomes the first row
+                            matrix = [list(row) for row in zip(*matrix)][::-1]
+                        return result
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,6],"peel":[7,8,9,10],"rotate":[12,13,14,15,16],"return":[18]}'>
+                #include <vector>
+                class Solution {
+                public:
+                    std::vector<int> spiralOrder(std::vector<std::vector<int>>& matrix) {
+                        std::vector<std::vector<int>> rest = matrix; // work on a copy
+                        std::vector<int> result;
+                        while (!rest.empty()) {
+                            result.insert(result.end(), rest[0].begin(), rest[0].end()); // take the whole first row
+                            rest.erase(rest.begin());
+                            if (rest.empty()) break;
+                            // turn what's left a quarter counter-clockwise: its right column becomes the first row
+                            int rows = (int)rest.size(), cols = (int)rest[0].size();
+                            std::vector<std::vector<int>> turned(cols, std::vector<int>(rows));
+                            for (int i = 0; i < cols; ++i)
+                                for (int j = 0; j < rows; ++j) turned[i][j] = rest[j][cols - 1 - i];
+                            rest = turned;
+                        }
+                        return result;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6],"peel":[7,8,9,10],"rotate":[12,13,14,15],"return":[17]}'>
+                import java.util.ArrayList;
+                import java.util.List;
+                class Solution {
+                    public List<Integer> spiralOrder(int[][] matrix) {
+                        int[][] rest = matrix; // never changed, only replaced by rotated copies
+                        List<Integer> result = new ArrayList<>();
+                        while (rest.length > 0) {
+                            for (int x : rest[0]) result.add(x); // take the whole first row
+                            int rows = rest.length - 1, cols = rest[0].length; // what's left: rows 1..end
+                            if (rows == 0) break;
+                            // turn what's left a quarter counter-clockwise: its right column becomes the first row
+                            int[][] turned = new int[cols][rows];
+                            for (int i = 0; i < cols; i++)
+                                for (int j = 0; j < rows; j++) turned[i][j] = rest[j + 1][cols - 1 - i];
+                            rest = turned;
+                        }
+                        return result;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">No shortcut</span></h2>
+            <p>
+              No standard library walks a matrix in spiral order. Python's
+              <code>zip(*matrix)</code> makes Approach 3 short to write, but it's
+              still the slower approach; C++ and Java have no built-in to turn a
+              matrix at all.
+            </p>
+            <p class="note">
+              Write Approach 2. The things to remember: four boundaries, move each
+              one after its side, and check <code>top &lt;= bottom</code> and
+              <code>left &lt;= right</code> before the last two sides.
+            </p>
+          </section>
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Walk and Turn Right</th>
+                    <td>Direction vectors + seen grid</td>
+                    <td>O(m·n)</td>
+                    <td>O(m·n)</td>
+                    <td>Simple; works for any walk-and-turn grid</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Shrink Four Boundaries</th>
+                    <td>top / bottom / left / right</td>
+                    <td>O(m·n)</td>
+                    <td>O(1)</td>
+                    <td>Expected answer; mind the two checks</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Peel the Top Row, Then Turn</th>
+                    <td>Take row 0, rotate the rest</td>
+                    <td>O(m·n·min(m, n))</td>
+                    <td>O(m·n)</td>
+                    <td>Short in Python; copies a lot</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -21962,6 +22408,243 @@
             line: "return",
             note: `Return ${best}, from nums[${bestRange[0]}..${bestRange[1]}]. One pass and two variables: O(n) time, O(1) space.`,
             view: view(undefined, { final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0054-spiral-matrix/approach1.visual.js -->
+    <script>
+      // Walk like a snake: keep going in one direction, and turn right when the next cell is off the grid or already taken.
+      DSAViz.register("0054-spiral-matrix/approach1", {
+        inputs: [{ name: "matrix", type: "int[][]", value: "[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]", maxRows: 5, maxCols: 5, minValue: -99, maxValue: 99 }],
+        trace({ matrix }) {
+          const m = matrix.length;
+          const n = matrix[0].length;
+          if (matrix.some((r) => r.length !== n)) throw new DSAViz.InputError("every row must have the same length, like [[1, 2], [3, 4]].");
+          const NAMES = ["right", "down", "left", "up"];
+          const dr = [0, 1, 0, -1];
+          const dc = [1, 0, -1, 0];
+          const seen = matrix.map((r) => r.map(() => false));
+          const result = [];
+          const steps = [];
+          const inside = (r, c) => r >= 0 && r < m && c >= 0 && c < n;
+          const view = (o = {}) => {
+            const marks = {};
+            for (let i = 0; i < m; i++) for (let j = 0; j < n; j++) if (seen[i][j]) marks[`${i},${j}`] = o.final ? "match" : "visited";
+            if (o.look && inside(...o.look)) marks[`${o.look[0]},${o.look[1]}`] = o.blocked ? "cut" : "compare";
+            if (o.at) marks[`${o.at[0]},${o.at[1]}`] = "active";
+            const rm = {};
+            if (o.fresh && result.length) rm[result.length - 1] = "new";
+            if (o.final) result.forEach((_, k) => (rm[k] = "match"));
+            return [
+              { type: "grid", label: "matrix (dark = the cell we're on, yellow = the next cell, grey = taken)", rows: [...Array(m).keys()], cols: [...Array(n).keys()], cells: matrix.map((r) => r.slice()), marks },
+              { type: "vars", items: [{ name: "(r, c)", value: o.at ? `(${o.at[0]}, ${o.at[1]})` : "-" }, { name: "direction d", value: o.d !== undefined ? NAMES[o.d] : "-", mark: o.turned ? "new" : "" }] },
+              { type: "array", label: `result (${result.length} of ${m * n})`, values: result.slice(), compact: true, marks: rm },
+            ];
+          };
+          let r = 0;
+          let c = 0;
+          let d = 0;
+          steps.push({ line: "init", note: `Start at the top-left corner heading right. seen marks the cells already taken; the four directions are tried in the order right, down, left, up.`, view: view({ at: [0, 0], d }) });
+          for (let k = 0; k < m * n; k++) {
+            result.push(matrix[r][c]);
+            seen[r][c] = true;
+            steps.push({ line: "take", note: `Take matrix[${r}][${c}] = ${matrix[r][c]}. That's ${k + 1} of ${m * n}.`, view: view({ at: [r, c], d, fresh: true }) });
+            if (k === m * n - 1) break;
+            let nr = r + dr[d];
+            let nc = c + dc[d];
+            if (!inside(nr, nc) || seen[nr][nc]) {
+              const why = inside(nr, nc) ? `(${nr}, ${nc}) is already taken` : `(${nr}, ${nc}) is off the grid`;
+              steps.push({ line: "turn", note: `Going ${NAMES[d]}, the next cell ${why}. Turn right.`, view: view({ at: [r, c], d, look: [nr, nc], blocked: true }) });
+              d = (d + 1) % 4;
+              nr = r + dr[d];
+              nc = c + dc[d];
+              steps.push({ line: "turn", note: `Now heading ${NAMES[d]}: the next cell is (${nr}, ${nc}).`, view: view({ at: [r, c], d, look: [nr, nc], turned: true }) });
+            } else {
+              steps.push({ line: "look", note: `Going ${NAMES[d]}, the next cell (${nr}, ${nc}) is free. Step onto it.`, view: view({ at: [r, c], d, look: [nr, nc] }) });
+            }
+            r = nr;
+            c = nc;
+          }
+          steps.push({ line: "return", note: `All ${m * n} cells taken: the loop has run m·n times, so it stops (the step it works out after the last cell is never used). One right turn is always enough here: the spiral never paints itself into a corner. O(m·n) time, plus O(m·n) for seen.`, view: view({ final: true }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0054-spiral-matrix/approach2.visual.js -->
+    <script>
+      // Four boundaries close in: take the top row, right column, bottom row, left column, shrinking the rectangle each time.
+      DSAViz.register("0054-spiral-matrix/approach2", {
+        inputs: [{ name: "matrix", type: "int[][]", value: "[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]", maxRows: 5, maxCols: 5, minValue: -99, maxValue: 99 }],
+        trace({ matrix }) {
+          const m = matrix.length;
+          const n = matrix[0].length;
+          if (matrix.some((r) => r.length !== n)) throw new DSAViz.InputError("every row must have the same length, like [[1, 2], [3, 4]].");
+          let top = 0;
+          let bottom = m - 1;
+          let left = 0;
+          let right = n - 1;
+          const taken = new Set();
+          const result = [];
+          const steps = [];
+          const view = (o = {}) => {
+            const marks = {};
+            for (let i = top; i <= bottom; i++) for (let j = left; j <= right; j++) marks[`${i},${j}`] = "window";
+            taken.forEach((k) => (marks[k] = o.final ? "match" : "visited"));
+            (o.side || []).forEach((k) => (marks[k] = "new"));
+            const rm = {};
+            for (let k = o.from ?? result.length; k < result.length; k++) rm[k] = "new";
+            if (o.final) result.forEach((_, k) => (rm[k] = "match"));
+            const hot = o.hot || [];
+            return [
+              { type: "grid", label: "matrix (outlined = rows top..bottom, columns left..right: not taken yet; grey = taken)", rows: [...Array(m).keys()], cols: [...Array(n).keys()], cells: matrix.map((r) => r.slice()), marks },
+              {
+                type: "vars",
+                items: [
+                  { name: "top", value: top, mark: hot.includes("top") ? "new" : "" },
+                  { name: "bottom", value: bottom, mark: hot.includes("bottom") ? "new" : "" },
+                  { name: "left", value: left, mark: hot.includes("left") ? "new" : "" },
+                  { name: "right", value: right, mark: hot.includes("right") ? "new" : "" },
+                ],
+              },
+              { type: "array", label: `result (${result.length} of ${m * n})`, values: result.slice(), compact: true, marks: rm },
+            ];
+          };
+          // Take the cells in order and record them, returning their keys for highlighting.
+          const take = (cells) => {
+            cells.forEach(([i, j]) => {
+              result.push(matrix[i][j]);
+              taken.add(`${i},${j}`);
+            });
+            return cells.map(([i, j]) => `${i},${j}`);
+          };
+          const range = (a, b, step) => {
+            const out = [];
+            for (let x = a; step > 0 ? x <= b : x >= b; x += step) out.push(x);
+            return out;
+          };
+          steps.push({ line: "init", note: `The outlined rectangle is what's not taken yet: rows ${top}..${bottom}, columns ${left}..${right}. Each side we take moves one boundary inward.`, view: view() });
+          while (top <= bottom && left <= right) {
+            steps.push({ line: "ring", note: `top ≤ bottom (${top} ≤ ${bottom}) and left ≤ right (${left} ≤ ${right}): cells remain, so walk another ring.`, view: view() });
+            let from = result.length;
+            let side = take(range(left, right, 1).map((j) => [top, j]));
+            top++;
+            steps.push({ line: "top", note: `Top row ${top - 1}, left to right: ${side.length} cell${side.length === 1 ? "" : "s"}. That row is done, so top becomes ${top}.`, view: view({ side, from, hot: ["top"] }) });
+            from = result.length;
+            side = take(range(top, bottom, 1).map((i) => [i, right]));
+            right--;
+            steps.push({
+              line: "right",
+              note: side.length
+                ? `Right column ${right + 1}, rows ${top}..${bottom}: ${side.length} cell${side.length === 1 ? "" : "s"}. right becomes ${right}.`
+                : `Right column: rows ${top}..${bottom} is empty (no rows left), so nothing is taken. right becomes ${right}.`,
+              view: view({ side, from, hot: ["right"] }),
+            });
+            if (top <= bottom) {
+              from = result.length;
+              side = take(range(right, left, -1).map((j) => [bottom, j]));
+              bottom--;
+              steps.push({
+                line: "bottom",
+                note: `top ≤ bottom (${top} ≤ ${bottom + 1}), so a row remains. Bottom row ${bottom + 1}, right to left: ${side.length} cell${side.length === 1 ? "" : "s"}. bottom becomes ${bottom}.`,
+                view: view({ side, from, hot: ["bottom"] }),
+              });
+            } else {
+              steps.push({ line: "bottom", note: `top > bottom (${top} > ${bottom}): the only row left was the top row, already taken. Skip the bottom row, or it would be read again backwards.`, view: view() });
+            }
+            if (left <= right) {
+              from = result.length;
+              side = take(range(bottom, top, -1).map((i) => [i, left]));
+              left++;
+              steps.push({
+                line: "left",
+                note: side.length
+                  ? `left ≤ right (${left - 1} ≤ ${right}), so a column remains. Left column ${left - 1}, bottom to top: ${side.length} cell${side.length === 1 ? "" : "s"}. left becomes ${left}.`
+                  : `left ≤ right (${left - 1} ≤ ${right}), but rows ${top}..${bottom} is empty, so nothing is taken. left becomes ${left}.`,
+                view: view({ side, from, hot: ["left"] }),
+              });
+            } else {
+              steps.push({ line: "left", note: `left > right (${left} > ${right}): the only column left was the right column, already taken. Skip the left column, or it would be read again upwards.`, view: view() });
+            }
+          }
+          steps.push({ line: "return", note: `The rectangle is empty (top > bottom or left > right). Every cell was read once: O(m·n) time and O(1) extra space besides the answer.`, view: view({ final: true }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0054-spiral-matrix/approach3.visual.js -->
+    <script>
+      // Peel and turn: take the whole first row, then rotate what's left counter-clockwise so the next side is on top.
+      DSAViz.register("0054-spiral-matrix/approach3", {
+        inputs: [{ name: "matrix", type: "int[][]", value: "[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]", maxRows: 5, maxCols: 5, minValue: -99, maxValue: 99 }],
+        trace({ matrix }) {
+          const m = matrix.length;
+          const n = matrix[0].length;
+          if (matrix.some((r) => r.length !== n)) throw new DSAViz.InputError("every row must have the same length, like [[1, 2], [3, 4]].");
+          // Keep the original position of every value, so the original matrix can show what's been taken.
+          let rest = matrix.map((row, i) => row.map((v, j) => ({ v, at: `${i},${j}` })));
+          const taken = new Set();
+          const result = [];
+          const steps = [];
+          let copied = 0;
+          const view = (o = {}) => {
+            const marks = {};
+            taken.forEach((k) => (marks[k] = o.final ? "match" : "visited"));
+            (o.row || []).forEach((k) => (marks[k] = "new"));
+            const rm = {};
+            for (let k = o.from ?? result.length; k < result.length; k++) rm[k] = "new";
+            if (o.final) result.forEach((_, k) => (rm[k] = "match"));
+            const widgets = [{ type: "grid", label: "original matrix (grey = taken)", rows: [...Array(m).keys()], cols: [...Array(n).keys()], cells: matrix.map((r) => r.slice()), marks }];
+            if (rest.length) {
+              const rmarks = {};
+              if (o.top) rest[0].forEach((_, j) => (rmarks[`0,${j}`] = "active"));
+              widgets.push({
+                type: "grid",
+                label: `matrix now: ${rest.length} × ${rest[0].length} (what's left, turned)`,
+                rows: [...Array(rest.length).keys()],
+                cols: [...Array(rest[0].length).keys()],
+                cells: rest.map((r) => r.map((x) => x.v)),
+                marks: rmarks,
+              });
+            }
+            widgets.push({ type: "vars", items: [{ name: "values copied by the rotations", value: copied }] });
+            widgets.push({ type: "array", label: `result (${result.length} of ${m * n})`, values: result.slice(), compact: true, marks: rm });
+            return widgets;
+          };
+          steps.push({ line: "init", note: `Work on a copy, so the caller's matrix isn't changed. Its first row is always the next stretch of the spiral.`, view: view({ top: true }) });
+          while (rest.length) {
+            const first = rest.shift();
+            const from = result.length;
+            first.forEach((x) => {
+              result.push(x.v);
+              taken.add(x.at);
+            });
+            const row = first.map((x) => x.at);
+            if (!rest.length) {
+              steps.push({ line: "peel", note: `Take the first row: ${first.map((x) => x.v).join(", ")}. Nothing is left, so the loop ends.`, view: view({ row, from }) });
+              break;
+            }
+            steps.push({ line: "peel", note: `Take the whole first row: ${first.map((x) => x.v).join(", ")}. ${rest.length} × ${rest[0].length} cells remain.`, view: view({ row, from }) });
+            const rows = rest.length;
+            const cols = rest[0].length;
+            const turned = [];
+            for (let i = 0; i < cols; i++) {
+              turned.push([]);
+              for (let j = 0; j < rows; j++) turned[i].push(rest[j][cols - 1 - i]);
+            }
+            rest = turned;
+            copied += rows * cols;
+            steps.push({
+              line: "rotate",
+              note: `Turn the rest a quarter counter-clockwise (${rows} × ${cols} becomes ${cols} × ${rows}). Its right column is now the first row, in top-to-bottom order: exactly the spiral's next side. That copied ${rows * cols} values.`,
+              view: view({ top: true }),
+            });
+          }
+          steps.push({
+            line: "return",
+            note: `Done. Short to write, but each turn copies everything that's left: ${copied} copies here on top of the ${m * n} values taken. About O(m·n·min(m, n)) time in total.`,
+            view: view({ final: true }),
           });
           return steps;
         },

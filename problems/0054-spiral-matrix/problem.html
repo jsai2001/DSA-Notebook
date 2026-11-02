@@ -1,0 +1,242 @@
+<details class="question" data-tags="array matrix simulation spiral boundaries">
+  <summary>
+    <span class="q-title">54. Spiral Matrix</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Matrix</span>
+      <span class="tag">Simulation</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Keep four boundaries, <code>top</code>,
+      <code>bottom</code>, <code>left</code>, <code>right</code>. Take the top
+      row, the right column, the bottom row, the left column, moving each
+      boundary inward after its side. Before the bottom row and the left
+      column, <strong>check the rectangle isn't already empty</strong>, or a
+      single leftover row or column is read twice. O(m·n) time, O(1) extra
+      space.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/spiral-matrix/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given an <code>m × n</code> matrix, return all of its elements in
+        spiral order: along the top row to the right, down the right side, back
+        along the bottom, up the left side, and then the same again on the
+        ring inside, until every element is listed.
+      </p>
+      <ul>
+        <li><code>1 &lt;= m, n &lt;= 10</code> and <code>-100 &lt;= matrix[i][j] &lt;= 100</code>.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[[1,2,3],[4,5,6],[7,8,9]]</code> →
+        <code>[1,2,3,6,9,8,7,4,5]</code>;
+        <code>[[1,2,3,4],[5,6,7,8],[9,10,11,12]]</code> →
+        <code>[1,2,3,4,8,12,11,10,9,5,6,7]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[[1]]</code></td>
+              <td><code>[1]</code></td>
+              <td>One cell: take it, and every later side must be empty or skipped.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,2,3]]</code></td>
+              <td><code>[1,2,3]</code></td>
+              <td>A single row. Without the <code>top &lt;= bottom</code> check, the bottom row is the same row read backwards: <code>[1,2,3,2,1]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[[1],[2],[3]]</code></td>
+              <td><code>[1,2,3]</code></td>
+              <td>A single column. Without the <code>left &lt;= right</code> check, the left column is the same column read upwards: <code>[1,2,3,2]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,2],[3,4]]</code></td>
+              <td><code>[1,2,4,3]</code></td>
+              <td>One ring and nothing inside: after the bottom row, the left column has no rows left to take.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,2,3],[4,5,6],[7,8,9]]</code></td>
+              <td><code>[1,2,3,6,9,8,7,4,5]</code></td>
+              <td>Odd square: the last ring is the single centre cell. Turning only at the grid's edges (not at taken cells) loops back to the start: <code>[1,2,3,6,9,8,7,4,1]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,2,3,4],[5,6,7,8],[9,10,11,12]]</code></td>
+              <td><code>[1,2,3,4,8,12,11,10,9,5,6,7]</code></td>
+              <td>Wider than tall: the inside is the single row <code>5,6,7</code>. Without the bottom-row check, 6 is read again: 13 values instead of 12.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,2],[3,4],[5,6],[7,8]]</code></td>
+              <td><code>[1,2,4,6,8,7,5,3]</code></td>
+              <td>Taller than wide: everything is on the outer ring, and the inside (rows 1–2, no columns) is empty.</td>
+            </tr>
+            <tr>
+              <td><code>[[7,7],[7,7]]</code></td>
+              <td><code>[7,7,7,7]</code></td>
+              <td>All equal: a wrong order looks right. Test with distinct values, and count that there are exactly m·n of them.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Walk and Turn Right</h2>
+      <p class="intuition">
+        Do exactly what the spiral looks like. Keep walking in one direction;
+        when the next cell is off the grid or already taken, turn right
+        (right → down → left → up → right). A <code>seen</code> grid remembers
+        what's taken.
+      </p>
+      <ul>
+        <li>Run the loop exactly m·n times, so it can't stop early or run forever.</li>
+        <li>One turn is always enough: after turning, the next cell is free until the very last one.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n)</span>
+        <span><strong>Space</strong> O(m·n) for <code>seen</code></span>
+      </div>
+      <p class="note">
+        Hard to get wrong, and it works for any "walk and turn" grid problem.
+        Both conditions matter: turning only at the edges goes back over the
+        outer ring. You could mark taken cells inside <code>matrix</code>
+        instead of <code>seen</code>, but that changes the caller's matrix.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Shrink Four Boundaries
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        The cells not taken yet always form a rectangle: rows
+        <code>top..bottom</code>, columns <code>left..right</code>. Take its
+        four sides in order, and after each side move that boundary one step
+        inward.
+      </p>
+      <ul>
+        <li>Top row left to right, then <code>top += 1</code>; right column top to bottom, then <code>right -= 1</code>.</li>
+        <li>Bottom row right to left only if <code>top &lt;= bottom</code>; left column bottom to top only if <code>left &lt;= right</code>.</li>
+        <li>Those two checks are for the last ring being a single row or column, which the first two sides already took.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n)</span>
+        <span><strong>Space</strong> O(1) besides the answer</span>
+      </div>
+      <p class="note">
+        The answer to give in an interview: no extra grid and no copying.
+        The first two sides need no check, because the <code>while</code>
+        condition already says the rectangle has a row and a column; an empty
+        range just takes nothing.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Peel the Top Row, Then Turn</h2>
+      <p class="intuition">
+        The spiral's next stretch is always the first row. Take it, then turn
+        the rest of the matrix a quarter counter-clockwise: its right column
+        becomes the new first row, in exactly the order the spiral goes down
+        it. Repeat until nothing is left.
+      </p>
+      <ul>
+        <li>Python: <code>[list(row) for row in zip(*matrix)][::-1]</code> is the counter-clockwise turn (transpose, then reverse the rows).</li>
+        <li>Without the <code>[::-1]</code> it's just a transpose, and the order goes wrong from the second side: <code>[1,2,3,4,7,5,6,8,9]</code> for the 3 × 3 example.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n·min(m, n))</span>
+        <span><strong>Space</strong> O(m·n)</span>
+      </div>
+      <p class="note">
+        Neat, and short in Python, but every turn copies everything that's
+        left. For a 10 × 10 matrix that's 615 copies to list 100 values; for
+        n × n it grows like ⅔·n³.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No standard library walks a matrix in spiral order. Python's
+        <code>zip(*matrix)</code> makes Approach 3 short to write, but it's
+        still the slower approach; C++ and Java have no built-in to turn a
+        matrix at all.
+      </p>
+      <p class="note">
+        Write Approach 2. The things to remember: four boundaries, move each
+        one after its side, and check <code>top &lt;= bottom</code> and
+        <code>left &lt;= right</code> before the last two sides.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Walk and Turn Right</th>
+              <td>Direction vectors + seen grid</td>
+              <td>O(m·n)</td>
+              <td>O(m·n)</td>
+              <td>Simple; works for any walk-and-turn grid</td>
+            </tr>
+            <tr>
+              <th scope="row">Shrink Four Boundaries</th>
+              <td>top / bottom / left / right</td>
+              <td>O(m·n)</td>
+              <td>O(1)</td>
+              <td>Expected answer; mind the two checks</td>
+            </tr>
+            <tr>
+              <th scope="row">Peel the Top Row, Then Turn</th>
+              <td>Take row 0, rotate the rest</td>
+              <td>O(m·n·min(m, n))</td>
+              <td>O(m·n)</td>
+              <td>Short in Python; copies a lot</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
