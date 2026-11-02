@@ -16587,6 +16587,628 @@
         </div>
       </details>
 
+      <!-- ===== problems/0572-subtree-of-another-tree ===== -->
+      <details class="question" data-tags="tree binary-tree dfs depth-first-search recursion string-matching kmp hash-function serialization same-tree">
+        <summary>
+          <span class="q-title">572. Subtree of Another Tree</span>
+          <span class="q-meta">
+            <span class="badge easy">Easy</span>
+            <span class="tag">Tree</span>
+            <span class="tag">DFS</span>
+            <span class="tag">String Matching</span>
+          </span>
+        </summary>
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> A subtree means a node <strong>and everything
+            below it</strong>. Try each node of <code>root</code> as the top and ask
+            "is this the same tree as <code>subRoot</code>?", where same means equal
+            values <em>and</em> both trees end (None) in the same places. That's
+            O(m·n). For O(m + n), write both trees in preorder with a marker for
+            every missing child and search for one list inside the other.
+          </div>
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/subtree-of-another-tree/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              Given the roots of two binary trees, <code>root</code> and
+              <code>subRoot</code>, return <code>true</code> if some node of
+              <code>root</code>, together with all of its descendants, has exactly
+              the same structure and values as <code>subRoot</code>. A tree counts
+              as a subtree of itself.
+            </p>
+            <ul>
+              <li><code>root</code> has 1 to 2000 nodes; <code>subRoot</code> has 1 to 1000.</li>
+              <li><code>-10⁴ &lt;= Node.val &lt;= 10⁴</code>.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>root = [3,4,5,1,2]</code>, <code>subRoot = [4,1,2]</code>
+              → <code>true</code>; <code>root = [3,4,5,1,2,null,null,null,null,0]</code>,
+              same <code>subRoot</code> → <code>false</code> (the 4 there has an
+              extra 0 below it).
+            </p>
+          </section>
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">root / subRoot</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[3,4,5,1,2,null,null,null,null,0]</code> / <code>[4,1,2]</code></td>
+                    <td><code>false</code></td>
+                    <td>The 4 matches until its 2, which has a 0 below it. A <code>same()</code> that returns true as soon as subRoot runs out says true.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,2,3]</code> / <code>[1,2]</code></td>
+                    <td><code>false</code></td>
+                    <td>subRoot is the top part of root, not a subtree: root's 1 also has a 3. Same mistake, same wrong true.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,2]</code> / <code>[1,null,2]</code></td>
+                    <td><code>false</code></td>
+                    <td>Left child vs right child. Without markers for missing children, both preorders are 1, 2.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[12]</code> / <code>[2]</code></td>
+                    <td><code>false</code></td>
+                    <td>As strings, "12,#,#" contains "2,#,#". Put a separator <em>before</em> each value too: ",12,#,#" doesn't contain ",2,#,#".</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,1]</code> / <code>[1]</code></td>
+                    <td><code>true</code></td>
+                    <td>The root 1 fails (it has a child), but its child 1 is a leaf and matches. Keep looking after a failure.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,2,null,3]</code> / <code>[3]</code></td>
+                    <td><code>true</code></td>
+                    <td>The match is two levels down. Calling <code>same()</code> on root's children instead of recursing only looks one level down and says false.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1]</code> / <code>[1,1]</code></td>
+                    <td><code>false</code></td>
+                    <td>subRoot is bigger than root.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Same Tree at Every Node</h2>
+            <p class="intuition">
+              Two helpers. <code>same(a, b)</code> walks both trees together: equal
+              values, then same left subtrees, then same right subtrees; two Nones
+              are the same, one None isn't. <code>isSubtree</code> asks
+              <code>same(node, subRoot)</code> at <code>root</code>, then recurses
+              into both children.
+            </p>
+            <ul>
+              <li><code>same()</code> stops at the first difference, so most tries end quickly.</li>
+              <li>Recurse with <code>isSubtree</code> on the children (not <code>same</code>), so every node gets tried.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(m · n)</span>
+              <span><strong>Space</strong> O(height) for the recursion</span>
+            </div>
+            <p class="note">
+              The answer most interviewers expect, and fast enough here: the worst
+              input tried (a 2000-node chain of 1s against a 1000-node chain of 1s
+              ending in 2) took 140 ms in Python and 10 ms in C++. Approaches 2 and
+              3 took about 1 ms on it.
+            </p>
+            <div class="code-tabs" data-viz="0572-subtree-of-another-tree/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"empty":[11,12],"try":[13],"found":[14],"down":[15],"same":[17,18,19,20]}'>
+                # Definition for a binary tree node.
+                # class TreeNode(object):
+                #     def __init__(self, val=0, left=None, right=None):
+                #         self.val = val
+                #         self.left = left
+                #         self.right = right
+                import sys
+                class Solution(object):
+                    def isSubtree(self, root, subRoot):
+                        sys.setrecursionlimit(10000)  # a one-sided tree can be 2000 levels deep
+                        if not root:  # ran off the tree: nothing down here can match
+                            return False
+                        if self.same(root, subRoot):  # does the subtree that starts here match exactly?
+                            return True
+                        return self.isSubtree(root.left, subRoot) or self.isSubtree(root.right, subRoot)
+
+                    def same(self, a, b):
+                        if not a or not b:
+                            return a is b  # both empty: same; only one empty: different
+                        return a.val == b.val and self.same(a.left, b.left) and self.same(a.right, b.right)
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"empty":[15],"try":[16],"found":[17],"down":[19],"same":[22,23,24]}'>
+                /**
+                 * Definition for a binary tree node.
+                 * struct TreeNode {
+                 *     int val;
+                 *     TreeNode *left;
+                 *     TreeNode *right;
+                 *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                 *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                 *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                 * };
+                 */
+                class Solution {
+                public:
+                    bool isSubtree(TreeNode* root, TreeNode* subRoot) {
+                        if (!root) return false; // ran off the tree: nothing down here can match
+                        if (same(root, subRoot)) { // does the subtree that starts here match exactly?
+                            return true;
+                        }
+                        return isSubtree(root->left, subRoot) || isSubtree(root->right, subRoot);
+                    }
+                private:
+                    bool same(TreeNode* a, TreeNode* b) {
+                        if (!a || !b) return a == b; // both empty: same; only one empty: different
+                        return a->val == b->val && same(a->left, b->left) && same(a->right, b->right);
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"empty":[18],"try":[19],"found":[20],"down":[22],"same":[24,25,26]}'>
+                /**
+                 * Definition for a binary tree node.
+                 * public class TreeNode {
+                 *     int val;
+                 *     TreeNode left;
+                 *     TreeNode right;
+                 *     TreeNode() {}
+                 *     TreeNode(int val) { this.val = val; }
+                 *     TreeNode(int val, TreeNode left, TreeNode right) {
+                 *         this.val = val;
+                 *         this.left = left;
+                 *         this.right = right;
+                 *     }
+                 * }
+                 */
+                class Solution {
+                    public boolean isSubtree(TreeNode root, TreeNode subRoot) {
+                        if (root == null) return false; // ran off the tree: nothing down here can match
+                        if (same(root, subRoot)) { // does the subtree that starts here match exactly?
+                            return true;
+                        }
+                        return isSubtree(root.left, subRoot) || isSubtree(root.right, subRoot);
+                    }
+                    private boolean same(TreeNode a, TreeNode b) {
+                        if (a == null || b == null) return a == b; // both empty: same; only one empty: different
+                        return a.val == b.val && same(a.left, b.left) && same(a.right, b.right);
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>
+              Approach 2: Preorder Lists + KMP
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              Write each tree as its preorder list, with a marker (∅) for every
+              missing child. With the markers, the list describes the tree exactly,
+              and each subtree is one unbroken run of the list. So subRoot is a
+              subtree exactly when its list appears inside root's list.
+            </p>
+            <ul>
+              <li>Keep the values as list items (or put a separator before each one), so 12 can't be mistaken for 2.</li>
+              <li>KMP finds the pattern in O(m + n): on a mismatch it falls back using <code>fail[]</code> and never re-reads the text.</li>
+              <li>A match must start at a value, and a subtree's list can't stop partway through another subtree, so a match is always a whole subtree.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(m + n)</span>
+              <span><strong>Space</strong> O(m + n)</span>
+            </div>
+            <p class="note">
+              Linear in the worst case, and it uses no hashing. The cost is writing
+              KMP correctly; the built-in string search below does the same job
+              with less code.
+            </p>
+            <div class="code-tabs" data-viz="0572-subtree-of-another-tree/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"walk":[11,12,13,14,15,16,17,18,19],"table":[21,22,23,24,25,26,27,28],"search":[29,30,33,34],"back":[31,32],"found":[35,36],"return":[37]}'>
+                # Definition for a binary tree node.
+                # class TreeNode(object):
+                #     def __init__(self, val=0, left=None, right=None):
+                #         self.val = val
+                #         self.left = left
+                #         self.right = right
+                import sys
+                class Solution(object):
+                    def isSubtree(self, root, subRoot):
+                        sys.setrecursionlimit(10000)  # a one-sided tree can be 2000 levels deep
+                        def preorder(node, out):  # values in preorder, with None for every missing child
+                            if not node:
+                                out.append(None)
+                                return out
+                            out.append(node.val)
+                            preorder(node.left, out)
+                            preorder(node.right, out)
+                            return out
+                        text, pattern = preorder(root, []), preorder(subRoot, [])
+                        # KMP. fail[i]: length of the longest proper prefix of pattern[:i + 1] that is also its suffix
+                        fail = [0] * len(pattern)
+                        k = 0
+                        for i in range(1, len(pattern)):
+                            while k and pattern[i] != pattern[k]:
+                                k = fail[k - 1]
+                            if pattern[i] == pattern[k]:
+                                k += 1
+                            fail[i] = k
+                        k = 0  # how much of pattern matches the text read so far
+                        for x in text:
+                            while k and x != pattern[k]:  # mismatch: fall back in pattern, never back in text
+                                k = fail[k - 1]
+                            if x == pattern[k]:
+                                k += 1
+                                if k == len(pattern):  # all of subRoot's preorder, in a row
+                                    return True
+                        return False
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"walk":[17,18,19,40,41,42,43,45,46,47],"table":[21,22,23,24,25,26],"search":[28,29,31,32],"back":[30],"found":[33],"return":[36]}'>
+                /**
+                 * Definition for a binary tree node.
+                 * struct TreeNode {
+                 *     int val;
+                 *     TreeNode *left;
+                 *     TreeNode *right;
+                 *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                 *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                 *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                 * };
+                 */
+                #include <climits>
+                #include <vector>
+                class Solution {
+                public:
+                    bool isSubtree(TreeNode* root, TreeNode* subRoot) {
+                        std::vector<int> text, pattern;
+                        preorder(root, text);
+                        preorder(subRoot, pattern);
+                        // KMP. fail[i]: length of the longest proper prefix of pattern[0..i] that is also its suffix
+                        std::vector<int> fail(pattern.size(), 0);
+                        size_t k = 0;
+                        for (size_t i = 1; i < pattern.size(); ++i) {
+                            while (k && pattern[i] != pattern[k]) k = fail[k - 1];
+                            if (pattern[i] == pattern[k]) ++k;
+                            fail[i] = (int)k;
+                        }
+                        k = 0; // how much of pattern matches the text read so far
+                        for (int x : text) {
+                            while (k && x != pattern[k]) k = fail[k - 1]; // mismatch: fall back in pattern, never back in text
+                            if (x == pattern[k]) {
+                                ++k;
+                                if (k == pattern.size()) return true; // all of subRoot's preorder, in a row
+                            }
+                        }
+                        return false;
+                    }
+                private:
+                    static constexpr int NONE = INT_MIN; // stands for a missing child; node values are only -10^4..10^4
+                    void preorder(TreeNode* node, std::vector<int>& out) { // values in preorder, with NONE for every missing child
+                        if (!node) {
+                            out.push_back(NONE);
+                            return;
+                        }
+                        out.push_back(node->val);
+                        preorder(node->left, out);
+                        preorder(node->right, out);
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"walk":[21,22,23,24,25,44,45,46,47,49,50,51],"table":[27,28,29,30,31,32],"search":[34,35,37,38],"back":[36],"found":[39],"return":[42]}'>
+                import java.util.ArrayList;
+                import java.util.List;
+                /**
+                 * Definition for a binary tree node.
+                 * public class TreeNode {
+                 *     int val;
+                 *     TreeNode left;
+                 *     TreeNode right;
+                 *     TreeNode() {}
+                 *     TreeNode(int val) { this.val = val; }
+                 *     TreeNode(int val, TreeNode left, TreeNode right) {
+                 *         this.val = val;
+                 *         this.left = left;
+                 *         this.right = right;
+                 *     }
+                 * }
+                 */
+                class Solution {
+                    private static final int NONE = Integer.MIN_VALUE; // stands for a missing child; node values are only -10^4..10^4
+                    public boolean isSubtree(TreeNode root, TreeNode subRoot) {
+                        List<Integer> textList = new ArrayList<>(), patternList = new ArrayList<>();
+                        preorder(root, textList);
+                        preorder(subRoot, patternList);
+                        int[] text = textList.stream().mapToInt(Integer::intValue).toArray();
+                        int[] pattern = patternList.stream().mapToInt(Integer::intValue).toArray();
+                        // KMP. fail[i]: length of the longest proper prefix of pattern[0..i] that is also its suffix
+                        int[] fail = new int[pattern.length];
+                        int k = 0;
+                        for (int i = 1; i < pattern.length; i++) {
+                            while (k > 0 && pattern[i] != pattern[k]) k = fail[k - 1];
+                            if (pattern[i] == pattern[k]) k++;
+                            fail[i] = k;
+                        }
+                        k = 0; // how much of pattern matches the text read so far
+                        for (int x : text) {
+                            while (k > 0 && x != pattern[k]) k = fail[k - 1]; // mismatch: fall back in pattern, never back in text
+                            if (x == pattern[k]) {
+                                k++;
+                                if (k == pattern.length) return true; // all of subRoot's preorder, in a row
+                            }
+                        }
+                        return false;
+                    }
+                    private void preorder(TreeNode node, List<Integer> out) { // values in preorder, with NONE for every missing child
+                        if (node == null) {
+                            out.add(NONE);
+                            return;
+                        }
+                        out.add(node.val);
+                        preorder(node.left, out);
+                        preorder(node.right, out);
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>Approach 3: Number Every Subtree</h2>
+            <p class="intuition">
+              Give each distinct subtree a number, bottom up: empty is #0, and a
+              node's number is looked up by the key
+              <code>(value, left #, right #)</code>. A key not seen before gets the
+              next number. Two subtrees get the same number exactly when they're
+              equal.
+            </p>
+            <ul>
+              <li>Number subRoot first; call its number <code>target</code>.</li>
+              <li>Then number root with the same table: true if any node gets <code>target</code>.</li>
+              <li>The numbers are exact, not hashes that might collide, so no double-check is needed.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(m + n) with a hash map</span>
+              <span><strong>Space</strong> O(m + n)</span>
+            </div>
+            <p class="note">
+              The same numbering finds every pair of equal subtrees in one tree,
+              as in Find Duplicate Subtrees (652). The C++ version here uses
+              <code>std::map</code>, which adds a log factor.
+            </p>
+            <div class="code-tabs" data-viz="0572-subtree-of-another-tree/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[11],"tag":[12,13,14],"key":[15,16,17,18,19],"target":[20],"scan":[21,22],"return":[23]}'>
+                # Definition for a binary tree node.
+                # class TreeNode(object):
+                #     def __init__(self, val=0, left=None, right=None):
+                #         self.val = val
+                #         self.left = left
+                #         self.right = right
+                import sys
+                class Solution(object):
+                    def isSubtree(self, root, subRoot):
+                        sys.setrecursionlimit(10000)  # a one-sided tree can be 2000 levels deep
+                        ids = {}  # (val, left id, right id) -> a number; two subtrees get the same number exactly when they're equal
+                        def tag(node, out):  # returns node's number, and adds it to out
+                            if not node:
+                                return 0  # every empty subtree is number 0
+                            key = (node.val, tag(node.left, out), tag(node.right, out))  # children first
+                            if key not in ids:
+                                ids[key] = len(ids) + 1  # a shape not seen before: the next number
+                            out.append(ids[key])
+                            return ids[key]
+                        target = tag(subRoot, [])
+                        everywhere = []  # the number of every subtree of root
+                        tag(root, everywhere)
+                        return target in everywhere
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[19],"target":[20,21],"scan":[22],"return":[23],"tag":[27,28],"key":[29,30,31,32,33]}'>
+                /**
+                 * Definition for a binary tree node.
+                 * struct TreeNode {
+                 *     int val;
+                 *     TreeNode *left;
+                 *     TreeNode *right;
+                 *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                 *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                 *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                 * };
+                 */
+                #include <algorithm>
+                #include <array>
+                #include <map>
+                #include <vector>
+                class Solution {
+                public:
+                    bool isSubtree(TreeNode* root, TreeNode* subRoot) {
+                        ids.clear(); // (val, left id, right id) -> a number; two subtrees get the same number exactly when they're equal
+                        std::vector<int> unused, everywhere;
+                        int target = tag(subRoot, unused);
+                        tag(root, everywhere); // the number of every subtree of root
+                        return std::find(everywhere.begin(), everywhere.end(), target) != everywhere.end();
+                    }
+                private:
+                    std::map<std::array<int, 3>, int> ids;
+                    int tag(TreeNode* node, std::vector<int>& out) { // returns node's number, and adds it to out
+                        if (!node) return 0; // every empty subtree is number 0
+                        std::array<int, 3> key = {node->val, tag(node->left, out), tag(node->right, out)}; // children first
+                        auto it = ids.find(key);
+                        if (it == ids.end()) it = ids.emplace(key, (int)ids.size() + 1).first; // a shape not seen before: the next number
+                        out.push_back(it->second);
+                        return it->second;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[21,23],"target":[24],"scan":[25,26],"return":[27],"tag":[29,30],"key":[31,32,33,34,35,36,38,39]}'>
+                import java.util.ArrayList;
+                import java.util.HashMap;
+                import java.util.List;
+                import java.util.Map;
+                /**
+                 * Definition for a binary tree node.
+                 * public class TreeNode {
+                 *     int val;
+                 *     TreeNode left;
+                 *     TreeNode right;
+                 *     TreeNode() {}
+                 *     TreeNode(int val) { this.val = val; }
+                 *     TreeNode(int val, TreeNode left, TreeNode right) {
+                 *         this.val = val;
+                 *         this.left = left;
+                 *         this.right = right;
+                 *     }
+                 * }
+                 */
+                class Solution {
+                    private final Map<List<Integer>, Integer> ids = new HashMap<>(); // (val, left id, right id) -> a number
+                    public boolean isSubtree(TreeNode root, TreeNode subRoot) {
+                        ids.clear(); // two subtrees get the same number exactly when they're equal
+                        int target = tag(subRoot, new ArrayList<>());
+                        List<Integer> everywhere = new ArrayList<>(); // the number of every subtree of root
+                        tag(root, everywhere);
+                        return everywhere.contains(target);
+                    }
+                    private int tag(TreeNode node, List<Integer> out) { // returns node's number, and adds it to out
+                        if (node == null) return 0; // every empty subtree is number 0
+                        int left = tag(node.left, out), right = tag(node.right, out); // children first
+                        List<Integer> key = List.of(node.val, left, right);
+                        Integer id = ids.get(key);
+                        if (id == null) {
+                            id = ids.size() + 1; // a shape not seen before: the next number
+                            ids.put(key, id);
+                        }
+                        out.add(id);
+                        return id;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">Built-ins</span></h2>
+            <p>
+              Approach 2 with the language's own substring search: build a string
+              with a "," before every value and "#" for every missing child, then
+              use <code>in</code> (Python), <code>find</code> (C++), or
+              <code>indexOf</code> (Java).
+            </p>
+            <div class="code-tabs">
+              <script type="text/plain" data-lang="Python">
+                import sys
+                class Solution(object):
+                    def isSubtree(self, root, subRoot):
+                        sys.setrecursionlimit(10000)
+                        def ser(node):  # "," before every value, "#" for a missing child
+                            return ",%d%s%s" % (node.val, ser(node.left), ser(node.right)) if node else ",#"
+                        return ser(subRoot) in ser(root)  # the "," stops ",2" from matching inside ",12"
+              </script>
+              <script type="text/plain" data-lang="C++">
+                #include <string>
+                class Solution {
+                public:
+                    bool isSubtree(TreeNode* root, TreeNode* subRoot) {
+                        std::string text, pattern;
+                        ser(root, text);
+                        ser(subRoot, pattern);
+                        return text.find(pattern) != std::string::npos; // the "," stops ",2" from matching inside ",12"
+                    }
+                private:
+                    void ser(TreeNode* node, std::string& out) { // "," before every value, "#" for a missing child
+                        if (!node) { out += ",#"; return; }
+                        out += "," + std::to_string(node->val);
+                        ser(node->left, out);
+                        ser(node->right, out);
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java">
+                class Solution {
+                    public boolean isSubtree(TreeNode root, TreeNode subRoot) {
+                        return ser(root, new StringBuilder()).indexOf(ser(subRoot, new StringBuilder()).toString()) >= 0; // the "," stops ",2" from matching inside ",12"
+                    }
+                    private StringBuilder ser(TreeNode node, StringBuilder out) { // "," before every value, "#" for a missing child
+                        if (node == null) return out.append(",#");
+                        out.append(',').append(node.val);
+                        ser(node.left, out);
+                        return ser(node.right, out);
+                    }
+                }
+              </script>
+            </div>
+            <div class="complexity">
+              <span><strong>Time</strong> O(m + n) to build; the search is fast in practice</span>
+              <span><strong>Space</strong> O(m + n)</span>
+            </div>
+            <p class="note">
+              All three pass every test here, in a few milliseconds at most. The library
+              searches don't all promise linear time in the worst case, so KMP is
+              the version to explain if asked for a guarantee.
+            </p>
+          </section>
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Same Tree at Every Node</th>
+                    <td>same(node, subRoot) everywhere</td>
+                    <td>O(m · n)</td>
+                    <td>O(height)</td>
+                    <td>Expected in interviews; 140 ms worst here</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Preorder Lists + KMP</th>
+                    <td>Serialize with ∅, pattern search</td>
+                    <td>O(m + n)</td>
+                    <td>O(m + n)</td>
+                    <td>Linear guarantee</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Number Every Subtree</th>
+                    <td>(value, left #, right #) → number</td>
+                    <td>O(m + n)</td>
+                    <td>O(m + n)</td>
+                    <td>Exact, no collisions</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0994-rotting-oranges ===== -->
       <details class="question" data-tags="matrix grid bfs breadth-first-search multi-source-bfs queue simulation graph">
         <summary>
@@ -25844,6 +26466,285 @@
               ? `The last window, "${s2.slice(n - m)}", is checked after the loop: zeros == 26. Return true.`
               : `The last window, "${s2.slice(n - m)}", is checked after the loop: zeros = ${zeros}. Return false. O(1) work per slide, O(n) in total.`,
             view: view(n - m, { hit: last }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0572-subtree-of-another-tree/approach1.visual.js -->
+    <script>
+      // Try every node of root as the top of a match: same() walks both trees together and stops at the first difference.
+      DSAViz.register("0572-subtree-of-another-tree/approach1", {
+        inputs: [
+          { name: "root", type: "tree", value: "[3, 4, 5, 1, 2, null, null, null, null, 0]", maxLength: 15 },
+          { name: "subRoot", type: "tree", value: "[4, 1, 2]", maxLength: 7 },
+        ],
+        trace({ root: rootValues, subRoot: subValues }) {
+          const A = DSAViz.buildTree(rootValues);
+          const B = DSAViz.buildTree(subValues);
+          const steps = [];
+          const tried = {}; // root node id -> "match" or "cut" once tried
+          let pairs = 0;
+          const view = (current, o = {}) => {
+            const am = {};
+            Object.keys(tried).forEach((id) => (am[id] = "visited"));
+            const bm = {};
+            (o.equal || []).forEach(([a, b]) => {
+              am[a] = "match";
+              bm[b] = "match";
+            });
+            if (o.bad) {
+              if (o.bad[0] >= 0) am[o.bad[0]] = "cut";
+              if (o.bad[1] >= 0) bm[o.bad[1]] = "cut";
+            }
+            if (current !== undefined && !o.equal) am[current] = "active";
+            return [
+              { type: "tree", label: "root (dark = trying this node as the top)", values: rootValues, marks: am },
+              { type: "tree", label: "subRoot", values: subValues, marks: bm },
+              { type: "vars", items: [{ name: "node pairs compared", value: pairs }] },
+            ];
+          };
+          // same(a, b): returns { ok, equal: [[a, b], ...] compared and equal, bad: [a, b] where they differ }
+          const same = (a, b, equal) => {
+            if (a < 0 || b < 0) {
+              if (a === b) return { ok: true };
+              return { ok: false, bad: [a, b] };
+            }
+            pairs++;
+            if (A.nodes[a].val !== B.nodes[b].val) return { ok: false, bad: [a, b] };
+            equal.push([a, b]);
+            const l = same(A.nodes[a].left, B.nodes[b].left, equal);
+            if (!l.ok) return l;
+            return same(A.nodes[a].right, B.nodes[b].right, equal);
+          };
+          const describe = (bad) => {
+            const [a, b] = bad;
+            if (a >= 0 && b >= 0) return `${A.nodes[a].val} ≠ ${B.nodes[b].val}`;
+            if (a >= 0) return `root has ${A.nodes[a].val} where subRoot has no node`;
+            return `subRoot has ${B.nodes[b].val} where root has no node`;
+          };
+          steps.push({ line: "try", note: `Check every node of root, top to bottom: could the subtree that starts there be an exact copy of subRoot?`, view: view(undefined) });
+          let found = -1;
+          const visit = (id) => {
+            if (id < 0 || found >= 0) return false;
+            const node = A.nodes[id];
+            const equal = [];
+            const r = same(id, B.root, equal);
+            tried[id] = r.ok ? "match" : "cut";
+            if (r.ok) {
+              found = id;
+              steps.push({ line: ["try", "same", "found"], note: `Start at ${node.val}: every node matches, and both trees end in the same places. This subtree is a copy of subRoot. Return true.`, view: view(id, { equal }) });
+              return true;
+            }
+            steps.push({
+              line: ["try", "same"],
+              note: `Start at ${node.val}: ${equal.length ? `${equal.length} node${equal.length === 1 ? " matches" : "s match"}, then ` : ""}${describe(r.bad)}. Not a copy.`,
+              view: view(id, { equal, bad: r.bad }),
+            });
+            const kids = [node.left, node.right].filter((k) => k >= 0);
+            steps.push({
+              line: kids.length ? "down" : ["down", "empty"],
+              note: kids.length ? `Try ${node.val}'s children: ${kids.map((k) => A.nodes[k].val).join(" and ")}.` : `${node.val} has no children: both recursive calls hit None and return false.`,
+              view: view(id),
+            });
+            return visit(node.left) || visit(node.right);
+          };
+          visit(A.root);
+          if (found < 0) {
+            steps.push({
+              line: ["empty", "down"],
+              note: `No node of root starts a copy of subRoot. Return false. ${pairs} node pair${pairs === 1 ? "" : "s"} compared: up to m·n in the worst case.`,
+              view: view(undefined),
+            });
+          }
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0572-subtree-of-another-tree/approach2.visual.js -->
+    <script>
+      // Write both trees as preorder lists with ∅ for every missing child, then find subRoot's list inside root's with KMP.
+      DSAViz.register("0572-subtree-of-another-tree/approach2", {
+        inputs: [
+          { name: "root", type: "tree", value: "[3, 4, 5, 1, 2]", maxLength: 7 },
+          { name: "subRoot", type: "tree", value: "[4, 1, 2]", maxLength: 3 },
+        ],
+        trace({ root: rootValues, subRoot: subValues }) {
+          const A = DSAViz.buildTree(rootValues);
+          const B = DSAViz.buildTree(subValues);
+          const NONE = "∅";
+          // preorder tokens, plus the root node id behind each value token
+          const walk = (T, id, out, ids) => {
+            if (id < 0) {
+              out.push(NONE);
+              ids.push(-1);
+              return;
+            }
+            out.push(T.nodes[id].val);
+            ids.push(id);
+            walk(T, T.nodes[id].left, out, ids);
+            walk(T, T.nodes[id].right, out, ids);
+          };
+          const text = [];
+          const textIds = [];
+          walk(A, A.root, text, textIds);
+          const pattern = [];
+          walk(B, B.root, pattern, []);
+          const fail = Array(pattern.length).fill(0);
+          let k = 0;
+          for (let i = 1; i < pattern.length; i++) {
+            while (k && pattern[i] !== pattern[k]) k = fail[k - 1];
+            if (pattern[i] === pattern[k]) k++;
+            fail[i] = k;
+          }
+          const steps = [];
+          let showTable = false;
+          const view = (o = {}) => {
+            const tm = {};
+            for (let j = 0; j < (o.i ?? 0); j++) tm[j] = "visited";
+            if (o.i !== undefined) {
+              for (let j = o.i - (o.k || 0); j < o.i; j++) tm[j] = "match"; // the part already matched
+              tm[o.i] = o.hit === false ? "cut" : "active";
+            }
+            if (o.found !== undefined) for (let j = o.found; j < o.found + pattern.length; j++) tm[j] = "match";
+            const pm = {};
+            for (let j = 0; j < (o.k ?? 0); j++) pm[j] = "match";
+            if (o.i !== undefined && o.k !== undefined && o.k < pattern.length) pm[o.k] = o.hit === false ? "cut" : "compare";
+            const am = {};
+            if (o.found !== undefined) {
+              // the matched tokens are exactly one subtree of root: colour its nodes
+              for (let j = o.found; j < o.found + pattern.length; j++) if (textIds[j] >= 0) am[textIds[j]] = "match";
+            }
+            return [
+              { type: "tree", label: "root", values: rootValues, marks: am },
+              { type: "array", label: "text = preorder(root) (∅ = missing child)", values: text, marks: tm, pointers: o.i !== undefined && o.i < text.length ? { i: o.i } : {} },
+              {
+                type: "array",
+                label: showTable ? "pattern = preorder(subRoot), fail[] underneath" : "pattern = preorder(subRoot)",
+                values: pattern,
+                sub: showTable ? fail : undefined,
+                marks: pm,
+                pointers: o.k !== undefined && o.k < pattern.length ? { k: o.k } : {},
+              },
+            ];
+          };
+          steps.push({
+            line: "walk",
+            note: `Write each tree in preorder, with ∅ for every missing child. The ∅s pin down the shape: [1, 2] and [1, null, 2] are both 1, 2 without them.`,
+            view: view(),
+          });
+          showTable = true;
+          steps.push({
+            line: "table",
+            note: `KMP's fail table: fail[j] is how long a start of pattern also ends pattern[0..j]. On a mismatch, k falls back to it instead of restarting.`,
+            view: view(),
+          });
+          k = 0;
+          for (let i = 0; i < text.length; i++) {
+            const x = text[i];
+            const backs = [];
+            while (k && x !== pattern[k]) {
+              backs.push(k);
+              k = fail[k - 1];
+            }
+            const line = backs.length ? ["search", "back"] : "search";
+            if (x === pattern[k]) {
+              k++;
+              if (k === pattern.length) {
+                const start = i - pattern.length + 1;
+                steps.push({
+                  line: ["search", "found"],
+                  note: `text[${i}] = ${x} matches: all ${pattern.length} tokens of pattern appear in a row, starting at text[${start}]. Those tokens are exactly the subtree under ${A.nodes[textIds[start]].val}. Return true.`,
+                  view: view({ found: start }),
+                });
+                return steps;
+              }
+              steps.push({
+                line,
+                note: `${backs.length ? `Mismatch, so k falls back (${backs.join(" → ")} → ${k - 1}). ` : ""}text[${i}] = ${x} = pattern[${k - 1}]: k = ${k} of ${pattern.length}.`,
+                view: view({ i, k: k - 1, hit: true }),
+              });
+            } else {
+              steps.push({
+                line,
+                note: `${backs.length ? `Mismatch, so k falls back (${backs.join(" → ")} → 0). ` : ""}text[${i}] = ${x} ≠ pattern[0] = ${pattern[0]}: k stays 0.`,
+                view: view({ i, k: 0, hit: false }),
+              });
+            }
+          }
+          steps.push({
+            line: "return",
+            note: `The end of text, and pattern never matched all the way. Return false. Both lists have about 2 tokens per node, and KMP reads text once: O(m + n).`,
+            view: view({ i: text.length, k }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0572-subtree-of-another-tree/approach3.visual.js -->
+    <script>
+      // Number every subtree by (value, left number, right number): equal subtrees get equal numbers, so compare numbers instead of trees.
+      DSAViz.register("0572-subtree-of-another-tree/approach3", {
+        inputs: [
+          { name: "root", type: "tree", value: "[1, 2, 2, 3, null, 3, 4]", maxLength: 15 },
+          { name: "subRoot", type: "tree", value: "[2, 3]", maxLength: 7 },
+        ],
+        trace({ root: rootValues, subRoot: subValues }) {
+          const A = DSAViz.buildTree(rootValues);
+          const B = DSAViz.buildTree(subValues);
+          const ids = new Map(); // "val,l,r" -> number
+          const capA = {};
+          const capB = {};
+          const steps = [];
+          let target = null;
+          const table = () => [...ids.entries()].map(([key, id]) => `#${id} = (${key})`);
+          const view = (tree, current, o = {}) => {
+            const am = {};
+            const bm = {};
+            Object.keys(capA).forEach((id) => (am[id] = "visited"));
+            Object.keys(capB).forEach((id) => (bm[id] = "visited"));
+            if (o.hits) o.hits.forEach((id) => (am[id] = "match"));
+            if (o.whole) Object.keys(capB).forEach((id) => (bm[id] = "match"));
+            if (current !== undefined) (tree === "A" ? am : bm)[current] = o.fresh ? "new" : "active";
+            return [
+              { type: "tree", label: "subRoot (caption = its number)", values: subValues, marks: bm, captions: { ...capB } },
+              { type: "tree", label: "root", values: rootValues, marks: am, captions: { ...capA } },
+              { type: "array", label: "ids: (value, left #, right #) → number (#0 = empty)", values: table(), wide: true, marks: o.fresh ? { [ids.size - 1]: "new" } : {} },
+              ...(target !== null ? [{ type: "vars", items: [{ name: "target", value: `#${target}` }] }] : []),
+            ];
+          };
+          steps.push({ line: "init", note: `Give every distinct subtree a number. Empty is #0. A node's number depends only on (its value, its left child's number, its right child's number).`, view: view() });
+          const tag = (T, tree, caps, id, out) => {
+            if (id < 0) return 0;
+            const node = T.nodes[id];
+            const l = tag(T, tree, caps, node.left, out);
+            const r = tag(T, tree, caps, node.right, out);
+            const key = `${node.val}, ${l}, ${r}`;
+            const fresh = !ids.has(key);
+            if (fresh) ids.set(key, ids.size + 1);
+            const num = ids.get(key);
+            caps[id] = `#${num}`;
+            out.push([id, num]);
+            steps.push({
+              line: ["tag", "key"],
+              note: fresh
+                ? `${node.val}: key (${key}) is new, so it gets the next number, #${num}.`
+                : `${node.val}: key (${key}) was seen before, so this subtree is equal to that one: #${num}.`,
+              view: view(tree, id, { fresh }),
+            });
+            return num;
+          };
+          target = tag(B, "B", capB, B.root, []);
+          steps.push({ line: "target", note: `subRoot as a whole is #${target}. Now number root's subtrees with the same table: any node that gets #${target} is an exact copy.`, view: view("B", undefined, { whole: true }) });
+          const everywhere = [];
+          tag(A, "A", capA, A.root, everywhere);
+          const hits = everywhere.filter(([, num]) => num === target).map(([id]) => id);
+          steps.push({
+            line: ["scan", "return"],
+            note: hits.length
+              ? `${hits.length === 1 ? "One node" : `${hits.length} nodes`} of root got #${target} (${hits.map((id) => A.nodes[id].val).join(", ")}): a copy of subRoot. Return true.`
+              : `No node of root got #${target}. Return false. Each node was numbered once, with a hash map lookup: O(m + n).`,
+            view: view("A", undefined, { hits }),
           });
           return steps;
         },

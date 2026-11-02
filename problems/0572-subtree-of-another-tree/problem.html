@@ -1,0 +1,245 @@
+<details class="question" data-tags="tree binary-tree dfs depth-first-search recursion string-matching kmp hash-function serialization same-tree">
+  <summary>
+    <span class="q-title">572. Subtree of Another Tree</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Tree</span>
+      <span class="tag">DFS</span>
+      <span class="tag">String Matching</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> A subtree means a node <strong>and everything
+      below it</strong>. Try each node of <code>root</code> as the top and ask
+      "is this the same tree as <code>subRoot</code>?", where same means equal
+      values <em>and</em> both trees end (None) in the same places. That's
+      O(m·n). For O(m + n), write both trees in preorder with a marker for
+      every missing child and search for one list inside the other.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/subtree-of-another-tree/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given the roots of two binary trees, <code>root</code> and
+        <code>subRoot</code>, return <code>true</code> if some node of
+        <code>root</code>, together with all of its descendants, has exactly
+        the same structure and values as <code>subRoot</code>. A tree counts
+        as a subtree of itself.
+      </p>
+      <ul>
+        <li><code>root</code> has 1 to 2000 nodes; <code>subRoot</code> has 1 to 1000.</li>
+        <li><code>-10⁴ &lt;= Node.val &lt;= 10⁴</code>.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>root = [3,4,5,1,2]</code>, <code>subRoot = [4,1,2]</code>
+        → <code>true</code>; <code>root = [3,4,5,1,2,null,null,null,null,0]</code>,
+        same <code>subRoot</code> → <code>false</code> (the 4 there has an
+        extra 0 below it).
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">root / subRoot</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[3,4,5,1,2,null,null,null,null,0]</code> / <code>[4,1,2]</code></td>
+              <td><code>false</code></td>
+              <td>The 4 matches until its 2, which has a 0 below it. A <code>same()</code> that returns true as soon as subRoot runs out says true.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3]</code> / <code>[1,2]</code></td>
+              <td><code>false</code></td>
+              <td>subRoot is the top part of root, not a subtree: root's 1 also has a 3. Same mistake, same wrong true.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2]</code> / <code>[1,null,2]</code></td>
+              <td><code>false</code></td>
+              <td>Left child vs right child. Without markers for missing children, both preorders are 1, 2.</td>
+            </tr>
+            <tr>
+              <td><code>[12]</code> / <code>[2]</code></td>
+              <td><code>false</code></td>
+              <td>As strings, "12,#,#" contains "2,#,#". Put a separator <em>before</em> each value too: ",12,#,#" doesn't contain ",2,#,#".</td>
+            </tr>
+            <tr>
+              <td><code>[1,1]</code> / <code>[1]</code></td>
+              <td><code>true</code></td>
+              <td>The root 1 fails (it has a child), but its child 1 is a leaf and matches. Keep looking after a failure.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,null,3]</code> / <code>[3]</code></td>
+              <td><code>true</code></td>
+              <td>The match is two levels down. Calling <code>same()</code> on root's children instead of recursing only looks one level down and says false.</td>
+            </tr>
+            <tr>
+              <td><code>[1]</code> / <code>[1,1]</code></td>
+              <td><code>false</code></td>
+              <td>subRoot is bigger than root.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Same Tree at Every Node</h2>
+      <p class="intuition">
+        Two helpers. <code>same(a, b)</code> walks both trees together: equal
+        values, then same left subtrees, then same right subtrees; two Nones
+        are the same, one None isn't. <code>isSubtree</code> asks
+        <code>same(node, subRoot)</code> at <code>root</code>, then recurses
+        into both children.
+      </p>
+      <ul>
+        <li><code>same()</code> stops at the first difference, so most tries end quickly.</li>
+        <li>Recurse with <code>isSubtree</code> on the children (not <code>same</code>), so every node gets tried.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m · n)</span>
+        <span><strong>Space</strong> O(height) for the recursion</span>
+      </div>
+      <p class="note">
+        The answer most interviewers expect, and fast enough here: the worst
+        input tried (a 2000-node chain of 1s against a 1000-node chain of 1s
+        ending in 2) took 140 ms in Python and 10 ms in C++. Approaches 2 and
+        3 took about 1 ms on it.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Preorder Lists + KMP
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Write each tree as its preorder list, with a marker (∅) for every
+        missing child. With the markers, the list describes the tree exactly,
+        and each subtree is one unbroken run of the list. So subRoot is a
+        subtree exactly when its list appears inside root's list.
+      </p>
+      <ul>
+        <li>Keep the values as list items (or put a separator before each one), so 12 can't be mistaken for 2.</li>
+        <li>KMP finds the pattern in O(m + n): on a mismatch it falls back using <code>fail[]</code> and never re-reads the text.</li>
+        <li>A match must start at a value, and a subtree's list can't stop partway through another subtree, so a match is always a whole subtree.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m + n)</span>
+        <span><strong>Space</strong> O(m + n)</span>
+      </div>
+      <p class="note">
+        Linear in the worst case, and it uses no hashing. The cost is writing
+        KMP correctly; the built-in string search below does the same job
+        with less code.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Number Every Subtree</h2>
+      <p class="intuition">
+        Give each distinct subtree a number, bottom up: empty is #0, and a
+        node's number is looked up by the key
+        <code>(value, left #, right #)</code>. A key not seen before gets the
+        next number. Two subtrees get the same number exactly when they're
+        equal.
+      </p>
+      <ul>
+        <li>Number subRoot first; call its number <code>target</code>.</li>
+        <li>Then number root with the same table: true if any node gets <code>target</code>.</li>
+        <li>The numbers are exact, not hashes that might collide, so no double-check is needed.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m + n) with a hash map</span>
+        <span><strong>Space</strong> O(m + n)</span>
+      </div>
+      <p class="note">
+        The same numbering finds every pair of equal subtrees in one tree,
+        as in Find Duplicate Subtrees (652). The C++ version here uses
+        <code>std::map</code>, which adds a log factor.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Approach 2 with the language's own substring search: build a string
+        with a "," before every value and "#" for every missing child, then
+        use <code>in</code> (Python), <code>find</code> (C++), or
+        <code>indexOf</code> (Java).
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m + n) to build; the search is fast in practice</span>
+        <span><strong>Space</strong> O(m + n)</span>
+      </div>
+      <p class="note">
+        All three pass every test here, in a few milliseconds at most. The library
+        searches don't all promise linear time in the worst case, so KMP is
+        the version to explain if asked for a guarantee.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Same Tree at Every Node</th>
+              <td>same(node, subRoot) everywhere</td>
+              <td>O(m · n)</td>
+              <td>O(height)</td>
+              <td>Expected in interviews; 140 ms worst here</td>
+            </tr>
+            <tr>
+              <th scope="row">Preorder Lists + KMP</th>
+              <td>Serialize with ∅, pattern search</td>
+              <td>O(m + n)</td>
+              <td>O(m + n)</td>
+              <td>Linear guarantee</td>
+            </tr>
+            <tr>
+              <th scope="row">Number Every Subtree</th>
+              <td>(value, left #, right #) → number</td>
+              <td>O(m + n)</td>
+              <td>O(m + n)</td>
+              <td>Exact, no collisions</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
