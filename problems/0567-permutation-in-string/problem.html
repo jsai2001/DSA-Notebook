@@ -1,0 +1,240 @@
+<details class="question" data-tags="hash-table two-pointers string sliding-window anagram permutation counting">
+  <summary>
+    <span class="q-title">567. Permutation in String</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Hash Table</span>
+      <span class="tag">String</span>
+      <span class="tag">Sliding Window</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> A permutation of <code>s1</code> is any string
+      with the <strong>same letter counts</strong>. Slide a window of length
+      <code>len(s1)</code> over <code>s2</code>: each step adds one letter and
+      removes one, so only two counts change. Track how many of the 26 letters
+      agree; the answer is true as soon as all 26 do. O(n) time, O(1) space.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/permutation-in-string/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given two strings <code>s1</code> and <code>s2</code>, return
+        <code>true</code> if <code>s2</code> contains a permutation of
+        <code>s1</code>: some substring of <code>s2</code> uses exactly the
+        letters of <code>s1</code>, in any order.
+      </p>
+      <ul>
+        <li><code>1 &lt;= s1.length, s2.length &lt;= 10⁴</code>.</li>
+        <li>Both strings are lowercase English letters only.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>s1 = "ab", s2 = "eidbaooo"</code> → <code>true</code>
+        ("ba"); <code>s1 = "ab", s2 = "eidboaoo"</code> → <code>false</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>"ab"</code>, <code>"a"</code></td>
+              <td><code>false</code></td>
+              <td>s1 is longer than s2: there's no window. Code that fills the first window from s2 without checking runs off its end.</td>
+            </tr>
+            <tr>
+              <td><code>"abc"</code>, <code>"abc"</code></td>
+              <td><code>true</code></td>
+              <td>Equal lengths: there's exactly one window. Looping <code>range(len(s2) − m)</code> (one short) checks none.</td>
+            </tr>
+            <tr>
+              <td><code>"ab"</code>, <code>"xxab"</code></td>
+              <td><code>true</code></td>
+              <td>The match is the last window. A sliding loop checks before each slide, so the last window has to be checked after the loop.</td>
+            </tr>
+            <tr>
+              <td><code>"ab"</code>, <code>"baxx"</code></td>
+              <td><code>true</code></td>
+              <td>The match is the first window. Checking only after each slide skips it.</td>
+            </tr>
+            <tr>
+              <td><code>"aab"</code>, <code>"xabb"</code></td>
+              <td><code>false</code></td>
+              <td>"abb" has the same <em>set</em> of letters as "aab" but not the same counts. Comparing sets says true.</td>
+            </tr>
+            <tr>
+              <td><code>"abc"</code>, <code>"ccccbbbbaaaa"</code></td>
+              <td><code>false</code></td>
+              <td>Every letter of s1 is in s2, but never all three side by side.</td>
+            </tr>
+            <tr>
+              <td><code>"adc"</code>, <code>"dcda"</code></td>
+              <td><code>true</code></td>
+              <td>"cda" at the end. The letters can be in any order, and a letter (d) can be outside the window too.</td>
+            </tr>
+            <tr>
+              <td><code>"a"</code>, <code>"bcb"</code></td>
+              <td><code>false</code></td>
+              <td>Approach 3 only: if <code>zeros</code> isn't decreased when a letter stops agreeing, it climbs to 26 by mistake and says true.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Sort Every Window</h2>
+      <p class="intuition">
+        Two strings are permutations of each other exactly when they sort to
+        the same string. Sort <code>s1</code> once, then sort every window of
+        <code>s2</code> with the same length and compare.
+      </p>
+      <ul>
+        <li>There are <code>n − m + 1</code> windows (n = len(s2), m = len(s1)), so loop to <code>n − m</code> inclusive.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O((n − m) · m log m)</span>
+        <span><strong>Space</strong> O(m)</span>
+      </div>
+      <p class="note">
+        Simple, but every window is sorted from scratch. With random letters,
+        m = 5000 and n = 10⁴, it took 2.0 s in Python here (0.16 s in C++).
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Sliding Window of Counts</h2>
+      <p class="intuition">
+        Compare letter counts instead of sorted strings. Count <code>s1</code>
+        into <code>need</code> and the first window into <code>have</code>.
+        Sliding the window one step right adds <code>s2[i]</code> and removes
+        <code>s2[i − m]</code>: two updates, not a recount.
+      </p>
+      <ul>
+        <li>Check <code>have == need</code> before each slide, and once more after the loop for the last window.</li>
+        <li>Lowercase letters only, so two arrays of 26 are enough.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(26 · n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Each comparison looks at all 26 counts, but that's a fixed cost: it
+        ran as fast as Approach 3 here (about 1.3 ms in Python on 10⁴
+        letters). A perfectly good interview answer.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Sliding Window, Count the Matches
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Skip the 26-way comparison. Keep one array,
+        <code>diff[c]</code> = count in the window − count in s1, and
+        <code>zeros</code>, how many letters have <code>diff</code> 0. The
+        window is a permutation of s1 exactly when <code>zeros == 26</code>.
+      </p>
+      <ul>
+        <li>When a letter comes in or goes out, only its <code>diff</code> changes.</li>
+        <li>Before changing it: if it was 0, <code>zeros −= 1</code>. After: if it's now 0, <code>zeros += 1</code>.</li>
+        <li>As in Approach 2, check before each slide and once after the loop.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Constant work per step, whatever the alphabet size. The same
+        "how many counts agree" trick works for Find All Anagrams in a String
+        (438) and Minimum Window Substring (76).
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        In Python, <code>collections.Counter</code> is the count array:
+        Approach 2 with any characters, not just a–z. C++ has
+        <code>std::is_permutation</code>, but it's for one pair of ranges and
+        can take O(m²) per window, so it doesn't help here. Java has nothing
+        built in.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · k), k = distinct letters</span>
+        <span><strong>Space</strong> O(k)</span>
+      </div>
+      <p class="note">
+        Passes every test here, about 3–7 ms on 10⁴ letters. A count can drop
+        to 0 and stay in the Counter; <code>==</code> treats it as missing in
+        Python 3.10 and later.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Sort Every Window</th>
+              <td>sorted(window) == sorted(s1)</td>
+              <td>O((n − m) · m log m)</td>
+              <td>O(m)</td>
+              <td>2.0 s in Python at the limits</td>
+            </tr>
+            <tr>
+              <th scope="row">Sliding Window of Counts</th>
+              <td>need / have, compare 26 counts</td>
+              <td>O(26 · n)</td>
+              <td>O(1)</td>
+              <td>Simple; just as fast in practice</td>
+            </tr>
+            <tr>
+              <th scope="row">Count the Matches</th>
+              <td>diff array + zeros</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>O(1) per step; mind the zeros updates</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
