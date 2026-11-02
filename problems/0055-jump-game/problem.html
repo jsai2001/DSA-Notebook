@@ -1,0 +1,239 @@
+<details class="question" data-tags="array greedy dynamic-programming jump reach">
+  <summary>
+    <span class="q-title">55. Jump Game</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Greedy</span>
+      <span class="tag">Dynamic Programming</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> The reachable indices are always one block
+      starting at 0, so one number describes them: <code>farthest</code>. Scan
+      left to right; if <code>i &gt; farthest</code>, you're stuck and the
+      answer is false. Otherwise <code>farthest = max(farthest, i + nums[i])</code>.
+      <strong>Check before you update.</strong> O(n) time, O(1) space.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/jump-game/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        You start at index 0 of <code>nums</code>. Each <code>nums[i]</code> is
+        your <em>maximum</em> jump length from index <code>i</code>: you can
+        jump to any index from <code>i + 1</code> up to
+        <code>i + nums[i]</code>. Return <code>true</code> if you can reach the
+        last index, otherwise <code>false</code>.
+      </p>
+      <ul>
+        <li><code>1 &lt;= nums.length &lt;= 10⁴</code> and <code>0 &lt;= nums[i] &lt;= 10⁵</code>.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[2,3,1,1,4]</code> → <code>true</code> (0 → 1 → 4);
+        <code>[3,2,1,0,4]</code> → <code>false</code> (every path ends on the
+        0 at index 3).
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[0]</code></td>
+              <td><code>true</code></td>
+              <td>You start on the last index, so no jump is needed. The 0 doesn't matter.</td>
+            </tr>
+            <tr>
+              <td><code>[0,1]</code></td>
+              <td><code>false</code></td>
+              <td>Stuck at the start. Updating <code>farthest</code> with index 1 <em>before</em> checking <code>i &gt; farthest</code> lets the unreachable index vouch for itself and returns true.</td>
+            </tr>
+            <tr>
+              <td><code>[1,0]</code></td>
+              <td><code>true</code></td>
+              <td>A 0 on the last index is fine: you never jump from there.</td>
+            </tr>
+            <tr>
+              <td><code>[3,2,1,0,4]</code></td>
+              <td><code>false</code></td>
+              <td>Every index before the 0 reaches exactly index 3 and no further. Big numbers early on don't help if they all stop at the same wall.</td>
+            </tr>
+            <tr>
+              <td><code>[2,3,1,1,4]</code></td>
+              <td><code>true</code></td>
+              <td>From 0 you can land on 1 instead of jumping the full 2. Moving the goal only when <code>i + nums[i] &gt; goal</code> (not <code>&gt;=</code>) misses exact landings and returns false.</td>
+            </tr>
+            <tr>
+              <td><code>[2,0,0]</code></td>
+              <td><code>true</code></td>
+              <td>Jump straight over the 0 in the middle onto the last index.</td>
+            </tr>
+            <tr>
+              <td><code>[1,1,0,1]</code></td>
+              <td><code>false</code></td>
+              <td>The 0 isn't at the start: you walk into it, and nothing earlier jumps over it.</td>
+            </tr>
+            <tr>
+              <td>10⁴ values of 10⁵</td>
+              <td><code>true</code></td>
+              <td>Jumps go far past the end; you only need to reach the last index. <code>i + nums[i]</code> is at most about 1.1 × 10⁵, so <code>int</code> is fine.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Dynamic Programming</h2>
+      <p class="intuition">
+        Call an index good if the last index can be reached from it. The last
+        index is good. Going right to left, <code>i</code> is good if any index
+        it can jump to is good. The answer is <code>good[0]</code>.
+      </p>
+      <ul>
+        <li>Stop scanning <code>i</code>'s range at the first good index: one is enough.</li>
+        <li>
+          Going right to left matters: every <code>good[j]</code> with
+          <code>j &gt; i</code> is already known when <code>i</code> needs it.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · k), k = max(nums)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Easy to trust, but slow on long runs of bad indices. On an input built
+        for it (<code>[5000, 4999, …, 1]</code> followed by 5000 zeros, so every
+        index scans its whole range and finds nothing) it took 0.26 s in Python
+        here, 14 ms in C++. Most inputs finish in a couple of milliseconds,
+        because the scan stops at the first good index.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Greedy, Move the Goal Left</h2>
+      <p class="intuition">
+        Approach 1 only ever needs the leftmost good index so far. Call it
+        <code>goal</code>, starting at the last index. Going right to left,
+        if <code>i + nums[i] &gt;= goal</code>, then <code>i</code> can land
+        on goal, so reaching <code>i</code> is enough: <code>goal = i</code>.
+      </p>
+      <ul>
+        <li>The answer is <code>goal == 0</code>.</li>
+        <li>Use <code>&gt;=</code>: landing exactly on goal is a valid jump.</li>
+        <li>Why only the leftmost one? If <code>i</code> can reach any good index, it can also reach the leftmost good index after it, since jumps can be any length up to <code>nums[i]</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Approach 1 with the array squeezed down to one number. It always
+        scans all n indices, even when the answer is clear early on.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Greedy, Farthest Reach
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Go the other way. If you can reach index <code>i</code>, you can
+        reach everything up to <code>i + nums[i]</code>, so the reachable
+        indices are always <code>0..farthest</code>. Walk left to right: if
+        <code>i</code> is past <code>farthest</code>, nothing can get there.
+      </p>
+      <ul>
+        <li>Check <code>i &gt; farthest</code> first, then update <code>farthest</code>: only a reachable index may extend the reach.</li>
+        <li>If the loop finishes, every index was reachable, including the last.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        The expected answer, and the same "how far can I get" idea as Jump
+        Game II (45), which counts the jumps as well. It stops as soon as it
+        gets stuck.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No standard library function solves this. A graph search over the
+        jumps would work, but each index can have up to 10⁵ jumps, which is
+        more work than Approach 1.
+      </p>
+      <p class="note">
+        Write Approach 3: one variable, and check <code>i &gt; farthest</code>
+        before updating it.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Dynamic Programming</th>
+              <td>good[i] = any good[j] in i's range</td>
+              <td>O(n · k)</td>
+              <td>O(n)</td>
+              <td>0.26 s in Python on the worst input tried</td>
+            </tr>
+            <tr>
+              <th scope="row">Move the Goal Left</th>
+              <td>Leftmost good index</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Use <code>&gt;=</code>, not <code>&gt;</code></td>
+            </tr>
+            <tr>
+              <th scope="row">Farthest Reach</th>
+              <td>Reachable block 0..farthest</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Expected answer; check before updating</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

@@ -13840,6 +13840,378 @@
         </div>
       </details>
 
+      <!-- ===== problems/0055-jump-game ===== -->
+      <details class="question" data-tags="array greedy dynamic-programming jump reach">
+        <summary>
+          <span class="q-title">55. Jump Game</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">Array</span>
+            <span class="tag">Greedy</span>
+            <span class="tag">Dynamic Programming</span>
+          </span>
+        </summary>
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> The reachable indices are always one block
+            starting at 0, so one number describes them: <code>farthest</code>. Scan
+            left to right; if <code>i &gt; farthest</code>, you're stuck and the
+            answer is false. Otherwise <code>farthest = max(farthest, i + nums[i])</code>.
+            <strong>Check before you update.</strong> O(n) time, O(1) space.
+          </div>
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/jump-game/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              You start at index 0 of <code>nums</code>. Each <code>nums[i]</code> is
+              your <em>maximum</em> jump length from index <code>i</code>: you can
+              jump to any index from <code>i + 1</code> up to
+              <code>i + nums[i]</code>. Return <code>true</code> if you can reach the
+              last index, otherwise <code>false</code>.
+            </p>
+            <ul>
+              <li><code>1 &lt;= nums.length &lt;= 10⁴</code> and <code>0 &lt;= nums[i] &lt;= 10⁵</code>.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>[2,3,1,1,4]</code> → <code>true</code> (0 → 1 → 4);
+              <code>[3,2,1,0,4]</code> → <code>false</code> (every path ends on the
+              0 at index 3).
+            </p>
+          </section>
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[0]</code></td>
+                    <td><code>true</code></td>
+                    <td>You start on the last index, so no jump is needed. The 0 doesn't matter.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[0,1]</code></td>
+                    <td><code>false</code></td>
+                    <td>Stuck at the start. Updating <code>farthest</code> with index 1 <em>before</em> checking <code>i &gt; farthest</code> lets the unreachable index vouch for itself and returns true.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,0]</code></td>
+                    <td><code>true</code></td>
+                    <td>A 0 on the last index is fine: you never jump from there.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[3,2,1,0,4]</code></td>
+                    <td><code>false</code></td>
+                    <td>Every index before the 0 reaches exactly index 3 and no further. Big numbers early on don't help if they all stop at the same wall.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2,3,1,1,4]</code></td>
+                    <td><code>true</code></td>
+                    <td>From 0 you can land on 1 instead of jumping the full 2. Moving the goal only when <code>i + nums[i] &gt; goal</code> (not <code>&gt;=</code>) misses exact landings and returns false.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2,0,0]</code></td>
+                    <td><code>true</code></td>
+                    <td>Jump straight over the 0 in the middle onto the last index.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[1,1,0,1]</code></td>
+                    <td><code>false</code></td>
+                    <td>The 0 isn't at the start: you walk into it, and nothing earlier jumps over it.</td>
+                  </tr>
+                  <tr>
+                    <td>10⁴ values of 10⁵</td>
+                    <td><code>true</code></td>
+                    <td>Jumps go far past the end; you only need to reach the last index. <code>i + nums[i]</code> is at most about 1.1 × 10⁵, so <code>int</code> is fine.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Dynamic Programming</h2>
+            <p class="intuition">
+              Call an index good if the last index can be reached from it. The last
+              index is good. Going right to left, <code>i</code> is good if any index
+              it can jump to is good. The answer is <code>good[0]</code>.
+            </p>
+            <ul>
+              <li>Stop scanning <code>i</code>'s range at the first good index: one is enough.</li>
+              <li>
+                Going right to left matters: every <code>good[j]</code> with
+                <code>j &gt; i</code> is already known when <code>i</code> needs it.
+              </li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n · k), k = max(nums)</span>
+              <span><strong>Space</strong> O(n)</span>
+            </div>
+            <p class="note">
+              Easy to trust, but slow on long runs of bad indices. On an input built
+              for it (<code>[5000, 4999, …, 1]</code> followed by 5000 zeros, so every
+              index scans its whole range and finds nothing) it took 0.26 s in Python
+              here, 14 ms in C++. Most inputs finish in a couple of milliseconds,
+              because the scan stops at the first good index.
+            </p>
+            <div class="code-tabs" data-viz="0055-jump-game/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5],"from":[6],"check":[7,8],"found":[9,10],"return":[11]}'>
+                class Solution(object):
+                    def canJump(self, nums):
+                        n = len(nums)
+                        good = [False] * n  # good[i]: the last index can be reached from i
+                        good[n - 1] = True  # standing on it already counts
+                        for i in range(n - 2, -1, -1):  # right to left, so every good[j] after i is known
+                            for j in range(i + 1, min(n - 1, i + nums[i]) + 1):  # every index one jump from i
+                                if good[j]:
+                                    good[i] = True
+                                    break  # one good landing spot is enough
+                        return good[0]
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8],"from":[9,10],"check":[11,12],"found":[13,14],"return":[18]}'>
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    bool canJump(std::vector<int>& nums) {
+                        int n = (int)nums.size();
+                        std::vector<bool> good(n, false); // good[i]: the last index can be reached from i
+                        good[n - 1] = true; // standing on it already counts
+                        for (int i = n - 2; i >= 0; --i) { // right to left, so every good[j] after i is known
+                            int last = std::min(n - 1, i + nums[i]);
+                            for (int j = i + 1; j <= last; ++j) { // every index one jump from i
+                                if (good[j]) {
+                                    good[i] = true;
+                                    break; // one good landing spot is enough
+                                }
+                            }
+                        }
+                        return good[0];
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5],"from":[6,7],"check":[8,9],"found":[10,11],"return":[15]}'>
+                class Solution {
+                    public boolean canJump(int[] nums) {
+                        int n = nums.length;
+                        boolean[] good = new boolean[n]; // good[i]: the last index can be reached from i
+                        good[n - 1] = true; // standing on it already counts
+                        for (int i = n - 2; i >= 0; i--) { // right to left, so every good[j] after i is known
+                            int last = Math.min(n - 1, i + nums[i]);
+                            for (int j = i + 1; j <= last; j++) { // every index one jump from i
+                                if (good[j]) {
+                                    good[i] = true;
+                                    break; // one good landing spot is enough
+                                }
+                            }
+                        }
+                        return good[0];
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>Approach 2: Greedy, Move the Goal Left</h2>
+            <p class="intuition">
+              Approach 1 only ever needs the leftmost good index so far. Call it
+              <code>goal</code>, starting at the last index. Going right to left,
+              if <code>i + nums[i] &gt;= goal</code>, then <code>i</code> can land
+              on goal, so reaching <code>i</code> is enough: <code>goal = i</code>.
+            </p>
+            <ul>
+              <li>The answer is <code>goal == 0</code>.</li>
+              <li>Use <code>&gt;=</code>: landing exactly on goal is a valid jump.</li>
+              <li>Why only the leftmost one? If <code>i</code> can reach any good index, it can also reach the leftmost good index after it, since jumps can be any length up to <code>nums[i]</code>.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              Approach 1 with the array squeezed down to one number. It always
+              scans all n indices, even when the answer is clear early on.
+            </p>
+            <div class="code-tabs" data-viz="0055-jump-game/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"scan":[4,5],"move":[6],"return":[7]}'>
+                class Solution(object):
+                    def canJump(self, nums):
+                        goal = len(nums) - 1  # the leftmost index known to reach the end
+                        for i in range(len(nums) - 2, -1, -1):  # right to left
+                            if i + nums[i] >= goal:  # i can land on goal: any jump up to nums[i] is allowed
+                                goal = i  # so reaching i is enough
+                        return goal == 0
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"scan":[6,7],"move":[8],"return":[11]}'>
+                #include <vector>
+                class Solution {
+                public:
+                    bool canJump(std::vector<int>& nums) {
+                        int goal = (int)nums.size() - 1; // the leftmost index known to reach the end
+                        for (int i = goal - 1; i >= 0; --i) { // right to left
+                            if (i + nums[i] >= goal) { // i can land on goal: any jump up to nums[i] is allowed
+                                goal = i; // so reaching i is enough
+                            }
+                        }
+                        return goal == 0;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"scan":[4,5],"move":[6],"return":[9]}'>
+                class Solution {
+                    public boolean canJump(int[] nums) {
+                        int goal = nums.length - 1; // the leftmost index known to reach the end
+                        for (int i = goal - 1; i >= 0; i--) { // right to left
+                            if (i + nums[i] >= goal) { // i can land on goal: any jump up to nums[i] is allowed
+                                goal = i; // so reaching i is enough
+                            }
+                        }
+                        return goal == 0;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>
+              Approach 3: Greedy, Farthest Reach
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              Go the other way. If you can reach index <code>i</code>, you can
+              reach everything up to <code>i + nums[i]</code>, so the reachable
+              indices are always <code>0..farthest</code>. Walk left to right: if
+              <code>i</code> is past <code>farthest</code>, nothing can get there.
+            </p>
+            <ul>
+              <li>Check <code>i &gt; farthest</code> first, then update <code>farthest</code>: only a reachable index may extend the reach.</li>
+              <li>If the loop finishes, every index was reachable, including the last.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              The expected answer, and the same "how far can I get" idea as Jump
+              Game II (45), which counts the jumps as well. It stops as soon as it
+              gets stuck.
+            </p>
+            <div class="code-tabs" data-viz="0055-jump-game/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"scan":[4],"stuck":[5,6],"reach":[7],"return":[8]}'>
+                class Solution(object):
+                    def canJump(self, nums):
+                        farthest = 0  # the furthest index reachable so far
+                        for i in range(len(nums)):
+                            if i > farthest:  # nothing before i can jump this far: stuck
+                                return False
+                            farthest = max(farthest, i + nums[i])  # i is reachable, so so is everything up to i + nums[i]
+                        return True
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"scan":[7],"stuck":[8],"reach":[9],"return":[11]}'>
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    bool canJump(std::vector<int>& nums) {
+                        int farthest = 0; // the furthest index reachable so far
+                        for (int i = 0; i < (int)nums.size(); ++i) {
+                            if (i > farthest) return false; // nothing before i can jump this far: stuck
+                            farthest = std::max(farthest, i + nums[i]); // i is reachable, so so is everything up to i + nums[i]
+                        }
+                        return true;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"scan":[4],"stuck":[5],"reach":[6],"return":[8]}'>
+                class Solution {
+                    public boolean canJump(int[] nums) {
+                        int farthest = 0; // the furthest index reachable so far
+                        for (int i = 0; i < nums.length; i++) {
+                            if (i > farthest) return false; // nothing before i can jump this far: stuck
+                            farthest = Math.max(farthest, i + nums[i]); // i is reachable, so so is everything up to i + nums[i]
+                        }
+                        return true;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">No shortcut</span></h2>
+            <p>
+              No standard library function solves this. A graph search over the
+              jumps would work, but each index can have up to 10⁵ jumps, which is
+              more work than Approach 1.
+            </p>
+            <p class="note">
+              Write Approach 3: one variable, and check <code>i &gt; farthest</code>
+              before updating it.
+            </p>
+          </section>
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Dynamic Programming</th>
+                    <td>good[i] = any good[j] in i's range</td>
+                    <td>O(n · k)</td>
+                    <td>O(n)</td>
+                    <td>0.26 s in Python on the worst input tried</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Move the Goal Left</th>
+                    <td>Leftmost good index</td>
+                    <td>O(n)</td>
+                    <td>O(1)</td>
+                    <td>Use <code>&gt;=</code>, not <code>&gt;</code></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Farthest Reach</th>
+                    <td>Reachable block 0..farthest</td>
+                    <td>O(n)</td>
+                    <td>O(1)</td>
+                    <td>Expected answer; check before updating</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -22646,6 +23018,180 @@
             note: `Done. Short to write, but each turn copies everything that's left: ${copied} copies here on top of the ${m * n} values taken. About O(m·n·min(m, n)) time in total.`,
             view: view({ final: true }),
           });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0055-jump-game/approach1.visual.js -->
+    <script>
+      // Right to left: good[i] is true if some index i can jump to is good. The last index is good by definition.
+      DSAViz.register("0055-jump-game/approach1", {
+        inputs: [{ name: "nums", type: "int[]", value: "[2, 3, 1, 1, 4]", minLength: 1, maxLength: 10, minValue: 0, maxValue: 6 }],
+        trace({ nums }) {
+          const n = nums.length;
+          const good = Array(n).fill(null); // null = not worked out yet
+          good[n - 1] = true;
+          const steps = [];
+          let checks = 0;
+          const view = (i, opts = {}) => {
+            const marks = {};
+            for (let k = 0; k < n; k++) if (good[k] !== null && k !== i) marks[k] = good[k] ? "visited" : "cut";
+            (opts.range || []).forEach((k) => (marks[k] = "window"));
+            (opts.scanned || []).forEach((k) => (marks[k] = "compare"));
+            if (opts.hit !== undefined) marks[opts.hit] = "match";
+            if (i !== undefined) marks[i] = opts.final ? (good[0] ? "match" : "cut") : "active";
+            return [
+              {
+                type: "array",
+                label: "nums (good[i] underneath: ✓ reaches the end, ✗ doesn't)",
+                values: nums,
+                sub: good.map((g) => (g === null ? "" : g ? "✓" : "✗")),
+                marks,
+                pointers: i !== undefined ? { i } : {},
+              },
+              { type: "vars", items: [{ name: "good[j] checks so far", value: checks }] },
+            ];
+          };
+          steps.push({ line: "init", note: `good[${n - 1}] = ✓: standing on the last index already counts. Work right to left, so when we look at i, every good[j] after it is known.`, view: view(undefined) });
+          for (let i = n - 2; i >= 0; i--) {
+            const last = Math.min(n - 1, i + nums[i]);
+            const range = [];
+            for (let j = i + 1; j <= last; j++) range.push(j);
+            steps.push({
+              line: "from",
+              note: range.length
+                ? `Index ${i}: nums[${i}] = ${nums[i]}, so it can land on ${range.length === 1 ? `index ${range[0]}` : `indices ${range[0]}..${last}`}${i + nums[i] > n - 1 ? ` (the jump can't go past the end)` : ""}.`
+                : `Index ${i}: nums[${i}] = 0, so it can't jump anywhere.`,
+              view: view(i, { range }),
+            });
+            const scanned = [];
+            let hit;
+            for (const j of range) {
+              checks++;
+              if (good[j]) {
+                hit = j;
+                break;
+              }
+              scanned.push(j);
+            }
+            good[i] = hit !== undefined;
+            steps.push({
+              line: hit !== undefined ? ["check", "found"] : "check",
+              note:
+                hit !== undefined
+                  ? `good[${hit}] is ✓${scanned.length ? ` (after ${scanned.length} ✗)` : ""}: jump there and carry on to the end. good[${i}] = ✓; one good landing spot is enough, so stop looking.`
+                  : range.length
+                    ? `${range.length === 1 ? `Index ${range[0]} isn't good` : `None of ${range.join(", ")} is good`}, so every jump from ${i} is a dead end. good[${i}] = ✗.`
+                    : `No jumps at all: good[${i}] = ✗.`,
+              view: view(i, { range: range.filter((j) => j !== hit && !scanned.includes(j)), scanned, hit }),
+            });
+          }
+          steps.push({
+            line: "return",
+            note: `Return good[0] = ${good[0] ? "true" : "false"}. That took ${checks} check${checks === 1 ? "" : "s"}: up to nums[i] per index, so O(n · k) time in the worst case, plus O(n) for good.`,
+            view: view(0, { final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0055-jump-game/approach2.visual.js -->
+    <script>
+      // Move the goal left: whenever i can land on the current goal, reaching i is enough, so i becomes the goal.
+      DSAViz.register("0055-jump-game/approach2", {
+        inputs: [{ name: "nums", type: "int[]", value: "[2, 3, 1, 1, 4]", minLength: 1, maxLength: 10, minValue: 0, maxValue: 6 }],
+        trace({ nums }) {
+          const n = nums.length;
+          let goal = n - 1;
+          const goals = new Set([goal]); // every index that was the goal at some point reaches the end
+          const steps = [];
+          const view = (i, opts = {}) => {
+            const marks = {};
+            for (let k = i === undefined ? n : i + 1; k < n; k++) marks[k] = "visited";
+            goals.forEach((k) => (marks[k] = "window"));
+            if (i !== undefined) marks[i] = opts.moved ? "new" : opts.miss ? "cut" : "active";
+            marks[goal] = opts.final ? (goal === 0 ? "match" : "cut") : marks[goal] === "new" ? "new" : "match";
+            const pointers = {};
+            if (i !== undefined && i !== goal) pointers.i = i;
+            pointers[i === goal ? "i, goal" : "goal"] = goal;
+            return [
+              { type: "array", label: "nums (i + nums[i] underneath; green = goal, outlined = earlier goals)", values: nums, sub: nums.map((v, k) => k + v), marks, pointers },
+              { type: "vars", items: [{ name: "goal", value: goal, mark: opts.moved ? "new" : "" }] },
+            ];
+          };
+          steps.push({ line: "init", note: `goal = ${n - 1}, the last index: from there you're already done. The question becomes "can we reach goal?", and goal moves left whenever it can.`, view: view(undefined) });
+          for (let i = n - 2; i >= 0; i--) {
+            if (i + nums[i] >= goal) {
+              const old = goal;
+              goal = i;
+              goals.add(i);
+              steps.push({
+                line: ["scan", "move"],
+                note: `${i} + ${nums[i]} = ${i + nums[i]} ≥ ${old}: from ${i} you can land on ${old}${i + nums[i] > old ? ` (a shorter jump is allowed)` : ""}. So reaching ${i} is enough: goal = ${i}.`,
+                view: view(i, { moved: true }),
+              });
+            } else {
+              steps.push({ line: "scan", note: `${i} + ${nums[i]} = ${i + nums[i]} < ${goal}: from ${i} you can't get to goal ${goal}. Leave goal where it is.`, view: view(i, { miss: true }) });
+            }
+          }
+          steps.push({
+            line: "return",
+            note: goal === 0
+              ? `goal reached 0, where we start. Return true. One pass, one variable: O(n) time, O(1) space.`
+              : `goal stopped at ${goal}: nothing to its left can get there, so index 0 can't reach the end. Return false.`,
+            view: view(undefined, { final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0055-jump-game/approach3.visual.js -->
+    <script>
+      // Left to right: farthest is the furthest index reachable so far. Getting to an index beyond it means you're stuck.
+      DSAViz.register("0055-jump-game/approach3", {
+        inputs: [{ name: "nums", type: "int[]", value: "[3, 2, 1, 0, 4]", minLength: 1, maxLength: 10, minValue: 0, maxValue: 6 }],
+        trace({ nums }) {
+          const n = nums.length;
+          let farthest = 0;
+          const steps = [];
+          const view = (i, opts = {}) => {
+            const marks = {};
+            for (let k = 0; k <= Math.min(farthest, n - 1); k++) marks[k] = "window";
+            for (let k = 0; k < (i ?? 0); k++) marks[k] = "visited";
+            if (opts.done) for (let k = 0; k < n; k++) marks[k] = "visited";
+            if (i !== undefined && i < n) marks[i] = opts.stuck ? "cut" : opts.grew ? "new" : "active";
+            if (opts.final) marks[n - 1] = "match";
+            const pointers = {};
+            const f = Math.min(farthest, n - 1);
+            if (i !== undefined && i < n && i !== f) pointers.i = i;
+            pointers[i === f ? "i, farthest" : "farthest"] = f;
+            return [
+              { type: "array", label: "nums (outlined = reachable so far, grey = already looked at; i + nums[i] underneath)", values: nums, sub: nums.map((v, k) => k + v), marks, pointers },
+              { type: "vars", items: [{ name: "farthest", value: farthest, mark: opts.grew ? "new" : "" }] },
+            ];
+          };
+          steps.push({ line: "init", note: "farthest = 0: so far, all we know is that we can stand on index 0.", view: view(undefined) });
+          for (let i = 0; i < n; i++) {
+            if (i > farthest) {
+              steps.push({
+                line: ["scan", "stuck"],
+                note: `i = ${i} but farthest = ${farthest}: no index before ${i} can jump this far, so neither ${i} nor anything after it is reachable. Return false.`,
+                view: view(i, { stuck: true }),
+              });
+              return steps;
+            }
+            const before = farthest;
+            farthest = Math.max(farthest, i + nums[i]);
+            steps.push({
+              line: ["scan", "reach"],
+              note:
+                farthest > before
+                  ? `${i} ≤ ${before}, so index ${i} is reachable. From it you can get to ${i + nums[i]}: farthest = ${farthest}${farthest >= n - 1 ? `, which covers the last index` : ""}.`
+                  : `${i} ≤ ${before}, so index ${i} is reachable. It gets to ${i + nums[i]}, no further than ${before}: farthest stays ${farthest}.`,
+              view: view(i, { grew: farthest > before }),
+            });
+          }
+          steps.push({ line: "return", note: `Every index was within reach, including the last one. Return true. One pass, one variable: O(n) time, O(1) space.`, view: view(undefined, { done: true, final: true }) });
           return steps;
         },
       });

@@ -1,0 +1,13 @@
+#include <vector>
+class Solution {
+public:
+    bool canJump(std::vector<int>& nums) {
+        int goal = (int)nums.size() - 1; // the leftmost index known to reach the end // @viz init
+        for (int i = goal - 1; i >= 0; --i) { // right to left // @viz scan
+            if (i + nums[i] >= goal) { // i can land on goal: any jump up to nums[i] is allowed // @viz scan
+                goal = i; // so reaching i is enough // @viz move
+            }
+        }
+        return goal == 0; // @viz return
+    }
+};
