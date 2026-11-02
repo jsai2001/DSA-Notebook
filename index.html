@@ -12412,7 +12412,7 @@
       <details class="pattern-group" id="g-dynamic-programming">
         <summary>
           <span class="g-name">Dynamic Programming</span>
-          <span class="g-count"><span class="g-total">4 problems</span></span>
+          <span class="g-count"><span class="g-total">5 problems</span></span>
           <span class="g-hint">Reuse the answers to smaller problems</span>
         </summary>
         <div class="g-body">
@@ -13962,6 +13962,384 @@
                         <td>O(n)</td>
                         <td>O(1)</td>
                         <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0062-unique-paths ===== -->
+          <details class="question" data-group="dynamic-programming" data-tags="math dynamic-programming dp combinatorics grid paths binomial memoization">
+            <summary>
+              <span class="q-title">62. Unique Paths</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Math</span>
+                <span class="tag">Dynamic Programming</span>
+                <span class="tag">Combinatorics</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> You can only reach a cell from <strong>above
+                or from the left</strong>, so
+                <code>paths(r, c) = paths(r − 1, c) + paths(r, c − 1)</code>, with 1 all
+                along the top row and left column. Fill it row by row with one array:
+                O(m·n) time, O(n) space. Or count directly: every path is
+                <code>m − 1</code> downs and <code>n − 1</code> rights in some order, so
+                the answer is <code>C(m + n − 2, m − 1)</code>.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/unique-paths/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  A robot starts at the top-left corner of an <code>m × n</code> grid and
+                  wants to reach the bottom-right corner. It can only move
+                  <strong>down</strong> or <strong>right</strong>, one cell at a time.
+                  Return how many different paths it can take.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= m, n &lt;= 100</code>.</li>
+                  <li>The answer is at most <code>2 · 10⁹</code>, so it fits in a 32-bit <code>int</code>.</li>
+                </ul>
+                <p class="note">
+                  Examples: <code>m = 3, n = 7</code> → <code>28</code>;
+                  <code>m = 3, n = 2</code> → <code>3</code> (right-down-down,
+                  down-right-down, down-down-right).
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>m = 1, n = 1</code></td>
+                        <td><code>1</code></td>
+                        <td>You start on the corner. Doing nothing counts as one path, not zero.</td>
+                      </tr>
+                      <tr>
+                        <td><code>m = 1, n = 100</code> / <code>m = 100, n = 1</code></td>
+                        <td><code>1</code> / <code>1</code></td>
+                        <td>A single row or column: one straight line. The DP's loops shouldn't run at all.</td>
+                      </tr>
+                      <tr>
+                        <td><code>m = 3, n = 7</code></td>
+                        <td><code>28</code></td>
+                        <td>If the row-by-row DP also "updates" the top row, every count is too big: this gives 84.</td>
+                      </tr>
+                      <tr>
+                        <td><code>m = 10, n = 10</code></td>
+                        <td><code>48620</code></td>
+                        <td>In the formula, dividing before multiplying (<code>result // i * (…)</code>) throws away remainders: 47448.</td>
+                      </tr>
+                      <tr>
+                        <td><code>m = 17, n = 17</code></td>
+                        <td><code>601080390</code></td>
+                        <td>The answer fits in an <code>int</code>, but <code>result * (…)</code> in the formula doesn't. With an <code>int</code>, C++ silently returns 28418082. Use 64 bits for the product.</td>
+                      </tr>
+                      <tr>
+                        <td><code>m = 8, n = 69</code></td>
+                        <td><code>1984829850</code></td>
+                        <td>The largest answer the limits allow, just under 2³¹. The DP is fine in <code>int</code>: no cell is bigger than the answer.</td>
+                      </tr>
+                      <tr>
+                        <td><code>m = 15, n = 15</code></td>
+                        <td><code>40116600</code></td>
+                        <td>Plain recursion without memo makes a call for every path: 4.5 s in Python here. With memo it's instant.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Recursion with Memo</h2>
+                <p class="intuition">
+                  The last move into <code>(r, c)</code> came from above or from the left,
+                  so <code>paths(r, c) = paths(r − 1, c) + paths(r, c − 1)</code>. The top
+                  row and left column are 1: there's only the straight line. Ask for the
+                  bottom-right corner and let the recursion fill in the rest.
+                </p>
+                <ul>
+                  <li>Without the memo, the same cells are recomputed over and over: the number of calls grows like the answer itself.</li>
+                  <li>With it, each cell is worked out once.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(m·n)</span>
+                  <span><strong>Space</strong> O(m·n) for the memo, plus O(m + n) recursion depth</span>
+                </div>
+                <p class="note">
+                  The most natural way to find the recurrence. The next approach is the
+                  same recurrence written as a loop.
+                </p>
+                <div class="code-tabs" data-viz="0062-unique-paths/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[5],"call":[6],"edge":[7,8],"memo":[9,11],"add":[10],"answer":[12]}'>
+                    import sys
+                    class Solution(object):
+                        def uniquePaths(self, m, n):
+                            sys.setrecursionlimit(10000)  # the calls go up to m + n levels deep
+                            memo = {}  # (r, c) -> number of paths from the top-left corner to (r, c)
+                            def paths(r, c):
+                                if r == 0 or c == 0:  # top row or left column: one way, a straight line
+                                    return 1
+                                if (r, c) not in memo:
+                                    memo[(r, c)] = paths(r - 1, c) + paths(r, c - 1)  # arrive from above, or from the left
+                                return memo[(r, c)]
+                            return paths(m - 1, n - 1)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"answer":[6],"call":[10],"edge":[11],"memo":[12,15],"add":[13]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int uniquePaths(int m, int n) {
+                            memo.assign(m, std::vector<int>(n, 0)); // memo[r][c]: paths from the top-left corner to (r, c); 0 = not known yet
+                            return paths(m - 1, n - 1);
+                        }
+                    private:
+                        std::vector<std::vector<int>> memo;
+                        int paths(int r, int c) {
+                            if (r == 0 || c == 0) return 1; // top row or left column: one way, a straight line
+                            if (memo[r][c] == 0) {
+                                memo[r][c] = paths(r - 1, c) + paths(r, c - 1); // arrive from above, or from the left
+                            }
+                            return memo[r][c];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4],"answer":[5],"call":[7],"edge":[8],"memo":[9,12],"add":[10]}'>
+                    class Solution {
+                        private int[][] memo;
+                        public int uniquePaths(int m, int n) {
+                            memo = new int[m][n]; // memo[r][c]: paths from the top-left corner to (r, c); 0 = not known yet
+                            return paths(m - 1, n - 1);
+                        }
+                        private int paths(int r, int c) {
+                            if (r == 0 || c == 0) return 1; // top row or left column: one way, a straight line
+                            if (memo[r][c] == 0) {
+                                memo[r][c] = paths(r - 1, c) + paths(r, c - 1); // arrive from above, or from the left
+                            }
+                            return memo[r][c];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: DP, One Row at a Time</h2>
+                <p class="intuition">
+                  Fill the grid row by row instead. Each cell only needs the row above
+                  and the cell to its left, so one array is enough: before
+                  <code>row[c]</code> is updated it still holds the cell above, and
+                  <code>row[c − 1]</code> already holds the cell to the left.
+                </p>
+                <ul>
+                  <li>Start with all 1s (the top row), then for every row below: <code>row[c] += row[c − 1]</code> for <code>c</code> from 1.</li>
+                  <li>Start the rows at 1, not 0: the top row is already right.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(m·n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  The usual interview answer, and the version that adapts to Unique
+                  Paths II (63), where obstacles set a cell to 0. Every count is at most
+                  the final answer, so a 32-bit <code>int</code> is enough.
+                </p>
+                <div class="code-tabs" data-viz="0062-unique-paths/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"row":[4],"cell":[5,6],"answer":[7]}'>
+                    class Solution(object):
+                        def uniquePaths(self, m, n):
+                            row = [1] * n  # the top row: one way to reach each of its cells
+                            for r in range(1, m):  # every row below it
+                                for c in range(1, n):  # column 0 stays 1
+                                    row[c] += row[c - 1]  # row[c] still holds the cell above; row[c - 1] is the cell to the left
+                            return row[n - 1]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"row":[6],"cell":[7,8],"answer":[11]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int uniquePaths(int m, int n) {
+                            std::vector<int> row(n, 1); // the top row: one way to reach each of its cells
+                            for (int r = 1; r < m; ++r) { // every row below it
+                                for (int c = 1; c < n; ++c) { // column 0 stays 1
+                                    row[c] += row[c - 1]; // row[c] still holds the cell above; row[c - 1] is the cell to the left
+                                }
+                            }
+                            return row[n - 1];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5],"row":[6],"cell":[7,8],"answer":[11]}'>
+                    import java.util.Arrays;
+                    class Solution {
+                        public int uniquePaths(int m, int n) {
+                            int[] row = new int[n];
+                            Arrays.fill(row, 1); // the top row: one way to reach each of its cells
+                            for (int r = 1; r < m; r++) { // every row below it
+                                for (int c = 1; c < n; c++) { // column 0 stays 1
+                                    row[c] += row[c - 1]; // row[c] still holds the cell above; row[c - 1] is the cell to the left
+                                }
+                            }
+                            return row[n - 1];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Count the Orders of the Moves
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Every path makes exactly <code>m − 1</code> moves down and
+                  <code>n − 1</code> moves right; paths differ only in the order. So
+                  count the orders: choose which of the <code>m + n − 2</code> moves are
+                  the downs, <code>C(m + n − 2, m − 1)</code>.
+                </p>
+                <ul>
+                  <li>Build it as <code>result = result × (total − k + i) / i</code> for <code>i = 1 … k</code>; after each step it is <code>C(total − k + i, i)</code>, a whole number, so the division is exact.</li>
+                  <li>Multiply first, then divide. Use <code>k = min(m, n) − 1</code> for fewer steps.</li>
+                  <li>The product goes past 2³¹ (up to about 2.8 · 10¹⁰ within the limits), so keep <code>result</code> in 64 bits.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(min(m, n))</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  Fastest, but it only works because there are no obstacles. Mention it
+                  after the DP; most interviewers want to see the recurrence first.
+                </p>
+                <div class="code-tabs" data-viz="0062-unique-paths/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[5,6],"step":[7,8],"answer":[9]}'>
+                    class Solution(object):
+                        def uniquePaths(self, m, n):
+                            # A path is m - 1 moves down and n - 1 moves right, in some order:
+                            # the answer is how many ways to choose which of the m + n - 2 moves go down.
+                            total, k = m + n - 2, min(m, n) - 1  # C(total, k); the smaller k means fewer steps
+                            result = 1
+                            for i in range(1, k + 1):
+                                result = result * (total - k + i) // i  # now C(total - k + i, i): always a whole number
+                            return result
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8],"step":[9,10],"answer":[12]}'>
+                    #include <algorithm>
+                    class Solution {
+                    public:
+                        int uniquePaths(int m, int n) {
+                            // A path is m - 1 moves down and n - 1 moves right, in some order:
+                            // the answer is how many ways to choose which of the m + n - 2 moves go down.
+                            int total = m + n - 2, k = std::min(m, n) - 1; // C(total, k); the smaller k means fewer steps
+                            long long result = 1; // 64-bit: result * (...) goes past 2^31 before the division
+                            for (int i = 1; i <= k; ++i) {
+                                result = result * (total - k + i) / i; // now C(total - k + i, i): always a whole number
+                            }
+                            return (int)result;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6],"step":[7,8],"answer":[10]}'>
+                    class Solution {
+                        public int uniquePaths(int m, int n) {
+                            // A path is m - 1 moves down and n - 1 moves right, in some order:
+                            // the answer is how many ways to choose which of the m + n - 2 moves go down.
+                            int total = m + n - 2, k = Math.min(m, n) - 1; // C(total, k); the smaller k means fewer steps
+                            long result = 1; // 64-bit: result * (...) goes past 2^31 before the division
+                            for (int i = 1; i <= k; i++) {
+                                result = result * (total - k + i) / i; // now C(total - k + i, i): always a whole number
+                            }
+                            return (int) result;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  Python has the binomial built in: <code>math.comb</code> (3.8+), with
+                  exact big integers, so overflow can't happen. C++ and Java have nothing
+                  built in for this; write Approach 3 with a 64-bit
+                  <code>result</code>.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    from math import comb
+                    class Solution(object):
+                        def uniquePaths(self, m, n):
+                            return comb(m + n - 2, m - 1)  # choose which of the m + n - 2 moves go down (Python 3.8+)
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(min(m, n)) multiplications</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  Passes every allowed input here (1773 of the 10,000 (m, n) pairs keep
+                  the answer at most 2 · 10⁹).
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Recursion with Memo</th>
+                        <td>paths(r − 1, c) + paths(r, c − 1)</td>
+                        <td>O(m·n)</td>
+                        <td>O(m·n)</td>
+                        <td>Without the memo it's exponential</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">DP, One Row at a Time</th>
+                        <td>row[c] += row[c − 1]</td>
+                        <td>O(m·n)</td>
+                        <td>O(n)</td>
+                        <td>Expected answer; handles obstacles (63)</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Count the Orders</th>
+                        <td>C(m + n − 2, min(m, n) − 1)</td>
+                        <td>O(min(m, n))</td>
+                        <td>O(1)</td>
+                        <td>64-bit product; no obstacles only</td>
                       </tr>
                     </tbody>
                   </table>
@@ -25837,6 +26215,208 @@
             line: "build",
             note: `Copy ${left ? `intervals[0..${left - 1}]` : "nothing before it"}, then ${show([start, end])}, then ${right < n ? `intervals[${right}..${n - 1}]` : "nothing after it"}. The searches looked at ${looks} interval${looks === 1 ? "" : "s"} (O(log n)), but building the answer still copies all of them: O(n) overall.`,
             view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0062-unique-paths/approach1.visual.js -->
+    <script>
+      // Top-down: paths(r, c) = paths(r - 1, c) + paths(r, c - 1), each cell worked out once and remembered.
+      DSAViz.register("0062-unique-paths/approach1", {
+        inputs: [
+          { name: "m", type: "int", value: "3", min: 1, max: 5 },
+          { name: "n", type: "int", value: "4", min: 1, max: 6 },
+        ],
+        trace({ m, n }) {
+          const memo = Array.from({ length: m }, () => Array(n).fill(null));
+          const stack = [];
+          const steps = [];
+          let calls = 0;
+          const view = (o = {}) => {
+            const marks = {};
+            for (let r = 0; r < m; r++) for (let c = 0; c < n; c++) if (memo[r][c] !== null) marks[`${r},${c}`] = "visited";
+            stack.forEach(([r, c]) => (marks[`${r},${c}`] = "window"));
+            (o.from || []).forEach(([r, c]) => (marks[`${r},${c}`] = "compare"));
+            if (o.at) marks[`${o.at[0]},${o.at[1]}`] = o.mark || "active";
+            if (o.final) marks[`${m - 1},${n - 1}`] = "match";
+            return [
+              {
+                type: "grid",
+                label: "paths to each cell, filled in as calls return (outlined = waiting on the call stack; the code only stores the inner cells in memo)",
+                rows: [...Array(m).keys()],
+                cols: [...Array(n).keys()],
+                cells: memo.map((row) => row.map((v) => (v === null ? "" : v))),
+                marks,
+              },
+              { type: "array", label: "call stack (bottom → top)", values: stack.map(([r, c]) => `paths(${r},${c})`), wide: true, marks: stack.length ? { [stack.length - 1]: "active" } : {} },
+              { type: "vars", items: [{ name: "calls", value: calls }] },
+            ];
+          };
+          steps.push({ line: ["init", "answer"], note: `Ask for paths(${m - 1}, ${n - 1}), the bottom-right corner. You can only move right or down, so you arrive there from the cell above or the cell to its left.`, view: view() });
+          const paths = (r, c) => {
+            calls++;
+            stack.push([r, c]);
+            if (r === 0 || c === 0) {
+              memo[r][c] = 1;
+              steps.push({
+                line: ["call", "edge"],
+                note: `paths(${r}, ${c}): ${r === 0 && c === 0 ? "the start itself" : r === 0 ? "top row" : "left column"}. The only way there is a straight line: 1.`,
+                view: view({ at: [r, c], mark: "new" }),
+              });
+              stack.pop();
+              return 1;
+            }
+            if (memo[r][c] !== null) {
+              steps.push({ line: ["call", "memo"], note: `paths(${r}, ${c}) is already in memo: ${memo[r][c]}. No new calls.`, view: view({ at: [r, c], mark: "match" }) });
+              stack.pop();
+              return memo[r][c];
+            }
+            steps.push({ line: ["call", "memo", "add"], note: `paths(${r}, ${c}) isn't known yet. It's paths(${r - 1}, ${c}) (from above) + paths(${r}, ${c - 1}) (from the left).`, view: view({ at: [r, c], from: [[r - 1, c], [r, c - 1]] }) });
+            const up = paths(r - 1, c);
+            const left = paths(r, c - 1);
+            memo[r][c] = up + left;
+            steps.push({ line: ["add", "memo"], note: `paths(${r}, ${c}) = ${up} + ${left} = ${memo[r][c]}. Remember it.`, view: view({ at: [r, c], mark: "new", from: [[r - 1, c], [r, c - 1]] }) });
+            stack.pop();
+            return memo[r][c];
+          };
+          const answer = paths(m - 1, n - 1);
+          steps.push({
+            line: "answer",
+            note: `There ${answer === 1 ? "is 1 path" : `are ${answer} paths`}. ${calls} call${calls === 1 ? "" : "s"} in all: each cell is worked out once, and at most two more calls reuse it. O(m·n).`,
+            view: view({ final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0062-unique-paths/approach2.visual.js -->
+    <script>
+      // Bottom-up with one row: going left to right, row[c] (the cell above) += row[c - 1] (the cell to the left).
+      DSAViz.register("0062-unique-paths/approach2", {
+        inputs: [
+          { name: "m", type: "int", value: "3", min: 1, max: 6 },
+          { name: "n", type: "int", value: "7", min: 1, max: 7 },
+        ],
+        trace({ m, n }) {
+          const done = Array.from({ length: m }, () => Array(n).fill(""));
+          const row = Array(n).fill(1);
+          done[0] = row.slice();
+          const steps = [];
+          const view = (r, c, o = {}) => {
+            const marks = {};
+            for (let i = 0; i < m; i++) for (let j = 0; j < n; j++) if (done[i][j] !== "") marks[`${i},${j}`] = "visited";
+            if (r !== undefined) {
+              for (let j = 0; j < n; j++) marks[`${r},${j}`] = done[r][j] !== "" ? "window" : marks[`${r},${j}`];
+              if (c !== undefined) {
+                if (r > 0) marks[`${r - 1},${c}`] = "compare";
+                if (c > 0) marks[`${r},${c - 1}`] = "compare";
+                marks[`${r},${c}`] = "new";
+              }
+            }
+            if (o.final) marks[`${m - 1},${n - 1}`] = "match";
+            const am = {};
+            if (c !== undefined) {
+              am[c] = "new";
+              if (c > 0) am[c - 1] = "compare";
+            }
+            if (o.final) am[n - 1] = "match";
+            return [
+              { type: "grid", label: "the grid (each cell: paths from the top-left corner)", rows: [...Array(m).keys()], cols: [...Array(n).keys()], cells: done.map((x) => x.slice()), marks },
+              { type: "array", label: r !== undefined ? `row: the one array the code keeps (now row ${r})` : "row: the one array the code keeps", values: row.slice(), marks: am },
+            ];
+          };
+          steps.push({ line: "init", note: `The top row is all 1s: you can only get there by moving right. The code keeps just one row of ${n === 1 ? "1 number" : `${n} numbers`} and rewrites it for each row below.`, view: view(0) });
+          for (let r = 1; r < m; r++) {
+            done[r][0] = 1;
+            steps.push({ line: "row", note: `Row ${r}. Column 0 stays 1 (only straight down gets there), so row[0] needs no change.`, view: view(r) });
+            for (let c = 1; c < n; c++) {
+              const above = row[c];
+              row[c] += row[c - 1];
+              done[r][c] = row[c];
+              steps.push({
+                line: "cell",
+                note: `(${r}, ${c}): row[${c}] still holds the cell above (${above}); row[${c - 1}] was just updated, so it's the cell to the left (${row[c - 1]}). row[${c}] = ${above} + ${row[c - 1]} = ${row[c]}.`,
+                view: view(r, c),
+              });
+            }
+          }
+          steps.push({
+            line: "answer",
+            note: `row[${n - 1}] = ${row[n - 1]}: the paths to the bottom-right corner. O(m·n) time, and only O(n) space for the row.`,
+            view: view(undefined, undefined, { final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0062-unique-paths/approach3.visual.js -->
+    <script>
+      // Every path is (m - 1) downs and (n - 1) rights in some order, so count the orders: C(m + n - 2, min(m, n) - 1).
+      DSAViz.register("0062-unique-paths/approach3", {
+        inputs: [
+          { name: "m", type: "int", value: "3", min: 1, max: 20 },
+          { name: "n", type: "int", value: "7", min: 1, max: 20 },
+        ],
+        trace({ m, n }) {
+          const total = m + n - 2;
+          const k = Math.min(m, n) - 1;
+          const steps = [];
+          let result = 1;
+          // One example path, drawn on the grid when it's small enough: all rights, then all downs.
+          const small = m <= 6 && n <= 8;
+          const moves = "R".repeat(n - 1) + "D".repeat(m - 1);
+          const view = (o = {}) => {
+            const widgets = [];
+            if (small) {
+              const marks = {};
+              let r = 0;
+              let c = 0;
+              marks["0,0"] = "match";
+              for (const mv of moves) {
+                if (mv === "R") c++;
+                else r++;
+                marks[`${r},${c}`] = "match";
+              }
+              widgets.push({ type: "grid", label: "one path (green): right, right, …, then down", rows: [...Array(m).keys()], cols: [...Array(n).keys()], cells: Array.from({ length: m }, () => Array(n).fill("")), marks });
+            }
+            widgets.push({ type: "array", label: `its moves: ${n - 1} R and ${m - 1} D (every path has the same moves, in some order)`, values: moves.split(""), compact: true, marks: {} });
+            widgets.push({
+              type: "vars",
+              items: [
+                { name: "total = m + n − 2", value: total },
+                { name: "k = min(m, n) − 1", value: k },
+                { name: "result", value: result, mark: o.fresh ? "new" : o.final ? "match" : "" },
+                ...(o.i ? [{ name: "i", value: o.i }] : []),
+              ],
+            });
+            return widgets;
+          };
+          steps.push({
+            line: "init",
+            note: total === 0
+              ? `m = n = 1: you start on the corner, so there's 1 path (no moves at all).`
+              : `Every path makes ${total} moves: ${m - 1} down and ${n - 1} right. A path is just a choice of which ${k} of the ${total} moves are the ${m <= n ? "downs" : "rights"}: C(${total}, ${k}). Pick the smaller side for fewer steps.`,
+            view: view(),
+          });
+          for (let i = 1; i <= k; i++) {
+            const before = result;
+            result = (result * (total - k + i)) / i;
+            steps.push({
+              line: "step",
+              note:
+                `i = ${i}: result = ${before} × ${total - k + i} ÷ ${i} = ${result}. That's C(${total - k + i}, ${i}), so the division always comes out even.` +
+                (before % i ? ` Dividing first would lose the remainder: ${before} ÷ ${i} × ${total - k + i} gives ${Math.floor(before / i) * (total - k + i)}.` : ""),
+              view: view({ i, fresh: true }),
+            });
+          }
+          steps.push({
+            line: "answer",
+            note: k === 0
+              ? `k = 0: a single row or column, so there's exactly 1 path${total ? " (a straight line)" : ""}. Return 1.`
+              : `Return ${result}. ${k} multiply-and-divide steps: O(min(m, n)) time, O(1) space.` +
+                (result > 2e9 ? ` (LeetCode never asks this one: its answers are at most 2 · 10⁹, and this would overflow the int it returns.)` : ""),
+            view: view({ final: true }),
           });
           return steps;
         },

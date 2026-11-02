@@ -1,0 +1,237 @@
+<details class="question" data-group="dynamic-programming" data-tags="math dynamic-programming dp combinatorics grid paths binomial memoization">
+  <summary>
+    <span class="q-title">62. Unique Paths</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Math</span>
+      <span class="tag">Dynamic Programming</span>
+      <span class="tag">Combinatorics</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> You can only reach a cell from <strong>above
+      or from the left</strong>, so
+      <code>paths(r, c) = paths(r − 1, c) + paths(r, c − 1)</code>, with 1 all
+      along the top row and left column. Fill it row by row with one array:
+      O(m·n) time, O(n) space. Or count directly: every path is
+      <code>m − 1</code> downs and <code>n − 1</code> rights in some order, so
+      the answer is <code>C(m + n − 2, m − 1)</code>.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/unique-paths/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        A robot starts at the top-left corner of an <code>m × n</code> grid and
+        wants to reach the bottom-right corner. It can only move
+        <strong>down</strong> or <strong>right</strong>, one cell at a time.
+        Return how many different paths it can take.
+      </p>
+      <ul>
+        <li><code>1 &lt;= m, n &lt;= 100</code>.</li>
+        <li>The answer is at most <code>2 · 10⁹</code>, so it fits in a 32-bit <code>int</code>.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>m = 3, n = 7</code> → <code>28</code>;
+        <code>m = 3, n = 2</code> → <code>3</code> (right-down-down,
+        down-right-down, down-down-right).
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>m = 1, n = 1</code></td>
+              <td><code>1</code></td>
+              <td>You start on the corner. Doing nothing counts as one path, not zero.</td>
+            </tr>
+            <tr>
+              <td><code>m = 1, n = 100</code> / <code>m = 100, n = 1</code></td>
+              <td><code>1</code> / <code>1</code></td>
+              <td>A single row or column: one straight line. The DP's loops shouldn't run at all.</td>
+            </tr>
+            <tr>
+              <td><code>m = 3, n = 7</code></td>
+              <td><code>28</code></td>
+              <td>If the row-by-row DP also "updates" the top row, every count is too big: this gives 84.</td>
+            </tr>
+            <tr>
+              <td><code>m = 10, n = 10</code></td>
+              <td><code>48620</code></td>
+              <td>In the formula, dividing before multiplying (<code>result // i * (…)</code>) throws away remainders: 47448.</td>
+            </tr>
+            <tr>
+              <td><code>m = 17, n = 17</code></td>
+              <td><code>601080390</code></td>
+              <td>The answer fits in an <code>int</code>, but <code>result * (…)</code> in the formula doesn't. With an <code>int</code>, C++ silently returns 28418082. Use 64 bits for the product.</td>
+            </tr>
+            <tr>
+              <td><code>m = 8, n = 69</code></td>
+              <td><code>1984829850</code></td>
+              <td>The largest answer the limits allow, just under 2³¹. The DP is fine in <code>int</code>: no cell is bigger than the answer.</td>
+            </tr>
+            <tr>
+              <td><code>m = 15, n = 15</code></td>
+              <td><code>40116600</code></td>
+              <td>Plain recursion without memo makes a call for every path: 4.5 s in Python here. With memo it's instant.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Recursion with Memo</h2>
+      <p class="intuition">
+        The last move into <code>(r, c)</code> came from above or from the left,
+        so <code>paths(r, c) = paths(r − 1, c) + paths(r, c − 1)</code>. The top
+        row and left column are 1: there's only the straight line. Ask for the
+        bottom-right corner and let the recursion fill in the rest.
+      </p>
+      <ul>
+        <li>Without the memo, the same cells are recomputed over and over: the number of calls grows like the answer itself.</li>
+        <li>With it, each cell is worked out once.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n)</span>
+        <span><strong>Space</strong> O(m·n) for the memo, plus O(m + n) recursion depth</span>
+      </div>
+      <p class="note">
+        The most natural way to find the recurrence. The next approach is the
+        same recurrence written as a loop.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: DP, One Row at a Time</h2>
+      <p class="intuition">
+        Fill the grid row by row instead. Each cell only needs the row above
+        and the cell to its left, so one array is enough: before
+        <code>row[c]</code> is updated it still holds the cell above, and
+        <code>row[c − 1]</code> already holds the cell to the left.
+      </p>
+      <ul>
+        <li>Start with all 1s (the top row), then for every row below: <code>row[c] += row[c − 1]</code> for <code>c</code> from 1.</li>
+        <li>Start the rows at 1, not 0: the top row is already right.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        The usual interview answer, and the version that adapts to Unique
+        Paths II (63), where obstacles set a cell to 0. Every count is at most
+        the final answer, so a 32-bit <code>int</code> is enough.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Count the Orders of the Moves
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Every path makes exactly <code>m − 1</code> moves down and
+        <code>n − 1</code> moves right; paths differ only in the order. So
+        count the orders: choose which of the <code>m + n − 2</code> moves are
+        the downs, <code>C(m + n − 2, m − 1)</code>.
+      </p>
+      <ul>
+        <li>Build it as <code>result = result × (total − k + i) / i</code> for <code>i = 1 … k</code>; after each step it is <code>C(total − k + i, i)</code>, a whole number, so the division is exact.</li>
+        <li>Multiply first, then divide. Use <code>k = min(m, n) − 1</code> for fewer steps.</li>
+        <li>The product goes past 2³¹ (up to about 2.8 · 10¹⁰ within the limits), so keep <code>result</code> in 64 bits.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(min(m, n))</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Fastest, but it only works because there are no obstacles. Mention it
+        after the DP; most interviewers want to see the recurrence first.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Python has the binomial built in: <code>math.comb</code> (3.8+), with
+        exact big integers, so overflow can't happen. C++ and Java have nothing
+        built in for this; write Approach 3 with a 64-bit
+        <code>result</code>.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(min(m, n)) multiplications</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Passes every allowed input here (1773 of the 10,000 (m, n) pairs keep
+        the answer at most 2 · 10⁹).
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Recursion with Memo</th>
+              <td>paths(r − 1, c) + paths(r, c − 1)</td>
+              <td>O(m·n)</td>
+              <td>O(m·n)</td>
+              <td>Without the memo it's exponential</td>
+            </tr>
+            <tr>
+              <th scope="row">DP, One Row at a Time</th>
+              <td>row[c] += row[c − 1]</td>
+              <td>O(m·n)</td>
+              <td>O(n)</td>
+              <td>Expected answer; handles obstacles (63)</td>
+            </tr>
+            <tr>
+              <th scope="row">Count the Orders</th>
+              <td>C(m + n − 2, min(m, n) − 1)</td>
+              <td>O(min(m, n))</td>
+              <td>O(1)</td>
+              <td>64-bit product; no obstacles only</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
