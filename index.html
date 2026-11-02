@@ -12971,6 +12971,429 @@
         </div>
       </details>
 
+      <!-- ===== problems/0053-maximum-subarray ===== -->
+      <details class="question" data-tags="array divide-and-conquer dynamic-programming kadane subarray prefix-sum">
+        <summary>
+          <span class="q-title">53. Maximum Subarray</span>
+          <span class="q-meta">
+            <span class="badge medium">Medium</span>
+            <span class="tag">Array</span>
+            <span class="tag">Divide and Conquer</span>
+            <span class="tag">Dynamic Programming</span>
+          </span>
+        </summary>
+        <div class="q-body">
+          <!-- KEY IDEA: what to remember at a glance -->
+          <div class="key-idea">
+            <strong>Key idea:</strong> <strong>Kadane's algorithm.</strong> Keep
+            <code>cur</code>, the best sum of a subarray that <em>ends here</em>:
+            <code>cur = max(nums[i], cur + nums[i])</code>. A run with a negative
+            sum only drags the next number down, so start again. The answer is the
+            largest <code>cur</code> seen. Start both at <code>nums[0]</code>, not 0.
+            O(n) time, O(1) space.
+          </div>
+          <!-- PROBLEM -->
+          <section class="q-section">
+            <h2>
+              Problem
+              <a
+                class="problem-link"
+                href="https://leetcode.com/problems/maximum-subarray/"
+                target="_blank"
+                rel="noopener noreferrer"
+                >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+              >
+            </h2>
+            <p>
+              Given an integer array <code>nums</code>, find the subarray (a
+              non-empty run of consecutive numbers) with the largest sum, and return
+              that sum.
+            </p>
+            <ul>
+              <li><code>1 &lt;= nums.length &lt;= 10⁵</code> and <code>-10⁴ &lt;= nums[i] &lt;= 10⁴</code>.</li>
+              <li>Follow-up: after the O(n) solution, try divide and conquer.</li>
+            </ul>
+            <p class="note">
+              Examples: <code>[-2,1,-3,4,-1,2,1,-5,4]</code> → <code>6</code>
+              (<code>[4,-1,2,1]</code>); <code>[1]</code> → <code>1</code>;
+              <code>[5,4,-1,7,8]</code> → <code>23</code>.
+            </p>
+          </section>
+          <!-- EDGE CASES: inputs to test before reading the approaches -->
+          <section class="q-section edge-cases">
+            <h2>Edge cases</h2>
+            <p class="note">Try these against your solution before reading the approaches.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Input</th>
+                    <th scope="col">Expected</th>
+                    <th scope="col">Why it's tricky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>[-1]</code></td>
+                    <td><code>-1</code></td>
+                    <td>The subarray can't be empty, so the answer can be negative. Starting <code>best</code> at 0 returns 0.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[-2,-1]</code></td>
+                    <td><code>-1</code></td>
+                    <td>All negative: the answer is the largest single number. The popular "add, and reset to 0 when negative" version returns 0 here (it was wrong on 1,104 of the small test arrays).</td>
+                  </tr>
+                  <tr>
+                    <td><code>[5,4,-1,7,8]</code></td>
+                    <td><code>23</code></td>
+                    <td>The whole array: keeping the −1 is worth it, because what follows makes up for it.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[2,-1,2]</code> / <code>[3,-4,3]</code></td>
+                    <td><code>3</code> / <code>3</code></td>
+                    <td>Crossing a negative number pays off only if the run before it is bigger than the drop.</td>
+                  </tr>
+                  <tr>
+                    <td><code>[0,-3,0]</code></td>
+                    <td><code>0</code></td>
+                    <td>A zero on its own is the best: the answer is 0 without anything being empty.</td>
+                  </tr>
+                  <tr>
+                    <td>10⁵ copies of 10⁴</td>
+                    <td><code>1000000000</code></td>
+                    <td>The largest possible sum. It fits in a 32-bit <code>int</code> (limit 2,147,483,647).</td>
+                  </tr>
+                  <tr>
+                    <td>10⁵ random numbers</td>
+                    <td>—</td>
+                    <td>Trying every subarray means 5 × 10⁹ additions: about 3 s in C++ and Java here, and minutes in Python.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <!-- APPROACH 1 -->
+          <section class="approach">
+            <h2>Approach 1: Brute Force (Every Subarray)</h2>
+            <p class="intuition">
+              For every start <code>i</code>, extend the end <code>j</code> one step
+              at a time, keeping a running sum, so each subarray's sum costs O(1).
+            </p>
+            <ul>
+              <li>Start <code>best</code> at <code>nums[0]</code>: every number may be negative.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n²)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              Correct, but n(n + 1) / 2 subarrays is 5 × 10⁹ at n = 10⁵: about 3 s
+              in optimised C++ and in Java here, and around 5 minutes in Python
+              (estimated from 5,000 numbers).
+            </p>
+            <div class="code-tabs" data-viz="0053-maximum-subarray/approach1">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"start":[4,5],"extend":[6,7,8],"return":[9]}'>
+                class Solution(object):
+                    def maxSubArray(self, nums):
+                        best = nums[0]  # not 0: every number may be negative
+                        for i in range(len(nums)):  # every start
+                            total = 0
+                            for j in range(i, len(nums)):  # every end, adding one number at a time
+                                total += nums[j]  # sum of nums[i..j]
+                                best = max(best, total)
+                        return best
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"start":[7,8],"extend":[9,10,11],"return":[14]}'>
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    int maxSubArray(std::vector<int>& nums) {
+                        int best = nums[0]; // not 0: every number may be negative
+                        for (size_t i = 0; i < nums.size(); ++i) { // every start
+                            int total = 0;
+                            for (size_t j = i; j < nums.size(); ++j) { // every end, adding one number at a time
+                                total += nums[j]; // sum of nums[i..j]
+                                best = std::max(best, total);
+                            }
+                        }
+                        return best;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"start":[4,5],"extend":[6,7,8],"return":[11]}'>
+                class Solution {
+                    public int maxSubArray(int[] nums) {
+                        int best = nums[0]; // not 0: every number may be negative
+                        for (int i = 0; i < nums.length; i++) { // every start
+                            int total = 0;
+                            for (int j = i; j < nums.length; j++) { // every end, adding one number at a time
+                                total += nums[j]; // sum of nums[i..j]
+                                best = Math.max(best, total);
+                            }
+                        }
+                        return best;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 2 -->
+          <section class="approach">
+            <h2>Approach 2: Divide and Conquer</h2>
+            <p class="intuition">
+              Split the array at <code>mid</code>. The best subarray lies entirely in
+              the left half, entirely in the right half, or crosses the middle. The
+              first two are the same problem on half the array; the crossing one is
+              the best run ending at <code>mid</code> plus the best run starting at
+              <code>mid + 1</code>.
+            </p>
+            <ul>
+              <li>The crossing runs must each hold at least one number, so start them at −∞, not 0.
+                Starting at 0 lets an empty run win: <code>[-1,-2]</code> gives 0 (wrong on 1,097 of the small test arrays).</li>
+              <li>Each level of the recursion scans every number once for the crossing runs.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n log n)</span>
+              <span><strong>Space</strong> O(log n) call stack</span>
+            </div>
+            <p class="note">
+              The follow-up's answer: 0.16 s in Python at n = 10⁵ here. Slower than
+              Kadane, but the same "left, right, or crossing" idea solves harder
+              problems, such as answering many range queries with a segment tree.
+            </p>
+            <div class="code-tabs" data-viz="0053-maximum-subarray/approach2">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"start":[3],"call":[5],"base":[6,7],"split":[8,9,10],"cross":[12,13,14,15,16,17,18,19],"combine":[20]}'>
+                class Solution(object):
+                    def maxSubArray(self, nums):
+                        return self.best(nums, 0, len(nums) - 1)
+
+                    def best(self, nums, lo, hi):  # largest sum of a subarray inside nums[lo..hi]
+                        if lo == hi:  # one number
+                            return nums[lo]
+                        mid = (lo + hi) // 2
+                        left = self.best(nums, lo, mid)  # the best subarray lies entirely in the left half
+                        right = self.best(nums, mid + 1, hi)  # ... or entirely in the right half
+                        # ... or it crosses the middle: the best run ending at mid, plus the best run starting at mid + 1
+                        total, left_run = 0, float("-inf")
+                        for i in range(mid, lo - 1, -1):
+                            total += nums[i]
+                            left_run = max(left_run, total)
+                        total, right_run = 0, float("-inf")
+                        for j in range(mid + 1, hi + 1):
+                            total += nums[j]
+                            right_run = max(right_run, total)
+                        return max(left, right, left_run + right_run)
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"start":[7],"call":[10],"base":[11],"split":[12,13,14],"cross":[16,17,18,19,21,22,23,24,25],"combine":[27]}'>
+                #include <algorithm>
+                #include <climits>
+                #include <vector>
+                class Solution {
+                public:
+                    int maxSubArray(std::vector<int>& nums) {
+                        return best(nums, 0, (int)nums.size() - 1);
+                    }
+                private:
+                    int best(const std::vector<int>& nums, int lo, int hi) { // largest sum of a subarray inside nums[lo..hi]
+                        if (lo == hi) return nums[lo]; // one number
+                        int mid = lo + (hi - lo) / 2;
+                        int left = best(nums, lo, mid); // the best subarray lies entirely in the left half
+                        int right = best(nums, mid + 1, hi); // ... or entirely in the right half
+                        // ... or it crosses the middle: the best run ending at mid, plus the best run starting at mid + 1
+                        int total = 0, leftRun = INT_MIN;
+                        for (int i = mid; i >= lo; --i) {
+                            total += nums[i];
+                            leftRun = std::max(leftRun, total);
+                        }
+                        int rightRun = INT_MIN;
+                        total = 0;
+                        for (int j = mid + 1; j <= hi; ++j) {
+                            total += nums[j];
+                            rightRun = std::max(rightRun, total);
+                        }
+                        return std::max({left, right, leftRun + rightRun}); // both runs hold at least one number by now
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"start":[3],"call":[6],"base":[7],"split":[8,9,10],"cross":[12,13,14,15,17,18,19,20,21],"combine":[23]}'>
+                class Solution {
+                    public int maxSubArray(int[] nums) {
+                        return best(nums, 0, nums.length - 1);
+                    }
+
+                    private int best(int[] nums, int lo, int hi) { // largest sum of a subarray inside nums[lo..hi]
+                        if (lo == hi) return nums[lo]; // one number
+                        int mid = lo + (hi - lo) / 2;
+                        int left = best(nums, lo, mid); // the best subarray lies entirely in the left half
+                        int right = best(nums, mid + 1, hi); // ... or entirely in the right half
+                        // ... or it crosses the middle: the best run ending at mid, plus the best run starting at mid + 1
+                        int total = 0, leftRun = Integer.MIN_VALUE;
+                        for (int i = mid; i >= lo; i--) {
+                            total += nums[i];
+                            leftRun = Math.max(leftRun, total);
+                        }
+                        int rightRun = Integer.MIN_VALUE;
+                        total = 0;
+                        for (int j = mid + 1; j <= hi; j++) {
+                            total += nums[j];
+                            rightRun = Math.max(rightRun, total);
+                        }
+                        return Math.max(Math.max(left, right), leftRun + rightRun); // both runs hold at least one number by now
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- APPROACH 3 -->
+          <section class="approach">
+            <h2>
+              Approach 3: Kadane's Algorithm
+              <span class="label optimal">Optimal</span>
+            </h2>
+            <p class="intuition">
+              Every subarray ends somewhere. The best one ending at <code>i</code>
+              is either <code>nums[i]</code> alone, or the best one ending at
+              <code>i − 1</code> extended by <code>nums[i]</code>. That's a one-step
+              DP that only needs the previous value.
+            </p>
+            <ul>
+              <li><code>cur = max(nums[i], cur + nums[i])</code>, then <code>best = max(best, cur)</code>.</li>
+              <li>Starting again happens exactly when the run so far is negative.</li>
+              <li>Both start at <code>nums[0]</code>, which keeps all-negative arrays right.</li>
+            </ul>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n)</span>
+              <span><strong>Space</strong> O(1)</span>
+            </div>
+            <p class="note">
+              One pass: 0.02 s in Python at n = 10⁵ here. The same "best ending here"
+              idea solves Maximum Product Subarray (keep the smallest too) and Best
+              Time to Buy and Sell Stock.
+            </p>
+            <div class="code-tabs" data-viz="0053-maximum-subarray/approach3">
+              <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"loop":[4],"cur":[5],"best":[6],"return":[7]}'>
+                class Solution(object):
+                    def maxSubArray(self, nums):
+                        best = cur = nums[0]  # cur: the largest sum of a subarray that ends here
+                        for i in range(1, len(nums)):
+                            cur = max(nums[i], cur + nums[i])  # extend the run, or start again here if the run so far is negative
+                            best = max(best, cur)
+                        return best
+              </script>
+              <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"loop":[7],"cur":[8],"best":[9],"return":[11]}'>
+                #include <algorithm>
+                #include <vector>
+                class Solution {
+                public:
+                    int maxSubArray(std::vector<int>& nums) {
+                        int best = nums[0], cur = nums[0]; // cur: the largest sum of a subarray that ends here
+                        for (size_t i = 1; i < nums.size(); ++i) {
+                            cur = std::max(nums[i], cur + nums[i]); // extend the run, or start again here if the run so far is negative
+                            best = std::max(best, cur);
+                        }
+                        return best;
+                    }
+                };
+              </script>
+              <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"loop":[4],"cur":[5],"best":[6],"return":[8]}'>
+                class Solution {
+                    public int maxSubArray(int[] nums) {
+                        int best = nums[0], cur = nums[0]; // cur: the largest sum of a subarray that ends here
+                        for (int i = 1; i < nums.length; i++) {
+                            cur = Math.max(nums[i], cur + nums[i]); // extend the run, or start again here if the run so far is negative
+                            best = Math.max(best, cur);
+                        }
+                        return best;
+                    }
+                }
+              </script>
+            </div>
+          </section>
+          <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+          <section class="q-section in-practice">
+            <h2>In practice <span class="label">Built-ins</span></h2>
+            <p>
+              Kadane is a running fold, so it fits library scans: Python's
+              <code>itertools.accumulate</code> with a max step, then
+              <code>max</code>; C++'s <code>std::partial_sum</code> with the same
+              step, then <code>std::max_element</code>. Java has no running-fold
+              helper for arrays, so write the loop.
+            </p>
+            <div class="code-tabs">
+              <script type="text/plain" data-lang="Python">
+                from itertools import accumulate
+                class Solution(object):
+                    def maxSubArray(self, nums):
+                        # accumulate carries Kadane's "best sum ending here" along the list; take the largest
+                        return max(accumulate(nums, lambda run, x: max(x, run + x)))
+              </script>
+              <script type="text/plain" data-lang="C++">
+                #include <algorithm>
+                #include <numeric>
+                #include <vector>
+                class Solution {
+                public:
+                    int maxSubArray(std::vector<int>& nums) {
+                        std::vector<int> run(nums.size()); // run[i]: best sum of a subarray ending at i
+                        std::partial_sum(nums.begin(), nums.end(), run.begin(), [](int r, int x) { return std::max(x, r + x); });
+                        return *std::max_element(run.begin(), run.end());
+                    }
+                };
+              </script>
+            </div>
+            <div class="complexity">
+              <span><strong>Time</strong> O(n)</span>
+              <span><strong>Space</strong> O(1) in Python, O(n) in C++</span>
+            </div>
+            <p class="note">
+              Both pass and match Approach 3's speed here. The C++ version stores
+              every running value in a vector; the plain loop needs no extra memory.
+            </p>
+          </section>
+          <!-- COMPARISON -->
+          <section class="q-section">
+            <h2>Comparison</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Approach</th>
+                    <th scope="col">Technique</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Space</th>
+                    <th scope="col">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Every Subarray</th>
+                    <td>Every start, running sum to every end</td>
+                    <td>O(n²)</td>
+                    <td>O(1)</td>
+                    <td>About 3 s in C++ at n = 10⁵</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Divide and Conquer</th>
+                    <td>Left, right, or crossing the middle</td>
+                    <td>O(n log n)</td>
+                    <td>O(log n)</td>
+                    <td>The follow-up; crossing runs start at −∞</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Kadane's Algorithm</th>
+                    <td>Best sum ending here: extend or restart</td>
+                    <td>O(n)</td>
+                    <td>O(1)</td>
+                    <td>Expected answer</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+      </details>
+
       <!-- ===== problems/0518-coin-change-ii ===== -->
       <details class="question" data-tags="array dynamic-programming dp knapsack unbounded-knapsack coins combinations memoization">
         <summary>
@@ -21349,6 +21772,196 @@
             line: "return",
             note: `Return ${result.length} solution${result.length === 1 ? "" : "s"}. The same search as with sets, but each row's safe columns come from one OR and one NOT, with no per-square checks.`,
             view: view(null),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0053-maximum-subarray/approach1.visual.js -->
+    <script>
+      // Brute force: every start i, then every end j, keeping a running sum of nums[i..j].
+      DSAViz.register("0053-maximum-subarray/approach1", {
+        inputs: [{ name: "nums", type: "int[]", value: "[-2, 1, -3, 4, -1, 2]", minLength: 1, maxLength: 8, minValue: -99, maxValue: 99 }],
+        trace({ nums }) {
+          const n = nums.length;
+          const steps = [];
+          let best = nums[0];
+          let bestRange = [0, 0];
+          let sums = 0;
+          const view = (i, j, total, opts = {}) => {
+            const marks = {};
+            if (i !== undefined) for (let k = i; k <= j; k++) marks[k] = "window";
+            if (opts.final) for (let k = bestRange[0]; k <= bestRange[1]; k++) marks[k] = "match";
+            if (j !== undefined) marks[j] = opts.improved ? "new" : "active";
+            const pointers = {};
+            if (i !== undefined) {
+              if (i === j) pointers["i, j"] = i;
+              else { pointers.i = i; pointers.j = j; }
+            }
+            return [
+              { type: "array", label: "nums (shaded = the subarray nums[i..j])", values: nums, marks, pointers },
+              {
+                type: "vars",
+                items: [
+                  ...(total !== undefined ? [{ name: "total", value: total }] : []),
+                  { name: "best", value: `${best} (nums[${bestRange[0]}..${bestRange[1]}])`, mark: opts.improved ? "new" : opts.final ? "match" : "" },
+                  { name: "sums looked at", value: sums },
+                ],
+              },
+            ];
+          };
+
+          steps.push({ line: "init", note: `best starts at nums[0] = ${nums[0]}, not 0: if every number is negative, the answer is negative.`, view: view() });
+          for (let i = 0; i < n; i++) {
+            let total = 0;
+            steps.push({ line: "start", note: `Start i = ${i}: total = 0.`, view: view(i, i - 1, 0) });
+            for (let j = i; j < n; j++) {
+              total += nums[j];
+              sums++;
+              const improved = total > best;
+              if (improved) { best = total; bestRange = [i, j]; }
+              steps.push({
+                line: "extend",
+                note: `Add nums[${j}] = ${nums[j]}: sum of nums[${i}..${j}] = ${total}.${improved ? ` New best.` : ""}`,
+                view: view(i, j, total, { improved }),
+              });
+            }
+          }
+          steps.push({
+            line: "return",
+            note: `Return ${best}, from nums[${bestRange[0]}..${bestRange[1]}]. It looked at all ${sums} subarrays: n(n + 1) / 2, O(n²).`,
+            view: view(undefined, undefined, undefined, { final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0053-maximum-subarray/approach2.visual.js -->
+    <script>
+      // Divide and conquer: the best subarray is in the left half, the right half, or crosses the middle.
+      DSAViz.register("0053-maximum-subarray/approach2", {
+        inputs: [{ name: "nums", type: "int[]", value: "[-2, 1, -3, 4, -1, 2, 1, -5]", minLength: 1, maxLength: 8, minValue: -99, maxValue: 99 }],
+        trace({ nums }) {
+          const n = nums.length;
+          const steps = [];
+          const stack = [];
+          const view = (lo, hi, opts = {}) => {
+            const marks = {};
+            nums.forEach((_, k) => {
+              if (lo !== undefined && (k < lo || k > hi)) marks[k] = "ghost";
+            });
+            if (opts.cross) for (let k = opts.cross[0]; k <= opts.cross[1]; k++) marks[k] = "window";
+            if (opts.best) for (let k = opts.best[0]; k <= opts.best[1]; k++) marks[k] = "match";
+            const pointers = {};
+            if (lo !== undefined && lo === hi) pointers["lo, hi"] = lo;
+            else if (lo !== undefined) { pointers.lo = lo; pointers.hi = hi; }
+            return [
+              { type: "array", label: "nums (faded = outside this call; the line is the middle)", values: nums, marks, pointers, cut: opts.mid !== undefined ? opts.mid + 1 : undefined },
+              { type: "array", label: "call stack: best(lo, hi), newest on the right", values: stack.map(([a, b]) => `${a}..${b}`), wide: true, marks: stack.length ? { [stack.length - 1]: "active" } : {} },
+              ...(opts.items ? [{ type: "vars", items: opts.items }] : []),
+            ];
+          };
+
+          steps.push({ line: "start", note: `best(0, ${n - 1}): split the array in half, solve each half, and also check the subarrays that cross the middle.`, view: view(0, n - 1) });
+          function best(lo, hi) {
+            stack.push([lo, hi]);
+            if (lo === hi) {
+              steps.push({ line: ["call", "base"], note: `best(${lo}, ${hi}): one number, so the answer is nums[${lo}] = ${nums[lo]}.`, view: view(lo, hi, { best: [lo, lo] }) });
+              stack.pop();
+              return { sum: nums[lo], range: [lo, lo] };
+            }
+            const mid = Math.floor((lo + hi) / 2);
+            steps.push({ line: ["call", "split"], note: `best(${lo}, ${hi}): split at mid = ${mid} into ${lo}..${mid} and ${mid + 1}..${hi}.`, view: view(lo, hi, { mid }) });
+            const L = best(lo, mid);
+            const R = best(mid + 1, hi);
+            let total = 0, leftRun = -Infinity, li = mid;
+            for (let i = mid; i >= lo; i--) { total += nums[i]; if (total > leftRun) { leftRun = total; li = i; } }
+            total = 0;
+            let rightRun = -Infinity, rj = mid + 1;
+            for (let j = mid + 1; j <= hi; j++) { total += nums[j]; if (total > rightRun) { rightRun = total; rj = j; } }
+            const C = { sum: leftRun + rightRun, range: [li, rj] };
+            steps.push({
+              line: "cross",
+              note: `Crossing the middle: the best run ending at ${mid} is nums[${li}..${mid}] = ${leftRun}, the best starting at ${mid + 1} is nums[${mid + 1}..${rj}] = ${rightRun}. Together ${C.sum}. Each run must hold at least one number, so they start at −∞, not 0.`,
+              view: view(lo, hi, { mid, cross: [li, rj], items: [{ name: "left half", value: L.sum }, { name: "right half", value: R.sum }, { name: "crossing", value: C.sum }] }),
+            });
+            const win = [L, R, C].reduce((a, b) => (b.sum > a.sum ? b : a));
+            const which = win === L ? "left half" : win === R ? "right half" : "crossing";
+            steps.push({
+              line: "combine",
+              note: `best(${lo}, ${hi}) = max(${L.sum}, ${R.sum}, ${C.sum}) = ${win.sum}, from the ${which}: nums[${win.range[0]}..${win.range[1]}].`,
+              view: view(lo, hi, { mid, best: win.range, items: [{ name: "left half", value: L.sum }, { name: "right half", value: R.sum }, { name: "crossing", value: C.sum }] }),
+            });
+            stack.pop();
+            return win;
+          }
+          const ans = best(0, n - 1);
+          steps.push({
+            line: "start",
+            note: `Return ${ans.sum}, from nums[${ans.range[0]}..${ans.range[1]}]. log n levels, and each level scans every number once for the crossing runs: O(n log n).`,
+            view: view(undefined, undefined, { best: ans.range }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0053-maximum-subarray/approach3.visual.js -->
+    <script>
+      // Kadane: cur = best sum of a subarray ending at i. Either extend the previous run or start fresh at nums[i].
+      DSAViz.register("0053-maximum-subarray/approach3", {
+        inputs: [{ name: "nums", type: "int[]", value: "[-2, 1, -3, 4, -1, 2, 1, -5, 4]", minLength: 1, maxLength: 12, minValue: -99, maxValue: 99 }],
+        trace({ nums }) {
+          const n = nums.length;
+          const steps = [];
+          let cur = nums[0];
+          let best = nums[0];
+          let runStart = 0;
+          let bestRange = [0, 0];
+          const curs = [nums[0]];
+          const view = (i, opts = {}) => {
+            const marks = {};
+            if (i !== undefined) for (let k = runStart; k <= i; k++) marks[k] = "window";
+            if (opts.final) for (let k = bestRange[0]; k <= bestRange[1]; k++) marks[k] = "match";
+            if (i !== undefined) marks[i] = opts.restart ? "new" : "active";
+            return [
+              { type: "array", label: "nums (shaded = the run ending at i; cur underneath)", values: nums, sub: nums.map((_, k) => (k < curs.length ? String(curs[k]) : "")), marks, pointers: i !== undefined ? { i } : {} },
+              {
+                type: "vars",
+                items: [
+                  { name: "cur", value: cur, mark: opts.restart ? "new" : "" },
+                  { name: "best", value: `${best} (nums[${bestRange[0]}..${bestRange[1]}])`, mark: opts.improved ? "new" : opts.final ? "match" : "" },
+                ],
+              },
+            ];
+          };
+
+          steps.push({ line: "init", note: `cur and best start at nums[0] = ${nums[0]}. cur is the best sum of a subarray that ends exactly here.`, view: view(0) });
+          for (let i = 1; i < n; i++) {
+            const extend = cur + nums[i];
+            const restart = nums[i] > extend;
+            const before = cur;
+            cur = restart ? nums[i] : extend;
+            if (restart) runStart = i;
+            curs.push(cur);
+            steps.push({
+              line: ["loop", "cur"],
+              note: restart
+                ? `i = ${i}: the run so far is ${before}, which only drags ${nums[i]} down (${before} + ${nums[i]} = ${extend} < ${nums[i]}). Start a new run here: cur = ${cur}.`
+                : `i = ${i}: extend the run: cur = max(${nums[i]}, ${before} + ${nums[i]}) = ${cur}.`,
+              view: view(i, { restart }),
+            });
+            const improved = cur > best;
+            if (improved) { best = cur; bestRange = [runStart, i]; }
+            steps.push({
+              line: "best",
+              note: improved ? `cur = ${cur} beats best: best = ${best}, nums[${bestRange[0]}..${bestRange[1]}].` : `best stays ${best} (cur = ${cur}).`,
+              view: view(i, { improved }),
+            });
+          }
+          steps.push({
+            line: "return",
+            note: `Return ${best}, from nums[${bestRange[0]}..${bestRange[1]}]. One pass and two variables: O(n) time, O(1) space.`,
+            view: view(undefined, { final: true }),
           });
           return steps;
         },
