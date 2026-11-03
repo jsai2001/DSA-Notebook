@@ -17396,7 +17396,7 @@
       <details class="pattern-group" id="g-math">
         <summary>
           <span class="g-name">Math</span>
-          <span class="g-count"><span class="g-total">3 problems</span></span>
+          <span class="g-count"><span class="g-total">4 problems</span></span>
           <span class="g-hint">Digits, overflow and fast power</span>
         </summary>
         <div class="g-body">
@@ -18725,6 +18725,413 @@
                         <td>O(log n)</td>
                         <td>O(1)</td>
                         <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0066-plus-one ===== -->
+          <details class="question" data-group="math" data-tags="array math digits carry addition big-integer overflow">
+            <summary>
+              <span class="q-title">66. Plus One</span>
+              <span class="q-meta">
+                <span class="badge easy">Easy</span>
+                <span class="tag">Array</span>
+                <span class="tag">Math</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Walk from the <strong>last digit</strong>. A 9
+                becomes 0 and the 1 carries left; the first digit under 9 just goes up
+                by one, and you <strong>stop right there</strong>. If every digit was 9,
+                the answer is a 1 followed by all 0s, one digit longer. O(n) worst case,
+                O(1) extra space. Don't turn the digits into a number: 100 digits don't
+                fit in any integer type.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/plus-one/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  A large integer is given as an array <code>digits</code>, most
+                  significant digit first. Add one to it and return the result in the
+                  same form.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= digits.length &lt;= 100</code> and <code>0 &lt;= digits[i] &lt;= 9</code>.</li>
+                  <li>No leading zeros (the number 0 itself is <code>[0]</code>).</li>
+                </ul>
+                <p class="note">
+                  Examples: <code>[1,2,3]</code> → <code>[1,2,4]</code>;
+                  <code>[4,3,2,1]</code> → <code>[4,3,2,2]</code>;
+                  <code>[9]</code> → <code>[1,0]</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[0]</code></td>
+                        <td><code>[1]</code></td>
+                        <td>The only input that starts with 0.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[9]</code></td>
+                        <td><code>[1,0]</code></td>
+                        <td>The answer is longer than the input. Code that returns <code>digits</code> after the loop gives <code>[0]</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[9,9,9]</code></td>
+                        <td><code>[1,0,0,0]</code></td>
+                        <td>Every digit carries. Forgetting the last carry gives <code>[0,0,0]</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,9]</code></td>
+                        <td><code>[2,0]</code></td>
+                        <td>The 9 must become 0 before carrying. Skipping that gives <code>[2,9]</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2,9]</code></td>
+                        <td><code>[1,3,0]</code></td>
+                        <td>The carry stops after one 9: the 1 at the front doesn't change.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[4,3,2,1]</code></td>
+                        <td><code>[4,3,2,2]</code></td>
+                        <td>No carry at all. The early-exit version looks at one digit and stops.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[9,8,7,6,5,4,3,2,1,0,1,2,3,4,5,6,7,8,9]</code></td>
+                        <td><code>[9,8,7,6,5,4,3,2,1,0,1,2,3,4,5,6,7,9,0]</code></td>
+                        <td>Only 19 digits, but already past a 64-bit <code>long long</code>. Turning it into a number in C++ gave <code>-38570200863586094826</code> here.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Add with a Carry</h2>
+                <p class="intuition">
+                  Do what you'd do on paper. Start with <code>carry = 1</code> (that's the
+                  "plus one"), and from the last digit to the first: add the carry, keep
+                  <code>total % 10</code>, carry <code>total / 10</code>. If a carry is
+                  left at the end, put it in front.
+                </p>
+                <ul>
+                  <li>Works on a copy, so the caller's array isn't changed.</li>
+                  <li>The same loop adds any two numbers stored as digits (Add Strings, Add Two Numbers).</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n), always</span>
+                  <span><strong>Space</strong> O(n) for the copy</span>
+                </div>
+                <p class="note">
+                  Correct and general, but it keeps going after the carry becomes 0:
+                  for <code>[4,3,2,1]</code> it visits all four digits to change one.
+                </p>
+                <div class="code-tabs" data-viz="0066-plus-one/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"loop":[5,6,7,8],"grow":[9,10],"return":[11]}'>
+                    class Solution(object):
+                        def plusOne(self, digits):
+                            result = digits[:]  # a copy, so the caller's list isn't changed
+                            carry = 1  # adding one is a carry of 1 into the last digit
+                            for i in range(len(result) - 1, -1, -1):  # right to left, like adding on paper
+                                total = result[i] + carry
+                                result[i] = total % 10
+                                carry = total // 10  # 1 only when total was 10
+                            if carry:  # a carry out of the first digit: every digit was 9
+                                result.insert(0, carry)
+                            return result
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,6],"loop":[7,8,9,10],"grow":[12,13],"return":[15]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> plusOne(std::vector<int>& digits) {
+                            std::vector<int> result = digits; // a copy, so the caller's vector isn't changed
+                            int carry = 1; // adding one is a carry of 1 into the last digit
+                            for (int i = (int)result.size() - 1; i >= 0; --i) { // right to left, like adding on paper
+                                int total = result[i] + carry;
+                                result[i] = total % 10;
+                                carry = total / 10; // 1 only when total was 10
+                            }
+                            if (carry) { // a carry out of the first digit: every digit was 9
+                                result.insert(result.begin(), carry);
+                            }
+                            return result;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4],"loop":[5,6,7,8],"grow":[10,11,12,13,14],"return":[16]}'>
+                    class Solution {
+                        public int[] plusOne(int[] digits) {
+                            int[] result = digits.clone(); // a copy, so the caller's array isn't changed
+                            int carry = 1; // adding one is a carry of 1 into the last digit
+                            for (int i = result.length - 1; i >= 0; i--) { // right to left, like adding on paper
+                                int total = result[i] + carry;
+                                result[i] = total % 10;
+                                carry = total / 10; // 1 only when total was 10
+                            }
+                            if (carry > 0) { // a carry out of the first digit: every digit was 9
+                                int[] longer = new int[result.length + 1];
+                                longer[0] = carry;
+                                System.arraycopy(result, 0, longer, 1, result.length);
+                                result = longer;
+                            }
+                            return result;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>
+                  Approach 2: Stop at the First Digit Under 9
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Adding one only changes the run of 9s at the end and the digit just
+                  before it. So from the right: a digit under 9 goes up by one and you
+                  return straight away; a 9 becomes 0 and you move left.
+                </p>
+                <ul>
+                  <li>If the loop finishes, every digit was 9 and is now 0: return <code>[1] + digits</code>.</li>
+                  <li>It changes <code>digits</code> in place. LeetCode accepts that; copy first if the caller still needs the original.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n) worst case, O(1) when the last digit isn't 9</span>
+                  <span><strong>Space</strong> O(1) extra (O(n) only for all 9s)</span>
+                </div>
+                <p class="note">
+                  The expected answer. 9 out of 10 numbers don't end in 9, so most of the
+                  time it looks at a single digit.
+                </p>
+                <div class="code-tabs" data-viz="0066-plus-one/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"loop":[3],"stop":[4,5,6],"nine":[7],"grow":[8]}'>
+                    class Solution(object):
+                        def plusOne(self, digits):
+                            for i in range(len(digits) - 1, -1, -1):  # right to left
+                                if digits[i] < 9:  # this digit can take the 1 without carrying
+                                    digits[i] += 1
+                                    return digits  # nothing to the left changes
+                                digits[i] = 0  # 9 + 1 = 10: write 0 and carry 1 to the left
+                            return [1] + digits  # every digit was 9: 99...9 + 1 = 100...0
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"loop":[5],"stop":[6,7,8],"nine":[10],"grow":[12,13]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> plusOne(std::vector<int>& digits) {
+                            for (int i = (int)digits.size() - 1; i >= 0; --i) { // right to left
+                                if (digits[i] < 9) { // this digit can take the 1 without carrying
+                                    ++digits[i];
+                                    return digits; // nothing to the left changes
+                                }
+                                digits[i] = 0; // 9 + 1 = 10: write 0 and carry 1 to the left
+                            }
+                            digits.insert(digits.begin(), 1); // every digit was 9: 99...9 + 1 = 100...0
+                            return digits;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"loop":[3],"stop":[4,5,6],"nine":[8],"grow":[10,11,12]}'>
+                    class Solution {
+                        public int[] plusOne(int[] digits) {
+                            for (int i = digits.length - 1; i >= 0; i--) { // right to left
+                                if (digits[i] < 9) { // this digit can take the 1 without carrying
+                                    digits[i]++;
+                                    return digits; // nothing to the left changes
+                                }
+                                digits[i] = 0; // 9 + 1 = 10: write 0 and carry 1 to the left
+                            }
+                            int[] result = new int[digits.length + 1]; // every digit was 9: 99...9 + 1 = 100...0
+                            result[0] = 1; // the rest are already 0
+                            return result;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>Approach 3: Find the Last Digit That Isn't 9</h2>
+                <p class="intuition">
+                  The same idea in two steps. Find <code>k</code>, the last position whose
+                  digit isn't 9. The answer is <code>digits[:k]</code>, then
+                  <code>digits[k] + 1</code>, then a 0 for every 9 after it. If there's no
+                  such <code>k</code>, it's a 1 followed by <code>n</code> zeros.
+                </p>
+                <ul>
+                  <li>Builds a new list, so the input isn't changed.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n) for the new list</span>
+                </div>
+                <p class="note">
+                  Easy to explain: "everything before k stays, k goes up, the 9s after k
+                  become 0". It always copies the whole number, so it never beats
+                  Approach 2.
+                </p>
+                <div class="code-tabs" data-viz="0066-plus-one/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"find":[3,4,5,6],"grow":[7,8],"build":[10]}'>
+                    class Solution(object):
+                        def plusOne(self, digits):
+                            n = len(digits)
+                            k = n - 1
+                            while k >= 0 and digits[k] == 9:  # skip the run of 9s at the end
+                                k -= 1
+                            if k < 0:  # all 9s
+                                return [1] + [0] * n
+                            # digits[k] is the last digit that isn't 9: it goes up by one, and the 9s after it become 0
+                            return digits[:k] + [digits[k] + 1] + [0] * (n - 1 - k)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"find":[5,6,7],"grow":[8,9,10,11],"build":[14,15,16,17]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> plusOne(std::vector<int>& digits) {
+                            int n = (int)digits.size();
+                            int k = n - 1;
+                            while (k >= 0 && digits[k] == 9) --k; // skip the run of 9s at the end
+                            if (k < 0) { // all 9s
+                                std::vector<int> result(n + 1, 0);
+                                result[0] = 1;
+                                return result;
+                            }
+                            // digits[k] is the last digit that isn't 9: it goes up by one, and the 9s after it become 0
+                            std::vector<int> result(digits.begin(), digits.begin() + k);
+                            result.push_back(digits[k] + 1);
+                            result.resize(n, 0);
+                            return result;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"find":[3,4,5],"grow":[6,7,8,9],"build":[12,13,14,15]}'>
+                    class Solution {
+                        public int[] plusOne(int[] digits) {
+                            int n = digits.length;
+                            int k = n - 1;
+                            while (k >= 0 && digits[k] == 9) k--; // skip the run of 9s at the end
+                            if (k < 0) { // all 9s
+                                int[] result = new int[n + 1];
+                                result[0] = 1;
+                                return result;
+                            }
+                            // digits[k] is the last digit that isn't 9: it goes up by one, and the 9s after it become 0
+                            int[] result = new int[n]; // new arrays start as all 0s
+                            System.arraycopy(digits, 0, result, 0, k);
+                            result[k] = digits[k] + 1;
+                            return result;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  Python's integers have no size limit, so joining the digits, adding 1
+                  and splitting them again just works. Java needs
+                  <code>BigInteger</code>: 100 digits are far beyond a <code>long</code>.
+                  C++ has no big integer type in the standard library, so write
+                  Approach 2 there.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    class Solution(object):
+                        def plusOne(self, digits):
+                            number = int("".join(map(str, digits)))  # Python ints have no size limit
+                            return [int(c) for c in str(number + 1)]
+                  </script>
+                  <script type="text/plain" data-lang="Java">
+                    import java.math.BigInteger;
+                    class Solution {
+                        public int[] plusOne(int[] digits) {
+                            StringBuilder sb = new StringBuilder();
+                            for (int d : digits) sb.append(d);
+                            // up to 100 digits: far too big for long, so use BigInteger
+                            String sum = new BigInteger(sb.toString()).add(BigInteger.ONE).toString();
+                            int[] result = new int[sum.length()];
+                            for (int i = 0; i < result.length; i++) result[i] = sum.charAt(i) - '0';
+                            return result;
+                        }
+                    }
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  Both pass every test here. They always convert the whole number back
+                  and forth, so they're about 3 times slower than Approach 2 in Python
+                  (10.3 ms vs 3.5 ms for 1000 calls on 100 nines), which doesn't matter
+                  at this size.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Add with a Carry</th>
+                        <td>Paper addition, carry = 1</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Always visits every digit</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Stop at the First Digit Under 9</th>
+                        <td>9s → 0 from the right, then +1</td>
+                        <td>O(n) worst</td>
+                        <td>O(1)</td>
+                        <td>Expected answer; changes the input</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Find the Last Digit That Isn't 9</th>
+                        <td>Prefix + (digit + 1) + zeros</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Input unchanged</td>
                       </tr>
                     </tbody>
                   </table>
@@ -26417,6 +26824,160 @@
               : `Return ${result}. ${k} multiply-and-divide steps: O(min(m, n)) time, O(1) space.` +
                 (result > 2e9 ? ` (LeetCode never asks this one: its answers are at most 2 · 10⁹, and this would overflow the int it returns.)` : ""),
             view: view({ final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0066-plus-one/approach1.visual.js -->
+    <script>
+      // Add 1 the way you would on paper: start with a carry of 1 at the last digit and carry left.
+      DSAViz.register("0066-plus-one/approach1", {
+        inputs: [{ name: "digits", type: "int[]", value: "[1, 2, 9, 9]", minLength: 1, maxLength: 10, minValue: 0, maxValue: 9 }],
+        trace({ digits }) {
+          if (digits.length > 1 && digits[0] === 0) throw new DSAViz.InputError("digits can't start with 0 (no leading zeros), unless it's just [0].");
+          const result = digits.slice();
+          let carry = 1;
+          const steps = [];
+          const view = (i, o = {}) => {
+            const marks = {};
+            for (let k = (i ?? result.length) + 1; k < result.length; k++) marks[k] = "visited";
+            if (i !== undefined && i >= 0) marks[i] = o.fresh ? "new" : "active";
+            if (o.final) result.forEach((_, k) => (marks[k] = "match"));
+            if (o.grew) marks[0] = "new";
+            return [
+              { type: "array", label: "result (a copy of digits)", values: result.slice(), marks, pointers: i !== undefined && i >= 0 ? { i } : {} },
+              { type: "vars", items: [{ name: "carry", value: carry, mark: o.carryNew ? "new" : "" }] },
+            ];
+          };
+          steps.push({ line: "init", note: `Copy digits. Adding one is just a carry of 1 going into the last digit.`, view: view(undefined) });
+          for (let i = result.length - 1; i >= 0; i--) {
+            const before = result[i];
+            const total = before + carry;
+            result[i] = total % 10;
+            const was = carry;
+            carry = Math.floor(total / 10);
+            steps.push({
+              line: "loop",
+              note:
+                was === 0
+                  ? `${before} + 0 = ${total}: nothing changes. The loop keeps going anyway; it always visits every digit.`
+                  : total === 10
+                    ? `${before} + 1 = 10: write 0, carry 1 to the left.`
+                    : `${before} + 1 = ${total}: write ${total}, carry 0.`,
+              view: view(i, { fresh: was > 0, carryNew: was !== carry }),
+            });
+          }
+          if (carry) {
+            result.unshift(carry);
+            steps.push({ line: "grow", note: `The carry fell off the front: every digit was 9. Put a 1 in front: the number got one digit longer.`, view: view(undefined, { grew: true }) });
+          } else {
+            steps.push({ line: "grow", note: `carry is 0 after the first digit, so the length stays the same.`, view: view(undefined) });
+          }
+          steps.push({ line: "return", note: `Return [${result.join(", ")}]. Every digit was visited: O(n) time, O(n) for the copy.`, view: view(undefined, { final: true }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0066-plus-one/approach2.visual.js -->
+    <script>
+      // From the right: 9s turn into 0s, and the first digit under 9 goes up by one, then stop.
+      DSAViz.register("0066-plus-one/approach2", {
+        inputs: [{ name: "digits", type: "int[]", value: "[1, 2, 9, 9]", minLength: 1, maxLength: 10, minValue: 0, maxValue: 9 }],
+        trace({ digits }) {
+          if (digits.length > 1 && digits[0] === 0) throw new DSAViz.InputError("digits can't start with 0 (no leading zeros), unless it's just [0].");
+          const d = digits.slice();
+          const steps = [];
+          let looked = 0;
+          const view = (i, o = {}) => {
+            const marks = {};
+            for (let k = (i ?? -1) + 1; k < d.length; k++) if (i !== undefined) marks[k] = "visited";
+            if (i !== undefined && i >= 0) marks[i] = o.mark || "active";
+            if (o.final) d.forEach((_, k) => (marks[k] = "match"));
+            if (o.grew) marks[0] = "new";
+            return [
+              { type: "array", label: "digits (changed in place)", values: d.slice(), marks, pointers: i !== undefined && i >= 0 ? { i } : {} },
+              { type: "vars", items: [{ name: "digits looked at", value: looked }] },
+            ];
+          };
+          steps.push({ line: "loop", note: `Start at the last digit. Only the run of 9s at the end, and the digit just before it, can change.`, view: view(undefined) });
+          for (let i = d.length - 1; i >= 0; i--) {
+            looked++;
+            if (d[i] < 9) {
+              d[i]++;
+              steps.push({
+                line: ["loop", "stop"],
+                note: `${d[i] - 1} < 9, so it takes the 1 without carrying: ${d[i] - 1} → ${d[i]}. Nothing to its left changes, so return right away.`,
+                view: view(i, { mark: "new" }),
+              });
+              steps.push({
+                line: "stop",
+                note: `Return [${d.join(", ")}]. Only ${looked} of ${d.length} digit${d.length === 1 ? "" : "s"} looked at: as many as the trailing 9s, plus one. O(n) in the worst case, O(1) extra space.`,
+                view: view(undefined, { final: true }),
+              });
+              return steps;
+            }
+            d[i] = 0;
+            steps.push({ line: ["loop", "nine"], note: `9 + 1 = 10: write 0 here and carry 1 into the digit on the left.`, view: view(i, { mark: "cut" }) });
+          }
+          d.unshift(1);
+          steps.push({
+            line: "grow",
+            note: `The loop ran out: every digit was 9 and is now 0. ${"9".repeat(digits.length)} + 1 = 1${"0".repeat(digits.length)}, so put a 1 in front. Return [${d.join(", ")}].`,
+            view: view(undefined, { final: true, grew: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0066-plus-one/approach3.visual.js -->
+    <script>
+      // Find the last digit that isn't 9: it goes up by one, everything after it becomes 0, everything before it stays.
+      DSAViz.register("0066-plus-one/approach3", {
+        inputs: [{ name: "digits", type: "int[]", value: "[8, 9, 9, 9]", minLength: 1, maxLength: 10, minValue: 0, maxValue: 9 }],
+        trace({ digits }) {
+          if (digits.length > 1 && digits[0] === 0) throw new DSAViz.InputError("digits can't start with 0 (no leading zeros), unless it's just [0].");
+          const n = digits.length;
+          const steps = [];
+          let result = null;
+          const view = (k, o = {}) => {
+            const marks = {};
+            for (let j = k + 1; j < n; j++) marks[j] = "cut";
+            if (k >= 0 && k < n) marks[k] = o.found ? "match" : "active";
+            const widgets = [{ type: "array", label: "digits (not changed)", values: digits, marks, pointers: k >= 0 && k < n ? { k } : {} }];
+            if (result) {
+              const rm = {};
+              result.forEach((_, j) => (rm[j] = "match"));
+              if (o.highlight !== undefined) rm[o.highlight] = "new";
+              widgets.push({ type: "array", label: "result (a new list)", values: result, marks: rm });
+            }
+            return widgets;
+          };
+          let k = n - 1;
+          steps.push({ line: "find", note: `k starts at the last digit. Walk left past the 9s at the end: those are the digits that will roll over to 0.`, view: view(k) });
+          while (k >= 0 && digits[k] === 9) {
+            k--;
+            steps.push({
+              line: "find",
+              note: k >= 0 ? `digits[${k + 1}] is 9 (red: it will become 0). Move left: k = ${k}.` : `digits[0] is 9 too: k = −1. Every digit is 9.`,
+              view: view(k),
+            });
+          }
+          if (k < 0) {
+            result = [1, ...Array(n).fill(0)];
+            steps.push({ line: "grow", note: `All 9s: the answer is 1 followed by ${n} zero${n === 1 ? "" : "s"}, one digit longer.`, view: view(k, { highlight: 0 }) });
+            return steps;
+          }
+          steps.push({
+            line: "find",
+            note: `digits[${k}] = ${digits[k]} isn't 9: this is the digit that goes up. ${n - 1 - k ? `The ${n - 1 - k === 1 ? "digit" : `${n - 1 - k} digits`} after it ${n - 1 - k === 1 ? "is" : "are"} 9.` : "It's the last digit, so no 9s follow it."}`,
+            view: view(k, { found: true }),
+          });
+          result = [...digits.slice(0, k), digits[k] + 1, ...Array(n - 1 - k).fill(0)];
+          steps.push({
+            line: "build",
+            note: `${k ? `Copy digits[0..${k - 1}] as they are` : "Nothing comes before it"}, then ${digits[k]} + 1 = ${digits[k] + 1}${n - 1 - k ? `, then ${n - 1 - k} zero${n - 1 - k === 1 ? "" : "s"}` : ""}. The input isn't touched. O(n) time and space.`,
+            view: view(k, { found: true, highlight: k }),
           });
           return steps;
         },

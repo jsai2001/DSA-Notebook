@@ -1,0 +1,234 @@
+<details class="question" data-group="math" data-tags="array math digits carry addition big-integer overflow">
+  <summary>
+    <span class="q-title">66. Plus One</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Array</span>
+      <span class="tag">Math</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Walk from the <strong>last digit</strong>. A 9
+      becomes 0 and the 1 carries left; the first digit under 9 just goes up
+      by one, and you <strong>stop right there</strong>. If every digit was 9,
+      the answer is a 1 followed by all 0s, one digit longer. O(n) worst case,
+      O(1) extra space. Don't turn the digits into a number: 100 digits don't
+      fit in any integer type.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/plus-one/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        A large integer is given as an array <code>digits</code>, most
+        significant digit first. Add one to it and return the result in the
+        same form.
+      </p>
+      <ul>
+        <li><code>1 &lt;= digits.length &lt;= 100</code> and <code>0 &lt;= digits[i] &lt;= 9</code>.</li>
+        <li>No leading zeros (the number 0 itself is <code>[0]</code>).</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[1,2,3]</code> → <code>[1,2,4]</code>;
+        <code>[4,3,2,1]</code> → <code>[4,3,2,2]</code>;
+        <code>[9]</code> → <code>[1,0]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[0]</code></td>
+              <td><code>[1]</code></td>
+              <td>The only input that starts with 0.</td>
+            </tr>
+            <tr>
+              <td><code>[9]</code></td>
+              <td><code>[1,0]</code></td>
+              <td>The answer is longer than the input. Code that returns <code>digits</code> after the loop gives <code>[0]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[9,9,9]</code></td>
+              <td><code>[1,0,0,0]</code></td>
+              <td>Every digit carries. Forgetting the last carry gives <code>[0,0,0]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[1,9]</code></td>
+              <td><code>[2,0]</code></td>
+              <td>The 9 must become 0 before carrying. Skipping that gives <code>[2,9]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,9]</code></td>
+              <td><code>[1,3,0]</code></td>
+              <td>The carry stops after one 9: the 1 at the front doesn't change.</td>
+            </tr>
+            <tr>
+              <td><code>[4,3,2,1]</code></td>
+              <td><code>[4,3,2,2]</code></td>
+              <td>No carry at all. The early-exit version looks at one digit and stops.</td>
+            </tr>
+            <tr>
+              <td><code>[9,8,7,6,5,4,3,2,1,0,1,2,3,4,5,6,7,8,9]</code></td>
+              <td><code>[9,8,7,6,5,4,3,2,1,0,1,2,3,4,5,6,7,9,0]</code></td>
+              <td>Only 19 digits, but already past a 64-bit <code>long long</code>. Turning it into a number in C++ gave <code>-38570200863586094826</code> here.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Add with a Carry</h2>
+      <p class="intuition">
+        Do what you'd do on paper. Start with <code>carry = 1</code> (that's the
+        "plus one"), and from the last digit to the first: add the carry, keep
+        <code>total % 10</code>, carry <code>total / 10</code>. If a carry is
+        left at the end, put it in front.
+      </p>
+      <ul>
+        <li>Works on a copy, so the caller's array isn't changed.</li>
+        <li>The same loop adds any two numbers stored as digits (Add Strings, Add Two Numbers).</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n), always</span>
+        <span><strong>Space</strong> O(n) for the copy</span>
+      </div>
+      <p class="note">
+        Correct and general, but it keeps going after the carry becomes 0:
+        for <code>[4,3,2,1]</code> it visits all four digits to change one.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Stop at the First Digit Under 9
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Adding one only changes the run of 9s at the end and the digit just
+        before it. So from the right: a digit under 9 goes up by one and you
+        return straight away; a 9 becomes 0 and you move left.
+      </p>
+      <ul>
+        <li>If the loop finishes, every digit was 9 and is now 0: return <code>[1] + digits</code>.</li>
+        <li>It changes <code>digits</code> in place. LeetCode accepts that; copy first if the caller still needs the original.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n) worst case, O(1) when the last digit isn't 9</span>
+        <span><strong>Space</strong> O(1) extra (O(n) only for all 9s)</span>
+      </div>
+      <p class="note">
+        The expected answer. 9 out of 10 numbers don't end in 9, so most of the
+        time it looks at a single digit.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Find the Last Digit That Isn't 9</h2>
+      <p class="intuition">
+        The same idea in two steps. Find <code>k</code>, the last position whose
+        digit isn't 9. The answer is <code>digits[:k]</code>, then
+        <code>digits[k] + 1</code>, then a 0 for every 9 after it. If there's no
+        such <code>k</code>, it's a 1 followed by <code>n</code> zeros.
+      </p>
+      <ul>
+        <li>Builds a new list, so the input isn't changed.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n) for the new list</span>
+      </div>
+      <p class="note">
+        Easy to explain: "everything before k stays, k goes up, the 9s after k
+        become 0". It always copies the whole number, so it never beats
+        Approach 2.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Python's integers have no size limit, so joining the digits, adding 1
+        and splitting them again just works. Java needs
+        <code>BigInteger</code>: 100 digits are far beyond a <code>long</code>.
+        C++ has no big integer type in the standard library, so write
+        Approach 2 there.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Both pass every test here. They always convert the whole number back
+        and forth, so they're about 3 times slower than Approach 2 in Python
+        (10.3 ms vs 3.5 ms for 1000 calls on 100 nines), which doesn't matter
+        at this size.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Add with a Carry</th>
+              <td>Paper addition, carry = 1</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Always visits every digit</td>
+            </tr>
+            <tr>
+              <th scope="row">Stop at the First Digit Under 9</th>
+              <td>9s → 0 from the right, then +1</td>
+              <td>O(n) worst</td>
+              <td>O(1)</td>
+              <td>Expected answer; changes the input</td>
+            </tr>
+            <tr>
+              <th scope="row">Find the Last Digit That Isn't 9</th>
+              <td>Prefix + (digit + 1) + zeros</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Input unchanged</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
