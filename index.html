@@ -12412,7 +12412,7 @@
       <details class="pattern-group" id="g-dynamic-programming">
         <summary>
           <span class="g-name">Dynamic Programming</span>
-          <span class="g-count"><span class="g-total">5 problems</span></span>
+          <span class="g-count"><span class="g-total">6 problems</span></span>
           <span class="g-hint">Reuse the answers to smaller problems</span>
         </summary>
         <div class="g-body">
@@ -14340,6 +14340,381 @@
                         <td>O(min(m, n))</td>
                         <td>O(1)</td>
                         <td>64-bit product; no obstacles only</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0070-climbing-stairs ===== -->
+          <details class="question" data-group="dynamic-programming" data-tags="math dynamic-programming dp memoization fibonacci recursion matrix-exponentiation stairs">
+            <summary>
+              <span class="q-title">70. Climbing Stairs</span>
+              <span class="q-meta">
+                <span class="badge easy">Easy</span>
+                <span class="tag">Math</span>
+                <span class="tag">Dynamic Programming</span>
+                <span class="tag">Memoization</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Your <strong>last move</strong> onto step
+                <code>n</code> was either 1 step (from <code>n − 1</code>) or 2 steps (from
+                <code>n − 2</code>), so <code>ways(n) = ways(n − 1) + ways(n − 2)</code>:
+                the Fibonacci numbers. Keep just the last two values: O(n) time, O(1)
+                space. For O(log n), raise <code>[[1, 1], [1, 0]]</code> to the power n.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/climbing-stairs/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  You are climbing a staircase with <code>n</code> steps. Each time you can
+                  climb either 1 or 2 steps. In how many distinct ways can you reach the
+                  top?
+                </p>
+                <ul>
+                  <li><code>1 &lt;= n &lt;= 45</code>.</li>
+                </ul>
+                <p class="note">
+                  Examples: <code>n = 2</code> → <code>2</code> (1 + 1, or 2);
+                  <code>n = 3</code> → <code>3</code> (1 + 1 + 1, 1 + 2, 2 + 1).
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>n = 1</code></td>
+                        <td><code>1</code></td>
+                        <td>The loop shouldn't run at all. An array version with <code>dp = [0] * (n + 1)</code> that sets <code>dp[2] = 2</code> crashes here (IndexError).</td>
+                      </tr>
+                      <tr>
+                        <td><code>n = 2</code></td>
+                        <td><code>2</code></td>
+                        <td>With only <code>ways(1) = 1</code> as the base case, <code>ways(2)</code> calls <code>ways(0)</code>, then <code>ways(−1)</code>, and never stops (Python: RecursionError).</td>
+                      </tr>
+                      <tr>
+                        <td><code>n = 3</code> / <code>n = 10</code></td>
+                        <td><code>3</code> / <code>89</code></td>
+                        <td>Returning the wrong one of the two variables (<code>prev</code> instead of <code>cur</code>) is one step behind: 2 and 55.</td>
+                      </tr>
+                      <tr>
+                        <td><code>n = 35</code></td>
+                        <td><code>14930352</code></td>
+                        <td>Plain recursion without a memo took 0.9 s in Python here, and each extra step makes it about 1.6× slower.</td>
+                      </tr>
+                      <tr>
+                        <td><code>n = 45</code></td>
+                        <td><code>1836311903</code></td>
+                        <td>The largest allowed, just under 2³¹, so an <code>int</code> is enough for the answer. (<code>n = 46</code> would be 2971215073.)</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Recursion with Memo</h2>
+                <p class="intuition">
+                  Look at the last move. To stand on step <code>k</code> you came from
+                  <code>k − 1</code> (a 1-step) or from <code>k − 2</code> (a 2-step), and
+                  those two groups of ways don't overlap. So
+                  <code>ways(k) = ways(k − 1) + ways(k − 2)</code>, with
+                  <code>ways(1) = 1</code> and <code>ways(2) = 2</code>.
+                </p>
+                <ul>
+                  <li>Remember each answer: without the memo, the same <code>k</code> is worked out over and over.</li>
+                  <li>The recursion goes about n levels deep, fine for n ≤ 45.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n) for the memo and the call stack</span>
+                </div>
+                <p class="note">
+                  The way to find the recurrence. The next approach is the same
+                  recurrence as a loop.
+                </p>
+                <div class="code-tabs" data-viz="0070-climbing-stairs/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"call":[4],"base":[5,6],"memo":[7,9],"add":[8],"answer":[10]}'>
+                    class Solution(object):
+                        def climbStairs(self, n):
+                            memo = {}  # k -> ways to climb k steps
+                            def ways(k):
+                                if k <= 2:  # 1 step: 1 way; 2 steps: 2 ways (1+1 or 2)
+                                    return k
+                                if k not in memo:
+                                    memo[k] = ways(k - 1) + ways(k - 2)  # the last move was 1 step or 2 steps
+                                return memo[k]
+                            return ways(n)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"answer":[6],"call":[10],"base":[11],"memo":[12,15],"add":[13]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int climbStairs(int n) {
+                            memo.assign(n + 1, 0); // memo[k]: ways to climb k steps; 0 = not known yet
+                            return ways(n);
+                        }
+                    private:
+                        std::vector<int> memo;
+                        int ways(int k) {
+                            if (k <= 2) return k; // 1 step: 1 way; 2 steps: 2 ways (1+1 or 2)
+                            if (memo[k] == 0) {
+                                memo[k] = ways(k - 1) + ways(k - 2); // the last move was 1 step or 2 steps
+                            }
+                            return memo[k];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4],"answer":[5],"call":[7],"base":[8],"memo":[9,12],"add":[10]}'>
+                    class Solution {
+                        private int[] memo;
+                        public int climbStairs(int n) {
+                            memo = new int[n + 1]; // memo[k]: ways to climb k steps; 0 = not known yet
+                            return ways(n);
+                        }
+                        private int ways(int k) {
+                            if (k <= 2) return k; // 1 step: 1 way; 2 steps: 2 ways (1+1 or 2)
+                            if (memo[k] == 0) {
+                                memo[k] = ways(k - 1) + ways(k - 2); // the last move was 1 step or 2 steps
+                            }
+                            return memo[k];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Two Variables</h2>
+                <p class="intuition">
+                  Work upward from the bottom instead. Each value only needs the two
+                  before it, so keep just those: <code>prev = ways(k − 1)</code> and
+                  <code>cur = ways(k)</code>, then shift them up one step at a time.
+                </p>
+                <ul>
+                  <li>Start from <code>ways(0) = 1</code> (stand still) and <code>ways(1) = 1</code>; that makes <code>n = 1</code> and <code>n = 2</code> need no special case.</li>
+                  <li>Return <code>cur</code>, the newer of the two.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  The answer interviewers expect. It's at most 44 additions here, so it's
+                  as fast as anything else in practice.
+                </p>
+                <div class="code-tabs" data-viz="0070-climbing-stairs/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"loop":[4,5],"answer":[6]}'>
+                    class Solution(object):
+                        def climbStairs(self, n):
+                            prev, cur = 1, 1  # ways(0) and ways(1): standing still counts as one way
+                            for _ in range(n - 1):  # step up from 1 to n
+                                prev, cur = cur, prev + cur  # ways(k) = ways(k - 1) + ways(k - 2)
+                            return cur
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[4],"loop":[5,6,7,8],"answer":[10]}'>
+                    class Solution {
+                    public:
+                        int climbStairs(int n) {
+                            int prev = 1, cur = 1; // ways(0) and ways(1): standing still counts as one way
+                            for (int k = 2; k <= n; ++k) { // step up from 1 to n
+                                int next = prev + cur; // ways(k) = ways(k - 1) + ways(k - 2)
+                                prev = cur;
+                                cur = next;
+                            }
+                            return cur;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"loop":[4,5,6,7],"answer":[9]}'>
+                    class Solution {
+                        public int climbStairs(int n) {
+                            int prev = 1, cur = 1; // ways(0) and ways(1): standing still counts as one way
+                            for (int k = 2; k <= n; k++) { // step up from 1 to n
+                                int next = prev + cur; // ways(k) = ways(k - 1) + ways(k - 2)
+                                prev = cur;
+                                cur = next;
+                            }
+                            return cur;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Matrix Fast Power
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  One step of the recurrence is a matrix multiplication:
+                  <code>[[1, 1], [1, 0]] × [ways(k), ways(k − 1)] = [ways(k + 1), ways(k)]</code>.
+                  So <code>M^n = [[ways(n), ways(n − 1)], [ways(n − 1), ways(n − 2)]]</code>,
+                  and <code>M^n</code> can be built from <code>M^1, M^2, M^4, …</code>
+                  using the bits of <code>n</code>, as in Pow(x, n) (50).
+                </p>
+                <ul>
+                  <li>For each bit of <code>n</code>, from the right: if it's 1, multiply <code>result</code> by <code>base</code>; then square <code>base</code>.</li>
+                  <li>
+                    Use 64-bit numbers. The loop squares <code>base</code> once after the last
+                    bit, a value it never uses. For <code>n ≥ 32</code> that's <code>M^64</code>,
+                    whose top-left is 17167680177565. With <code>int</code> in C++ it overflowed
+                    right there (3524578 × 3524578).
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(log n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  Asymptotically best, but at n ≤ 45 it does 10 matrix products against
+                  Approach 2's 44 additions, so there's no real gain here. Worth knowing
+                  for the "huge n, answer mod 10⁹ + 7" versions of this problem.
+                </p>
+                <div class="code-tabs" data-viz="0070-climbing-stairs/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"mul":[4,5,6],"init":[7,8,9],"bit":[10,11],"take":[12],"square":[13,14],"answer":[15]}'>
+                    class Solution(object):
+                        def climbStairs(self, n):
+                            # [[1, 1], [1, 0]] to the power n is [[ways(n), ways(n - 1)], [ways(n - 1), ways(n - 2)]]
+                            def mul(x, y):  # 2 x 2 matrix product
+                                return [[x[0][0] * y[0][0] + x[0][1] * y[1][0], x[0][0] * y[0][1] + x[0][1] * y[1][1]],
+                                        [x[1][0] * y[0][0] + x[1][1] * y[1][0], x[1][0] * y[0][1] + x[1][1] * y[1][1]]]
+                            result = [[1, 0], [0, 1]]  # the identity: M to the power 0
+                            base = [[1, 1], [1, 0]]  # M to the power 1
+                            p = n
+                            while p:  # fast power: one bit of n per round
+                                if p & 1:  # this bit is 1: multiply its power of M in
+                                    result = mul(result, base)
+                                base = mul(base, base)  # M^1, M^2, M^4, M^8, ...
+                                p >>= 1
+                            return result[0][0]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"mul":[4,5,6],"init":[11,12,13],"bit":[14,15],"take":[16],"square":[18,19],"answer":[21]}'>
+                    #include <array>
+                    class Solution {
+                        using Mat = std::array<std::array<long long, 2>, 2>; // 64-bit: the last squaring reaches M^64, far past an int
+                        static Mat mul(const Mat& x, const Mat& y) { // 2 x 2 matrix product
+                            return {{{x[0][0] * y[0][0] + x[0][1] * y[1][0], x[0][0] * y[0][1] + x[0][1] * y[1][1]},
+                                     {x[1][0] * y[0][0] + x[1][1] * y[1][0], x[1][0] * y[0][1] + x[1][1] * y[1][1]}}};
+                        }
+                    public:
+                        int climbStairs(int n) {
+                            // [[1, 1], [1, 0]] to the power n is [[ways(n), ways(n - 1)], [ways(n - 1), ways(n - 2)]]
+                            Mat result = {{{1, 0}, {0, 1}}}; // the identity: M to the power 0
+                            Mat base = {{{1, 1}, {1, 0}}}; // M to the power 1
+                            int p = n;
+                            while (p) { // fast power: one bit of n per round
+                                if (p & 1) { // this bit is 1: multiply its power of M in
+                                    result = mul(result, base);
+                                }
+                                base = mul(base, base); // M^1, M^2, M^4, M^8, ...
+                                p >>= 1;
+                            }
+                            return (int)result[0][0];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"mul":[3,4,5],"init":[9,10,11],"bit":[12,13],"take":[14],"square":[16,17],"answer":[19]}'>
+                    class Solution {
+                        // 2 x 2 matrix product; long, because the last squaring reaches M^64, far past an int
+                        private static long[][] mul(long[][] x, long[][] y) {
+                            return new long[][] {{x[0][0] * y[0][0] + x[0][1] * y[1][0], x[0][0] * y[0][1] + x[0][1] * y[1][1]},
+                                                 {x[1][0] * y[0][0] + x[1][1] * y[1][0], x[1][0] * y[0][1] + x[1][1] * y[1][1]}};
+                        }
+                        public int climbStairs(int n) {
+                            // [[1, 1], [1, 0]] to the power n is [[ways(n), ways(n - 1)], [ways(n - 1), ways(n - 2)]]
+                            long[][] result = {{1, 0}, {0, 1}}; // the identity: M to the power 0
+                            long[][] base = {{1, 1}, {1, 0}}; // M to the power 1
+                            int p = n;
+                            while (p > 0) { // fast power: one bit of n per round
+                                if ((p & 1) == 1) { // this bit is 1: multiply its power of M in
+                                    result = mul(result, base);
+                                }
+                                base = mul(base, base); // M^1, M^2, M^4, M^8, ...
+                                p >>= 1;
+                            }
+                            return (int) result[0][0];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  None of the standard libraries has a Fibonacci function. There is a
+                  closed form, <code>round(φ^(n+1) / √5)</code> with
+                  <code>φ = (1 + √5) / 2</code>, but in 64-bit floating point it was exact
+                  only up to <code>n = 69</code> here and wrong from <code>n = 70</code> on.
+                  It works within this problem's limits, but it depends on rounding luck.
+                </p>
+                <p class="note">
+                  Write Approach 2. The things to remember: the last move was 1 or 2 steps,
+                  start from <code>ways(0) = ways(1) = 1</code>, and return the newer value.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Recursion with Memo</th>
+                        <td>ways(k − 1) + ways(k − 2)</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Exponential without the memo</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Two Variables</th>
+                        <td>prev, cur = cur, prev + cur</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Matrix Fast Power</th>
+                        <td>[[1, 1], [1, 0]]^n</td>
+                        <td>O(log n)</td>
+                        <td>O(1)</td>
+                        <td>Needs 64-bit; pays off for huge n</td>
                       </tr>
                     </tbody>
                   </table>
@@ -26978,6 +27353,194 @@
             line: "build",
             note: `${k ? `Copy digits[0..${k - 1}] as they are` : "Nothing comes before it"}, then ${digits[k]} + 1 = ${digits[k] + 1}${n - 1 - k ? `, then ${n - 1 - k} zero${n - 1 - k === 1 ? "" : "s"}` : ""}. The input isn't touched. O(n) time and space.`,
             view: view(k, { found: true, highlight: k }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0070-climbing-stairs/approach1.visual.js -->
+    <script>
+      // Top-down: ways(k) = ways(k - 1) + ways(k - 2), each k worked out once and remembered.
+      DSAViz.register("0070-climbing-stairs/approach1", {
+        inputs: [{ name: "n", type: "int", value: "5", min: 1, max: 10 }],
+        trace({ n }) {
+          const memo = Array(n + 1).fill("");
+          const stack = [];
+          const steps = [];
+          let calls = 0;
+          const view = (k, o = {}) => {
+            const marks = {};
+            memo.forEach((v, i) => v !== "" && (marks[i] = "visited"));
+            stack.forEach((s) => (marks[s] = "window"));
+            (o.from || []).forEach((i) => (marks[i] = "compare"));
+            if (k !== undefined) marks[k] = o.mark || "active";
+            if (o.final) marks[n] = "match";
+            return [
+              { type: "array", label: "ways(k) under each step k, filled in as calls return (outlined = waiting on the call stack)", values: memo.slice(), marks },
+              { type: "array", label: "call stack (bottom → top)", values: stack.map((s) => `ways(${s})`), wide: true, marks: stack.length ? { [stack.length - 1]: "active" } : {} },
+              { type: "vars", items: [{ name: "calls", value: calls }] },
+            ];
+          };
+          steps.push({ line: ["init", "answer"], note: n <= 2 ? `Ask for ways(${n}). With ${n} step${n === 1 ? "" : "s"} it's a base case, answered directly.` : `Ask for ways(${n}). The last move onto step ${n} was either 1 step or 2 steps, so ways(${n}) = ways(${n - 1}) + ways(${n - 2}).`, view: view() });
+          const ways = (k) => {
+            calls++;
+            stack.push(k);
+            if (k <= 2) {
+              memo[k] = k;
+              steps.push({ line: ["call", "base"], note: k === 1 ? `ways(1) = 1: a single 1-step.` : `ways(2) = 2: 1 + 1, or one 2-step.`, view: view(k, { mark: "new" }) });
+              stack.pop();
+              return k;
+            }
+            if (memo[k] !== "") {
+              steps.push({ line: ["call", "memo"], note: `ways(${k}) is already known: ${memo[k]}. No new calls.`, view: view(k, { mark: "match" }) });
+              stack.pop();
+              return memo[k];
+            }
+            steps.push({ line: ["call", "memo", "add"], note: `ways(${k}) isn't known yet: work out ways(${k - 1}) + ways(${k - 2}).`, view: view(k, { from: [k - 1, k - 2] }) });
+            const a = ways(k - 1);
+            const b = ways(k - 2);
+            memo[k] = a + b;
+            steps.push({ line: ["add", "memo"], note: `ways(${k}) = ${a} + ${b} = ${memo[k]}. Remember it.`, view: view(k, { mark: "new", from: [k - 1, k - 2] }) });
+            stack.pop();
+            return memo[k];
+          };
+          const answer = ways(n);
+          steps.push({
+            line: "answer",
+            note: `${answer} way${answer === 1 ? "" : "s"} to climb ${n} step${n === 1 ? "" : "s"}. ${calls} call${calls === 1 ? "" : "s"}: each k is worked out once, so O(n).${n > 2 ? " Without the memo the same k's are worked out again and again, and the number of calls grows about 1.6× with every extra step." : ""}`,
+            view: view(undefined, { final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0070-climbing-stairs/approach2.visual.js -->
+    <script>
+      // Bottom-up: ways(k) only needs the two values before it, so keep just prev and cur.
+      DSAViz.register("0070-climbing-stairs/approach2", {
+        inputs: [{ name: "n", type: "int", value: "6", min: 1, max: 15 }],
+        trace({ n }) {
+          const seen = Array(n + 1).fill("");
+          seen[0] = 1;
+          seen[1] = 1;
+          let prev = 1;
+          let cur = 1;
+          let k = 1; // cur is ways(k), prev is ways(k - 1)
+          const steps = [];
+          const view = (o = {}) => {
+            const marks = {};
+            for (let i = 0; i <= k; i++) marks[i] = "visited";
+            marks[k - 1] = "compare";
+            marks[k] = o.fresh ? "new" : "active";
+            if (o.final) marks[n] = "match";
+            const pointers = { prev: k - 1, cur: k };
+            return [
+              { type: "array", label: "ways(k) for each step k (the code only keeps the two highlighted ones)", values: seen.slice(), marks, pointers },
+              { type: "vars", items: [{ name: "prev", value: prev }, { name: "cur", value: cur, mark: o.fresh ? "new" : "" }] },
+            ];
+          };
+          steps.push({ line: "init", note: `prev = ways(0) = 1 (standing at the bottom is one way: do nothing) and cur = ways(1) = 1.`, view: view() });
+          for (let step = 0; step < n - 1; step++) {
+            const next = prev + cur;
+            steps.push({
+              line: "loop",
+              note: `ways(${k + 1}) = ways(${k}) + ways(${k - 1}) = ${cur} + ${prev} = ${next}: the last move was 1 step (from ${k}) or 2 steps (from ${k - 1}). Shift: prev = ${cur}, cur = ${next}.`,
+              view: (() => {
+                prev = cur;
+                cur = next;
+                k++;
+                seen[k] = cur;
+                return view({ fresh: true });
+              })(),
+            });
+          }
+          steps.push({
+            line: "answer",
+            note: `Return cur = ways(${n}) = ${cur}. ${n - 1} addition${n - 1 === 1 ? "" : "s"}: O(n) time, and O(1) space because only two numbers are kept.`,
+            view: view({ final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0070-climbing-stairs/approach3.visual.js -->
+    <script>
+      // M = [[1, 1], [1, 0]]; M^n holds ways(n). Fast power builds M^n from M^1, M^2, M^4, ... using the bits of n.
+      DSAViz.register("0070-climbing-stairs/approach3", {
+        inputs: [{ name: "n", type: "int", value: "13", min: 1, max: 45 }],
+        trace({ n }) {
+          const mul = (x, y) => [
+            [x[0][0] * y[0][0] + x[0][1] * y[1][0], x[0][0] * y[0][1] + x[0][1] * y[1][1]],
+            [x[1][0] * y[0][0] + x[1][1] * y[1][0], x[1][0] * y[0][1] + x[1][1] * y[1][1]],
+          ];
+          const bits = n.toString(2).split("").map(Number); // most significant first
+          let result = [[1, 0], [0, 1]];
+          let base = [[1, 1], [1, 0]];
+          let resPow = 0;
+          let basePow = 1;
+          let p = n;
+          let round = 0; // how many low bits have been used
+          let mults = 0;
+          const steps = [];
+          const grid = (label, m, mark) => ({
+            type: "grid",
+            label,
+            rows: ["", ""],
+            cols: ["", ""],
+            cells: m.map((r) => r.slice()),
+            marks: mark ? { "0,0": mark, "0,1": mark, "1,0": mark, "1,1": mark } : {},
+            corner: "",
+          });
+          const view = (o = {}) => {
+            const bm = {};
+            bits.forEach((_, i) => {
+              const fromRight = bits.length - 1 - i;
+              if (fromRight < round) bm[i] = "visited";
+              else if (fromRight === round && o.bit) bm[i] = bits[i] ? "match" : "active";
+            });
+            return [
+              { type: "array", label: `n = ${n} in binary (one bit per round, from the right)`, values: bits, compact: true, marks: bm, sub: bits.map((_, i) => `2^${bits.length - 1 - i}`) },
+              grid(`result = M^${resPow}  (top-left is ways(${resPow}))`, result, o.took ? "new" : o.final ? "match" : ""),
+              grid(`base = M^${basePow}`, base, o.squared ? "new" : ""),
+              { type: "vars", items: [{ name: "p", value: p }, { name: "matrix products", value: mults }] },
+            ];
+          };
+          steps.push({
+            line: "init",
+            note: `M = [[1, 1], [1, 0]]. Multiplying by M turns [ways(k), ways(k − 1)] into [ways(k + 1), ways(k)], so M^${n} has ways(${n}) in its top-left. ${n} = ${bits.join("")} in binary.`,
+            view: view(),
+          });
+          while (p) {
+            const bit = p & 1;
+            if (bit) {
+              result = mul(result, base);
+              resPow += basePow;
+              mults++;
+              steps.push({
+                line: ["bit", "take", "mul"],
+                note: `Bit for ${basePow} is 1: result = M^${resPow - basePow} × M^${basePow} = M^${resPow}. Powers add when you multiply.`,
+                view: view({ bit: true, took: true }),
+              });
+            } else {
+              steps.push({ line: "bit", note: `Bit for ${basePow} is 0: ${basePow} isn't part of ${n}, so result stays M^${resPow}.`, view: view({ bit: true }) });
+            }
+            base = mul(base, base);
+            basePow *= 2;
+            p >>= 1;
+            round++;
+            mults++;
+            steps.push({
+              line: ["square", "mul"],
+              note: p
+                ? `Square base: M^${basePow / 2} × M^${basePow / 2} = M^${basePow}, ready for the next bit. p = ${p}.`
+                : `Square base to M^${basePow} anyway (it's never used). p = 0, so stop.${base[0][0] > 2147483647 ? ` Its top-left is ${base[0][0]}, past 2^31: with 32-bit ints this unused square is what overflows.` : ""}`,
+              view: view({ squared: true }),
+            });
+          }
+          steps.push({
+            line: "answer",
+            note: `Return result[0][0] = ways(${n}) = ${result[0][0]}. ${mults} matrix products for ${bits.length} bit${bits.length === 1 ? "" : "s"}: O(log n), against ${n - 1} additions for Approach 2.`,
+            view: view({ final: true }),
           });
           return steps;
         },

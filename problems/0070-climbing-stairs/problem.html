@@ -1,0 +1,223 @@
+<details class="question" data-group="dynamic-programming" data-tags="math dynamic-programming dp memoization fibonacci recursion matrix-exponentiation stairs">
+  <summary>
+    <span class="q-title">70. Climbing Stairs</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Math</span>
+      <span class="tag">Dynamic Programming</span>
+      <span class="tag">Memoization</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Your <strong>last move</strong> onto step
+      <code>n</code> was either 1 step (from <code>n − 1</code>) or 2 steps (from
+      <code>n − 2</code>), so <code>ways(n) = ways(n − 1) + ways(n − 2)</code>:
+      the Fibonacci numbers. Keep just the last two values: O(n) time, O(1)
+      space. For O(log n), raise <code>[[1, 1], [1, 0]]</code> to the power n.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/climbing-stairs/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        You are climbing a staircase with <code>n</code> steps. Each time you can
+        climb either 1 or 2 steps. In how many distinct ways can you reach the
+        top?
+      </p>
+      <ul>
+        <li><code>1 &lt;= n &lt;= 45</code>.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>n = 2</code> → <code>2</code> (1 + 1, or 2);
+        <code>n = 3</code> → <code>3</code> (1 + 1 + 1, 1 + 2, 2 + 1).
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>n = 1</code></td>
+              <td><code>1</code></td>
+              <td>The loop shouldn't run at all. An array version with <code>dp = [0] * (n + 1)</code> that sets <code>dp[2] = 2</code> crashes here (IndexError).</td>
+            </tr>
+            <tr>
+              <td><code>n = 2</code></td>
+              <td><code>2</code></td>
+              <td>With only <code>ways(1) = 1</code> as the base case, <code>ways(2)</code> calls <code>ways(0)</code>, then <code>ways(−1)</code>, and never stops (Python: RecursionError).</td>
+            </tr>
+            <tr>
+              <td><code>n = 3</code> / <code>n = 10</code></td>
+              <td><code>3</code> / <code>89</code></td>
+              <td>Returning the wrong one of the two variables (<code>prev</code> instead of <code>cur</code>) is one step behind: 2 and 55.</td>
+            </tr>
+            <tr>
+              <td><code>n = 35</code></td>
+              <td><code>14930352</code></td>
+              <td>Plain recursion without a memo took 0.9 s in Python here, and each extra step makes it about 1.6× slower.</td>
+            </tr>
+            <tr>
+              <td><code>n = 45</code></td>
+              <td><code>1836311903</code></td>
+              <td>The largest allowed, just under 2³¹, so an <code>int</code> is enough for the answer. (<code>n = 46</code> would be 2971215073.)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Recursion with Memo</h2>
+      <p class="intuition">
+        Look at the last move. To stand on step <code>k</code> you came from
+        <code>k − 1</code> (a 1-step) or from <code>k − 2</code> (a 2-step), and
+        those two groups of ways don't overlap. So
+        <code>ways(k) = ways(k − 1) + ways(k − 2)</code>, with
+        <code>ways(1) = 1</code> and <code>ways(2) = 2</code>.
+      </p>
+      <ul>
+        <li>Remember each answer: without the memo, the same <code>k</code> is worked out over and over.</li>
+        <li>The recursion goes about n levels deep, fine for n ≤ 45.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n) for the memo and the call stack</span>
+      </div>
+      <p class="note">
+        The way to find the recurrence. The next approach is the same
+        recurrence as a loop.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Two Variables</h2>
+      <p class="intuition">
+        Work upward from the bottom instead. Each value only needs the two
+        before it, so keep just those: <code>prev = ways(k − 1)</code> and
+        <code>cur = ways(k)</code>, then shift them up one step at a time.
+      </p>
+      <ul>
+        <li>Start from <code>ways(0) = 1</code> (stand still) and <code>ways(1) = 1</code>; that makes <code>n = 1</code> and <code>n = 2</code> need no special case.</li>
+        <li>Return <code>cur</code>, the newer of the two.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        The answer interviewers expect. It's at most 44 additions here, so it's
+        as fast as anything else in practice.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Matrix Fast Power
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        One step of the recurrence is a matrix multiplication:
+        <code>[[1, 1], [1, 0]] × [ways(k), ways(k − 1)] = [ways(k + 1), ways(k)]</code>.
+        So <code>M^n = [[ways(n), ways(n − 1)], [ways(n − 1), ways(n − 2)]]</code>,
+        and <code>M^n</code> can be built from <code>M^1, M^2, M^4, …</code>
+        using the bits of <code>n</code>, as in Pow(x, n) (50).
+      </p>
+      <ul>
+        <li>For each bit of <code>n</code>, from the right: if it's 1, multiply <code>result</code> by <code>base</code>; then square <code>base</code>.</li>
+        <li>
+          Use 64-bit numbers. The loop squares <code>base</code> once after the last
+          bit, a value it never uses. For <code>n ≥ 32</code> that's <code>M^64</code>,
+          whose top-left is 17167680177565. With <code>int</code> in C++ it overflowed
+          right there (3524578 × 3524578).
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Asymptotically best, but at n ≤ 45 it does 10 matrix products against
+        Approach 2's 44 additions, so there's no real gain here. Worth knowing
+        for the "huge n, answer mod 10⁹ + 7" versions of this problem.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        None of the standard libraries has a Fibonacci function. There is a
+        closed form, <code>round(φ^(n+1) / √5)</code> with
+        <code>φ = (1 + √5) / 2</code>, but in 64-bit floating point it was exact
+        only up to <code>n = 69</code> here and wrong from <code>n = 70</code> on.
+        It works within this problem's limits, but it depends on rounding luck.
+      </p>
+      <p class="note">
+        Write Approach 2. The things to remember: the last move was 1 or 2 steps,
+        start from <code>ways(0) = ways(1) = 1</code>, and return the newer value.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Recursion with Memo</th>
+              <td>ways(k − 1) + ways(k − 2)</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Exponential without the memo</td>
+            </tr>
+            <tr>
+              <th scope="row">Two Variables</th>
+              <td>prev, cur = cur, prev + cur</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+            <tr>
+              <th scope="row">Matrix Fast Power</th>
+              <td>[[1, 1], [1, 0]]^n</td>
+              <td>O(log n)</td>
+              <td>O(1)</td>
+              <td>Needs 64-bit; pays off for huge n</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
