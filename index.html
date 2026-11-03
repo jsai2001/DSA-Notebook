@@ -17393,7 +17393,7 @@
       <details class="pattern-group" id="g-matrix">
         <summary>
           <span class="g-name">Matrix</span>
-          <span class="g-count"><span class="g-total">2 problems</span></span>
+          <span class="g-count"><span class="g-total">3 problems</span></span>
           <span class="g-hint">Walk or rotate a 2D grid</span>
         </summary>
         <div class="g-body">
@@ -18226,6 +18226,427 @@
                         <td>O(m·n·min(m, n))</td>
                         <td>O(m·n)</td>
                         <td>Short in Python; copies a lot</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0073-set-matrix-zeroes ===== -->
+          <details class="question" data-group="matrix" data-tags="array hash-table matrix in-place flags markers zeroes">
+            <summary>
+              <span class="q-title">73. Set Matrix Zeroes</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Array</span>
+                <span class="tag">Hash Table</span>
+                <span class="tag">Matrix</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> <strong>Find all the zeros first, change
+                cells second</strong>; zeroing as you go makes new zeros that spread.
+                Remember which rows and columns had a zero (O(m + n) flags), or, for
+                O(1) space, write those flags into row 0 and column 0 themselves, with
+                one extra variable for column 0. Fill the inside first, then row 0, then
+                column 0, so the flags are read before they're overwritten.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/set-matrix-zeroes/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Given an <code>m × n</code> integer matrix, if a cell is
+                  <code>0</code>, set its entire row and column to <code>0</code>. Do it
+                  <strong>in place</strong>: change <code>matrix</code> itself and return
+                  nothing.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= m, n &lt;= 200</code>.</li>
+                  <li><code>-2³¹ &lt;= matrix[i][j] &lt;= 2³¹ − 1</code>: any <code>int</code> can appear.</li>
+                  <li>Follow-up: can you use only O(1) extra space?</li>
+                </ul>
+                <p class="note">
+                  Examples: <code>[[1,1,1],[1,0,1],[1,1,1]]</code> →
+                  <code>[[1,0,1],[0,0,0],[1,0,1]]</code>;
+                  <code>[[0,1,2,0],[3,4,5,2],[1,3,1,5]]</code> →
+                  <code>[[0,0,0,0],[0,4,5,0],[0,3,1,0]]</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[[0,7],[7,7]]</code></td>
+                        <td><code>[[0,0],[0,7]]</code></td>
+                        <td>Zeroing a row and column as soon as you see a 0 creates new zeros, which then get treated as original: everything becomes 0.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[0],[7]]</code></td>
+                        <td><code>[[0],[0]]</code></td>
+                        <td>A single column. If <code>matrix[0][0]</code> is used as the flag for both row 0 and column 0 (no extra variable), column 0 is never wiped: <code>[[0],[7]]</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[0,7],[7,7]]</code></td>
+                        <td><code>[[0,0],[0,7]]</code></td>
+                        <td>With flags in row 0 / column 0: wiping row 0 before the inside erases the column flags' meaning, so every column looks flagged: all 0s.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[7,7],[0,7]]</code></td>
+                        <td><code>[[0,7],[0,0]]</code></td>
+                        <td>Wiping column 0 before row 0 sets <code>matrix[0][0]</code> to 0, so row 0 then looks flagged too: all 0s.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[5]]</code> / <code>[[0]]</code></td>
+                        <td><code>[[5]]</code> / <code>[[0]]</code></td>
+                        <td>1 × 1: there's no inside at all, only the flag cell.</td>
+                      </tr>
+                      <tr>
+                        <td>Values like <code>-1</code> or <code>-2³¹</code></td>
+                        <td>Kept as they are</td>
+                        <td>Every <code>int</code> is a valid value, so there's no spare number to mean "zero this later". Flags have to live somewhere else, or in cells that will become 0 anyway.</td>
+                      </tr>
+                      <tr>
+                        <td>Python: <code>matrix = [...]</code></td>
+                        <td>Caller sees the change</td>
+                        <td>Building a new list and assigning it to <code>matrix</code> only changes the local name; the caller's matrix stays the same. Write into the cells.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Copy, Then Wipe</h2>
+                <p class="intuition">
+                  Keep a copy of the original matrix, so the zeros you add can't be
+                  mistaken for original ones. For every 0 in the copy, set its whole row
+                  and its whole column to 0 in the real matrix.
+                </p>
+                <ul>
+                  <li>Each zero costs <code>m + n</code> writes, and rows and columns get wiped again and again when there are many zeros.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(m·n·(m + n))</span>
+                  <span><strong>Space</strong> O(m·n) for the copy</span>
+                </div>
+                <p class="note">
+                  Easy to get right, but an all-zero 200 × 200 matrix took 325 ms in
+                  Python here, against 3 ms for the other two.
+                </p>
+                <div class="code-tabs" data-viz="0073-set-matrix-zeroes/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"copy":[3,4],"scan":[5,6,7],"wipe":[8,9,10,11]}'>
+                    class Solution(object):
+                        def setZeroes(self, matrix):
+                            m, n = len(matrix), len(matrix[0])
+                            original = [row[:] for row in matrix]  # find the zeros here, so new zeros don't spread
+                            for i in range(m):
+                                for j in range(n):
+                                    if original[i][j] == 0:
+                                        for c in range(n):  # wipe its row
+                                            matrix[i][c] = 0
+                                        for r in range(m):  # and its column
+                                            matrix[r][j] = 0
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"copy":[5,6],"scan":[7,8,9],"wipe":[10,11]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        void setZeroes(std::vector<std::vector<int>>& matrix) {
+                            int m = (int)matrix.size(), n = (int)matrix[0].size();
+                            std::vector<std::vector<int>> original = matrix; // find the zeros here, so new zeros don't spread
+                            for (int i = 0; i < m; ++i) {
+                                for (int j = 0; j < n; ++j) {
+                                    if (original[i][j] == 0) {
+                                        for (int c = 0; c < n; ++c) matrix[i][c] = 0; // wipe its row
+                                        for (int r = 0; r < m; ++r) matrix[r][j] = 0; // and its column
+                                    }
+                                }
+                            }
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"copy":[3,4,5],"scan":[6,7,8],"wipe":[9,10]}'>
+                    class Solution {
+                        public void setZeroes(int[][] matrix) {
+                            int m = matrix.length, n = matrix[0].length;
+                            int[][] original = new int[m][]; // find the zeros here, so new zeros don't spread
+                            for (int i = 0; i < m; i++) original[i] = matrix[i].clone();
+                            for (int i = 0; i < m; i++) {
+                                for (int j = 0; j < n; j++) {
+                                    if (original[i][j] == 0) {
+                                        for (int c = 0; c < n; c++) matrix[i][c] = 0; // wipe its row
+                                        for (int r = 0; r < m; r++) matrix[r][j] = 0; // and its column
+                                    }
+                                }
+                            }
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Row and Column Flags</h2>
+                <p class="intuition">
+                  A cell ends up 0 exactly when its row or its column had a 0. So the
+                  first pass only reads, and records <code>zero_rows[i]</code> and
+                  <code>zero_cols[j]</code>. The second pass zeroes every cell whose row
+                  or column is flagged.
+                </p>
+                <ul>
+                  <li>Nothing is written in the first pass, so nothing can spread.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(m·n)</span>
+                  <span><strong>Space</strong> O(m + n)</span>
+                </div>
+                <p class="note">
+                  The clearest version, and a fine answer. The follow-up asks you to get
+                  rid of the two flag arrays.
+                </p>
+                <div class="code-tabs" data-viz="0073-set-matrix-zeroes/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"mark":[5,6,7,8],"fill":[9,10,11,12]}'>
+                    class Solution(object):
+                        def setZeroes(self, matrix):
+                            m, n = len(matrix), len(matrix[0])
+                            zero_rows, zero_cols = [False] * m, [False] * n
+                            for i in range(m):  # pass 1: only remember where the zeros are
+                                for j in range(n):
+                                    if matrix[i][j] == 0:
+                                        zero_rows[i] = zero_cols[j] = True
+                            for i in range(m):  # pass 2: zero every cell in a marked row or column
+                                for j in range(n):
+                                    if zero_rows[i] or zero_cols[j]:
+                                        matrix[i][j] = 0
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,6],"mark":[7,8,9],"fill":[12,13,14]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        void setZeroes(std::vector<std::vector<int>>& matrix) {
+                            int m = (int)matrix.size(), n = (int)matrix[0].size();
+                            std::vector<bool> zeroRows(m, false), zeroCols(n, false);
+                            for (int i = 0; i < m; ++i) { // pass 1: only remember where the zeros are
+                                for (int j = 0; j < n; ++j) {
+                                    if (matrix[i][j] == 0) zeroRows[i] = zeroCols[j] = true;
+                                }
+                            }
+                            for (int i = 0; i < m; ++i) { // pass 2: zero every cell in a marked row or column
+                                for (int j = 0; j < n; ++j) {
+                                    if (zeroRows[i] || zeroCols[j]) matrix[i][j] = 0;
+                                }
+                            }
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4],"mark":[5,6,7],"fill":[10,11,12]}'>
+                    class Solution {
+                        public void setZeroes(int[][] matrix) {
+                            int m = matrix.length, n = matrix[0].length;
+                            boolean[] zeroRows = new boolean[m], zeroCols = new boolean[n];
+                            for (int i = 0; i < m; i++) { // pass 1: only remember where the zeros are
+                                for (int j = 0; j < n; j++) {
+                                    if (matrix[i][j] == 0) zeroRows[i] = zeroCols[j] = true;
+                                }
+                            }
+                            for (int i = 0; i < m; i++) { // pass 2: zero every cell in a marked row or column
+                                for (int j = 0; j < n; j++) {
+                                    if (zeroRows[i] || zeroCols[j]) matrix[i][j] = 0;
+                                }
+                            }
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Flags in Row 0 and Column 0
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Use the matrix's own first row and first column as the flag arrays: a
+                  zero at <code>(i, j)</code> writes 0 into <code>matrix[i][0]</code> and
+                  <code>matrix[0][j]</code>. Those cells were going to become 0 anyway, so
+                  no information is lost.
+                </p>
+                <ul>
+                  <li><code>matrix[0][0]</code> can only hold one flag. Let it be row 0's, and keep column 0's in a variable, <code>col0_zero</code>.</li>
+                  <li>Then fill the inside (<code>i, j ≥ 1</code>) from the flags.</li>
+                  <li>Then row 0 (if <code>matrix[0][0]</code> is 0), then column 0 (if <code>col0_zero</code>). That order matters: each step still reads flags the later ones overwrite.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(m·n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  The answer to the follow-up. Every mistake in the edge cases above
+                  (the shared corner, the order of the last three steps) breaks only this
+                  version, so test it on a single column and on a zero in column 0.
+                </p>
+                <div class="code-tabs" data-viz="0073-set-matrix-zeroes/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,6],"mark":[7,8,9,10,11,12,13],"fill":[14,15,16,17],"row0":[18,19,20],"col0":[21,22,23]}'>
+                    class Solution(object):
+                        def setZeroes(self, matrix):
+                            m, n = len(matrix), len(matrix[0])
+                            # Use row 0 and column 0 as the marks. matrix[0][0] marks row 0,
+                            # so column 0 needs a mark of its own: this flag.
+                            col0_zero = False
+                            for i in range(m):
+                                if matrix[i][0] == 0:  # a zero in column 0: remember it in the flag
+                                    col0_zero = True
+                                for j in range(1, n):
+                                    if matrix[i][j] == 0:
+                                        matrix[i][0] = 0  # mark row i
+                                        matrix[0][j] = 0  # mark column j
+                            for i in range(1, m):  # the inside first, while the marks are still intact
+                                for j in range(1, n):
+                                    if matrix[i][0] == 0 or matrix[0][j] == 0:
+                                        matrix[i][j] = 0
+                            if matrix[0][0] == 0:  # row 0 had a zero
+                                for j in range(n):
+                                    matrix[0][j] = 0
+                            if col0_zero:  # column 0 had a zero
+                                for i in range(m):
+                                    matrix[i][0] = 0
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,8],"mark":[9,10,11,12,13,14],"fill":[18,19,20],"row0":[23,24],"col0":[26,27]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        void setZeroes(std::vector<std::vector<int>>& matrix) {
+                            int m = (int)matrix.size(), n = (int)matrix[0].size();
+                            // Use row 0 and column 0 as the marks. matrix[0][0] marks row 0,
+                            // so column 0 needs a mark of its own: this flag.
+                            bool col0Zero = false;
+                            for (int i = 0; i < m; ++i) {
+                                if (matrix[i][0] == 0) col0Zero = true; // a zero in column 0: remember it in the flag
+                                for (int j = 1; j < n; ++j) {
+                                    if (matrix[i][j] == 0) {
+                                        matrix[i][0] = 0; // mark row i
+                                        matrix[0][j] = 0; // mark column j
+                                    }
+                                }
+                            }
+                            for (int i = 1; i < m; ++i) { // the inside first, while the marks are still intact
+                                for (int j = 1; j < n; ++j) {
+                                    if (matrix[i][0] == 0 || matrix[0][j] == 0) matrix[i][j] = 0;
+                                }
+                            }
+                            if (matrix[0][0] == 0) { // row 0 had a zero
+                                for (int j = 0; j < n; ++j) matrix[0][j] = 0;
+                            }
+                            if (col0Zero) { // column 0 had a zero
+                                for (int i = 0; i < m; ++i) matrix[i][0] = 0;
+                            }
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,6],"mark":[7,8,9,10,11,12],"fill":[16,17,18],"row0":[21,22],"col0":[24,25]}'>
+                    class Solution {
+                        public void setZeroes(int[][] matrix) {
+                            int m = matrix.length, n = matrix[0].length;
+                            // Use row 0 and column 0 as the marks. matrix[0][0] marks row 0,
+                            // so column 0 needs a mark of its own: this flag.
+                            boolean col0Zero = false;
+                            for (int i = 0; i < m; i++) {
+                                if (matrix[i][0] == 0) col0Zero = true; // a zero in column 0: remember it in the flag
+                                for (int j = 1; j < n; j++) {
+                                    if (matrix[i][j] == 0) {
+                                        matrix[i][0] = 0; // mark row i
+                                        matrix[0][j] = 0; // mark column j
+                                    }
+                                }
+                            }
+                            for (int i = 1; i < m; i++) { // the inside first, while the marks are still intact
+                                for (int j = 1; j < n; j++) {
+                                    if (matrix[i][0] == 0 || matrix[0][j] == 0) matrix[i][j] = 0;
+                                }
+                            }
+                            if (matrix[0][0] == 0) { // row 0 had a zero
+                                for (int j = 0; j < n; j++) matrix[0][j] = 0;
+                            }
+                            if (col0Zero) { // column 0 had a zero
+                                for (int i = 0; i < m; i++) matrix[i][0] = 0;
+                            }
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  None of the standard libraries has a call for this, and the
+                  in-place, O(1)-space part is the whole point of the problem.
+                </p>
+                <p class="note">
+                  Write Approach 2 first. If asked for O(1) space, move the flags into
+                  row 0 and column 0, and remember: one extra variable for column 0, and
+                  the inside before row 0 before column 0.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Copy, Then Wipe</th>
+                        <td>Read zeros from a copy</td>
+                        <td>O(m·n·(m + n))</td>
+                        <td>O(m·n)</td>
+                        <td>Slow with many zeros</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Row and Column Flags</th>
+                        <td>Two passes, two flag arrays</td>
+                        <td>O(m·n)</td>
+                        <td>O(m + n)</td>
+                        <td>Clearest</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Flags in Row 0 and Column 0</th>
+                        <td>Flags inside the matrix + col0_zero</td>
+                        <td>O(m·n)</td>
+                        <td>O(1)</td>
+                        <td>Follow-up answer; order matters</td>
                       </tr>
                     </tbody>
                   </table>
@@ -28244,6 +28665,215 @@
             note: `Return row[${n}] = ${row[n]}. Same O(m·n) time as the full table, but only O(min(m, n)) space: one row of ${n + 1} number${n ? "s" : ""}.`,
             view: view({ final: true }),
           });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0073-set-matrix-zeroes/approach1.visual.js -->
+    <script>
+      // Copy the matrix, find the zeros in the copy, and wipe their rows and columns in the real one.
+      DSAViz.register("0073-set-matrix-zeroes/approach1", {
+        inputs: [{ name: "matrix", type: "int[][]", value: "[[1, 2, 0], [4, 5, 6], [0, 8, 9]]", maxRows: 5, maxCols: 5, minValue: -99, maxValue: 99 }],
+        trace({ matrix }) {
+          const m = matrix.length;
+          const n = matrix[0].length;
+          if (matrix.some((r) => r.length !== n)) throw new DSAViz.InputError("every row must have the same length, like [[1, 0], [3, 4]].");
+          const original = matrix.map((r) => r.slice());
+          const mat = matrix.map((r) => r.slice());
+          const idx = (k) => [...Array(k).keys()];
+          const steps = [];
+          let writes = 0;
+          const view = (o = {}) => {
+            const om = {};
+            const mm = {};
+            for (let i = 0; i < m; i++) for (let j = 0; j < n; j++) if (original[i][j] === 0) om[`${i},${j}`] = "visited";
+            if (o.at) {
+              om[`${o.at[0]},${o.at[1]}`] = "active";
+              for (let c = 0; c < n; c++) mm[`${o.at[0]},${c}`] = "new";
+              for (let r = 0; r < m; r++) mm[`${r},${o.at[1]}`] = "new";
+            }
+            if (o.final) for (let i = 0; i < m; i++) for (let j = 0; j < n; j++) mm[`${i},${j}`] = mat[i][j] === 0 ? "match" : "";
+            return [
+              { type: "grid", label: "original: the copy we read the zeros from (grey = its zeros)", rows: idx(m), cols: idx(n), cells: original.map((r) => r.slice()), marks: om },
+              { type: "grid", label: "matrix: the one we change", rows: idx(m), cols: idx(n), cells: mat.map((r) => r.slice()), marks: mm },
+              { type: "vars", items: [{ name: "cells written", value: writes }] },
+            ];
+          };
+          steps.push({ line: "copy", note: `Copy the matrix first. If we wiped rows in the matrix we're reading, the new zeros would look like original ones and spread.`, view: view() });
+          let zeros = 0;
+          for (let i = 0; i < m; i++) {
+            for (let j = 0; j < n; j++) {
+              if (original[i][j] !== 0) continue;
+              zeros++;
+              for (let c = 0; c < n; c++) mat[i][c] = 0;
+              for (let r = 0; r < m; r++) mat[r][j] = 0;
+              writes += m + n;
+              steps.push({ line: ["scan", "wipe"], note: `original[${i}][${j}] is 0: wipe row ${i} and column ${j} of matrix (${m + n} writes).`, view: view({ at: [i, j] }) });
+            }
+          }
+          steps.push({
+            line: "scan",
+            note: zeros
+              ? `Every cell of the copy checked: ${zeros} zero${zeros === 1 ? "" : "s"}, ${writes} writes. Each zero costs m + n writes, so it's O(m·n·(m + n)) at worst, plus O(m·n) for the copy.`
+              : `No zeros in the matrix, so nothing changes.`,
+            view: view({ final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0073-set-matrix-zeroes/approach2.visual.js -->
+    <script>
+      // Two passes: first only remember which rows and columns have a zero, then zero every cell in them.
+      DSAViz.register("0073-set-matrix-zeroes/approach2", {
+        inputs: [{ name: "matrix", type: "int[][]", value: "[[0, 1, 2, 0], [3, 4, 5, 2], [1, 3, 1, 5]]", maxRows: 5, maxCols: 5, minValue: -99, maxValue: 99 }],
+        trace({ matrix }) {
+          const m = matrix.length;
+          const n = matrix[0].length;
+          if (matrix.some((r) => r.length !== n)) throw new DSAViz.InputError("every row must have the same length, like [[1, 0], [3, 4]].");
+          const mat = matrix.map((r) => r.slice());
+          const zr = Array(m).fill(false);
+          const zc = Array(n).fill(false);
+          const idx = (k) => [...Array(k).keys()];
+          const steps = [];
+          const show = (b) => (b ? "T" : "F");
+          const view = (o = {}) => {
+            const marks = {};
+            for (let i = 0; i < m; i++) for (let j = 0; j < n; j++) {
+              if (o.pass === 2 && (zr[i] || zc[j]) && i <= (o.row ?? m)) marks[`${i},${j}`] = i === o.row ? "new" : "visited";
+            }
+            (o.found || []).forEach(([i, j]) => (marks[`${i},${j}`] = "active"));
+            if (o.final) for (let i = 0; i < m; i++) for (let j = 0; j < n; j++) marks[`${i},${j}`] = mat[i][j] === 0 ? "match" : "";
+            const rm = {};
+            const cm = {};
+            zr.forEach((b, i) => b && (rm[i] = o.pass === 2 && i === o.row ? "new" : "match"));
+            zc.forEach((b, j) => b && (cm[j] = "match"));
+            return [
+              { type: "grid", label: "matrix", rows: idx(m), cols: idx(n), cells: mat.map((r) => r.slice()), marks },
+              { type: "array", label: "zero_rows (T = row has a zero)", values: zr.map(show), compact: true, marks: rm },
+              { type: "array", label: "zero_cols (T = column has a zero)", values: zc.map(show), compact: true, marks: cm },
+            ];
+          };
+          steps.push({ line: "init", note: `Two lists of flags, one per row and one per column. The first pass only reads; nothing is changed until all zeros are known.`, view: view() });
+          for (let i = 0; i < m; i++) {
+            const found = [];
+            for (let j = 0; j < n; j++) if (mat[i][j] === 0) {
+              zr[i] = zc[j] = true;
+              found.push([i, j]);
+            }
+            steps.push({
+              line: "mark",
+              note: found.length ? `Row ${i}: zero${found.length === 1 ? "" : "s"} at column${found.length === 1 ? "" : "s"} ${found.map(([, j]) => j).join(", ")}. Flag row ${i} and ${found.length === 1 ? "that column" : "those columns"}.` : `Row ${i}: no zeros.`,
+              view: view({ found }),
+            });
+          }
+          for (let i = 0; i < m; i++) {
+            let changed = 0;
+            for (let j = 0; j < n; j++) if ((zr[i] || zc[j]) && mat[i][j] !== 0) {
+              mat[i][j] = 0;
+              changed++;
+            }
+            steps.push({
+              line: "fill",
+              note: zr[i] ? `Row ${i} is flagged: every cell becomes 0.` : changed ? `Row ${i} isn't flagged, but the flagged columns cross it: ${changed === 1 ? "1 cell becomes" : `${changed} cells become`} 0.` : `Row ${i}: nothing to change.`,
+              view: view({ pass: 2, row: i }),
+            });
+          }
+          steps.push({ line: "fill", note: `Done. Two passes over the matrix: O(m·n) time, O(m + n) extra space for the flags.`, view: view({ final: true }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0073-set-matrix-zeroes/approach3.visual.js -->
+    <script>
+      // Row 0 and column 0 hold the flags. matrix[0][0] flags row 0; col0_zero flags column 0. Fill the inside first, then row 0, then column 0.
+      DSAViz.register("0073-set-matrix-zeroes/approach3", {
+        inputs: [{ name: "matrix", type: "int[][]", value: "[[1, 1, 1, 1], [1, 0, 1, 1], [1, 1, 1, 0], [0, 1, 1, 1]]", maxRows: 5, maxCols: 5, minValue: -99, maxValue: 99 }],
+        trace({ matrix }) {
+          const m = matrix.length;
+          const n = matrix[0].length;
+          if (matrix.some((r) => r.length !== n)) throw new DSAViz.InputError("every row must have the same length, like [[1, 0], [3, 4]].");
+          const mat = matrix.map((r) => r.slice());
+          const idx = (k) => [...Array(k).keys()];
+          let col0 = false;
+          const steps = [];
+          const view = (o = {}) => {
+            const marks = {};
+            for (let j = 0; j < n; j++) marks[`0,${j}`] = "window"; // the flag row
+            for (let i = 0; i < m; i++) marks[`${i},0`] = "window"; // the flag column
+            (o.found || []).forEach(([i, j]) => (marks[`${i},${j}`] = "active"));
+            (o.flags || []).forEach(([i, j]) => (marks[`${i},${j}`] = "compare"));
+            (o.changed || []).forEach(([i, j]) => (marks[`${i},${j}`] = "new"));
+            if (o.final) for (let i = 0; i < m; i++) for (let j = 0; j < n; j++) marks[`${i},${j}`] = mat[i][j] === 0 ? "match" : "";
+            return [
+              { type: "grid", label: "matrix (outlined: row 0 and column 0, used as the flags)", rows: idx(m), cols: idx(n), cells: mat.map((r) => r.slice()), marks },
+              { type: "vars", items: [{ name: "col0_zero", value: col0 ? "True" : "False", mark: o.col0 ? "new" : "" }] },
+            ];
+          };
+          steps.push({
+            line: "init",
+            note: `No extra arrays: write the flags into row 0 and column 0 themselves. matrix[0][0] can only be one flag, so it's row 0's, and column 0 gets the extra variable col0_zero.`,
+            view: view(),
+          });
+          for (let i = 0; i < m; i++) {
+            const found = [];
+            const flags = [];
+            let hit0 = false;
+            if (mat[i][0] === 0) {
+              col0 = true;
+              hit0 = true;
+              found.push([i, 0]);
+            }
+            for (let j = 1; j < n; j++) if (mat[i][j] === 0) {
+              found.push([i, j]);
+              mat[i][0] = 0;
+              mat[0][j] = 0;
+              flags.push([i, 0], [0, j]);
+            }
+            const inner = found.filter(([, j]) => j > 0).map(([, j]) => j);
+            let note = `Row ${i}: `;
+            if (!found.length) note += `no zeros.`;
+            else {
+              if (hit0) note += `column 0 has a 0, so col0_zero = True. `;
+              if (inner.length) note += `zero${inner.length === 1 ? "" : "s"} at column${inner.length === 1 ? "" : "s"} ${inner.join(", ")}: write 0 into matrix[${i}][0] (flag row ${i}) and matrix[0][${inner.join("], matrix[0][")}] (flag ${inner.length === 1 ? "that column" : "those columns"}).`;
+            }
+            steps.push({ line: "mark", note: note.trim(), view: view({ found, flags, col0: hit0 }) });
+          }
+          for (let i = 1; i < m && n > 1; i++) {
+            const changed = [];
+            for (let j = 1; j < n; j++) if ((mat[i][0] === 0 || mat[0][j] === 0) && mat[i][j] !== 0) {
+              mat[i][j] = 0;
+              changed.push([i, j]);
+            }
+            steps.push({
+              line: "fill",
+              note: `Inside, row ${i}: a cell becomes 0 if its row flag matrix[${i}][0] or its column flag matrix[0][j] is 0. ${changed.length ? `${changed.length} cell${changed.length === 1 ? "" : "s"} changed.` : "Nothing changes."}`,
+              view: view({ changed }),
+            });
+          }
+          if (m === 1 || n === 1) steps.push({ line: "fill", note: `Only one ${m === 1 ? "row" : "column"}, so there's no inside to fill: everything is in the flag row or column.`, view: view() });
+          const r0 = mat[0][0] === 0;
+          const c1 = [];
+          if (r0) for (let j = 0; j < n; j++) if (mat[0][j] !== 0) {
+            mat[0][j] = 0;
+            c1.push([0, j]);
+          }
+          steps.push({
+            line: "row0",
+            note: r0 ? `matrix[0][0] is 0: row 0 had a zero, so all of row 0 becomes 0. This comes after the inside, which still needed the column flags in row 0.` : `matrix[0][0] isn't 0: row 0 had no zero, so it stays. Any 0 written into it as a column flag is right anyway: that whole column is zero.`,
+            view: view({ changed: c1 }),
+          });
+          const c2 = [];
+          if (col0) for (let i = 0; i < m; i++) if (mat[i][0] !== 0) {
+            mat[i][0] = 0;
+            c2.push([i, 0]);
+          }
+          steps.push({
+            line: "col0",
+            note: col0 ? `col0_zero is True: column 0 had a zero, so all of column 0 becomes 0. Last, because the inside and row 0 read its flags.` : `col0_zero is False: column 0 keeps its values.`,
+            view: view({ changed: c2, col0 }),
+          });
+          steps.push({ line: "col0", note: `Done. Two passes over the matrix and O(1) extra space: the flags live inside the matrix.`, view: view({ final: true }) });
           return steps;
         },
       });
