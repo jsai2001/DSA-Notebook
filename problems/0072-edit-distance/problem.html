@@ -1,0 +1,240 @@
+<details class="question" data-group="dynamic-programming" data-tags="string dynamic-programming dp levenshtein edit-distance memoization insert delete replace table">
+  <summary>
+    <span class="q-title">72. Edit Distance</span>
+    <span class="q-meta">
+      <span class="badge hard">Hard</span>
+      <span class="tag">String</span>
+      <span class="tag">Dynamic Programming</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Let <code>dp[i][j]</code> be the edits to turn
+      the first <code>i</code> letters of <code>word1</code> into the first
+      <code>j</code> of <code>word2</code>. Look at the <strong>last
+      letters</strong>: if they match, <code>dp[i][j] = dp[i−1][j−1]</code>;
+      otherwise it's <code>1 + min(</code>replace <code>dp[i−1][j−1]</code>,
+      delete <code>dp[i−1][j]</code>, insert <code>dp[i][j−1])</code>. The
+      edges are <code>dp[i][0] = i</code> and <code>dp[0][j] = j</code>. O(m·n)
+      time; one row is enough for O(min(m, n)) space.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/edit-distance/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given two strings <code>word1</code> and <code>word2</code>, return the
+        minimum number of operations to turn <code>word1</code> into
+        <code>word2</code>. Each operation is one of: <strong>insert</strong> a
+        character, <strong>delete</strong> a character, or
+        <strong>replace</strong> a character.
+      </p>
+      <ul>
+        <li><code>0 &lt;= word1.length, word2.length &lt;= 500</code>: either word can be empty.</li>
+        <li>Both are lowercase English letters.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>"horse"</code> → <code>"ros"</code> is <code>3</code>
+        (replace h with r, delete r, delete e);
+        <code>"intention"</code> → <code>"execution"</code> is <code>5</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>""</code>, <code>""</code></td>
+              <td><code>0</code></td>
+              <td>Both empty. The table is a single cell, <code>dp[0][0] = 0</code>.</td>
+            </tr>
+            <tr>
+              <td><code>"abc"</code>, <code>""</code></td>
+              <td><code>3</code></td>
+              <td>Delete everything. Leaving the first column at 0 (no <code>dp[i][0] = i</code>) gives 0 here, and 2 for "horse" → "ros".</td>
+            </tr>
+            <tr>
+              <td><code>"a"</code>, <code>"a"</code></td>
+              <td><code>0</code></td>
+              <td>Matching letters cost nothing. Adding 1 even when they match gives 1 (and 5 for "horse" → "ros").</td>
+            </tr>
+            <tr>
+              <td><code>"a"</code>, <code>"b"</code></td>
+              <td><code>1</code></td>
+              <td>One replace. Without replace (only insert and delete) it takes 2.</td>
+            </tr>
+            <tr>
+              <td><code>"ab"</code>, <code>"ba"</code></td>
+              <td><code>2</code></td>
+              <td>There's no "swap" operation: two replaces (or delete + insert).</td>
+            </tr>
+            <tr>
+              <td><code>"intention"</code>, <code>"execution"</code></td>
+              <td><code>5</code></td>
+              <td>Same length but not 9: "tion" lines up. Counting only inserts and deletes, <code>m + n − 2·LCS</code>, gives 8.</td>
+            </tr>
+            <tr>
+              <td><code>"aaaaaaaaaaa"</code>, <code>"bbbbbbbbbbb"</code></td>
+              <td><code>11</code></td>
+              <td>Recursion without a memo tries three branches at every pair: 8.4 s in Python here for 11 letters each, about 5× slower per extra letter.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Recursion with Memo</h2>
+      <p class="intuition">
+        <code>dist(i, j)</code> turns <code>word1[i:]</code> into
+        <code>word2[j:]</code>. Look at the first letters left: if they match,
+        keep them, <code>dist(i + 1, j + 1)</code>. If not, do one edit and
+        recurse: replace <code>(i + 1, j + 1)</code>, delete
+        <code>(i + 1, j)</code>, or insert <code>(i, j + 1)</code>, whichever
+        is cheapest.
+      </p>
+      <ul>
+        <li>When <code>word1</code> runs out, insert the rest of <code>word2</code>; when <code>word2</code> runs out, delete the rest of <code>word1</code>.</li>
+        <li>There are only <code>(m + 1)(n + 1)</code> different <code>(i, j)</code>, so the memo makes it polynomial.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n)</span>
+        <span><strong>Space</strong> O(m·n), plus O(m + n) call depth</span>
+      </div>
+      <p class="note">
+        The most natural way to find the recurrence. At the limits (500 × 500)
+        it took 210 ms in Python here, about 5 times slower than the table,
+        because of the calls and the dictionary.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: The DP Table</h2>
+      <p class="intuition">
+        The same recurrence, filled in row by row. <code>dp[i][j]</code> is for
+        the first <code>i</code> letters of <code>word1</code> and the first
+        <code>j</code> of <code>word2</code>, so it only needs the cells above,
+        to the left and above-left, which are already filled.
+      </p>
+      <ul>
+        <li>↖ replace (or keep, if the letters match), ↑ delete <code>word1</code>'s letter, ← insert <code>word2</code>'s letter.</li>
+        <li>Fill the first row and column first: <code>dp[0][j] = j</code>, <code>dp[i][0] = i</code>.</li>
+        <li>Walking back from <code>dp[m][n]</code> along the choices gives the actual edits, not just their number.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n)</span>
+        <span><strong>Space</strong> O(m·n)</span>
+      </div>
+      <p class="note">
+        The standard answer (the Levenshtein distance). 45 ms in Python at the
+        limits. Keep the full table if you need to print the edits.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: One Row
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Each row only uses the row above, so keep one array and overwrite it
+        left to right. Before <code>row[j]</code> is overwritten it still holds
+        the cell above; <code>row[j − 1]</code> already holds the new cell to
+        the left. The above-left cell is gone by then, so save it in
+        <code>diag</code> first.
+      </p>
+      <ul>
+        <li>At the start of each row: <code>diag = row[0]</code>, then <code>row[0] = i</code>.</li>
+        <li>After each cell: <code>diag</code> = the old <code>row[j]</code>, for the next cell.</li>
+        <li>Swap the words so the row runs over the shorter one: the distance is the same both ways.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n)</span>
+        <span><strong>Space</strong> O(min(m, n))</span>
+      </div>
+      <p class="note">
+        31 ms in Python at the limits, and far less memory. It gives the number
+        only; you can't read the edits back from one row.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        None of the standard libraries has an edit distance function. Python's
+        <code>difflib</code> compares sequences, but its similarity ratio isn't
+        this distance. In real projects people use a library such as
+        <code>rapidfuzz</code> (Python) or Apache Commons Text's
+        <code>LevenshteinDistance</code> (Java), which aren't available on
+        LeetCode.
+      </p>
+      <p class="note">
+        Write Approach 2, then mention Approach 3. The two things people get
+        wrong: the first row and column (<code>i</code> and <code>j</code>, not
+        0), and no +1 when the letters match.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Recursion with Memo</th>
+              <td>dist(i, j) on what's left of both words</td>
+              <td>O(m·n)</td>
+              <td>O(m·n)</td>
+              <td>210 ms in Python at the limits</td>
+            </tr>
+            <tr>
+              <th scope="row">The DP Table</th>
+              <td>↖ / ↑ / ← plus 1, or ↖ free on a match</td>
+              <td>O(m·n)</td>
+              <td>O(m·n)</td>
+              <td>Standard; can list the edits</td>
+            </tr>
+            <tr>
+              <th scope="row">One Row</th>
+              <td>The table, one row and a saved diagonal</td>
+              <td>O(m·n)</td>
+              <td>O(min(m, n))</td>
+              <td>Least memory; number only</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
