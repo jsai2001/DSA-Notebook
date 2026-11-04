@@ -3227,7 +3227,7 @@
       <details class="pattern-group" id="g-binary-search">
         <summary>
           <span class="g-name">Binary Search</span>
-          <span class="g-count"><span class="g-total">2 problems</span></span>
+          <span class="g-count"><span class="g-total">3 problems</span></span>
           <span class="g-hint">Halve the search space each step</span>
         </summary>
         <div class="g-body">
@@ -4307,6 +4307,451 @@
                         <td>O(log n)</td>
                         <td>O(1)</td>
                         <td>Expected answer; mind <code>&lt;=</code> when lo == mid</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0074-search-a-2d-matrix ===== -->
+          <details class="question" data-group="binary-search" data-tags="array binary-search matrix sorted 2d staircase flatten">
+            <summary>
+              <span class="q-title">74. Search a 2D Matrix</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Array</span>
+                <span class="tag">Binary Search</span>
+                <span class="tag">Matrix</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Each row is sorted and starts above the
+                previous row's end, so <strong>read row by row, the matrix is one sorted
+                list</strong> of <code>m·n</code> numbers. Binary search positions
+                <code>0 … m·n − 1</code>, and turn a position <code>p</code> into the cell
+                <code>(p // n, p % n)</code>, dividing by the <em>row length</em>
+                <code>n</code>. O(log(m·n)).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/search-a-2d-matrix/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  You're given an <code>m × n</code> integer matrix where each row is
+                  sorted in non-decreasing order, and the first number of each row is
+                  greater than the last number of the row before it. Return
+                  <code>true</code> if <code>target</code> is in the matrix. Aim for
+                  O(log(m·n)) time.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= m, n &lt;= 100</code> and <code>-10⁴ &lt;= matrix[i][j], target &lt;= 10⁴</code>.</li>
+                  <li>Values can repeat inside a row (non-decreasing), but never across rows.</li>
+                </ul>
+                <p class="note">
+                  Examples: <code>[[1,3,5,7],[10,11,16,20],[23,30,34,60]]</code> with
+                  <code>target = 3</code> → <code>true</code>; with
+                  <code>target = 13</code> → <code>false</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[[1]]</code>, <code>1</code></td>
+                        <td><code>true</code></td>
+                        <td>One cell: <code>lo = hi = 0</code>. With <code>while lo &lt; hi</code> the loop never runs and you return false.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[1,3,5]]</code>, <code>5</code></td>
+                        <td><code>true</code></td>
+                        <td>A single row. Turning a position into a cell with the number of rows (<code>p // m</code>) instead of the row length (<code>p // n</code>) reads row 1 on the first step, and there's only row 0: IndexError.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[1,3]]</code>, <code>9</code></td>
+                        <td><code>false</code></td>
+                        <td>Bigger than everything. With <code>hi = m·n</code> instead of <code>m·n − 1</code>, the search reads one past the end (IndexError).</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[1,3],[5,7]]</code>, <code>3</code></td>
+                        <td><code>true</code></td>
+                        <td>The staircase walk must start at the top-right (or bottom-left). From the top-left, both moves make the value bigger, so there's no way to choose: it misses 3.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[1,3],[5,7]]</code>, <code>5</code></td>
+                        <td><code>true</code></td>
+                        <td>The target is a row's first value. Picking the row with "first value &lt; target" (<code>bisect_left</code>) chooses the row before it and says false.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[1,3,5]]</code>, <code>0</code> / <code>[[1,3,5]]</code>, <code>4</code></td>
+                        <td><code>false</code> / <code>false</code></td>
+                        <td>Smaller than everything, and between two values: the search has to end with nothing left, not a wrong neighbour.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[1,1,1],[2,2,2]]</code>, <code>2</code></td>
+                        <td><code>true</code></td>
+                        <td>Repeats inside a row are allowed; the flattened list is still sorted, so binary search still works.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Check Every Cell</h2>
+                <p class="intuition">
+                  Look at every value, row by row, and return true when one matches.
+                </p>
+                <ul>
+                  <li>Correct for any matrix, sorted or not, because it doesn't rely on the order at all.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(m·n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  At most 10⁴ cells, so it passes, but it ignores everything the problem
+                  tells you. About 0.2 ms per call on a full 100 × 100 in Python here,
+                  against about 0.003 ms for binary search.
+                </p>
+                <div class="code-tabs" data-viz="0074-search-a-2d-matrix/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"row":[3],"cell":[4,5],"found":[6],"return":[7]}'>
+                    class Solution(object):
+                        def searchMatrix(self, matrix, target):
+                            for row in matrix:
+                                for value in row:  # look at every cell
+                                    if value == target:
+                                        return True
+                            return False
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"row":[5],"cell":[6,7],"found":[8],"return":[12]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool searchMatrix(std::vector<std::vector<int>>& matrix, int target) {
+                            for (const auto& row : matrix) {
+                                for (int value : row) { // look at every cell
+                                    if (value == target) {
+                                        return true;
+                                    }
+                                }
+                            }
+                            return false;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"row":[3],"cell":[4,5],"found":[6],"return":[10]}'>
+                    class Solution {
+                        public boolean searchMatrix(int[][] matrix, int target) {
+                            for (int[] row : matrix) {
+                                for (int value : row) { // look at every cell
+                                    if (value == target) {
+                                        return true;
+                                    }
+                                }
+                            }
+                            return false;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Staircase from the Top-Right</h2>
+                <p class="intuition">
+                  At the top-right corner, everything to the left is smaller and
+                  everything below is bigger. If the value is too big, the rest of its
+                  column is bigger still: move left. If it's too small, the rest of its
+                  row is smaller still: move down. Each step drops a row or a column.
+                </p>
+                <ul>
+                  <li>At most <code>m + n − 1</code> steps before you walk off the matrix.</li>
+                  <li>It only needs each row and each column sorted, so it also solves Search a 2D Matrix II (240), where binary search on the flattened list doesn't work.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(m + n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  Easy to get right, and the version to remember for 240. Here it uses
+                  less than the problem gives you: it never needs "each row starts above
+                  the previous one".
+                </p>
+                <div class="code-tabs" data-viz="0074-search-a-2d-matrix/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4],"loop":[5,6],"found":[7,8],"left":[9,10],"down":[11,12],"return":[13]}'>
+                    class Solution(object):
+                        def searchMatrix(self, matrix, target):
+                            # Start at the top-right corner: everything to its left is smaller, everything below is bigger.
+                            r, c = 0, len(matrix[0]) - 1
+                            while r < len(matrix) and c >= 0:
+                                value = matrix[r][c]
+                                if value == target:
+                                    return True
+                                if value > target:  # too big: the whole column below is bigger still
+                                    c -= 1
+                                else:  # too small: the rest of this row is to the left, smaller still
+                                    r += 1
+                            return False  # walked off the matrix
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"loop":[7,8],"found":[9,10],"left":[12,13],"down":[14,15],"return":[18]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool searchMatrix(std::vector<std::vector<int>>& matrix, int target) {
+                            // Start at the top-right corner: everything to its left is smaller, everything below is bigger.
+                            int r = 0, c = (int)matrix[0].size() - 1;
+                            while (r < (int)matrix.size() && c >= 0) {
+                                int value = matrix[r][c];
+                                if (value == target) {
+                                    return true;
+                                }
+                                if (value > target) { // too big: the whole column below is bigger still
+                                    --c;
+                                } else { // too small: the rest of this row is to the left, smaller still
+                                    ++r;
+                                }
+                            }
+                            return false; // walked off the matrix
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4],"loop":[5,6],"found":[7,8],"left":[10,11],"down":[12,13],"return":[16]}'>
+                    class Solution {
+                        public boolean searchMatrix(int[][] matrix, int target) {
+                            // Start at the top-right corner: everything to its left is smaller, everything below is bigger.
+                            int r = 0, c = matrix[0].length - 1;
+                            while (r < matrix.length && c >= 0) {
+                                int value = matrix[r][c];
+                                if (value == target) {
+                                    return true;
+                                }
+                                if (value > target) { // too big: the whole column below is bigger still
+                                    c--;
+                                } else { // too small: the rest of this row is to the left, smaller still
+                                    r++;
+                                }
+                            }
+                            return false; // walked off the matrix
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Binary Search the Flattened Matrix
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Number the cells row by row: position <code>p</code> is row
+                  <code>p // n</code>, column <code>p % n</code>. Because each row starts
+                  above the previous row's end, the values in that order are sorted, so
+                  an ordinary binary search over positions <code>0 … m·n − 1</code>
+                  works, without building the list.
+                </p>
+                <ul>
+                  <li>Divide by <code>n</code>, the number of columns (the row length), not by <code>m</code>.</li>
+                  <li>The usual binary search details: <code>hi = m·n − 1</code>, and loop while <code>lo &lt;= hi</code>.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(log(m·n))</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  The expected answer: at most 14 cells looked at for a 100 × 100 matrix.
+                  Two binary searches (first the row, then inside it) cost the same,
+                  O(log m + log n) = O(log(m·n)); that's the built-in version below.
+                </p>
+                <div class="code-tabs" data-viz="0074-search-a-2d-matrix/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5],"loop":[6,7,8],"found":[9,10],"right":[11,12],"left":[13,14],"return":[15]}'>
+                    class Solution(object):
+                        def searchMatrix(self, matrix, target):
+                            # Read row by row, the matrix is one sorted list of m * n numbers.
+                            m, n = len(matrix), len(matrix[0])
+                            lo, hi = 0, m * n - 1  # positions in that list
+                            while lo <= hi:
+                                mid = (lo + hi) // 2
+                                value = matrix[mid // n][mid % n]  # position -> (row, column): divide by the row length n
+                                if value == target:
+                                    return True
+                                if value < target:
+                                    lo = mid + 1  # the target is after mid
+                                else:
+                                    hi = mid - 1  # the target is before mid
+                            return False
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7],"loop":[8,9,10],"found":[11,12],"right":[14,15],"left":[16,17],"return":[20]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool searchMatrix(std::vector<std::vector<int>>& matrix, int target) {
+                            // Read row by row, the matrix is one sorted list of m * n numbers.
+                            int m = (int)matrix.size(), n = (int)matrix[0].size();
+                            int lo = 0, hi = m * n - 1; // positions in that list
+                            while (lo <= hi) {
+                                int mid = lo + (hi - lo) / 2;
+                                int value = matrix[mid / n][mid % n]; // position -> (row, column): divide by the row length n
+                                if (value == target) {
+                                    return true;
+                                }
+                                if (value < target) {
+                                    lo = mid + 1; // the target is after mid
+                                } else {
+                                    hi = mid - 1; // the target is before mid
+                                }
+                            }
+                            return false;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5],"loop":[6,7,8],"found":[9,10],"right":[12,13],"left":[14,15],"return":[18]}'>
+                    class Solution {
+                        public boolean searchMatrix(int[][] matrix, int target) {
+                            // Read row by row, the matrix is one sorted list of m * n numbers.
+                            int m = matrix.length, n = matrix[0].length;
+                            int lo = 0, hi = m * n - 1; // positions in that list
+                            while (lo <= hi) {
+                                int mid = lo + (hi - lo) / 2;
+                                int value = matrix[mid / n][mid % n]; // position -> (row, column): divide by the row length n
+                                if (value == target) {
+                                    return true;
+                                }
+                                if (value < target) {
+                                    lo = mid + 1; // the target is after mid
+                                } else {
+                                    hi = mid - 1; // the target is before mid
+                                }
+                            }
+                            return false;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  Two library binary searches: find the last row whose first value is
+                  <code>&lt;= target</code>, then search that row. Python's
+                  <code>bisect_right</code> takes a <code>key</code> since 3.10; C++ has
+                  <code>std::upper_bound</code> and <code>std::binary_search</code>; Java's
+                  <code>Arrays.binarySearch</code> searches the row, but the row itself
+                  has to be found with a short loop.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    from bisect import bisect_right
+                    class Solution(object):
+                        def searchMatrix(self, matrix, target):
+                            # The last row whose first value is <= target is the only row that can hold it.
+                            r = bisect_right(matrix, target, key=lambda row: row[0]) - 1  # key= needs Python 3.10+
+                            if r < 0:
+                                return False  # smaller than everything
+                            row = matrix[r]
+                            c = bisect_right(row, target) - 1
+                            return c >= 0 and row[c] == target
+                  </script>
+                  <script type="text/plain" data-lang="C++">
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool searchMatrix(std::vector<std::vector<int>>& matrix, int target) {
+                            // The first row whose first value is > target; the row before it is the only one that can hold it.
+                            auto after = std::upper_bound(matrix.begin(), matrix.end(), target,
+                                                          [](int t, const std::vector<int>& row) { return t < row[0]; });
+                            if (after == matrix.begin()) return false; // smaller than everything
+                            const std::vector<int>& row = *(after - 1);
+                            return std::binary_search(row.begin(), row.end(), target);
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java">
+                    import java.util.Arrays;
+                    class Solution {
+                        public boolean searchMatrix(int[][] matrix, int target) {
+                            // Find the last row whose first value is <= target (Java has no binary search by a key for this).
+                            int lo = 0, hi = matrix.length - 1, r = -1;
+                            while (lo <= hi) {
+                                int mid = (lo + hi) >>> 1;
+                                if (matrix[mid][0] <= target) { r = mid; lo = mid + 1; } else hi = mid - 1;
+                            }
+                            // Arrays.binarySearch returns a negative number when the value isn't there
+                            return r >= 0 && Arrays.binarySearch(matrix[r], target) >= 0;
+                        }
+                    }
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(log m + log n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  All three pass every test here. Use <code>bisect_right</code> (first
+                  value <code>&lt;= target</code>), not <code>bisect_left</code>: the
+                  target can be the first value of a row.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Check Every Cell</th>
+                        <td>Scan</td>
+                        <td>O(m·n)</td>
+                        <td>O(1)</td>
+                        <td>Ignores the sorting</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Staircase from the Top-Right</th>
+                        <td>Drop a row or a column per step</td>
+                        <td>O(m + n)</td>
+                        <td>O(1)</td>
+                        <td>Also solves 240</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Binary Search the Flattened Matrix</th>
+                        <td>Position p → (p // n, p % n)</td>
+                        <td>O(log(m·n))</td>
+                        <td>O(1)</td>
+                        <td>Expected answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -28874,6 +29319,195 @@
             view: view({ changed: c2, col0 }),
           });
           steps.push({ line: "col0", note: `Done. Two passes over the matrix and O(1) extra space: the flags live inside the matrix.`, view: view({ final: true }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0074-search-a-2d-matrix/approach1.visual.js -->
+    <script>
+      // Look at every cell, row by row, until the target turns up.
+      DSAViz.register("0074-search-a-2d-matrix/approach1", {
+        inputs: [
+          { name: "matrix", type: "int[][]", value: "[[1, 3, 5, 7], [10, 11, 16, 20], [23, 30, 34, 60]]", maxRows: 5, maxCols: 5, minValue: -99, maxValue: 99 },
+          { name: "target", type: "int", value: "16", min: -99, max: 99 },
+        ],
+        trace({ matrix, target }) {
+          const m = matrix.length;
+          const n = matrix[0].length;
+          if (matrix.some((r) => r.length !== n)) throw new DSAViz.InputError("every row must have the same length, like [[1, 3], [5, 7]].");
+          const flat = matrix.flat();
+          if (flat.some((v, k) => k && (k % n === 0 ? v <= flat[k - 1] : v < flat[k - 1])))
+            throw new DSAViz.InputError("each row must be sorted, and each row must start above the previous row's last value (the problem promises this).");
+          const idx = (k) => [...Array(k).keys()];
+          const steps = [];
+          let looked = 0;
+          let passed = false; // has a cell bigger than the target been seen yet?
+          const view = (at, o = {}) => {
+            const marks = {};
+            for (let k = 0; k < looked - (at ? 1 : 0); k++) marks[`${Math.floor(k / n)},${k % n}`] = "visited";
+            if (at) marks[`${at[0]},${at[1]}`] = o.hit ? "match" : "active";
+            return [
+              { type: "grid", label: `matrix (looking for ${target})`, rows: idx(m), cols: idx(n), cells: matrix.map((r) => r.slice()), marks },
+              { type: "vars", items: [{ name: "cells looked at", value: looked }] },
+            ];
+          };
+          for (let i = 0; i < m; i++) {
+            for (let j = 0; j < n; j++) {
+              looked++;
+              const v = matrix[i][j];
+              if (v === target) {
+                steps.push({ line: ["row", "cell", "found"], note: `matrix[${i}][${j}] = ${v}: found it. Return true.`, view: view([i, j], { hit: true }) });
+                return steps;
+              }
+              const first = v > target && !passed;
+              steps.push({ line: ["row", "cell"], note: `matrix[${i}][${j}] = ${v} ≠ ${target}.${v > target && !passed ? " It's already bigger than the target, so the rest can't match, but this approach doesn't use the sorting and keeps going." : ""}`, view: view([i, j]) });
+              if (first) passed = true;
+            }
+          }
+          steps.push({ line: "return", note: `Every one of the ${m * n} cells checked: ${target} isn't there. Return false. O(m·n), and it never uses the sorting.`, view: view(null) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0074-search-a-2d-matrix/approach2.visual.js -->
+    <script>
+      // From the top-right corner: too big → go left (drop the column), too small → go down (drop the row).
+      DSAViz.register("0074-search-a-2d-matrix/approach2", {
+        inputs: [
+          { name: "matrix", type: "int[][]", value: "[[1, 3, 5, 7], [10, 11, 16, 20], [23, 30, 34, 60]]", maxRows: 5, maxCols: 5, minValue: -99, maxValue: 99 },
+          { name: "target", type: "int", value: "30", min: -99, max: 99 },
+        ],
+        trace({ matrix, target }) {
+          const m = matrix.length;
+          const n = matrix[0].length;
+          if (matrix.some((r) => r.length !== n)) throw new DSAViz.InputError("every row must have the same length, like [[1, 3], [5, 7]].");
+          const flat = matrix.flat();
+          if (flat.some((v, k) => k && (k % n === 0 ? v <= flat[k - 1] : v < flat[k - 1])))
+            throw new DSAViz.InputError("each row must be sorted, and each row must start above the previous row's last value (the problem promises this).");
+          const idx = (k) => [...Array(k).keys()];
+          const steps = [];
+          let r = 0;
+          let c = n - 1;
+          let looked = 0;
+          const view = (o = {}) => {
+            const marks = {};
+            for (let i = 0; i < m; i++) for (let j = 0; j < n; j++) if (i < r || j > c) marks[`${i},${j}`] = "visited";
+            for (let i = r; i < m; i++) for (let j = 0; j <= c; j++) marks[`${i},${j}`] = "window";
+            if (r < m && c >= 0) marks[`${r},${c}`] = o.hit ? "match" : "active";
+            return [
+              { type: "grid", label: `matrix (outlined = where ${target} could still be)`, rows: idx(m), cols: idx(n), cells: matrix.map((x) => x.slice()), marks },
+              { type: "vars", items: [{ name: "(r, c)", value: r < m && c >= 0 ? `(${r}, ${c})` : "off the matrix" }, { name: "cells looked at", value: looked }] },
+            ];
+          };
+          steps.push({ line: "init", note: `Start at the top-right corner, ${matrix[0][n - 1]}. Everything to its left is smaller and everything below it is bigger, so one comparison always rules out a whole row or column.`, view: view() });
+          while (r < m && c >= 0) {
+            const v = matrix[r][c];
+            looked++;
+            if (v === target) {
+              steps.push({ line: ["loop", "found"], note: `matrix[${r}][${c}] = ${v}: found it. Return true.`, view: view({ hit: true }) });
+              return steps;
+            }
+            if (v > target) {
+              c--;
+              steps.push({ line: ["loop", "found", "left"], note: `${v} > ${target}: everything below ${v} in column ${c + 1} is even bigger. Drop that column: move left.`, view: view() });
+            } else {
+              r++;
+              steps.push({ line: ["loop", "found", "left", "down"], note: `${v} < ${target}: everything left of ${v} in row ${r - 1} is even smaller. Drop that row: move down.`, view: view() });
+            }
+          }
+          steps.push({ line: ["loop", "return"], note: `Walked off the matrix: no row or column is left that could hold ${target}. Return false. ${looked} cell${looked === 1 ? "" : "s"} looked at; at most m + n − 1, so O(m + n).`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0074-search-a-2d-matrix/approach3.visual.js -->
+    <script>
+      // Read row by row, the matrix is one sorted list; binary search it, turning a position into (pos // n, pos % n).
+      DSAViz.register("0074-search-a-2d-matrix/approach3", {
+        inputs: [
+          { name: "matrix", type: "int[][]", value: "[[1, 3, 5, 7], [10, 11, 16, 20], [23, 30, 34, 60]]", maxRows: 5, maxCols: 5, minValue: -99, maxValue: 99 },
+          { name: "target", type: "int", value: "34", min: -99, max: 99 },
+        ],
+        trace({ matrix, target }) {
+          const m = matrix.length;
+          const n = matrix[0].length;
+          if (matrix.some((r) => r.length !== n)) throw new DSAViz.InputError("every row must have the same length, like [[1, 3], [5, 7]].");
+          const flat = matrix.flat();
+          if (flat.some((v, k) => k && (k % n === 0 ? v <= flat[k - 1] : v < flat[k - 1])))
+            throw new DSAViz.InputError("each row must be sorted, and each row must start above the previous row's last value (the problem promises this).");
+          const idx = (k) => [...Array(k).keys()];
+          const steps = [];
+          let lo = 0;
+          let hi = m * n - 1;
+          let looked = 0;
+          const view = (mid, o = {}) => {
+            const gm = {};
+            const fm = {};
+            for (let k = 0; k < m * n; k++) {
+              const key = `${Math.floor(k / n)},${k % n}`;
+              const inside = k >= lo && k <= hi;
+              gm[key] = inside ? "window" : "visited";
+              fm[k] = inside ? "window" : "visited";
+            }
+            if (mid !== undefined) {
+              gm[`${Math.floor(mid / n)},${mid % n}`] = o.hit ? "match" : "active";
+              fm[mid] = o.hit ? "match" : "active";
+            }
+            const pointers = {};
+            const add = (name, k) => {
+              if (k < 0 || k >= m * n) return;
+              const key = Object.keys(pointers).find((x) => pointers[x] === k);
+              if (key) {
+                delete pointers[key];
+                pointers[`${key}, ${name}`] = k;
+              } else pointers[name] = k;
+            };
+            if (lo <= hi) {
+              add("lo", lo);
+              if (mid !== undefined) add("mid", mid);
+              add("hi", hi);
+            }
+            return [
+              { type: "array", label: "the matrix read row by row (outlined = the range searched this step)", values: flat, compact: true, marks: fm, pointers },
+              { type: "grid", label: "the same cells in the matrix", rows: idx(m), cols: idx(n), cells: matrix.map((x) => x.slice()), marks: gm },
+              { type: "vars", items: [{ name: "lo", value: o.after ? o.after[0] : lo, mark: o.after && o.after[0] !== lo ? "new" : "" }, { name: "hi", value: o.after ? o.after[1] : hi, mark: o.after && o.after[1] !== hi ? "new" : "" }, { name: "cells looked at", value: looked }] },
+            ];
+          };
+          steps.push({
+            line: "init",
+            note: `Each row starts above the previous row's end, so read row by row the ${m * n === 1 ? "single value is a sorted list" : `${m * n} values are one sorted list`}. Binary search positions 0 … ${m * n - 1}.`,
+            view: view(undefined),
+          });
+          while (lo <= hi) {
+            const mid = Math.floor((lo + hi) / 2);
+            const r = Math.floor(mid / n);
+            const c = mid % n;
+            const v = matrix[r][c];
+            looked++;
+            if (v === target) {
+              steps.push({ line: ["loop", "found"], note: `mid = ${mid} → row ${mid} ÷ ${n} = ${r}, column ${mid} mod ${n} = ${c}: matrix[${r}][${c}] = ${v}. Found it. Return true.`, view: view(mid, { hit: true }) });
+              return steps;
+            }
+            const before = [lo, hi];
+            if (v < target) lo = mid + 1;
+            else hi = mid - 1;
+            steps.push({
+              line: v < target ? ["loop", "found", "right"] : ["loop", "found", "right", "left"],
+              note: `mid = ${mid} → (${r}, ${c}) = ${v}. ${v < target ? `${v} < ${target}: the target is after it, lo = ${lo}.` : `${v} > ${target}: the target is before it, hi = ${hi}.`} ${hi - lo + 1 > 0 ? `${hi - lo + 1} position${hi - lo + 1 === 1 ? "" : "s"} left.` : ""}`.trim(),
+              view: (() => {
+                const now = [lo, hi];
+                [lo, hi] = before;
+                const w = view(mid, { after: now });
+                [lo, hi] = now;
+                return w;
+              })(),
+            });
+          }
+          steps.push({
+            line: ["loop", "return"],
+            note: `lo = ${lo} > hi = ${hi}: no positions left, so ${target} isn't in the matrix. Return false. ${looked} cell${looked === 1 ? "" : "s"} looked at for ${m * n}: O(log(m·n)).`,
+            view: view(undefined),
+          });
           return steps;
         },
       });

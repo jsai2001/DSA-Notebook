@@ -1,0 +1,238 @@
+<details class="question" data-group="binary-search" data-tags="array binary-search matrix sorted 2d staircase flatten">
+  <summary>
+    <span class="q-title">74. Search a 2D Matrix</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Binary Search</span>
+      <span class="tag">Matrix</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Each row is sorted and starts above the
+      previous row's end, so <strong>read row by row, the matrix is one sorted
+      list</strong> of <code>m·n</code> numbers. Binary search positions
+      <code>0 … m·n − 1</code>, and turn a position <code>p</code> into the cell
+      <code>(p // n, p % n)</code>, dividing by the <em>row length</em>
+      <code>n</code>. O(log(m·n)).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/search-a-2d-matrix/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        You're given an <code>m × n</code> integer matrix where each row is
+        sorted in non-decreasing order, and the first number of each row is
+        greater than the last number of the row before it. Return
+        <code>true</code> if <code>target</code> is in the matrix. Aim for
+        O(log(m·n)) time.
+      </p>
+      <ul>
+        <li><code>1 &lt;= m, n &lt;= 100</code> and <code>-10⁴ &lt;= matrix[i][j], target &lt;= 10⁴</code>.</li>
+        <li>Values can repeat inside a row (non-decreasing), but never across rows.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[[1,3,5,7],[10,11,16,20],[23,30,34,60]]</code> with
+        <code>target = 3</code> → <code>true</code>; with
+        <code>target = 13</code> → <code>false</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[[1]]</code>, <code>1</code></td>
+              <td><code>true</code></td>
+              <td>One cell: <code>lo = hi = 0</code>. With <code>while lo &lt; hi</code> the loop never runs and you return false.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,3,5]]</code>, <code>5</code></td>
+              <td><code>true</code></td>
+              <td>A single row. Turning a position into a cell with the number of rows (<code>p // m</code>) instead of the row length (<code>p // n</code>) reads row 1 on the first step, and there's only row 0: IndexError.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,3]]</code>, <code>9</code></td>
+              <td><code>false</code></td>
+              <td>Bigger than everything. With <code>hi = m·n</code> instead of <code>m·n − 1</code>, the search reads one past the end (IndexError).</td>
+            </tr>
+            <tr>
+              <td><code>[[1,3],[5,7]]</code>, <code>3</code></td>
+              <td><code>true</code></td>
+              <td>The staircase walk must start at the top-right (or bottom-left). From the top-left, both moves make the value bigger, so there's no way to choose: it misses 3.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,3],[5,7]]</code>, <code>5</code></td>
+              <td><code>true</code></td>
+              <td>The target is a row's first value. Picking the row with "first value &lt; target" (<code>bisect_left</code>) chooses the row before it and says false.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,3,5]]</code>, <code>0</code> / <code>[[1,3,5]]</code>, <code>4</code></td>
+              <td><code>false</code> / <code>false</code></td>
+              <td>Smaller than everything, and between two values: the search has to end with nothing left, not a wrong neighbour.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,1,1],[2,2,2]]</code>, <code>2</code></td>
+              <td><code>true</code></td>
+              <td>Repeats inside a row are allowed; the flattened list is still sorted, so binary search still works.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Check Every Cell</h2>
+      <p class="intuition">
+        Look at every value, row by row, and return true when one matches.
+      </p>
+      <ul>
+        <li>Correct for any matrix, sorted or not, because it doesn't rely on the order at all.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        At most 10⁴ cells, so it passes, but it ignores everything the problem
+        tells you. About 0.2 ms per call on a full 100 × 100 in Python here,
+        against about 0.003 ms for binary search.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Staircase from the Top-Right</h2>
+      <p class="intuition">
+        At the top-right corner, everything to the left is smaller and
+        everything below is bigger. If the value is too big, the rest of its
+        column is bigger still: move left. If it's too small, the rest of its
+        row is smaller still: move down. Each step drops a row or a column.
+      </p>
+      <ul>
+        <li>At most <code>m + n − 1</code> steps before you walk off the matrix.</li>
+        <li>It only needs each row and each column sorted, so it also solves Search a 2D Matrix II (240), where binary search on the flattened list doesn't work.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m + n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Easy to get right, and the version to remember for 240. Here it uses
+        less than the problem gives you: it never needs "each row starts above
+        the previous one".
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Binary Search the Flattened Matrix
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Number the cells row by row: position <code>p</code> is row
+        <code>p // n</code>, column <code>p % n</code>. Because each row starts
+        above the previous row's end, the values in that order are sorted, so
+        an ordinary binary search over positions <code>0 … m·n − 1</code>
+        works, without building the list.
+      </p>
+      <ul>
+        <li>Divide by <code>n</code>, the number of columns (the row length), not by <code>m</code>.</li>
+        <li>The usual binary search details: <code>hi = m·n − 1</code>, and loop while <code>lo &lt;= hi</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log(m·n))</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        The expected answer: at most 14 cells looked at for a 100 × 100 matrix.
+        Two binary searches (first the row, then inside it) cost the same,
+        O(log m + log n) = O(log(m·n)); that's the built-in version below.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Two library binary searches: find the last row whose first value is
+        <code>&lt;= target</code>, then search that row. Python's
+        <code>bisect_right</code> takes a <code>key</code> since 3.10; C++ has
+        <code>std::upper_bound</code> and <code>std::binary_search</code>; Java's
+        <code>Arrays.binarySearch</code> searches the row, but the row itself
+        has to be found with a short loop.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log m + log n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        All three pass every test here. Use <code>bisect_right</code> (first
+        value <code>&lt;= target</code>), not <code>bisect_left</code>: the
+        target can be the first value of a row.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Check Every Cell</th>
+              <td>Scan</td>
+              <td>O(m·n)</td>
+              <td>O(1)</td>
+              <td>Ignores the sorting</td>
+            </tr>
+            <tr>
+              <th scope="row">Staircase from the Top-Right</th>
+              <td>Drop a row or a column per step</td>
+              <td>O(m + n)</td>
+              <td>O(1)</td>
+              <td>Also solves 240</td>
+            </tr>
+            <tr>
+              <th scope="row">Binary Search the Flattened Matrix</th>
+              <td>Position p → (p // n, p % n)</td>
+              <td>O(log(m·n))</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
