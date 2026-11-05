@@ -1,0 +1,233 @@
+<details class="question" data-group="stack" data-tags="array stack monotonic-stack histogram rectangle">
+  <summary>
+    <span class="q-title">84. Largest Rectangle in Histogram</span>
+    <span class="q-meta">
+      <span class="badge hard">Hard</span>
+      <span class="tag">Array</span>
+      <span class="tag">Stack</span>
+      <span class="tag">Monotonic Stack</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> The best rectangle is as tall as its
+      <strong>shortest bar</strong>, and stretches until a shorter bar on each
+      side. Keep a stack of bars with rising heights. When a shorter bar
+      arrives, pop: the popped bar's right wall is the new bar, its left wall
+      is the bar below it on the stack. A height-0 bar at the end pops
+      everything. O(n).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/largest-rectangle-in-histogram/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>heights[i]</code> is the height of bar i in a histogram; every
+        bar is 1 wide. Return the area of the largest rectangle that fits
+        inside the histogram.
+      </p>
+      <ul>
+        <li><code>1 &lt;= heights.length &lt;= 10⁵</code> and <code>0 &lt;= heights[i] &lt;= 10⁴</code>.</li>
+        <li>The largest possible answer, 10⁵ · 10⁴ = 10⁹, fits in a 32-bit int.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[2,1,5,6,2,3]</code> → <code>10</code> (bars 5 and 6,
+        height 5, width 2); <code>[2,4]</code> → <code>4</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[5]</code></td>
+              <td><code>5</code></td>
+              <td>One bar: the rectangle is the bar itself.</td>
+            </tr>
+            <tr>
+              <td><code>[0]</code>, <code>[0,0]</code></td>
+              <td><code>0</code></td>
+              <td>Height 0 is allowed; the area is 0, not an error.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3,4,5]</code></td>
+              <td><code>9</code></td>
+              <td>Rising heights: nothing is ever popped during the loop. Without the height-0 bar at the end, the stack is never emptied and the answer comes out 0.</td>
+            </tr>
+            <tr>
+              <td><code>[5,4,3,2,1]</code></td>
+              <td><code>9</code></td>
+              <td>Falling heights: every bar pops the one before it right away.</td>
+            </tr>
+            <tr>
+              <td><code>[2,1,2]</code></td>
+              <td><code>3</code></td>
+              <td>The best rectangle uses the shortest bar across the whole width. When the stack is empty after a pop, the width is all of <code>0..i−1</code>; measuring it from the popped bar alone gives 2.</td>
+            </tr>
+            <tr>
+              <td><code>[3,3,3]</code></td>
+              <td><code>9</code></td>
+              <td>Equal heights. In Approach 2, at least one pass must pop equal bars (<code>&gt;=</code>). If both passes stop at an equal bar (<code>&gt;</code>), each 3 is boxed in by its neighbours and the answer comes out 3.</td>
+            </tr>
+            <tr>
+              <td><code>[2,1,5,6,2,3]</code></td>
+              <td><code>10</code></td>
+              <td>The best rectangle (5 × 2) isn't as tall as the tallest bar (6) or as wide as the whole array (1 × 6 = 6).</td>
+            </tr>
+            <tr>
+              <td>10⁵ bars, all 10⁴</td>
+              <td><code>1000000000</code></td>
+              <td>The largest answer: 10⁹ still fits in an int, so no <code>long</code> is needed.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Every Pair of Edges</h2>
+      <p class="intuition">
+        Pick a left edge <code>i</code>, then move the right edge
+        <code>j</code> outward one bar at a time. The rectangle over
+        <code>i..j</code> is as tall as the shortest bar in it, so keep a
+        running minimum instead of recomputing it.
+      </p>
+      <ul>
+        <li>Area of <code>i..j</code> = <code>low · (j − i + 1)</code>, with <code>low = min(heights[i..j])</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Correct, but 5.7 s in Python at only n = 10⁴, and 4.1 s in C++ at
+        n = 10⁵. Too slow for the limits.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Nearest Shorter Bar on Each Side</h2>
+      <p class="intuition">
+        Turn it around: for each bar, find the widest rectangle that is
+        exactly as tall as it. That rectangle stretches until the nearest
+        <strong>shorter</strong> bar on the left (<code>left[i]</code>) and on
+        the right (<code>right[i]</code>), so its width is
+        <code>right[i] − left[i] − 1</code>.
+      </p>
+      <ul>
+        <li>One pass from the left with a stack: pop every bar that isn't shorter than bar i; what's left on top is <code>left[i]</code>.</li>
+        <li>The same pass from the right gives <code>right[i]</code>. Then take the best <code>heights[i] · width</code>.</li>
+        <li>Each index is pushed and popped at most once per pass.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Easier to get right than Approach 3, since each pass answers one clear
+        question. 44 ms in Python at n = 10⁵.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: One Pass with a Monotonic Stack
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Do both sides at once. The stack holds bars with rising heights. When
+        bar <code>i</code> isn't taller than the top, the top bar has found its
+        right wall (<code>i</code>), and its left wall is the bar under it on
+        the stack (shorter, or it would have been popped). Pop it and score
+        <code>height · (i − left − 1)</code>.
+      </p>
+      <ul>
+        <li>After the last bar, pretend there's one more of height 0 at <code>i = n</code>: it pops everything still waiting.</li>
+        <li>An empty stack after a pop means no shorter bar on the left: <code>left = −1</code>, width <code>i</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n) for the stack</span>
+      </div>
+      <p class="note">
+        One pass and no extra arrays: 22 ms in Python and 0.8 ms in C++ at
+        n = 10⁵. The same stack, row by row, solves Maximal Rectangle (85).
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No library has a "largest rectangle" function, in Python, C++ or Java.
+        Write the stack.
+      </p>
+      <p class="note">
+        Remember two things: pop while the top isn't shorter, and add the
+        height-0 bar at the end. In Java, <code>ArrayDeque</code> is the stack
+        to use (<code>Stack</code> is old and synchronized).
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Every Pair of Edges</th>
+              <td>Running minimum from each left edge</td>
+              <td>O(n²)</td>
+              <td>O(1)</td>
+              <td>Too slow at n = 10⁵</td>
+            </tr>
+            <tr>
+              <th scope="row">Nearest Shorter Bar</th>
+              <td>Two stack passes, left[i] and right[i]</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Clearest O(n) answer</td>
+            </tr>
+            <tr>
+              <th scope="row">One-Pass Stack</th>
+              <td>Pop = right wall found; below it = left wall</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>One pass; needs the height-0 bar at the end</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
