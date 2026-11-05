@@ -30967,9 +30967,11 @@
     <script src="./present.js"></script>
     <!-- ===== DEMO ONLY: swipeable cards on phones (not part of the real site) ===== -->
   <style>
+    /* The page behind the cards never scrolls or bounces */
     html.deck-lock,
     html.deck-lock body {
       overflow: hidden;
+      overscroll-behavior: none;
     }
 
     /* ---------- the pattern / problem deck ---------- */
@@ -31080,16 +31082,24 @@
       outline-offset: 2px;
     }
 
-    /* A preview: text that doesn't fit fades out (the whole problem is one tap away),
-       and the hint below it always stays in view */
+    /* A preview: long text scrolls inside the card (the bottom fades while there is more),
+       and the "Tap to open" line below it always stays in view */
     .deck-body {
       flex: 1;
       min-width: 0;
       min-height: 0;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
+      /* Only up/down stays in the card; a sideways swipe still passes to the deck */
+      overscroll-behavior-y: contain;
       padding-bottom: 1rem;
+    }
+
+    /* Flex items must not shrink, or the text gets squashed instead of scrolling */
+    .deck-body > * {
+      flex-shrink: 0;
     }
 
     .deck-body.is-cut {
@@ -31265,7 +31275,7 @@
       right: 0;
       z-index: 16;
       display: block;
-      padding: max(1rem, env(safe-area-inset-top)) 1.25rem 0.5rem;
+      padding: max(0.75rem, env(safe-area-inset-top)) 1rem 0.4rem;
       background: var(--bg);
     }
 
@@ -31294,19 +31304,28 @@
       font-size: 0.85rem;
     }
 
+    /* One line: a long title ends in "…", the difficulty stays visible */
     .deck-readtitle {
       display: flex;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       align-items: center;
-      gap: 0.35rem 0.6rem;
-      margin-top: 0.7rem;
-      font-size: 1.15rem;
+      gap: 0.5rem;
+      margin-top: 0.55rem;
+      font-size: 1.05rem;
       font-weight: 600;
       line-height: 1.3;
       color: var(--text-strong);
     }
 
+    .deck-readtitle > span:first-child {
+      min-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
     .deck-readtitle .badge {
+      flex-shrink: 0;
       font-size: 0.75rem;
     }
 
@@ -31314,8 +31333,8 @@
     .deck-chips {
       display: flex;
       gap: 0.4rem;
-      margin: 0.6rem -1.25rem 0;
-      padding: 0 1.25rem 0.1rem;
+      margin: 0.55rem -1rem 0;
+      padding: 0 1rem 0.1rem;
       overflow-x: auto;
       scrollbar-width: none;
     }
@@ -31349,17 +31368,17 @@
       color: var(--active-text);
     }
 
+    /* The section buttons at the top already show where you are, so the bottom row is
+       kept only for screen readers (it announces "3 / 9 · Edge cases" on each change) */
     body.deck-read .deck-readfoot {
       position: fixed;
-      left: 0;
-      right: 0;
-      bottom: calc(5.25rem + env(safe-area-inset-bottom));
-      z-index: 16;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      white-space: nowrap;
       display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.6rem;
-      padding: 0 1.25rem;
     }
 
     /* Keep the dots and the label on one line; a long label ends in "…" */
@@ -31387,12 +31406,27 @@
       display: none;
     }
 
+    /* An opaque screen behind the open problem, so the list under it never shows or scrolls */
+    body.deck-read::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 13;
+      background: var(--bg);
+      touch-action: none;
+    }
+
+    /* Reading gets the whole screen: the floating buttons go away (keys / and R still work) */
+    body.deck-read .dock {
+      display: none;
+    }
+
     body.deck-read .question.deck-current {
       position: fixed;
       top: var(--deck-read-top, 9rem);
       left: 0;
       right: 0;
-      bottom: calc(8.5rem + env(safe-area-inset-bottom));
+      bottom: env(safe-area-inset-bottom);
       z-index: 14;
       display: flex;
       flex-direction: column;
@@ -31409,6 +31443,8 @@
     /* Each section of the problem is one card; swipe sideways between them, scroll down inside one */
     /* Pinned to the card's box: Chrome wraps details content in a slot, so flex sizing would not apply */
     body.deck-read .question.deck-current > .q-body {
+      /* Code runs edge to edge inside the section card's border: its padding is 1.1rem */
+      --bleed: 1.1rem;
       position: absolute;
       inset: 0;
       display: flex;
@@ -31426,12 +31462,12 @@
     }
 
     body.deck-read .question.deck-current > .q-body > :not(.q-jump) {
-      flex: 0 0 calc(100% - 2.5rem);
+      flex: 0 0 calc(100% - 1.5rem);
       min-width: 0;
       box-sizing: border-box;
-      max-height: calc(100% - 1rem);
-      margin: 0.4rem 1.25rem 0.6rem;
-      padding: 1.25rem 1.2rem 1.5rem;
+      max-height: calc(100% - 0.9rem);
+      margin: 0.4rem 0.75rem 0.5rem;
+      padding: 1.1rem 1.1rem 1.5rem;
       border: 0.1rem solid var(--border);
       border-radius: 1.5rem;
       background: var(--card-bg);
@@ -31485,7 +31521,7 @@
       }
 
       .deck-readtitle {
-        margin-top: 0.5rem;
+        margin-top: 0.45rem;
         font-size: 1rem;
       }
     }
@@ -31606,9 +31642,16 @@
         return c;
       }
 
+      // A card acts as a button, but is a plain element so its text can scroll on iPhone too.
+      function cardEl(cls) {
+        const card = el("div", cls);
+        card.setAttribute("role", "button");
+        card.tabIndex = 0;
+        return card;
+      }
+
       function patternSlide(g, i) {
-        const card = el("button", "deck-card");
-        card.type = "button";
+        const card = cardEl("deck-card");
         const body = el("span", "deck-body");
         body.append(el("span", "deck-kicker", `Pattern ${i + 1} of ${groups.length}`), el("span", "deck-title", g.name), el("span", "deck-hint", g.hint));
         const counts = el("span", "deck-counts");
@@ -31628,8 +31671,7 @@
       }
 
       function problemSlide(g, q, j) {
-        const card = el("button", "deck-card is-problem");
-        card.type = "button";
+        const card = cardEl("deck-card is-problem");
         const body = el("span", "deck-body");
         body.append(el("span", "deck-kicker", `${g.name} · ${j + 1} of ${g.cards.length}`), el("span", "deck-title", title(q)));
         const meta = q.querySelector(".q-meta");
@@ -31676,10 +31718,12 @@
         indicate();
       }
 
-      // Fade the bottom of any card whose text doesn't fit.
+      // Fade the bottom of a card while some of its text is still below.
+      const cutOne = (b) => b.classList.toggle("is-cut", b.scrollTop + b.clientHeight < b.scrollHeight - 2);
       function markCut() {
-        track.querySelectorAll(".deck-body").forEach((b) => b.classList.toggle("is-cut", b.scrollHeight > b.clientHeight + 1));
+        track.querySelectorAll(".deck-body").forEach(cutOne);
       }
+      track.addEventListener("scroll", (e) => e.target.classList && e.target.classList.contains("deck-body") && cutOne(e.target), true);
 
       function current() {
         return Math.max(0, Math.min(count - 1, Math.round(track.scrollLeft / Math.max(1, track.clientWidth))));
@@ -31714,6 +31758,12 @@
       track.addEventListener("click", (e) => {
         const card = e.target.closest(".deck-card");
         if (card) card.open();
+      });
+      track.addEventListener("keydown", (e) => {
+        const card = e.target.closest && e.target.closest(".deck-card");
+        if (!card || e.target !== card || (e.key !== "Enter" && e.key !== " ")) return;
+        e.preventDefault();
+        card.open();
       });
 
       // ---------- reading one problem: each section is a card ----------
