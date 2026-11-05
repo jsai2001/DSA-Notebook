@@ -31038,8 +31038,6 @@
       scroll-snap-type: x mandatory;
       overscroll-behavior-x: contain;
       scrollbar-width: none;
-      /* The browser handles only sideways swipes here; up/down is our "swipe up to open" */
-      touch-action: pan-x;
     }
 
     .deck-track::-webkit-scrollbar {
@@ -31082,16 +31080,7 @@
       outline-offset: 2px;
     }
 
-    /* While a card is being pulled up it follows the finger; it springs back if let go early */
-    .deck-card.is-pulling {
-      transition: none;
-    }
-
-    .deck-card.is-releasing {
-      transition: transform 0.18s ease-out;
-    }
-
-    /* A preview: text that doesn't fit fades out (the whole problem is one swipe up away),
+    /* A preview: text that doesn't fit fades out (the whole problem is one tap away),
        and the hint below it always stays in view */
     .deck-body {
       flex: 1;
@@ -31190,7 +31179,7 @@
       margin-top: 1rem;
     }
 
-    /* "Swipe up to open", at the bottom of every card */
+    /* "Tap to open", at the bottom of every card */
     .deck-cta {
       display: flex;
       flex-direction: column;
@@ -31204,14 +31193,6 @@
       font-weight: 600;
     }
 
-    .deck-cta-arrow {
-      font-size: 1.1rem;
-      line-height: 1;
-    }
-
-    .deck-card.is-ready .deck-cta {
-      color: var(--easy-text);
-    }
 
     /* ---------- dots, counter and arrows under a deck ---------- */
     .deck-foot {
@@ -31521,12 +31502,6 @@
         white-space: nowrap;
       }
     }
-
-    @media (prefers-reduced-motion: reduce) {
-      .deck-card.is-releasing {
-        transition: none;
-      }
-    }
   </style>
   <script>
     (function swipeDeck() {
@@ -31627,7 +31602,7 @@
       // ---------- slides ----------
       function cta(text) {
         const c = el("span", "deck-cta");
-        c.append(el("span", "deck-cta-arrow", "↑"), el("span", "", text));
+        c.append(el("span", "", text));
         return c;
       }
 
@@ -31644,7 +31619,7 @@
         const ul = el("ul", "deck-list");
         g.cards.forEach((q) => ul.append(el("li", "", title(q))));
         body.append(ul);
-        card.append(body, cta(`Swipe up to see ${plural(g.cards.length, "problem")}`));
+        card.append(body, cta(`Tap to see ${plural(g.cards.length, "problem")}`));
         card.open = () => {
           push();
           show("problems", i, 0);
@@ -31661,7 +31636,7 @@
         if (meta) body.append(meta.cloneNode(true));
         const idea = q.querySelector(".q-body > .key-idea");
         if (idea) body.append(idea.cloneNode(true));
-        card.append(body, cta("Swipe up to open"));
+        card.append(body, cta("Tap to open"));
         card.open = () => {
           push();
           read(q);
@@ -31689,10 +31664,10 @@
         back.hidden = lv === "patterns";
         if (lv === "patterns") {
           heading.textContent = "Patterns";
-          sub.textContent = `${groups.length} patterns, ${groups.reduce((n, x) => n + x.cards.length, 0)} problems. Swipe sideways to browse, swipe up to open.`;
+          sub.textContent = `${groups.length} patterns, ${groups.reduce((n, x) => n + x.cards.length, 0)} problems. Swipe sideways to browse, tap to open.`;
         } else {
           heading.textContent = groups[g].name;
-          sub.textContent = `${plural(groups[g].cards.length, "problem")}. Swipe sideways to browse, swipe up to open.`;
+          sub.textContent = `${plural(groups[g].cards.length, "problem")}. Swipe sideways to browse, tap to open.`;
         }
         dots.replaceChildren(...items.map(() => el("span", "deck-dot")));
         dots.hidden = items.length > 16;
@@ -31735,63 +31710,10 @@
         }
       });
 
-      // ---------- swipe up to open the card on screen (a tap or Enter works too) ----------
-      const PULL = 70; // how far up (px) counts as "open it"
-      let pull = null;
-      track.addEventListener(
-        "touchstart",
-        (e) => {
-          const card = e.target.closest(".deck-card");
-          if (!card || e.touches.length !== 1) return (pull = null);
-          const t = e.touches[0];
-          pull = { card, x: t.clientX, y: t.clientY, time: performance.now(), axis: null, dy: 0 };
-        },
-        { passive: true }
-      );
-      track.addEventListener(
-        "touchmove",
-        (e) => {
-          if (!pull) return;
-          const t = e.touches[0];
-          const dx = t.clientX - pull.x;
-          const dy = t.clientY - pull.y;
-          if (!pull.axis && Math.max(Math.abs(dx), Math.abs(dy)) > 10) pull.axis = Math.abs(dy) > Math.abs(dx) * 1.2 ? "y" : "x";
-          if (pull.axis !== "y") return;
-          pull.dy = Math.min(0, dy);
-          pull.card.classList.add("is-pulling");
-          pull.card.classList.toggle("is-ready", pull.dy <= -PULL);
-          pull.card.style.transform = `translateY(${Math.max(pull.dy * 0.6, -90)}px)`;
-        },
-        { passive: true }
-      );
-      function endPull() {
-        if (!pull) return;
-        const { card, dy, axis, time } = pull;
-        pull = null;
-        if (axis !== "y") return;
-        const fast = dy < -35 && -dy / Math.max(1, performance.now() - time) > 0.6;
-        card.classList.remove("is-pulling", "is-ready");
-        card.classList.add("is-releasing");
-        card.style.transform = "";
-        setTimeout(() => card.classList.remove("is-releasing"), 200);
-        if (dy <= -PULL || fast) {
-          card.swipedAt = performance.now();
-          card.open();
-        }
-      }
-      track.addEventListener("touchend", endPull, { passive: true });
-      track.addEventListener("touchcancel", () => {
-        if (pull) {
-          pull.card.classList.remove("is-pulling", "is-ready");
-          pull.card.style.transform = "";
-        }
-        pull = null;
-      });
+      // ---------- tap (or Enter) opens the card on screen ----------
       track.addEventListener("click", (e) => {
         const card = e.target.closest(".deck-card");
-        if (!card) return;
-        if (card.swipedAt && performance.now() - card.swipedAt < 500) return; // already opened by the swipe
-        card.open();
+        if (card) card.open();
       });
 
       // ---------- reading one problem: each section is a card ----------
