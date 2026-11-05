@@ -10560,7 +10560,7 @@
       <details class="pattern-group" id="g-backtracking">
         <summary>
           <span class="g-name">Backtracking</span>
-          <span class="g-count"><span class="g-total">6 problems</span></span>
+          <span class="g-count"><span class="g-total">7 problems</span></span>
           <span class="g-hint">Choose, explore, undo</span>
         </summary>
         <div class="g-body">
@@ -13372,6 +13372,422 @@
                         <td>O(n!) bound</td>
                         <td>O(n)</td>
                         <td>About 3× faster than sets</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0078-subsets ===== -->
+          <details class="question" data-group="backtracking" data-tags="array backtracking bit-manipulation recursion subsets power-set">
+            <summary>
+              <span class="q-title">78. Subsets</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Array</span>
+                <span class="tag">Backtracking</span>
+                <span class="tag">Bit Manipulation</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Every number is either <strong>in</strong> a
+                subset or <strong>out</strong>: n yes/no choices, so 2ⁿ subsets. Backtrack
+                with a start index: record <code>path</code> (a <em>copy</em>) at every
+                call, then extend it only with numbers after the last one taken, so no
+                subset comes out twice. O(n · 2ⁿ), the size of the answer.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/subsets/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Given an array <code>nums</code> of distinct integers, return all its
+                  subsets (the power set). No subset may appear twice; any order is
+                  fine.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= nums.length &lt;= 10</code> and <code>-10 &lt;= nums[i] &lt;= 10</code>.</li>
+                  <li>All the numbers are different.</li>
+                </ul>
+                <p class="note">
+                  Examples: <code>[1,2,3]</code> →
+                  <code>[[],[1],[2],[1,2],[3],[1,3],[2,3],[1,2,3]]</code>;
+                  <code>[0]</code> → <code>[[],[0]]</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[1]</code></td>
+                        <td><code>[[],[1]]</code></td>
+                        <td>The empty subset counts. Recording only when something was added gives just <code>[[1]]</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[0]</code></td>
+                        <td><code>[[],[0]]</code></td>
+                        <td>0 is a real number to take. A Python check like <code>if x:</code> treats it as "nothing".</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2,3]</code></td>
+                        <td>8 subsets</td>
+                        <td>Adding <code>path</code> itself instead of a copy gives 8 empty lists: they're all the same list, which ends empty.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2,3]</code> with a start index</td>
+                        <td>8 subsets</td>
+                        <td>Recursing on <code>start + 1</code> instead of <code>i + 1</code> gives 16 lists, with repeats like <code>[3,2]</code> and impossible ones like <code>[2,2]</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[-1,0,1]</code></td>
+                        <td>8 subsets</td>
+                        <td>Negative numbers and 0 are just values; nothing about them is special.</td>
+                      </tr>
+                      <tr>
+                        <td>10 numbers</td>
+                        <td>1024 subsets</td>
+                        <td>The largest input: 2¹⁰ subsets holding 5120 numbers in total. Small, but every approach has to build all of it.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2]</code></td>
+                        <td><code>[[1,2],[],[2],[1]]</code> is fine too</td>
+                        <td>Any order is accepted. When testing your own code, compare the answers as sets, not as lists in one fixed order.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Take or Skip Each Number</h2>
+                <p class="intuition">
+                  Walk the numbers in order and make one choice per number: take it or
+                  leave it. That's a binary tree n levels deep; each of its 2ⁿ leaves
+                  is one subset.
+                </p>
+                <ul>
+                  <li>Take: append <code>nums[i]</code>, recurse on <code>i + 1</code>. Skip: pop it, recurse on <code>i + 1</code> again.</li>
+                  <li>When <code>i == n</code> every number is decided: add a <strong>copy</strong> of <code>path</code>.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · 2ⁿ)</span>
+                  <span><strong>Space</strong> O(n) besides the answer</span>
+                </div>
+                <p class="note">
+                  The easiest one to reason about: the recursion tree is exactly the
+                  "in or out" choices. 0.32 ms in Python for n = 10.
+                </p>
+                <div class="code-tabs" data-viz="0078-subsets/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,12],"call":[4],"done":[5,6,7],"take":[8,9],"skip":[10,11],"return":[13]}'>
+                    class Solution(object):
+                        def subsets(self, nums):
+                            result, path = [], []
+                            def backtrack(i):  # decide nums[i], nums[i+1], ...; path = what's taken so far
+                                if i == len(nums):  # every number decided: path is one subset
+                                    result.append(path[:])  # a copy: path keeps changing
+                                    return
+                                path.append(nums[i])  # take nums[i]
+                                backtrack(i + 1)
+                                path.pop()  # undo, then leave nums[i] out
+                                backtrack(i + 1)
+                            backtrack(0)
+                            return result
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,6,7],"return":[8],"call":[13],"done":[14,15,16],"take":[18,19],"skip":[20,21]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<std::vector<int>> subsets(std::vector<int>& nums) {
+                            result.clear();
+                            path.clear();
+                            backtrack(nums, 0);
+                            return result;
+                        }
+                    private:
+                        std::vector<std::vector<int>> result;
+                        std::vector<int> path;
+                        void backtrack(const std::vector<int>& nums, size_t i) { // decide nums[i], nums[i+1], ...; path = what's taken so far
+                            if (i == nums.size()) { // every number decided: path is one subset
+                                result.push_back(path); // pushes a copy
+                                return;
+                            }
+                            path.push_back(nums[i]); // take nums[i]
+                            backtrack(nums, i + 1);
+                            path.pop_back(); // undo, then leave nums[i] out
+                            backtrack(nums, i + 1);
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[7,8,9],"return":[10],"call":[12],"done":[13,14,15],"take":[17,18],"skip":[19,20]}'>
+                    import java.util.ArrayList;
+                    import java.util.List;
+                    class Solution {
+                        private List<List<Integer>> result;
+                        private List<Integer> path;
+                        public List<List<Integer>> subsets(int[] nums) {
+                            result = new ArrayList<>();
+                            path = new ArrayList<>();
+                            backtrack(nums, 0);
+                            return result;
+                        }
+                        private void backtrack(int[] nums, int i) { // decide nums[i], nums[i+1], ...; path = what's taken so far
+                            if (i == nums.length) { // every number decided: path is one subset
+                                result.add(new ArrayList<>(path)); // a copy: path keeps changing
+                                return;
+                            }
+                            path.add(nums[i]); // take nums[i]
+                            backtrack(nums, i + 1);
+                            path.remove(path.size() - 1); // undo, then leave nums[i] out
+                            backtrack(nums, i + 1);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>
+                  Approach 2: Backtracking with a Start Index
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Every path is already a subset, so record it as soon as the call
+                  starts. Then try each number from <code>start</code> on as the next
+                  one, and recurse on <code>i + 1</code>: only later numbers can follow,
+                  so each subset is built in one order only.
+                </p>
+                <ul>
+                  <li>Record, then for each <code>i</code> from <code>start</code>: append, recurse on <code>i + 1</code>, pop.</li>
+                  <li>Each call adds one subset, so there are exactly 2ⁿ calls and no dead ends.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · 2ⁿ)</span>
+                  <span><strong>Space</strong> O(n) besides the answer</span>
+                </div>
+                <p class="note">
+                  The one to know: the same loop, with small changes, solves Subsets II
+                  (sort and skip a number equal to the previous one), Combinations and
+                  Combination Sum (39, 40). 0.30 ms in Python for n = 10.
+                </p>
+                <div class="code-tabs" data-viz="0078-subsets/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,10],"call":[4],"record":[5],"choose":[6,7,8],"undo":[9],"return":[11]}'>
+                    class Solution(object):
+                        def subsets(self, nums):
+                            result, path = [], []
+                            def backtrack(start):  # path is a subset; extend it only with numbers after it
+                                result.append(path[:])  # every path is an answer, even the empty one
+                                for i in range(start, len(nums)):
+                                    path.append(nums[i])
+                                    backtrack(i + 1)  # only later numbers next, so no subset repeats
+                                    path.pop()  # undo, so the next number can take this place
+                            backtrack(0)
+                            return result
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,6,7],"return":[8],"call":[13],"record":[14],"choose":[15,16,17],"undo":[18]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<std::vector<int>> subsets(std::vector<int>& nums) {
+                            result.clear();
+                            path.clear();
+                            backtrack(nums, 0);
+                            return result;
+                        }
+                    private:
+                        std::vector<std::vector<int>> result;
+                        std::vector<int> path;
+                        void backtrack(const std::vector<int>& nums, size_t start) { // path is a subset; extend it only with numbers after it
+                            result.push_back(path); // every path is an answer, even the empty one
+                            for (size_t i = start; i < nums.size(); ++i) {
+                                path.push_back(nums[i]);
+                                backtrack(nums, i + 1); // only later numbers next, so no subset repeats
+                                path.pop_back(); // undo, so the next number can take this place
+                            }
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[7,8,9],"return":[10],"call":[12],"record":[13],"choose":[14,15,16],"undo":[17]}'>
+                    import java.util.ArrayList;
+                    import java.util.List;
+                    class Solution {
+                        private List<List<Integer>> result;
+                        private List<Integer> path;
+                        public List<List<Integer>> subsets(int[] nums) {
+                            result = new ArrayList<>();
+                            path = new ArrayList<>();
+                            backtrack(nums, 0);
+                            return result;
+                        }
+                        private void backtrack(int[] nums, int start) { // path is a subset; extend it only with numbers after it
+                            result.add(new ArrayList<>(path)); // every path is an answer, even the empty one
+                            for (int i = start; i < nums.length; i++) {
+                                path.add(nums[i]);
+                                backtrack(nums, i + 1); // only later numbers next, so no subset repeats
+                                path.remove(path.size() - 1); // undo, so the next number can take this place
+                            }
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>Approach 3: Bitmask</h2>
+                <p class="intuition">
+                  Write the in/out choices as bits. Every number from <code>0</code> to
+                  <code>2ⁿ − 1</code> is one subset: bit <code>i</code> is 1 exactly
+                  when <code>nums[i]</code> is in it.
+                </p>
+                <ul>
+                  <li>For each <code>mask</code>, test bit i with <code>(mask &gt;&gt; i) &amp; 1</code>.</li>
+                  <li>No recursion. It only works while 2ⁿ fits in an int, which n ≤ 10 easily does.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · 2ⁿ)</span>
+                  <span><strong>Space</strong> O(1) besides the answer</span>
+                </div>
+                <p class="note">
+                  Tests all n bits of every mask, even the 0s, so it's a little slower
+                  in Python (0.60 ms for n = 10). In C++ and Java it's as fast as the
+                  others.
+                </p>
+                <div class="code-tabs" data-viz="0078-subsets/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"mask":[5,6],"bit":[7,8,9],"add":[10],"return":[11]}'>
+                    class Solution(object):
+                        def subsets(self, nums):
+                            n = len(nums)
+                            result = []
+                            for mask in range(1 << n):  # 2^n masks, one per subset
+                                subset = []
+                                for i in range(n):
+                                    if mask >> i & 1:  # bit i is 1: nums[i] is in this subset
+                                        subset.append(nums[i])
+                                result.append(subset)
+                            return result
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,6],"mask":[7,8],"bit":[9,10,11],"add":[12],"return":[14]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<std::vector<int>> subsets(std::vector<int>& nums) {
+                            int n = (int)nums.size();
+                            std::vector<std::vector<int>> result;
+                            for (int mask = 0; mask < (1 << n); ++mask) { // 2^n masks, one per subset
+                                std::vector<int> subset;
+                                for (int i = 0; i < n; ++i)
+                                    if ((mask >> i) & 1) // bit i is 1: nums[i] is in this subset
+                                        subset.push_back(nums[i]);
+                                result.push_back(subset);
+                            }
+                            return result;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6],"mask":[7,8],"bit":[9,10,11],"add":[12],"return":[14]}'>
+                    import java.util.ArrayList;
+                    import java.util.List;
+                    class Solution {
+                        public List<List<Integer>> subsets(int[] nums) {
+                            int n = nums.length;
+                            List<List<Integer>> result = new ArrayList<>();
+                            for (int mask = 0; mask < (1 << n); mask++) { // 2^n masks, one per subset
+                                List<Integer> subset = new ArrayList<>();
+                                for (int i = 0; i < n; i++)
+                                    if (((mask >> i) & 1) == 1) // bit i is 1: nums[i] is in this subset
+                                        subset.add(nums[i]);
+                                result.add(subset);
+                            }
+                            return result;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  Python's <code>itertools.combinations(nums, r)</code> gives every
+                  subset of size <code>r</code>; join them for r = 0 to n. C++ and Java
+                  have nothing built in, so the bitmask loop is the usual short version
+                  there.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    from itertools import combinations
+                    class Solution(object):
+                        def subsets(self, nums):
+                            # all subsets of size 0, then size 1, ... up to size n
+                            return [list(c) for r in range(len(nums) + 1) for c in combinations(nums, r)]
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · 2ⁿ)</span>
+                  <span><strong>Space</strong> O(n) besides the answer</span>
+                </div>
+                <p class="note">
+                  The fastest here (0.09 ms for n = 10): the loop runs in C. The tuples
+                  have to become lists.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Take or Skip</th>
+                        <td>Binary choice per number</td>
+                        <td>O(n · 2ⁿ)</td>
+                        <td>O(n)</td>
+                        <td>Easiest to reason about</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Start Index</th>
+                        <td>Record, then extend with later numbers</td>
+                        <td>O(n · 2ⁿ)</td>
+                        <td>O(n)</td>
+                        <td>Extends to Subsets II and Combination Sum</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Bitmask</th>
+                        <td>Count 0 to 2ⁿ − 1, bits pick numbers</td>
+                        <td>O(n · 2ⁿ)</td>
+                        <td>O(1)</td>
+                        <td>No recursion; needs 2ⁿ to fit in an int</td>
                       </tr>
                     </tbody>
                   </table>
@@ -30307,6 +30723,152 @@
             note: bestLen <= m ? `Return ${bestText()}. Each letter came in once and left at most once: O(m + n).` : `No window ever covered "${t}". Return "".`,
             view: view(m, { final: true }),
           });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0078-subsets/approach1.visual.js -->
+    <script>
+      // Take or skip: one yes/no choice per number; when all are decided, path is one subset.
+      DSAViz.register("0078-subsets/approach1", {
+        inputs: [{ name: "nums", type: "int[]", value: "[1, 2, 3]", minLength: 1, maxLength: 4, minValue: -10, maxValue: 10 }],
+        trace({ nums }) {
+          if (new Set(nums).size !== nums.length) throw new DSAViz.InputError("The numbers must all be different.");
+          const n = nums.length;
+          const steps = [];
+          const result = [];
+          const path = [];
+          const choice = nums.map(() => ""); // "in" / "out" / "" for the numbers decided so far
+          const fmt = (a) => `[${a.join(", ")}]`;
+          const view = (i, o = {}) => {
+            const marks = {};
+            choice.forEach((c, k) => {
+              if (c === "in") marks[k] = "match";
+              else if (c === "out") marks[k] = "ghost";
+            });
+            if (i !== undefined && i < n) marks[i] = o.skip ? "cut" : "active";
+            return [
+              { type: "array", label: "nums (green = taken, faded = left out)", values: nums, marks, pointers: i !== undefined && i < n ? { i } : {} },
+              { type: "array", label: "path", values: path.slice(), marks: o.done ? Object.fromEntries(path.map((_, k) => [k, "match"])) : o.added ? { [path.length - 1]: "new" } : {} },
+              { type: "array", label: `result (${result.length} of ${2 ** n})`, values: result.map(fmt), wide: true, marks: o.done ? { [result.length - 1]: "new" } : {} },
+            ];
+          };
+          steps.push({ line: "init", note: `Decide each number in turn: take it or leave it out. ${n} choices, so ${2 ** n} subsets.`, view: view() });
+          function backtrack(i) {
+            if (i === n) {
+              result.push(path.slice());
+              steps.push({ line: ["call", "done"], note: `All ${n} numbers decided: ${fmt(path)}. Add a copy to result.`, view: view(i, { done: true }) });
+              return;
+            }
+            choice[i] = "in";
+            path.push(nums[i]);
+            steps.push({ line: ["call", "take"], note: `Take ${nums[i]}: path = ${fmt(path)}. Decide the next number.`, view: view(i, { added: true }) });
+            backtrack(i + 1);
+            path.pop();
+            choice[i] = "out";
+            for (let k = i + 1; k < n; k++) choice[k] = "";
+            steps.push({ line: "skip", note: `Back at ${nums[i]}: pop it (path = ${fmt(path)}) and try the other choice, leaving it out.`, view: view(i, { skip: true }) });
+            backtrack(i + 1);
+            choice[i] = "";
+          }
+          backtrack(0);
+          steps.push({ line: "return", note: `Return all ${result.length} subsets. 2ⁿ leaves, each copied in O(n): O(n · 2ⁿ).`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0078-subsets/approach2.visual.js -->
+    <script>
+      // Start index: record path at every call, then extend it only with numbers after the last one taken.
+      DSAViz.register("0078-subsets/approach2", {
+        inputs: [{ name: "nums", type: "int[]", value: "[1, 2, 3]", minLength: 1, maxLength: 4, minValue: -10, maxValue: 10 }],
+        trace({ nums }) {
+          if (new Set(nums).size !== nums.length) throw new DSAViz.InputError("The numbers must all be different.");
+          const n = nums.length;
+          const steps = [];
+          const result = [];
+          const path = [];
+          const taken = [];
+          const fmt = (a) => `[${a.join(", ")}]`;
+          const view = (start, i, o = {}) => {
+            const marks = {};
+            taken.forEach((k) => (marks[k] = "match"));
+            for (let k = 0; k < start; k++) if (!taken.includes(k)) marks[k] = "ghost"; // can't come next
+            if (i !== undefined) marks[i] = "active";
+            const pointers = {};
+            if (start !== undefined && start < n) pointers.start = start;
+            if (i !== undefined) pointers.i = i;
+            return [
+              { type: "array", label: "nums (green = in path, faded = before start: can't come next)", values: nums, marks, pointers },
+              { type: "array", label: "path", values: path.slice(), marks: o.recorded ? Object.fromEntries(path.map((_, k) => [k, "match"])) : o.added ? { [path.length - 1]: "new" } : {} },
+              { type: "array", label: `result (${result.length} of ${2 ** n})`, values: result.map(fmt), wide: true, marks: o.recorded ? { [result.length - 1]: "new" } : {} },
+            ];
+          };
+          steps.push({ line: "init", note: "Every path is a subset. Record it, then extend it with each later number in turn.", view: view(0) });
+          function backtrack(start) {
+            result.push(path.slice());
+            steps.push({
+              line: ["call", "record"],
+              note: `Record ${fmt(path)}${path.length ? "" : " (the empty subset counts)"}.${start < n ? ` Next number: one of nums[${start}..${n - 1}].` : " Nothing after it to add."}`,
+              view: view(start, undefined, { recorded: true }),
+            });
+            for (let i = start; i < n; i++) {
+              path.push(nums[i]);
+              taken.push(i);
+              steps.push({ line: "choose", note: `Add ${nums[i]}: path = ${fmt(path)}. Recurse on ${i + 1}, so only numbers after ${nums[i]} can follow.`, view: view(start, i, { added: true }) });
+              backtrack(i + 1);
+              path.pop();
+              taken.pop();
+              steps.push({ line: "undo", note: `Pop ${nums[i]}: path = ${fmt(path)}. ${i + 1 < n ? `Try ${nums[i + 1]} in its place.` : "No more numbers to try here."}`, view: view(start, i) });
+            }
+          }
+          backtrack(0);
+          steps.push({ line: "return", note: `Return all ${result.length}. One call per subset, no dead ends: O(n · 2ⁿ) with the copies.`, view: view(n) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0078-subsets/approach3.visual.js -->
+    <script>
+      // Bitmask: each number 0 .. 2^n − 1 is one subset; bit i says whether nums[i] is in it.
+      DSAViz.register("0078-subsets/approach3", {
+        inputs: [{ name: "nums", type: "int[]", value: "[1, 2, 3]", minLength: 1, maxLength: 4, minValue: -10, maxValue: 10 }],
+        trace({ nums }) {
+          if (new Set(nums).size !== nums.length) throw new DSAViz.InputError("The numbers must all be different.");
+          const n = nums.length;
+          const steps = [];
+          const result = [];
+          const fmt = (a) => `[${a.join(", ")}]`;
+          // Bits are shown under the numbers they pick: bit i lines up with nums[i].
+          const view = (mask, o = {}) => {
+            const marks = {};
+            const bits = nums.map((_, i) => (mask === undefined ? "·" : (mask >> i) & 1));
+            const bitMarks = {};
+            if (mask !== undefined)
+              nums.forEach((_, i) => {
+                if ((mask >> i) & 1) {
+                  marks[i] = "match";
+                  bitMarks[`0,${i}`] = "match";
+                } else marks[i] = "ghost";
+              });
+            return [
+              { type: "array", label: "nums (green = picked by this mask)", values: nums, marks },
+              { type: "grid", label: mask === undefined ? "bits" : `mask = ${mask} (binary ${mask.toString(2).padStart(n, "0")}, written right to left here: bit i sits under nums[i])`, rows: ["bit"], cols: nums.map((_, i) => String(i)), cells: [bits], marks: bitMarks, corner: "" },
+              { type: "array", label: `result (${result.length} of ${2 ** n})`, values: result.map(fmt), wide: true, marks: o.added ? { [result.length - 1]: "new" } : {} },
+            ];
+          };
+          steps.push({ line: "init", note: `${n} numbers, so ${2 ** n} masks: 0 to ${2 ** n - 1}. Each one's bits say which numbers to take.`, view: view() });
+          for (let mask = 0; mask < 1 << n; mask++) {
+            const subset = nums.filter((_, i) => (mask >> i) & 1);
+            result.push(subset);
+            const on = nums.map((_, i) => i).filter((i) => (mask >> i) & 1);
+            steps.push({
+              line: ["mask", "bit", "add"],
+              note: on.length ? `mask ${mask}: bit${on.length > 1 ? "s" : ""} ${on.join(", ")} ${on.length > 1 ? "are" : "is"} 1, so take ${on.map((i) => nums[i]).join(", ")}. Add ${fmt(subset)}.` : `mask 0: every bit is 0, so this is the empty subset. Add [].`,
+              view: view(mask, { added: true }),
+            });
+          }
+          steps.push({ line: "return", note: `Return all ${result.length}. ${2 ** n} masks × ${n} bit tests each: O(n · 2ⁿ), no recursion.`, view: view(undefined) });
           return steps;
         },
       });

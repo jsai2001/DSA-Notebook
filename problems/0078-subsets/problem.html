@@ -1,0 +1,232 @@
+<details class="question" data-group="backtracking" data-tags="array backtracking bit-manipulation recursion subsets power-set">
+  <summary>
+    <span class="q-title">78. Subsets</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Backtracking</span>
+      <span class="tag">Bit Manipulation</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Every number is either <strong>in</strong> a
+      subset or <strong>out</strong>: n yes/no choices, so 2ⁿ subsets. Backtrack
+      with a start index: record <code>path</code> (a <em>copy</em>) at every
+      call, then extend it only with numbers after the last one taken, so no
+      subset comes out twice. O(n · 2ⁿ), the size of the answer.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/subsets/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given an array <code>nums</code> of distinct integers, return all its
+        subsets (the power set). No subset may appear twice; any order is
+        fine.
+      </p>
+      <ul>
+        <li><code>1 &lt;= nums.length &lt;= 10</code> and <code>-10 &lt;= nums[i] &lt;= 10</code>.</li>
+        <li>All the numbers are different.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[1,2,3]</code> →
+        <code>[[],[1],[2],[1,2],[3],[1,3],[2,3],[1,2,3]]</code>;
+        <code>[0]</code> → <code>[[],[0]]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[1]</code></td>
+              <td><code>[[],[1]]</code></td>
+              <td>The empty subset counts. Recording only when something was added gives just <code>[[1]]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[0]</code></td>
+              <td><code>[[],[0]]</code></td>
+              <td>0 is a real number to take. A Python check like <code>if x:</code> treats it as "nothing".</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3]</code></td>
+              <td>8 subsets</td>
+              <td>Adding <code>path</code> itself instead of a copy gives 8 empty lists: they're all the same list, which ends empty.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3]</code> with a start index</td>
+              <td>8 subsets</td>
+              <td>Recursing on <code>start + 1</code> instead of <code>i + 1</code> gives 16 lists, with repeats like <code>[3,2]</code> and impossible ones like <code>[2,2]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[-1,0,1]</code></td>
+              <td>8 subsets</td>
+              <td>Negative numbers and 0 are just values; nothing about them is special.</td>
+            </tr>
+            <tr>
+              <td>10 numbers</td>
+              <td>1024 subsets</td>
+              <td>The largest input: 2¹⁰ subsets holding 5120 numbers in total. Small, but every approach has to build all of it.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2]</code></td>
+              <td><code>[[1,2],[],[2],[1]]</code> is fine too</td>
+              <td>Any order is accepted. When testing your own code, compare the answers as sets, not as lists in one fixed order.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Take or Skip Each Number</h2>
+      <p class="intuition">
+        Walk the numbers in order and make one choice per number: take it or
+        leave it. That's a binary tree n levels deep; each of its 2ⁿ leaves
+        is one subset.
+      </p>
+      <ul>
+        <li>Take: append <code>nums[i]</code>, recurse on <code>i + 1</code>. Skip: pop it, recurse on <code>i + 1</code> again.</li>
+        <li>When <code>i == n</code> every number is decided: add a <strong>copy</strong> of <code>path</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · 2ⁿ)</span>
+        <span><strong>Space</strong> O(n) besides the answer</span>
+      </div>
+      <p class="note">
+        The easiest one to reason about: the recursion tree is exactly the
+        "in or out" choices. 0.32 ms in Python for n = 10.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Backtracking with a Start Index
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Every path is already a subset, so record it as soon as the call
+        starts. Then try each number from <code>start</code> on as the next
+        one, and recurse on <code>i + 1</code>: only later numbers can follow,
+        so each subset is built in one order only.
+      </p>
+      <ul>
+        <li>Record, then for each <code>i</code> from <code>start</code>: append, recurse on <code>i + 1</code>, pop.</li>
+        <li>Each call adds one subset, so there are exactly 2ⁿ calls and no dead ends.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · 2ⁿ)</span>
+        <span><strong>Space</strong> O(n) besides the answer</span>
+      </div>
+      <p class="note">
+        The one to know: the same loop, with small changes, solves Subsets II
+        (sort and skip a number equal to the previous one), Combinations and
+        Combination Sum (39, 40). 0.30 ms in Python for n = 10.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Bitmask</h2>
+      <p class="intuition">
+        Write the in/out choices as bits. Every number from <code>0</code> to
+        <code>2ⁿ − 1</code> is one subset: bit <code>i</code> is 1 exactly
+        when <code>nums[i]</code> is in it.
+      </p>
+      <ul>
+        <li>For each <code>mask</code>, test bit i with <code>(mask &gt;&gt; i) &amp; 1</code>.</li>
+        <li>No recursion. It only works while 2ⁿ fits in an int, which n ≤ 10 easily does.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · 2ⁿ)</span>
+        <span><strong>Space</strong> O(1) besides the answer</span>
+      </div>
+      <p class="note">
+        Tests all n bits of every mask, even the 0s, so it's a little slower
+        in Python (0.60 ms for n = 10). In C++ and Java it's as fast as the
+        others.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Python's <code>itertools.combinations(nums, r)</code> gives every
+        subset of size <code>r</code>; join them for r = 0 to n. C++ and Java
+        have nothing built in, so the bitmask loop is the usual short version
+        there.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · 2ⁿ)</span>
+        <span><strong>Space</strong> O(n) besides the answer</span>
+      </div>
+      <p class="note">
+        The fastest here (0.09 ms for n = 10): the loop runs in C. The tuples
+        have to become lists.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Take or Skip</th>
+              <td>Binary choice per number</td>
+              <td>O(n · 2ⁿ)</td>
+              <td>O(n)</td>
+              <td>Easiest to reason about</td>
+            </tr>
+            <tr>
+              <th scope="row">Start Index</th>
+              <td>Record, then extend with later numbers</td>
+              <td>O(n · 2ⁿ)</td>
+              <td>O(n)</td>
+              <td>Extends to Subsets II and Combination Sum</td>
+            </tr>
+            <tr>
+              <th scope="row">Bitmask</th>
+              <td>Count 0 to 2ⁿ − 1, bits pick numbers</td>
+              <td>O(n · 2ⁿ)</td>
+              <td>O(1)</td>
+              <td>No recursion; needs 2ⁿ to fit in an int</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
