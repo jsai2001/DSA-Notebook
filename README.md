@@ -34,6 +34,7 @@ app.js                  pattern groups ("By pattern" / "By number"),
 viz.js                  visualizer engine (widgets, controls, line highlighting)
 solutions.css           styles (light and dark themes)
 present.js / .css       Present mode: a card's steps as full-screen slides
+mobile.js / .css        phones: patterns, problems and sections as swipeable cards; full-screen visualizer
 build.py                stitches template.html + problems/ into index.html, and
                         template.html + designs/ into system-design.html
 index.html              GENERATED (Coding Solutions tab). Don't edit by hand.

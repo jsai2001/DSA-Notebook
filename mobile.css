@@ -1,0 +1,930 @@
+/* Phones (up to 600px wide): browse by pattern as swipeable cards.
+   mobile.js builds the cards and adds body.deck-on; nothing here applies without it,
+   except the full-screen visualizer (.viz.is-max), which mobile.js also adds. */
+
+/* The page behind the cards never scrolls or bounces */
+html.deck-lock,
+html.deck-lock body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* ---------- the pattern / problem deck ---------- */
+.deck {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  padding: max(1rem, env(safe-area-inset-top)) 0 calc(5.25rem + env(safe-area-inset-bottom));
+  background: var(--bg);
+}
+
+.deck[hidden] {
+  display: none;
+}
+
+.deck-top {
+  padding: 0 1.25rem;
+}
+
+.deck-top .site-nav {
+  margin-bottom: 0.9rem;
+}
+
+.deck-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+  padding: 0.35rem 0.9rem 0.35rem 0.7rem;
+  border: 0.1rem solid var(--border-card);
+  border-radius: 2rem;
+  background: var(--surface);
+  color: var(--text-strong);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.deck-back[hidden] {
+  display: none;
+}
+
+.deck-heading {
+  font-size: 1.45rem;
+  line-height: 1.25;
+  color: var(--text-strong);
+}
+
+.deck-sub {
+  margin: 0.15rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* One card per screen; native scrolling with snap points does the sideways swipe */
+.deck-track {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  margin-top: 1rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.deck-track::-webkit-scrollbar {
+  display: none;
+}
+
+.deck-track:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.deck-slide {
+  flex: 0 0 100%;
+  min-width: 0; /* a long title must not make its card wider than the screen */
+  display: flex;
+  padding: 0.25rem 1.25rem 0.6rem;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+}
+
+.deck-card {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1.4rem 1.35rem 1.25rem;
+  border: 0.1rem solid var(--border);
+  border-radius: 1.75rem;
+  background: var(--card-bg);
+  box-shadow: 0 0.5rem 1.5rem -0.75rem rgba(0, 0, 0, 0.25);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.deck-card:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* A preview: long text scrolls inside the card (the bottom fades while there is more),
+   and the "Tap to open" line below it always stays in view */
+.deck-body {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  /* Only up/down stays in the card; a sideways swipe still passes to the deck */
+  overscroll-behavior-y: contain;
+  padding-bottom: 1rem;
+}
+
+/* Flex items must not shrink, or the text gets squashed instead of scrolling */
+.deck-body > * {
+  flex-shrink: 0;
+}
+
+.deck-body.is-cut {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 3rem), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 3rem), transparent);
+}
+
+.deck-kicker {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.deck-title {
+  margin-top: 0.35rem;
+  font-size: 1.6rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text-strong);
+}
+
+.deck-card.is-problem .deck-title {
+  font-size: 1.3rem;
+}
+
+.deck-hint {
+  margin-top: 0.35rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.deck-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 1rem;
+}
+
+.deck-pill {
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.deck-pill.easy {
+  background: var(--easy-bg);
+  color: var(--easy-text);
+}
+
+.deck-pill.medium {
+  background: var(--medium-bg);
+  color: var(--medium-text);
+}
+
+.deck-pill.hard {
+  background: var(--hard-bg);
+  color: var(--hard-text);
+}
+
+.deck-list {
+  margin: 1.1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.deck-list li {
+  padding: 0.55rem 0;
+  border-top: 0.1rem solid var(--border-soft);
+  color: var(--text-strong);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Problem cards reuse the real difficulty badge, tags and key idea */
+.deck-card .q-meta {
+  margin-top: 0.75rem;
+  justify-content: flex-start;
+}
+
+.deck-card .key-idea {
+  margin-top: 1rem;
+}
+
+/* "Tap to open", at the bottom of every card */
+.deck-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  flex-shrink: 0;
+  padding-top: 0.6rem;
+  border-top: 0.1rem solid var(--border-soft);
+  color: var(--text-strong);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+
+/* ---------- dots, counter and arrows under a deck ---------- */
+.deck-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1.25rem 0;
+}
+
+.deck-arrow {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0.1rem solid var(--border-card);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text-strong);
+  font: inherit;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.deck-arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.deck-dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.35rem;
+  max-width: 13rem;
+}
+
+.deck-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--border-soft);
+}
+
+.deck-dot.is-current {
+  width: 1.2rem;
+  background: var(--active-bg);
+}
+
+.deck-counter {
+  min-width: 3.2rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* ---------- reading one problem: its sections as cards ---------- */
+.deck-readtop,
+.deck-readfoot {
+  display: none;
+}
+
+body.deck-read .deck-readtop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 16;
+  display: block;
+  padding: max(0.75rem, env(safe-area-inset-top)) 1rem 0.4rem;
+  background: var(--bg);
+}
+
+.deck-readrow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: 3.25rem; /* room for the theme button */
+}
+
+.deck-readrow .deck-back {
+  display: block; /* text-overflow needs a block box, not inline-flex */
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0 auto 0 0;
+  max-width: 60%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.deck-readpos {
+  flex-shrink: 0;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* One line: a long title ends in "…", the difficulty stays visible */
+.deck-readtitle {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-strong);
+}
+
+.deck-readtitle > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.deck-readtitle .badge {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+}
+
+/* Section buttons: tap one to jump to its card */
+.deck-chips {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0.55rem -1rem 0;
+  padding: 0 1rem 0.1rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.deck-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.deck-chip {
+  flex-shrink: 0;
+  padding: 0.3rem 0.8rem;
+  border: 0.1rem solid var(--border-card);
+  border-radius: 2rem;
+  background: var(--surface);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.deck-chip.is-optimal {
+  border-color: var(--easy-text);
+  color: var(--easy-text);
+}
+
+.deck-chip[aria-current="true"] {
+  background: var(--active-bg);
+  border-color: var(--active-bg);
+  color: var(--active-text);
+}
+
+/* The section buttons at the top already show where you are, so the bottom row is
+   kept only for screen readers (it announces "3 / 9 · Edge cases" on each change) */
+body.deck-read .deck-readfoot {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  display: flex;
+}
+
+/* Keep the dots and the label on one line; a long label ends in "…" */
+.deck-readfoot .deck-dots {
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  gap: 0.25rem;
+}
+
+.deck-readfoot .deck-counter {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* The open problem fills the space between the top bar and the dots */
+body.deck-read .page-header,
+body.deck-on .view-bar {
+  display: none;
+}
+
+body.deck-read #question-list > .pattern-group:not(.deck-reading) {
+  display: none;
+}
+
+/* An opaque screen behind the open problem, so the list under it never shows or scrolls */
+body.deck-read::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 13;
+  background: var(--bg);
+  touch-action: none;
+}
+
+/* Reading gets the whole screen: the floating buttons go away (keys / and R still work) */
+body.deck-read .dock {
+  display: none;
+}
+
+body.deck-read .question.deck-current {
+  position: fixed;
+  top: var(--deck-read-top, 9rem);
+  left: 0;
+  right: 0;
+  bottom: env(safe-area-inset-bottom);
+  z-index: 14;
+  display: flex;
+  flex-direction: column;
+  border: none;
+  border-radius: 0;
+  background: var(--bg);
+}
+
+body.deck-read .question.deck-current > summary,
+body.deck-read .question.deck-current .q-jump {
+  display: none;
+}
+
+/* Each section of the problem is one card; swipe sideways between them, scroll down inside one */
+/* Pinned to the card's box: Chrome wraps details content in a slot, so flex sizing would not apply */
+body.deck-read .question.deck-current > .q-body {
+  /* Code runs edge to edge inside the section card's border: its padding is 1.1rem */
+  --bleed: 1.1rem;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+body.deck-read .question.deck-current > .q-body::-webkit-scrollbar {
+  display: none;
+}
+
+body.deck-read .question.deck-current > .q-body > :not(.q-jump) {
+  flex: 0 0 calc(100% - 1.5rem);
+  min-width: 0;
+  box-sizing: border-box;
+  max-height: calc(100% - 0.9rem);
+  margin: 0.4rem 0.75rem 0.5rem;
+  padding: 1.1rem 1.1rem 1.5rem;
+  border: 0.1rem solid var(--border);
+  border-radius: 1.5rem;
+  background: var(--card-bg);
+  box-shadow: 0 0.5rem 1.5rem -0.75rem rgba(0, 0, 0, 0.25);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+}
+
+/* ---------- Visualize, full screen ---------- */
+.viz-maxbar {
+  display: none;
+}
+
+.viz.is-max {
+  /* Code and the pinned footer run edge to edge: they bleed by exactly this padding */
+  --bleed: 0rem;
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  margin: 0;
+  padding: 0 0.85rem 0.75rem;
+  border: none;
+  border-radius: 0;
+  background: var(--bg);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.viz.is-max .viz-maxbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 -0.85rem 0.75rem;
+  padding: max(0.75rem, env(safe-area-inset-top)) 0.85rem 0.6rem;
+  border-bottom: 0.1rem solid var(--border-soft);
+  background: var(--bg);
+}
+
+.viz-maxtitle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.viz-maxclose {
+  flex-shrink: 0;
+  padding: 0.4rem 0.9rem;
+  border: 0.1rem solid var(--border-card);
+  border-radius: 2rem;
+  background: var(--surface);
+  color: var(--text-strong);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.viz-maxclose:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* The pinned footer sits on the screen's bottom edge, above the phone's home bar */
+.viz.is-max .viz-footer {
+  padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+}
+
+/* More room for the code while visualizing */
+.viz.is-max .viz-pre {
+  max-height: 60vh;
+}
+
+/* Nothing else on screen while it is open (the theme button would sit on the Close button) */
+body.viz-max-on .theme-toggle,
+body.viz-max-on .deck-readtop {
+  visibility: hidden;
+}
+
+/* Short screens: a tighter layout so the cards keep their room */
+@media (max-height: 700px) {
+  .deck-sub {
+    display: none;
+  }
+
+  .deck-top .site-nav {
+    margin-bottom: 0.5rem;
+  }
+
+  .deck-top .site-nav a {
+    padding: 0.3rem 0.65rem;
+    font-size: 0.8rem;
+  }
+
+  .deck-track {
+    margin-top: 0.6rem;
+  }
+
+  .deck-card {
+    padding: 1.1rem 1.1rem 1rem;
+  }
+
+  .deck-title {
+    font-size: 1.35rem;
+  }
+
+  .deck-card.is-problem .deck-title {
+    font-size: 1.15rem;
+  }
+
+  .deck-counts {
+    margin-top: 0.7rem;
+  }
+
+  .deck-card .key-idea {
+    margin-top: 0.75rem;
+    padding: 0.75rem 0.9rem;
+    font-size: 0.9rem;
+  }
+
+  .deck-readtitle {
+    margin-top: 0.45rem;
+    font-size: 1rem;
+  }
+}
+
+/* Narrow phones: keep the two tabs on one line */
+@media (max-width: 360px) {
+  .deck-top .site-nav {
+    flex-wrap: nowrap;
+  }
+
+  .deck-top .site-nav a {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+  }
+}
+/* ---------- compact: less room for chrome, more for the content ---------- */
+.deck {
+  padding: max(0.75rem, env(safe-area-inset-top)) 0 calc(0.5rem + env(safe-area-inset-bottom));
+}
+
+.deck-top {
+  padding: 0 1rem;
+}
+
+.deck-top .site-nav {
+  margin-bottom: 0.5rem;
+}
+
+.deck-top .site-nav a {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.82rem;
+}
+
+/* "← Patterns" and the pattern's name on one line */
+.deck-headrow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.deck-headrow .deck-back {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0.25rem 0.75rem 0.25rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+.deck-heading {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 1.2rem;
+}
+
+.deck-sub {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.deck-track {
+  margin-top: 0.5rem;
+}
+
+.deck-slide {
+  padding: 0.15rem 1rem 0.4rem;
+}
+
+.deck-card {
+  padding: 1rem 1.05rem 0.85rem;
+  border-radius: 1.25rem;
+}
+
+.deck-title {
+  margin-top: 0;
+  font-size: 1.35rem;
+}
+
+.deck-card.is-problem .deck-title {
+  font-size: 1.15rem;
+}
+
+.deck-counts {
+  margin-top: 0.65rem;
+}
+
+.deck-list {
+  margin-top: 0.7rem;
+}
+
+.deck-list li {
+  padding: 0.45rem 0;
+}
+
+.deck-card .q-meta {
+  margin-top: 0.5rem;
+}
+
+.deck-card .key-idea {
+  margin-top: 0.7rem;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.92rem;
+}
+
+.deck-cta {
+  padding-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.deck-dots[hidden] {
+  display: none;
+}
+
+/* One bottom row: search, ‹, "3 / 14", ›, Surprise me */
+.deck-foot {
+  gap: 0.5rem;
+  padding: 0.25rem 1rem 0;
+}
+
+.deck-arrow {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.deck-tool svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.deck-tool.is-search {
+  margin-right: auto;
+}
+
+.deck-tool.is-surprise {
+  margin-left: auto;
+}
+
+/* The page's own search/Surprise row is hidden on the deck (the row above has them),
+   but comes back while the search box is open, since the box lives in it */
+body.deck-on .dock:not(:has(#search:not([hidden]))) {
+  display: none;
+}
+
+/* Reading: back, title and ‹ 1/6 › on one line; the theme button waits on the deck screens */
+body.deck-read .theme-toggle {
+  display: none;
+}
+
+body.deck-read .deck-readtop {
+  padding: max(0.6rem, env(safe-area-inset-top)) 0.75rem 0.35rem;
+}
+
+.deck-readrow {
+  gap: 0.4rem;
+  margin-right: 0;
+}
+
+.deck-readrow .deck-back {
+  flex-shrink: 0;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  text-align: center;
+  font-size: 1rem;
+  line-height: 2.05rem;
+}
+
+.deck-readrow .deck-readtitle {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.deck-readtitle .badge {
+  display: none;
+}
+
+.deck-readrow .deck-arrow {
+  width: 2.1rem;
+  height: 2.1rem;
+  font-size: 1rem;
+}
+
+.deck-readpos {
+  font-size: 0.8rem;
+}
+
+.deck-chips {
+  margin: 0.4rem -0.75rem 0;
+  padding: 0 0.75rem 0.1rem;
+}
+
+.deck-chip {
+  padding: 0.25rem 0.7rem;
+  font-size: 0.78rem;
+}
+
+/* Thinner edges around each section card; code bleeds by exactly the card's side padding */
+body.deck-read .question.deck-current > .q-body {
+  --bleed: 0.9rem;
+}
+
+body.deck-read .question.deck-current > .q-body > :not(.q-jump) {
+  flex: 0 0 calc(100% - 1rem);
+  max-height: calc(100% - 0.6rem);
+  margin: 0.3rem 0.5rem;
+  padding: 1rem 0.9rem 1.25rem;
+  border-radius: 1.1rem;
+}
+
+/* ---------- Visualize, full screen: the input boxes wait behind "Edit input" ---------- */
+.viz.is-max:not(.show-input) .viz-form {
+  display: none;
+}
+
+.viz.is-max .viz-main {
+  margin-top: 0;
+}
+
+/* Controls sit on the screen's bottom edge even when the content above is short */
+.viz.is-max:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+}
+
+.viz.is-max > * {
+  flex-shrink: 0;
+}
+
+/* No bottom padding on the panel: sticky stops at the padding edge, which left a 12px gap */
+.viz.is-max {
+  padding-bottom: 0;
+}
+
+.viz.is-max .viz-footer {
+  margin-top: auto;
+  margin-bottom: 0;
+}
+
+.viz-maxedit {
+  flex-shrink: 0;
+  padding: 0.4rem 0.8rem;
+  border: 0.1rem solid var(--border-card);
+  border-radius: 2rem;
+  background: transparent;
+  color: var(--text-strong);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.viz-maxedit[aria-expanded="true"] {
+  background: var(--active-bg);
+  border-color: var(--active-bg);
+  color: var(--active-text);
+}
+
+.viz-maxedit:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.viz.is-max.show-input .viz-form {
+  margin-bottom: 0.75rem;
+}
+
+.viz.is-max .viz-maxbar {
+  padding-top: max(0.6rem, env(safe-area-inset-top));
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.6rem;
+  gap: 0.5rem;
+}
+
+.viz.is-max .viz-maxtitle {
+  font-size: 0.95rem;
+}
+
+.viz.is-max .viz-maxclose {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+}
