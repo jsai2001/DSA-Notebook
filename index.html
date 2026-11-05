@@ -2298,7 +2298,7 @@
       <details class="pattern-group" id="g-sliding-window">
         <summary>
           <span class="g-name">Sliding Window</span>
-          <span class="g-count"><span class="g-total">2 problems</span></span>
+          <span class="g-count"><span class="g-total">3 problems</span></span>
           <span class="g-hint">A window that grows and shrinks over a string</span>
         </summary>
         <div class="g-body">
@@ -2762,6 +2762,534 @@
                         <td>O(n)</td>
                         <td>O(min(n, m))</td>
                         <td>Single pass; expected answer in interviews</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0076-minimum-window-substring ===== -->
+          <details class="question" data-group="sliding-window" data-tags="hash-table string sliding-window counting substring minimum-window">
+            <summary>
+              <span class="q-title">76. Minimum Window Substring</span>
+              <span class="q-meta">
+                <span class="badge hard">Hard</span>
+                <span class="tag">Hash Table</span>
+                <span class="tag">String</span>
+                <span class="tag">Sliding Window</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Grow the window to the right until it
+                <strong>covers</strong> t, then shrink it from the left while it still
+                does. Keep <code>need[c]</code> (how many more of each letter the window
+                needs) and <code>missing</code> (how many letters of t are still
+                missing): the window covers t exactly when <code>missing == 0</code>.
+                Each letter enters and leaves once, so O(m + n).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/minimum-window-substring/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Given strings <code>s</code> and <code>t</code>, return the shortest
+                  substring of <code>s</code> that contains every letter of
+                  <code>t</code>, <strong>duplicates included</strong>. If there's none,
+                  return <code>""</code>.
+                </p>
+                <ul>
+                  <li><code>m = s.length</code>, <code>n = t.length</code>, <code>1 &lt;= m, n &lt;= 10⁵</code>.</li>
+                  <li>Both strings are uppercase and lowercase English letters (<code>'A'</code> and <code>'a'</code> are different).</li>
+                  <li>The answer is unique in LeetCode's tests.</li>
+                  <li>Follow-up: can you do it in O(m + n)?</li>
+                </ul>
+                <p class="note">
+                  Examples: <code>s = "ADOBECODEBANC", t = "ABC"</code> →
+                  <code>"BANC"</code>; <code>s = "a", t = "a"</code> → <code>"a"</code>;
+                  <code>s = "a", t = "aa"</code> → <code>""</code> (s has only one a).
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>"a"</code>, <code>"aa"</code></td>
+                        <td><code>""</code></td>
+                        <td>t has two a's. Checking only that each letter <em>appears</em> (a set) says "a".</td>
+                      </tr>
+                      <tr>
+                        <td><code>"ab"</code>, <code>"abc"</code></td>
+                        <td><code>""</code></td>
+                        <td>t is longer than s: no window can cover it. The answer must start as "none", not as all of s.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"ab"</code>, <code>"A"</code></td>
+                        <td><code>""</code></td>
+                        <td>Upper and lower case are different letters.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"abc"</code>, <code>"cba"</code></td>
+                        <td><code>"abc"</code></td>
+                        <td>The answer is all of s. Starting <code>best</code> at <code>len(s)</code> and keeping only <em>shorter</em> windows never records it; start one past it.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"xxxab"</code>, <code>"ba"</code></td>
+                        <td><code>"ab"</code></td>
+                        <td>The answer ends at the last letter: it's found inside the loop, so nothing is left to check after it.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"aaab"</code>, <code>"ab"</code></td>
+                        <td><code>"ab"</code></td>
+                        <td>The first window that covers t is "aaab". Shrinking has to drop two extra a's, not just one.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"aba"</code>, <code>"aa"</code></td>
+                        <td><code>"aba"</code></td>
+                        <td>The two a's aren't next to each other, so the b in between has to stay.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"bba"</code>, <code>"ab"</code></td>
+                        <td><code>"ba"</code></td>
+                        <td>The first b is extra. Approach 3: <code>need[b]</code> goes to −1, which is how it knows that b can go.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"ADOBECODEBANC"</code>, <code>"ABC"</code></td>
+                        <td><code>"BANC"</code></td>
+                        <td>"ADOBEC" covers t first; the shortest window only shows up after giving up the A and growing again.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Try Every Start</h2>
+                <p class="intuition">
+                  For each start <code>i</code>, grow the window to the right one letter
+                  at a time until it covers t. That's the shortest window starting at
+                  <code>i</code>; keep the shortest of them all.
+                </p>
+                <ul>
+                  <li>Count <code>missing</code>, the letters of t not yet in the window: a new letter lowers it only while the window has fewer of that letter than t does.</li>
+                  <li>Stop growing at the first cover (<code>break</code>): longer windows from the same start can't be shorter.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(m² + n)</span>
+                  <span><strong>Space</strong> O(1) (a count per letter)</span>
+                </div>
+                <p class="note">
+                  Correct, but every start can scan to the end. With
+                  <code>s = "aa…ab"</code> and <code>t = "ab"</code> it took 5.6 s in
+                  Python at m = 10⁴ here; at m = 10⁵ that's 100 times more. C++ took
+                  10.4 s at m = 10⁵.
+                </p>
+                <div class="code-tabs" data-viz="0076-minimum-window-substring/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5,6],"start":[7,8,9],"grow":[10,11,12,13,14],"found":[15,18],"record":[16,17],"return":[19]}'>
+                    class Solution(object):
+                        def minWindow(self, s, t):
+                            need = {}
+                            for c in t:
+                                need[c] = need.get(c, 0) + 1
+                            best_start, best_len = 0, len(s) + 1  # no window yet
+                            for i in range(len(s)):
+                                have = {}
+                                missing = len(t)  # letters of t not yet in s[i..j]
+                                for j in range(i, len(s)):
+                                    c = s[j]
+                                    have[c] = have.get(c, 0) + 1
+                                    if have[c] <= need.get(c, 0):  # one more letter of t is covered
+                                        missing -= 1
+                                    if missing == 0:  # s[i..j] covers t
+                                        if j - i + 1 < best_len:
+                                            best_start, best_len = i, j - i + 1
+                                        break  # a longer window from i can't be shorter
+                            return s[best_start:best_start + best_len] if best_len <= len(s) else ""
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8,9],"start":[10,11,12],"grow":[13,14,15],"found":[16,21],"record":[17,18,19],"return":[25]}'>
+                    #include <array>
+                    #include <string>
+                    class Solution {
+                    public:
+                        std::string minWindow(std::string s, std::string t) {
+                            std::array<int, 128> need{};
+                            for (char c : t) ++need[c];
+                            int m = (int)s.size(), n = (int)t.size();
+                            int bestStart = 0, bestLen = m + 1; // no window yet
+                            for (int i = 0; i < m; ++i) {
+                                std::array<int, 128> have{};
+                                int missing = n; // letters of t not yet in s[i..j]
+                                for (int j = i; j < m; ++j) {
+                                    char c = s[j];
+                                    if (++have[c] <= need[c]) --missing; // one more letter of t is covered
+                                    if (missing == 0) { // s[i..j] covers t
+                                        if (j - i + 1 < bestLen) {
+                                            bestStart = i;
+                                            bestLen = j - i + 1;
+                                        }
+                                        break; // a longer window from i can't be shorter
+                                    }
+                                }
+                            }
+                            return bestLen <= m ? s.substr(bestStart, bestLen) : "";
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5,6],"start":[7,8,9],"grow":[10,11,12],"found":[13,18],"record":[14,15,16],"return":[22]}'>
+                    class Solution {
+                        public String minWindow(String s, String t) {
+                            int[] need = new int[128];
+                            for (char c : t.toCharArray()) need[c]++;
+                            int m = s.length(), n = t.length();
+                            int bestStart = 0, bestLen = m + 1; // no window yet
+                            for (int i = 0; i < m; i++) {
+                                int[] have = new int[128];
+                                int missing = n; // letters of t not yet in s[i..j]
+                                for (int j = i; j < m; j++) {
+                                    char c = s.charAt(j);
+                                    if (++have[c] <= need[c]) missing--; // one more letter of t is covered
+                                    if (missing == 0) { // s[i..j] covers t
+                                        if (j - i + 1 < bestLen) {
+                                            bestStart = i;
+                                            bestLen = j - i + 1;
+                                        }
+                                        break; // a longer window from i can't be shorter
+                                    }
+                                }
+                            }
+                            return bestLen <= m ? s.substring(bestStart, bestStart + bestLen) : "";
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Sliding Window, Compare Counts</h2>
+                <p class="intuition">
+                  Don't restart for every <code>i</code>. Move <code>right</code> one
+                  letter at a time and add it to <code>have</code>. Whenever
+                  <code>s[left..right]</code> covers t, record it, then drop
+                  <code>s[left]</code> and check again. Both ends only move right.
+                </p>
+                <ul>
+                  <li>"Covers" means <code>have[c] &gt;= need[c]</code> for every distinct letter <code>c</code> of t (k of them, at most 52).</li>
+                  <li>The <code>while</code> keeps shrinking as long as it still covers, so every window recorded is the shortest one ending at <code>right</code>.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(k · m + n), k = distinct letters in t</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  The cover check looks at up to 52 counts after each move. With random
+                  letters and all 52 in t, it took 0.52 s in Python at m = 10⁵ (5 ms in
+                  C++). Fast enough to pass.
+                </p>
+                <div class="code-tabs" data-viz="0076-minimum-window-substring/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5,6,7,8],"grow":[9,10],"check":[12],"record":[13,14],"shrink":[15,16],"return":[17]}'>
+                    class Solution(object):
+                        def minWindow(self, s, t):
+                            need = {}
+                            for c in t:
+                                need[c] = need.get(c, 0) + 1
+                            have = {}
+                            best_start, best_len = 0, len(s) + 1  # no window yet
+                            left = 0
+                            for right in range(len(s)):
+                                have[s[right]] = have.get(s[right], 0) + 1
+                                # Does s[left..right] cover t? Look at every distinct letter of t.
+                                while all(have.get(c, 0) >= k for c, k in need.items()):
+                                    if right - left + 1 < best_len:
+                                        best_start, best_len = left, right - left + 1
+                                    have[s[left]] -= 1  # drop the leftmost letter and try again
+                                    left += 1
+                            return s[best_start:best_start + best_len] if best_len <= len(s) else ""
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8,9,10,11,12,13],"grow":[20,21],"check":[22],"record":[23,24,25],"shrink":[27,28],"return":[31]}'>
+                    #include <array>
+                    #include <string>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::string minWindow(std::string s, std::string t) {
+                            std::array<int, 128> need{}, have{};
+                            std::vector<char> letters; // the distinct letters of t
+                            for (char c : t)
+                                if (need[c]++ == 0) letters.push_back(c);
+                            int m = (int)s.size();
+                            int bestStart = 0, bestLen = m + 1; // no window yet
+                            int left = 0;
+                            // Does s[left..right] cover t? Look at every distinct letter of t.
+                            auto covers = [&] {
+                                for (char c : letters)
+                                    if (have[c] < need[c]) return false;
+                                return true;
+                            };
+                            for (int right = 0; right < m; ++right) {
+                                ++have[s[right]];
+                                while (covers()) {
+                                    if (right - left + 1 < bestLen) {
+                                        bestStart = left;
+                                        bestLen = right - left + 1;
+                                    }
+                                    --have[s[left]]; // drop the leftmost letter and try again
+                                    ++left;
+                                }
+                            }
+                            return bestLen <= m ? s.substr(bestStart, bestLen) : "";
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[6,7,8,9,10,11,12],"grow":[13,14],"check":[15],"record":[16,17,18],"shrink":[20,21],"return":[24]}'>
+                    import java.util.ArrayList;
+                    import java.util.List;
+
+                    class Solution {
+                        public String minWindow(String s, String t) {
+                            int[] need = new int[128], have = new int[128];
+                            List<Character> letters = new ArrayList<>(); // the distinct letters of t
+                            for (char c : t.toCharArray())
+                                if (need[c]++ == 0) letters.add(c);
+                            int m = s.length();
+                            int bestStart = 0, bestLen = m + 1; // no window yet
+                            int left = 0;
+                            for (int right = 0; right < m; right++) {
+                                have[s.charAt(right)]++;
+                                while (covers(need, have, letters)) {
+                                    if (right - left + 1 < bestLen) {
+                                        bestStart = left;
+                                        bestLen = right - left + 1;
+                                    }
+                                    have[s.charAt(left)]--; // drop the leftmost letter and try again
+                                    left++;
+                                }
+                            }
+                            return bestLen <= m ? s.substring(bestStart, bestStart + bestLen) : "";
+                        }
+
+                        // Does the window cover t? Look at every distinct letter of t.
+                        private boolean covers(int[] need, int[] have, List<Character> letters) {
+                            for (char c : letters)
+                                if (have[c] < need[c]) return false;
+                            return true;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Sliding Window, Count What's Missing
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Replace the 52-way check with one number. <code>need[c]</code> starts
+                  as the count of c in t and drops by 1 whenever c enters the window;
+                  <code>missing</code> starts at <code>len(t)</code>. The window covers
+                  t exactly when <code>missing == 0</code>.
+                </p>
+                <ul>
+                  <li>A letter coming in lowers <code>missing</code> only if <code>need[c] &gt; 0</code> before (t still wanted it). Then <code>need[c] −= 1</code>, which can go below 0: that many extra copies.</li>
+                  <li>Once it covers: drop letters from the left while <code>need[s[left]] &lt; 0</code> (extra copies), record the window, then give up <code>s[left]</code> so one letter is missing again and keep growing.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(m + n)</span>
+                  <span><strong>Space</strong> O(1) (128 counts)</span>
+                </div>
+                <p class="note">
+                  Each letter of s enters once and leaves at most once, so the work is
+                  constant per letter: 20 ms in Python and 0.3 ms in C++ at m = 10⁵. The
+                  same need/missing idea as Permutation in String (567), with a window
+                  that changes size.
+                </p>
+                <div class="code-tabs" data-viz="0076-minimum-window-substring/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5,6,7,8],"grow":[9,10,11,12,13],"check":[14],"shrink":[15,16,17],"record":[18,19],"release":[20,21,22],"return":[23]}'>
+                    class Solution(object):
+                        def minWindow(self, s, t):
+                            need = {}  # how many more of each letter the window needs; below 0 = extra
+                            for c in t:
+                                need[c] = need.get(c, 0) + 1
+                            missing = len(t)  # letters of t not yet in the window
+                            best_start, best_len = 0, len(s) + 1  # no window yet
+                            left = 0
+                            for right in range(len(s)):
+                                c = s[right]
+                                if need.get(c, 0) > 0:  # t still needed this letter
+                                    missing -= 1
+                                need[c] = need.get(c, 0) - 1
+                                if missing == 0:  # the window covers t
+                                    while need[s[left]] < 0:  # s[left] is extra: drop it
+                                        need[s[left]] += 1
+                                        left += 1
+                                    if right - left + 1 < best_len:  # the shortest window ending at right
+                                        best_start, best_len = left, right - left + 1
+                                    need[s[left]] += 1  # give up s[left]: now one letter of t is missing
+                                    missing += 1
+                                    left += 1
+                            return s[best_start:best_start + best_len] if best_len <= len(s) else ""
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8,9,10,11],"grow":[12,13,14,15],"check":[16],"shrink":[17,18,19],"record":[21,22,23],"release":[25,26,27],"return":[30]}'>
+                    #include <array>
+                    #include <string>
+                    class Solution {
+                    public:
+                        std::string minWindow(std::string s, std::string t) {
+                            std::array<int, 128> need{}; // how many more of each letter the window needs; below 0 = extra
+                            for (char c : t) ++need[c];
+                            int missing = (int)t.size(); // letters of t not yet in the window
+                            int m = (int)s.size();
+                            int bestStart = 0, bestLen = m + 1; // no window yet
+                            int left = 0;
+                            for (int right = 0; right < m; ++right) {
+                                char c = s[right];
+                                if (need[c] > 0) --missing; // t still needed this letter
+                                --need[c];
+                                if (missing == 0) { // the window covers t
+                                    while (need[s[left]] < 0) { // s[left] is extra: drop it
+                                        ++need[s[left]];
+                                        ++left;
+                                    }
+                                    if (right - left + 1 < bestLen) { // the shortest window ending at right
+                                        bestStart = left;
+                                        bestLen = right - left + 1;
+                                    }
+                                    ++need[s[left]]; // give up s[left]: now one letter of t is missing
+                                    ++missing;
+                                    ++left;
+                                }
+                            }
+                            return bestLen <= m ? s.substr(bestStart, bestLen) : "";
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5,6,7,8],"grow":[9,10,11,12],"check":[13],"shrink":[14,15,16],"record":[18,19,20],"release":[22,23,24],"return":[27]}'>
+                    class Solution {
+                        public String minWindow(String s, String t) {
+                            int[] need = new int[128]; // how many more of each letter the window needs; below 0 = extra
+                            for (char c : t.toCharArray()) need[c]++;
+                            int missing = t.length(); // letters of t not yet in the window
+                            int m = s.length();
+                            int bestStart = 0, bestLen = m + 1; // no window yet
+                            int left = 0;
+                            for (int right = 0; right < m; right++) {
+                                char c = s.charAt(right);
+                                if (need[c] > 0) missing--; // t still needed this letter
+                                need[c]--;
+                                if (missing == 0) { // the window covers t
+                                    while (need[s.charAt(left)] < 0) { // s[left] is extra: drop it
+                                        need[s.charAt(left)]++;
+                                        left++;
+                                    }
+                                    if (right - left + 1 < bestLen) { // the shortest window ending at right
+                                        bestStart = left;
+                                        bestLen = right - left + 1;
+                                    }
+                                    need[s.charAt(left)]++; // give up s[left]: now one letter of t is missing
+                                    missing++;
+                                    left++;
+                                }
+                            }
+                            return bestLen <= m ? s.substring(bestStart, bestStart + bestLen) : "";
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  In Python, <code>collections.Counter</code> gives Approach 2 almost
+                  for free: <code>need &lt;= have</code> asks "does every count in t fit
+                  in the window?" in one expression. C++ and Java have nothing built in
+                  for this, so write Approach 3.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    from collections import Counter
+                    class Solution(object):
+                        def minWindow(self, s, t):
+                            need, have = Counter(t), Counter()
+                            best_start, best_len = 0, len(s) + 1
+                            left = 0
+                            for right, c in enumerate(s):
+                                have[c] += 1
+                                while need <= have:  # every count in t is covered (Python 3.10+)
+                                    if right - left + 1 < best_len:
+                                        best_start, best_len = left, right - left + 1
+                                    have[s[left]] -= 1
+                                    left += 1
+                            return s[best_start:best_start + best_len] if best_len <= len(s) else ""
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(k · m + n)</span>
+                  <span><strong>Space</strong> O(k)</span>
+                </div>
+                <p class="note">
+                  Passes every test here; 0.84 s in Python on the same 10⁵ random
+                  letters, so slower than Approach 2 but still fine. <code>&lt;=</code>
+                  on Counters needs Python 3.10 or later.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Try Every Start</th>
+                        <td>Grow from each i until it covers t</td>
+                        <td>O(m² + n)</td>
+                        <td>O(1)</td>
+                        <td>Too slow at m = 10⁵</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Compare Counts</th>
+                        <td>Grow right, shrink left, check k counts</td>
+                        <td>O(k · m + n)</td>
+                        <td>O(1)</td>
+                        <td>Simple; passes</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Count What's Missing</th>
+                        <td>need[c] (can go below 0) + missing</td>
+                        <td>O(m + n)</td>
+                        <td>O(1)</td>
+                        <td>O(1) per letter; the follow-up's answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -29508,6 +30036,276 @@
             line: ["loop", "return"],
             note: `lo = ${lo} > hi = ${hi}: no positions left, so ${target} isn't in the matrix. Return false. ${looked} cell${looked === 1 ? "" : "s"} looked at for ${m * n}: O(log(m·n)).`,
             view: view(undefined),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0076-minimum-window-substring/approach1.visual.js -->
+    <script>
+      // For each start i, grow right until the window covers t; that's the shortest window starting at i.
+      DSAViz.register("0076-minimum-window-substring/approach1", {
+        inputs: [
+          { name: "s", type: "string", value: "ADOBECODEBANC", maxLength: 14 },
+          { name: "t", type: "string", value: "ABC", maxLength: 6 },
+        ],
+        trace({ s, t }) {
+          for (const [name, x] of [["s", s], ["t", t]]) if (!/^[A-Za-z]+$/.test(x)) throw new DSAViz.InputError(`${name} must be 1 or more letters (A–Z, a–z).`);
+          const m = s.length;
+          const need = {};
+          for (const c of t) need[c] = (need[c] || 0) + 1;
+          let bestStart = 0;
+          let bestLen = m + 1;
+          let scanned = 0;
+          const steps = [];
+          const bestText = () => (bestLen <= m ? `"${s.slice(bestStart, bestStart + bestLen)}"` : "none yet");
+          const view = (i, j, o = {}) => {
+            const marks = {};
+            if (o.final) {
+              if (bestLen <= m) for (let k = bestStart; k < bestStart + bestLen; k++) marks[k] = "match";
+            } else {
+              for (let k = 0; k < i; k++) marks[k] = "visited"; // starts already tried
+              for (let k = i; k <= j; k++) marks[k] = o.found ? "match" : "window";
+            }
+            const pointers = o.final || j < i ? {} : j > i ? { i, j } : { i };
+            return [
+              { type: "array", label: "s (outlined = s[i..j]; grey = starts already tried)", values: [...s], marks, pointers },
+              {
+                type: "vars",
+                items: [
+                  { name: "t", value: `"${t}"` },
+                  { name: "best", value: bestText(), mark: o.newBest ? "match" : "" },
+                  { name: "letters scanned", value: scanned },
+                ],
+              },
+            ];
+          };
+          steps.push({ line: "init", note: `need = the letter counts of "${t}". Try every start i; from each one, grow right until s[i..j] has every letter of t.`, view: view(0, -1) });
+          for (let i = 0; i < m; i++) {
+            const have = {};
+            let missing = t.length;
+            let j = i;
+            let found = false;
+            for (; j < m; j++) {
+              scanned++;
+              const c = s[j];
+              have[c] = (have[c] || 0) + 1;
+              if (have[c] <= (need[c] || 0)) missing--;
+              if (missing === 0) {
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              steps.push({ line: ["start", "grow"], note: `From i = ${i}, grew to the end of s without covering "${t}" (still missing ${missing}). No window starts here${i + 1 < m ? "; the later starts won't cover it either, but this approach still tries them" : ""}.`, view: view(i, m - 1) });
+              continue;
+            }
+            const len = j - i + 1;
+            const newBest = len < bestLen;
+            if (newBest) {
+              bestStart = i;
+              bestLen = len;
+            }
+            steps.push({
+              line: ["start", "grow", "found", "record"],
+              note: `From i = ${i}, grew to j = ${j}: "${s.slice(i, j + 1)}" (length ${len}) is the first to cover "${t}". ${newBest ? "New best." : `Not shorter; best stays ${bestText()}.`} Stop growing: anything longer from i is worse.`,
+              view: view(i, j, { found: true, newBest }),
+            });
+          }
+          steps.push({
+            line: "return",
+            note: `${bestLen <= m ? `Return ${bestText()}.` : `Return "".`} ${scanned} letters scanned for m = ${m}: every start scans again from scratch, O(m²).`,
+            view: view(m, m, { final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0076-minimum-window-substring/approach2.visual.js -->
+    <script>
+      // Grow right; while the window covers t (have >= need for every letter of t), record it and drop the left letter.
+      DSAViz.register("0076-minimum-window-substring/approach2", {
+        inputs: [
+          { name: "s", type: "string", value: "ADOBECODEBANC", maxLength: 14 },
+          { name: "t", type: "string", value: "ABC", maxLength: 6 },
+        ],
+        trace({ s, t }) {
+          for (const [name, x] of [["s", s], ["t", t]]) if (!/^[A-Za-z]+$/.test(x)) throw new DSAViz.InputError(`${name} must be 1 or more letters (A–Z, a–z).`);
+          const m = s.length;
+          const tl = [...new Set(t)].sort(); // only t's letters matter for "covers"
+          const need = {};
+          const have = {};
+          tl.forEach((c) => (need[c] = have[c] = 0));
+          for (const c of t) need[c]++;
+          let left = 0;
+          let bestStart = 0;
+          let bestLen = m + 1;
+          const steps = [];
+          const bestText = () => (bestLen <= m ? `"${s.slice(bestStart, bestStart + bestLen)}"` : "none yet");
+          const covers = () => tl.every((c) => have[c] >= need[c]);
+          const short = () => tl.filter((c) => have[c] < need[c]);
+          const view = (right, o = {}) => {
+            const marks = {};
+            if (o.final) {
+              if (bestLen <= m) for (let k = bestStart; k < bestStart + bestLen; k++) marks[k] = "match";
+            } else {
+              for (let k = left; k <= right; k++) marks[k] = o.covers ? "match" : "window";
+              if (o.in !== undefined) marks[o.in] = "new";
+              if (o.out !== undefined) marks[o.out] = "cut";
+            }
+            const pointers = {};
+            if (!o.final && right >= 0) {
+              pointers.left = Math.min(left, m - 1);
+              pointers.right = right;
+            }
+            const gm = {};
+            tl.forEach((c, j) => {
+              gm[`1,${j}`] = have[c] >= need[c] ? "match" : "compare";
+              if (o.letter === c) gm[`1,${j}`] = "new";
+            });
+            return [
+              { type: "array", label: "s (outlined = the window)", values: [...s], marks, pointers },
+              { type: "grid", label: "t's letters (green = the window has enough)", rows: ["need", "have"], cols: tl, cells: [tl.map((c) => need[c]), tl.map((c) => have[c])], marks: gm, corner: "" },
+              { type: "vars", items: [{ name: "best", value: bestText(), mark: o.newBest ? "match" : "" }] },
+            ];
+          };
+          steps.push({ line: "init", note: `need = the letter counts of "${t}". Only these ${tl.length} letter${tl.length === 1 ? "" : "s"} matter: the window covers t when it has enough of each.`, view: view(-1) });
+          for (let right = 0; right < m; right++) {
+            const c = s[right];
+            if (c in have) have[c]++;
+            if (!covers()) {
+              steps.push({ line: ["grow", "check"], note: `${c} comes in. Still short of ${short().join(", ")}: doesn't cover t yet.`, view: view(right, { in: right, letter: c }) });
+              continue;
+            }
+            steps.push({ line: ["grow", "check"], note: `${c} comes in. Every count of t is covered: "${s.slice(left, right + 1)}" covers "${t}".`, view: view(right, { in: right, letter: c, covers: true }) });
+            while (covers()) {
+              const len = right - left + 1;
+              const newBest = len < bestLen;
+              if (newBest) {
+                bestStart = left;
+                bestLen = len;
+              }
+              steps.push({ line: "record", note: `"${s.slice(left, right + 1)}" (length ${len}). ${newBest ? "New best." : `best stays ${bestText()}.`}`, view: view(right, { covers: true, newBest }) });
+              const out = s[left];
+              if (out in have) have[out]--;
+              left++;
+              const still = covers();
+              steps.push({
+                line: ["shrink", "check"],
+                note: `Drop ${out} from the left. ${still ? "Still covers t: record and drop again." : `Now short of ${short().join(", ")}: grow right again.`}`,
+                view: view(right, { out: left - 1, letter: out, covers: still }),
+              });
+            }
+          }
+          steps.push({
+            line: "return",
+            note: bestLen <= m ? `Return ${bestText()}. Each step checks ${tl.length} count${tl.length === 1 ? "" : "s"}: O(k · m + n).` : `No window ever covered "${t}". Return "".`,
+            view: view(m, { final: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0076-minimum-window-substring/approach3.visual.js -->
+    <script>
+      // need[c] counts down as letters come in (below 0 = extra copies); missing == 0 means the window covers t.
+      DSAViz.register("0076-minimum-window-substring/approach3", {
+        inputs: [
+          { name: "s", type: "string", value: "ADOBECODEBANC", maxLength: 14 },
+          { name: "t", type: "string", value: "ABC", maxLength: 6 },
+        ],
+        trace({ s, t }) {
+          for (const [name, x] of [["s", s], ["t", t]]) if (!/^[A-Za-z]+$/.test(x)) throw new DSAViz.InputError(`${name} must be 1 or more letters (A–Z, a–z).`);
+          const m = s.length;
+          const letters = [...new Set(s + t)].sort();
+          const inT = new Set(t);
+          const need = {};
+          letters.forEach((c) => (need[c] = 0));
+          for (const c of t) need[c]++;
+          let missing = t.length;
+          let left = 0;
+          let bestStart = 0;
+          let bestLen = m + 1;
+          const steps = [];
+          const bestText = () => (bestLen <= m ? `"${s.slice(bestStart, bestStart + bestLen)}"` : "none yet");
+          const view = (right, o = {}) => {
+            const marks = {};
+            if (o.final) {
+              if (bestLen <= m) for (let k = bestStart; k < bestStart + bestLen; k++) marks[k] = "match";
+            } else {
+              for (let k = left; k <= right; k++) marks[k] = o.covers ? "match" : "window";
+              if (o.in !== undefined) marks[o.in] = "new";
+              if (o.out !== undefined) marks[o.out] = "cut";
+            }
+            const pointers = {};
+            if (!o.final && right >= 0) {
+              pointers.left = Math.min(left, m - 1);
+              pointers.right = right;
+            }
+            const gm = {};
+            letters.forEach((c, j) => {
+              if (inT.has(c) && need[c] <= 0) gm[`0,${j}`] = "match";
+              else if (need[c] < 0) gm[`0,${j}`] = "visited";
+              if (o.letter === c) gm[`0,${j}`] = "new";
+            });
+            return [
+              { type: "array", label: "s (outlined = the window)", values: [...s], marks, pointers },
+              { type: "grid", label: "need: how many more the window needs (green = t's letter covered; below 0 = extra)", rows: ["need"], cols: letters, cells: [letters.map((c) => need[c])], marks: gm, corner: "" },
+              {
+                type: "vars",
+                items: [
+                  { name: "missing", value: missing, mark: o.mchange ? "new" : "" },
+                  { name: "best", value: bestText(), mark: o.newBest ? "match" : "" },
+                ],
+              },
+            ];
+          };
+          steps.push({ line: "init", note: `need = the letter counts of "${t}". missing = ${t.length}: every letter of t is still missing.`, view: view(-1) });
+          for (let right = 0; right < m; right++) {
+            const c = s[right];
+            const wanted = need[c] > 0;
+            if (wanted) missing--;
+            need[c]--;
+            steps.push({
+              line: "grow",
+              note: wanted
+                ? `${c} comes in. t still needed it, so missing − 1 = ${missing}. need[${c}] = ${need[c]}.`
+                : `${c} comes in. ${inT.has(c) ? `t has enough ${c}'s already` : `t has no ${c}`}, so missing stays ${missing}. need[${c}] = ${need[c]} (extra).`,
+              view: view(right, { in: right, letter: c, mchange: wanted }),
+            });
+            if (missing !== 0) continue;
+            steps.push({ line: "check", note: `missing == 0: "${s.slice(left, right + 1)}" covers "${t}". Now make it as short as possible.`, view: view(right, { covers: true }) });
+            while (need[s[left]] < 0) {
+              const out = s[left];
+              need[out]++;
+              left++;
+              steps.push({ line: "shrink", note: `need[${out}] was below 0, so that ${out} is extra: drop it. need[${out}] = ${need[out]}. The window still covers t.`, view: view(right, { covers: true, out: left - 1, letter: out }) });
+            }
+            const len = right - left + 1;
+            const newBest = len < bestLen;
+            if (newBest) {
+              bestStart = left;
+              bestLen = len;
+            }
+            steps.push({
+              line: "record",
+              note: `need[${s[left]}] is ${need[s[left]]}, so s[left] = ${s[left]} can't go. "${s.slice(left, right + 1)}" (length ${len}) is the shortest window ending here. ${newBest ? "New best." : `best stays ${bestText()}.`}`,
+              view: view(right, { covers: true, newBest }),
+            });
+            const gone = s[left];
+            need[gone]++;
+            missing++;
+            left++;
+            steps.push({
+              line: "release",
+              note: `Give up ${gone} to look for something shorter: need[${gone}] = ${need[gone]}, missing = 1. Keep growing right.`,
+              view: view(right, { out: left - 1, letter: gone, mchange: true }),
+            });
+          }
+          steps.push({
+            line: "return",
+            note: bestLen <= m ? `Return ${bestText()}. Each letter came in once and left at most once: O(m + n).` : `No window ever covered "${t}". Return "".`,
+            view: view(m, { final: true }),
           });
           return steps;
         },

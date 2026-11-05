@@ -1,0 +1,251 @@
+<details class="question" data-group="sliding-window" data-tags="hash-table string sliding-window counting substring minimum-window">
+  <summary>
+    <span class="q-title">76. Minimum Window Substring</span>
+    <span class="q-meta">
+      <span class="badge hard">Hard</span>
+      <span class="tag">Hash Table</span>
+      <span class="tag">String</span>
+      <span class="tag">Sliding Window</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Grow the window to the right until it
+      <strong>covers</strong> t, then shrink it from the left while it still
+      does. Keep <code>need[c]</code> (how many more of each letter the window
+      needs) and <code>missing</code> (how many letters of t are still
+      missing): the window covers t exactly when <code>missing == 0</code>.
+      Each letter enters and leaves once, so O(m + n).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/minimum-window-substring/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given strings <code>s</code> and <code>t</code>, return the shortest
+        substring of <code>s</code> that contains every letter of
+        <code>t</code>, <strong>duplicates included</strong>. If there's none,
+        return <code>""</code>.
+      </p>
+      <ul>
+        <li><code>m = s.length</code>, <code>n = t.length</code>, <code>1 &lt;= m, n &lt;= 10⁵</code>.</li>
+        <li>Both strings are uppercase and lowercase English letters (<code>'A'</code> and <code>'a'</code> are different).</li>
+        <li>The answer is unique in LeetCode's tests.</li>
+        <li>Follow-up: can you do it in O(m + n)?</li>
+      </ul>
+      <p class="note">
+        Examples: <code>s = "ADOBECODEBANC", t = "ABC"</code> →
+        <code>"BANC"</code>; <code>s = "a", t = "a"</code> → <code>"a"</code>;
+        <code>s = "a", t = "aa"</code> → <code>""</code> (s has only one a).
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>"a"</code>, <code>"aa"</code></td>
+              <td><code>""</code></td>
+              <td>t has two a's. Checking only that each letter <em>appears</em> (a set) says "a".</td>
+            </tr>
+            <tr>
+              <td><code>"ab"</code>, <code>"abc"</code></td>
+              <td><code>""</code></td>
+              <td>t is longer than s: no window can cover it. The answer must start as "none", not as all of s.</td>
+            </tr>
+            <tr>
+              <td><code>"ab"</code>, <code>"A"</code></td>
+              <td><code>""</code></td>
+              <td>Upper and lower case are different letters.</td>
+            </tr>
+            <tr>
+              <td><code>"abc"</code>, <code>"cba"</code></td>
+              <td><code>"abc"</code></td>
+              <td>The answer is all of s. Starting <code>best</code> at <code>len(s)</code> and keeping only <em>shorter</em> windows never records it; start one past it.</td>
+            </tr>
+            <tr>
+              <td><code>"xxxab"</code>, <code>"ba"</code></td>
+              <td><code>"ab"</code></td>
+              <td>The answer ends at the last letter: it's found inside the loop, so nothing is left to check after it.</td>
+            </tr>
+            <tr>
+              <td><code>"aaab"</code>, <code>"ab"</code></td>
+              <td><code>"ab"</code></td>
+              <td>The first window that covers t is "aaab". Shrinking has to drop two extra a's, not just one.</td>
+            </tr>
+            <tr>
+              <td><code>"aba"</code>, <code>"aa"</code></td>
+              <td><code>"aba"</code></td>
+              <td>The two a's aren't next to each other, so the b in between has to stay.</td>
+            </tr>
+            <tr>
+              <td><code>"bba"</code>, <code>"ab"</code></td>
+              <td><code>"ba"</code></td>
+              <td>The first b is extra. Approach 3: <code>need[b]</code> goes to −1, which is how it knows that b can go.</td>
+            </tr>
+            <tr>
+              <td><code>"ADOBECODEBANC"</code>, <code>"ABC"</code></td>
+              <td><code>"BANC"</code></td>
+              <td>"ADOBEC" covers t first; the shortest window only shows up after giving up the A and growing again.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Try Every Start</h2>
+      <p class="intuition">
+        For each start <code>i</code>, grow the window to the right one letter
+        at a time until it covers t. That's the shortest window starting at
+        <code>i</code>; keep the shortest of them all.
+      </p>
+      <ul>
+        <li>Count <code>missing</code>, the letters of t not yet in the window: a new letter lowers it only while the window has fewer of that letter than t does.</li>
+        <li>Stop growing at the first cover (<code>break</code>): longer windows from the same start can't be shorter.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m² + n)</span>
+        <span><strong>Space</strong> O(1) (a count per letter)</span>
+      </div>
+      <p class="note">
+        Correct, but every start can scan to the end. With
+        <code>s = "aa…ab"</code> and <code>t = "ab"</code> it took 5.6 s in
+        Python at m = 10⁴ here; at m = 10⁵ that's 100 times more. C++ took
+        10.4 s at m = 10⁵.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Sliding Window, Compare Counts</h2>
+      <p class="intuition">
+        Don't restart for every <code>i</code>. Move <code>right</code> one
+        letter at a time and add it to <code>have</code>. Whenever
+        <code>s[left..right]</code> covers t, record it, then drop
+        <code>s[left]</code> and check again. Both ends only move right.
+      </p>
+      <ul>
+        <li>"Covers" means <code>have[c] &gt;= need[c]</code> for every distinct letter <code>c</code> of t (k of them, at most 52).</li>
+        <li>The <code>while</code> keeps shrinking as long as it still covers, so every window recorded is the shortest one ending at <code>right</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(k · m + n), k = distinct letters in t</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        The cover check looks at up to 52 counts after each move. With random
+        letters and all 52 in t, it took 0.52 s in Python at m = 10⁵ (5 ms in
+        C++). Fast enough to pass.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Sliding Window, Count What's Missing
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Replace the 52-way check with one number. <code>need[c]</code> starts
+        as the count of c in t and drops by 1 whenever c enters the window;
+        <code>missing</code> starts at <code>len(t)</code>. The window covers
+        t exactly when <code>missing == 0</code>.
+      </p>
+      <ul>
+        <li>A letter coming in lowers <code>missing</code> only if <code>need[c] &gt; 0</code> before (t still wanted it). Then <code>need[c] −= 1</code>, which can go below 0: that many extra copies.</li>
+        <li>Once it covers: drop letters from the left while <code>need[s[left]] &lt; 0</code> (extra copies), record the window, then give up <code>s[left]</code> so one letter is missing again and keep growing.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m + n)</span>
+        <span><strong>Space</strong> O(1) (128 counts)</span>
+      </div>
+      <p class="note">
+        Each letter of s enters once and leaves at most once, so the work is
+        constant per letter: 20 ms in Python and 0.3 ms in C++ at m = 10⁵. The
+        same need/missing idea as Permutation in String (567), with a window
+        that changes size.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        In Python, <code>collections.Counter</code> gives Approach 2 almost
+        for free: <code>need &lt;= have</code> asks "does every count in t fit
+        in the window?" in one expression. C++ and Java have nothing built in
+        for this, so write Approach 3.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(k · m + n)</span>
+        <span><strong>Space</strong> O(k)</span>
+      </div>
+      <p class="note">
+        Passes every test here; 0.84 s in Python on the same 10⁵ random
+        letters, so slower than Approach 2 but still fine. <code>&lt;=</code>
+        on Counters needs Python 3.10 or later.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Try Every Start</th>
+              <td>Grow from each i until it covers t</td>
+              <td>O(m² + n)</td>
+              <td>O(1)</td>
+              <td>Too slow at m = 10⁵</td>
+            </tr>
+            <tr>
+              <th scope="row">Compare Counts</th>
+              <td>Grow right, shrink left, check k counts</td>
+              <td>O(k · m + n)</td>
+              <td>O(1)</td>
+              <td>Simple; passes</td>
+            </tr>
+            <tr>
+              <th scope="row">Count What's Missing</th>
+              <td>need[c] (can go below 0) + missing</td>
+              <td>O(m + n)</td>
+              <td>O(1)</td>
+              <td>O(1) per letter; the follow-up's answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
