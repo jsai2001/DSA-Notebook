@@ -1,0 +1,241 @@
+<details class="question" data-group="backtracking" data-tags="array string backtracking matrix dfs grid recursion">
+  <summary>
+    <span class="q-title">79. Word Search</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">String</span>
+      <span class="tag">Backtracking</span>
+      <span class="tag">Matrix</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> From every cell, try to spell the word with a
+      DFS: match <code>word[k]</code>, <strong>mark</strong> the cell so the
+      path can't use it twice, try the 4 neighbours for <code>word[k + 1]</code>,
+      then <strong>unmark</strong> it on the way back. Prune first: if the
+      board doesn't have enough of some letter, the answer is false without
+      any search. O(R · C · 3ᴸ) in the worst case.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/word-search/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given an <code>R × C</code> grid of letters <code>board</code> and a
+        string <code>word</code>, return <code>true</code> if the word can be
+        spelled by a path of cells, each next to the previous one (up, down,
+        left or right). A cell can be used <strong>at most once</strong> in
+        the path.
+      </p>
+      <ul>
+        <li><code>1 &lt;= R, C &lt;= 6</code>, <code>1 &lt;= word.length &lt;= 15</code>.</li>
+        <li>Board and word use uppercase and lowercase English letters (<code>'A'</code> and <code>'a'</code> differ).</li>
+        <li>Follow-up: can you prune the search so it's fast on bigger boards?</li>
+      </ul>
+      <p class="note">
+        Examples: with <code>board = [["A","B","C","E"],["S","F","C","S"],["A","D","E","E"]]</code>,
+        <code>"ABCCED"</code> → <code>true</code>, <code>"SEE"</code> →
+        <code>true</code>, <code>"ABCB"</code> → <code>false</code> (the B
+        would be used twice).
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[["a"]]</code>, <code>"a"</code></td>
+              <td><code>true</code></td>
+              <td>The first cell is already the whole word, so success has to be noticed without stepping to any neighbour (there are none).</td>
+            </tr>
+            <tr>
+              <td><code>[["a"]]</code>, <code>"aa"</code></td>
+              <td><code>false</code></td>
+              <td>Without marking, the path steps back onto the same a.</td>
+            </tr>
+            <tr>
+              <td>The example board, <code>"ABCB"</code></td>
+              <td><code>false</code></td>
+              <td>A-B-C is there, but the only B next to that C is the one already used.</td>
+            </tr>
+            <tr>
+              <td><code>[["a","b"]]</code>, <code>"ba"</code></td>
+              <td><code>true</code></td>
+              <td>The word can start anywhere, not just at (0, 0).</td>
+            </tr>
+            <tr>
+              <td><code>[["a","b"],["c","d"]]</code>, <code>"ad"</code></td>
+              <td><code>false</code></td>
+              <td>Diagonals don't count: only up, down, left and right.</td>
+            </tr>
+            <tr>
+              <td><code>[["C","A","A"],["A","A","A"],["B","C","D"]]</code>, <code>"AAB"</code></td>
+              <td><code>true</code></td>
+              <td>Forget to unmark and a failed try leaves cells blocked: the later path through them is missed (it says false).</td>
+            </tr>
+            <tr>
+              <td><code>[["a"]]</code>, <code>"A"</code></td>
+              <td><code>false</code></td>
+              <td>Upper and lower case are different letters.</td>
+            </tr>
+            <tr>
+              <td>6 × 6 of <code>"A"</code>, <code>"AAAAAAAAAAAAAAB"</code></td>
+              <td><code>false</code></td>
+              <td>There's no B, but plain DFS still walks every 14-letter path of A's first: 1.5 s in Python. Counting letters first answers at once.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: DFS with a Seen Grid</h2>
+      <p class="intuition">
+        <code>dfs(r, c, k)</code> asks: can <code>word[k:]</code> be spelled
+        starting at cell (r, c)? It fails right away if the cell is off the
+        board, already on the path, or the wrong letter. Otherwise it marks
+        the cell in <code>seen</code> and asks the same question of the 4
+        neighbours for <code>k + 1</code>.
+      </p>
+      <ul>
+        <li>Success is <code>k == len(word)</code>: every letter matched. Check it first.</li>
+        <li>Unmark (<code>seen[r][c] = False</code>) before returning, success or not: another path may need the cell.</li>
+        <li>Try every cell as the start.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(R · C · 3ᴸ), L = len(word)</span>
+        <span><strong>Space</strong> O(R · C) for seen, O(L) stack</span>
+      </div>
+      <p class="note">
+        After the first letter each step has at most 3 new directions (the 4th
+        is where it came from), hence 3ᴸ. On the all-A board above it took
+        1.5 s in Python (42 ms in C++).
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Mark the Board in Place</h2>
+      <p class="intuition">
+        Skip the extra grid: overwrite the cell with <code>"#"</code> while it's
+        on the path. <code>"#"</code> never equals a letter, so the
+        "wrong letter" check also catches "already used". Put the letter back
+        on the way out.
+      </p>
+      <ul>
+        <li>Save the letter, write <code>"#"</code>, search the neighbours, restore the letter.</li>
+        <li>The board is back to normal when <code>exist</code> returns, true or false.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(R · C · 3ᴸ)</span>
+        <span><strong>Space</strong> O(L) stack</span>
+      </div>
+      <p class="note">
+        The usual interview answer: one array fewer, one check fewer. Just as
+        slow as Approach 1 on the bad boards (1.5 s in Python).
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Prune First, Then Search
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        The follow-up's answer: cheap checks before the expensive search.
+        Count the letters on the board. If the word needs more of some letter
+        than the board has, no path can exist: return false.
+      </p>
+      <ul>
+        <li>Then, if the word's first letter is more common on the board than its last, <strong>reverse the word</strong>. A path spells the word exactly when, walked backwards, it spells the reverse, so the answer is the same, but there are fewer cells to start from.</li>
+        <li>Then the same in-place DFS as Approach 2.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(R · C + L) for the checks, O(R · C · 3ᴸ) worst case</span>
+        <span><strong>Space</strong> O(L) stack</span>
+      </div>
+      <p class="note">
+        Same worst case on paper, but the slow boards above become instant:
+        all A's with no B is caught by the count, and a word ending in a
+        walled-off B starts from the B and fails in one step (both under
+        0.1 ms in Python, versus 1.5 s and 0.95 s).
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No library searches a grid for a path. Python, C++ and Java all need
+        the DFS written out.
+      </p>
+      <p class="note">
+        Write Approach 2, and mention the letter count and the reverse trick
+        for the follow-up. For many words on one board (Word Search II, 212),
+        put the words in a trie and search the board once.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Seen Grid</th>
+              <td>DFS, seen[r][c] marks the path</td>
+              <td>O(R · C · 3ᴸ)</td>
+              <td>O(R · C)</td>
+              <td>Leaves the board untouched</td>
+            </tr>
+            <tr>
+              <th scope="row">Mark in Place</th>
+              <td>DFS, "#" marks the path, restored after</td>
+              <td>O(R · C · 3ᴸ)</td>
+              <td>O(L)</td>
+              <td>The usual answer</td>
+            </tr>
+            <tr>
+              <th scope="row">Prune First</th>
+              <td>Letter counts, start from the rarer end</td>
+              <td>O(R · C · 3ᴸ) worst</td>
+              <td>O(L)</td>
+              <td>The bad cases become instant</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
