@@ -18,7 +18,7 @@ DSAViz.register("0127-word-ladder/approach3", {
     let tries = 0;
     const set = (s, label, marks = {}) => ({ type: "set", label, items: [...s], marks });
     const view = (o = {}) => [
-      set(front, `front: growing now (from ${frontFrom})`, o.frontMarks || {}),
+      set(front, `front: growing now (from ${frontFrom}; yellow = the word being changed)`, o.frontMarks || {}),
       set(back, `back: waiting (from ${backFrom})`, o.backMarks || {}),
       ...(o.grown ? [set(o.grown, "grown: front's next level", Object.fromEntries([...o.grown].map((w) => [w, o.fresh && o.fresh.includes(w) ? "new" : ""])))] : []),
       set(words, "words (unused)"),
@@ -81,7 +81,7 @@ DSAViz.register("0127-word-ladder/approach3", {
           steps.push({
             line: ["pop", "try", "meet"],
             note: `From "${word}": "${meet}" is in back, so the two searches meet. Return ${count}.`,
-            view: view({ grown, fresh, frontMarks: { [word]: "active" }, backMarks: { [meet]: "match" }, counted: true }),
+            view: view({ grown, fresh, frontMarks: { [word]: "compare" }, backMarks: { [meet]: "match" }, counted: true }),
           });
           return steps;
         }
@@ -90,7 +90,7 @@ DSAViz.register("0127-word-ladder/approach3", {
           note: `From "${word}": ${word.length} × 26 one-letter changes. ${
             fresh.length ? `${fresh.map((w) => `"${w}"`).join(", ")} ${fresh.length === 1 ? "is an unused word" : "are unused words"}: move ${fresh.length === 1 ? "it" : "them"} to grown.` : "No unused word, and nothing from back."
           }`,
-          view: view({ grown, fresh, frontMarks: { [word]: "active" }, counted: true }),
+          view: view({ grown, fresh, frontMarks: { [word]: "compare" }, counted: true }),
         });
       }
       front = grown;

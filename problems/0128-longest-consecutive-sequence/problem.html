@@ -1,0 +1,274 @@
+<details class="question" data-group="arrays-hashing" data-tags="array hash-table set union-find consecutive sequence run sort">
+  <summary>
+    <span class="q-title">128. Longest Consecutive Sequence</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Hash Table</span>
+      <span class="tag">Sorting</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Put the numbers in a set. Only start
+      counting at a number <code>x</code> whose <code>x - 1</code> is
+      <strong>not</strong> in the set: that's the first number of a run.
+      Walk up <code>x + 1</code>, <code>x + 2</code>, … from there. Every
+      number is walked once, so it's O(n).
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/longest-consecutive-sequence/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given an unsorted array <code>nums</code>, return the length of the
+        longest run of consecutive values (like 1, 2, 3, 4), in any order in
+        the array. The problem asks for O(n) time.
+      </p>
+      <ul>
+        <li><code>0 &lt;= nums.length &lt;= 10⁵</code></li>
+        <li><code>-10⁹ &lt;= nums[i] &lt;= 10⁹</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[100, 4, 200, 1, 3, 2]</code> → <code>4</code> (1, 2,
+        3, 4). <code>[0, 3, 7, 2, 5, 8, 4, 6, 0, 1]</code> → <code>9</code>.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[]</code></td>
+              <td><code>0</code></td>
+              <td>Empty input is allowed: no run at all, not 1.</td>
+            </tr>
+            <tr>
+              <td><code>[1, 2, 0, 1]</code></td>
+              <td><code>3</code></td>
+              <td>A repeat inside a run. After sorting (0, 1, 1, 2), treating the second 1 as a break says <code>2</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[1, 2, 3]</code></td>
+              <td><code>3</code></td>
+              <td>The longest run is at the very end. Updating the best only when a run breaks never counts it: said <code>0</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[5, 5, 5]</code></td>
+              <td><code>1</code></td>
+              <td>All the same: a run of one value.</td>
+            </tr>
+            <tr>
+              <td><code>[-1, 0, 1]</code></td>
+              <td><code>3</code></td>
+              <td>Runs can cross zero.</td>
+            </tr>
+            <tr>
+              <td><code>[1000000000, -1000000000]</code></td>
+              <td><code>1</code></td>
+              <td>The extremes: <code>x + 1</code> and <code>x - 1</code> still fit in a 32-bit <code>int</code>.</td>
+            </tr>
+            <tr>
+              <td>1 to 10⁵, shuffled</td>
+              <td><code>100000</code></td>
+              <td>One long run. Walking up from every number is about 5 × 10⁹ lookups.</td>
+            </tr>
+            <tr>
+              <td>1 to 8,000, plus 8,000 more 1s</td>
+              <td><code>8000</code></td>
+              <td>Many copies of a run's start. Looping over <code>nums</code> instead of the set walks the run once per copy: 7.5 s instead of 3 ms in Python here.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Walk Up From Every Number</h2>
+      <p class="intuition">
+        Put the numbers in a set. From each number <code>x</code>, count how
+        many of <code>x + 1</code>, <code>x + 2</code>, … are in the set, and
+        keep the longest count.
+      </p>
+      <ul>
+        <li>
+          Right, but wasteful: in a run of length m, each of its m numbers
+          walks the rest of the run again.
+        </li>
+        <li>
+          One long run of n numbers costs about n² / 2 lookups.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Measured on one shuffled run, the time roughly quadruples each time
+        n doubles. Python: 0.34 s at 2,000, 1.2 s at 4,000, 3.2 s at 8,000.
+        C++: 0.17 s at 10,000, 0.85 s at 20,000, 5.3 s at 40,000. At
+        n = 10⁵ that grows to roughly half a minute in C++ and several
+        minutes in Python (estimated, not run).
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Sort, Then Scan</h2>
+      <p class="intuition">
+        After sorting, every run sits side by side. Scan once: a step of
+        exactly +1 grows the current run, an equal value changes nothing, and
+        anything bigger starts a new run.
+      </p>
+      <ul>
+        <li>
+          Skip repeats; don't reset the run on them.
+        </li>
+        <li>
+          Update the best after <strong>every</strong> step, so the last run
+          counts too.
+        </li>
+        <li>
+          C++ and Java sort the input in place. Copy it first if the caller
+          still needs the original order.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(1) extra (O(n) in Python's <code>sorted</code>)</span>
+      </div>
+      <p class="note">
+        Doesn't meet the O(n) rule, but it's fast in practice. At
+        n = 10⁵ here: C++ 4.9 ms and Java 71 ms, both faster than the hash
+        set in Approach 3. Python 73 ms. Worth mentioning in an interview as
+        the simple option.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Start Only at a Run's First Number
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Same set as Approach 1, but only walk up from <code>x</code> when
+        <code>x - 1</code> is <strong>not</strong> in the set. Any other
+        number is inside a run that its first number will count.
+      </p>
+      <ul>
+        <li>
+          Each number is checked once (is <code>x - 1</code> there?) and
+          walked over at most once, so at most about 2n lookups.
+        </li>
+        <li>
+          Loop over the <strong>set</strong>, not <code>nums</code>: with
+          many copies of a run's first number, looping over
+          <code>nums</code> walks the run once per copy and is O(n²) again.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        The answer the problem asks for. At n = 10⁵ here: Python 34 ms (2×
+        faster than sorting), C++ 9.5 ms, Java 122 ms. O(n) doesn't mean
+        faster everywhere: in C++ and Java, hashing every number cost more
+        than sorting. Java also boxes each <code>int</code> into an
+        <code>Integer</code>.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Remove repeats and sort, then measure each run:
+        <code>sorted(set(nums))</code> with
+        <code>itertools.groupby</code> in Python (inside a run, value minus
+        position stays the same), <code>std::sort</code> +
+        <code>std::unique</code> in C++,
+        <code>IntStream.distinct().sorted()</code> in Java.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Short and fast enough: Python 54 ms, C++ 5.8 ms, Java 310 ms (the
+        stream has setup cost) at n = 10⁵ here. It's Approach 2 in fewer
+        lines, so it doesn't meet the O(n) rule. In an interview, expect to
+        be asked for Approach 3.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Walk Up From Every Number</th>
+              <td>Set, walk from each x</td>
+              <td>O(n²)</td>
+              <td>O(n)</td>
+              <td>One long run makes it quadratic</td>
+            </tr>
+            <tr>
+              <th scope="row">Sort, Then Scan</th>
+              <td>Sort, count +1 steps, skip repeats</td>
+              <td>O(n log n)</td>
+              <td>O(1) extra</td>
+              <td>Fastest in C++ and Java here</td>
+            </tr>
+            <tr>
+              <th scope="row">Start Only at a Run's First Number</th>
+              <td>Set, walk only when x - 1 is missing</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Required answer; loop over the set</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

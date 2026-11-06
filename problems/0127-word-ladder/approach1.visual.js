@@ -16,13 +16,13 @@ DSAViz.register("0127-word-ladder/approach1", {
     const view = (o = {}) => {
       const marks = {};
       list.forEach((w, k) => {
-        if (o.taken && o.taken.includes(w)) marks[k] = "new";
+        if (o.taken && o.taken.includes(w)) marks[k] = "match";
         else if (used.has(w)) marks[k] = "ghost";
         else if (o.checked && o.checked.includes(w)) marks[k] = "compare";
       });
       if (o.found) marks[list.indexOf(o.found)] = "match";
       return [
-        { type: "array", label: "wordList (grey = used, yellow = compared now, new = one letter apart)", values: list, wide: true, marks },
+        { type: "array", label: "wordList (yellow = compared now, green = one letter apart, dashed = used)", values: list, wide: true, marks },
         { type: "array", label: "queue (front → back)", values: [...queue], wide: true, marks: queue.length && o.front ? { 0: "active" } : {} },
         {
           type: "vars",

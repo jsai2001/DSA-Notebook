@@ -57,7 +57,7 @@
       <details class="pattern-group" id="g-arrays-hashing">
         <summary>
           <span class="g-name">Arrays &amp; Hashing</span>
-          <span class="g-count"><span class="g-total">3 problems</span></span>
+          <span class="g-count"><span class="g-total">4 problems</span></span>
           <span class="g-hint">Count or look things up in a hash map</span>
         </summary>
         <div class="g-body">
@@ -789,6 +789,508 @@
                         <td>O(n · k)</td>
                         <td>O(n · k)</td>
                         <td>No sorting; needs a safe key format</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0128-longest-consecutive-sequence ===== -->
+          <details class="question" data-group="arrays-hashing" data-tags="array hash-table set union-find consecutive sequence run sort">
+            <summary>
+              <span class="q-title">128. Longest Consecutive Sequence</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Array</span>
+                <span class="tag">Hash Table</span>
+                <span class="tag">Sorting</span>
+              </span>
+            </summary>
+
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Put the numbers in a set. Only start
+                counting at a number <code>x</code> whose <code>x - 1</code> is
+                <strong>not</strong> in the set: that's the first number of a run.
+                Walk up <code>x + 1</code>, <code>x + 2</code>, … from there. Every
+                number is walked once, so it's O(n).
+              </div>
+
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/longest-consecutive-sequence/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Given an unsorted array <code>nums</code>, return the length of the
+                  longest run of consecutive values (like 1, 2, 3, 4), in any order in
+                  the array. The problem asks for O(n) time.
+                </p>
+                <ul>
+                  <li><code>0 &lt;= nums.length &lt;= 10⁵</code></li>
+                  <li><code>-10⁹ &lt;= nums[i] &lt;= 10⁹</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>[100, 4, 200, 1, 3, 2]</code> → <code>4</code> (1, 2,
+                  3, 4). <code>[0, 3, 7, 2, 5, 8, 4, 6, 0, 1]</code> → <code>9</code>.
+                </p>
+              </section>
+
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[]</code></td>
+                        <td><code>0</code></td>
+                        <td>Empty input is allowed: no run at all, not 1.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1, 2, 0, 1]</code></td>
+                        <td><code>3</code></td>
+                        <td>A repeat inside a run. After sorting (0, 1, 1, 2), treating the second 1 as a break says <code>2</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1, 2, 3]</code></td>
+                        <td><code>3</code></td>
+                        <td>The longest run is at the very end. Updating the best only when a run breaks never counts it: said <code>0</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[5, 5, 5]</code></td>
+                        <td><code>1</code></td>
+                        <td>All the same: a run of one value.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[-1, 0, 1]</code></td>
+                        <td><code>3</code></td>
+                        <td>Runs can cross zero.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1000000000, -1000000000]</code></td>
+                        <td><code>1</code></td>
+                        <td>The extremes: <code>x + 1</code> and <code>x - 1</code> still fit in a 32-bit <code>int</code>.</td>
+                      </tr>
+                      <tr>
+                        <td>1 to 10⁵, shuffled</td>
+                        <td><code>100000</code></td>
+                        <td>One long run. Walking up from every number is about 5 × 10⁹ lookups.</td>
+                      </tr>
+                      <tr>
+                        <td>1 to 8,000, plus 8,000 more 1s</td>
+                        <td><code>8000</code></td>
+                        <td>Many copies of a run's start. Looping over <code>nums</code> instead of the set walks the run once per copy: 7.5 s instead of 3 ms in Python here.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Walk Up From Every Number</h2>
+                <p class="intuition">
+                  Put the numbers in a set. From each number <code>x</code>, count how
+                  many of <code>x + 1</code>, <code>x + 2</code>, … are in the set, and
+                  keep the longest count.
+                </p>
+                <ul>
+                  <li>
+                    Right, but wasteful: in a run of length m, each of its m numbers
+                    walks the rest of the run again.
+                  </li>
+                  <li>
+                    One long run of n numbers costs about n² / 2 lookups.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n²)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  Measured on one shuffled run, the time roughly quadruples each time
+                  n doubles. Python: 0.34 s at 2,000, 1.2 s at 4,000, 3.2 s at 8,000.
+                  C++: 0.17 s at 10,000, 0.85 s at 20,000, 5.3 s at 40,000. At
+                  n = 10⁵ that grows to roughly half a minute in C++ and several
+                  minutes in Python (estimated, not run).
+                </p>
+                <div class="code-tabs" data-viz="0128-longest-consecutive-sequence/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"loop":[5],"start":[6],"walk":[7,8],"best":[9],"return":[10]}'>
+                    class Solution(object):
+                        def longestConsecutive(self, nums):
+                            present = set(nums)
+                            best = 0
+                            for x in nums:
+                                length = 1
+                                while x + length in present:  # walk up from every number
+                                    length += 1
+                                best = max(best, length)
+                            return best
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8],"loop":[9],"start":[10],"walk":[11,12],"best":[14],"return":[16]}'>
+                    #include <algorithm>
+                    #include <unordered_set>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int longestConsecutive(std::vector<int>& nums) {
+                            std::unordered_set<int> present(nums.begin(), nums.end());
+                            int best = 0;
+                            for (int x : nums) {
+                                int length = 1;
+                                while (present.count(x + length)) { // walk up from every number
+                                    ++length;
+                                }
+                                best = std::max(best, length);
+                            }
+                            return best;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6,7],"loop":[8],"start":[9],"walk":[10,11],"best":[13],"return":[15]}'>
+                    import java.util.*;
+
+                    class Solution {
+                        public int longestConsecutive(int[] nums) {
+                            Set<Integer> present = new HashSet<>();
+                            for (int x : nums) present.add(x);
+                            int best = 0;
+                            for (int x : nums) {
+                                int length = 1;
+                                while (present.contains(x + length)) { // walk up from every number
+                                    length++;
+                                }
+                                best = Math.max(best, length);
+                            }
+                            return best;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Sort, Then Scan</h2>
+                <p class="intuition">
+                  After sorting, every run sits side by side. Scan once: a step of
+                  exactly +1 grows the current run, an equal value changes nothing, and
+                  anything bigger starts a new run.
+                </p>
+                <ul>
+                  <li>
+                    Skip repeats; don't reset the run on them.
+                  </li>
+                  <li>
+                    Update the best after <strong>every</strong> step, so the last run
+                    counts too.
+                  </li>
+                  <li>
+                    C++ and Java sort the input in place. Copy it first if the caller
+                    still needs the original order.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n)</span>
+                  <span><strong>Space</strong> O(1) extra (O(n) in Python's <code>sorted</code>)</span>
+                </div>
+                <p class="note">
+                  Doesn't meet the O(n) rule, but it's fast in practice. At
+                  n = 10⁵ here: C++ 4.9 ms and Java 71 ms, both faster than the hash
+                  set in Approach 3. Python 73 ms. Worth mentioning in an interview as
+                  the simple option.
+                </p>
+                <div class="code-tabs" data-viz="0128-longest-consecutive-sequence/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"sort":[5,6],"loop":[7],"dup":[8,9],"extend":[10,11],"reset":[12,13],"best":[14],"return":[15]}'>
+                    class Solution(object):
+                        def longestConsecutive(self, nums):
+                            if not nums:
+                                return 0
+                            nums = sorted(nums)
+                            best = cur = 1
+                            for i in range(1, len(nums)):
+                                if nums[i] == nums[i - 1]:  # a repeat doesn't break the run
+                                    continue
+                                if nums[i] == nums[i - 1] + 1:
+                                    cur += 1
+                                else:
+                                    cur = 1  # a gap: a new run starts here
+                                best = max(best, cur)
+                            return best
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7],"sort":[9,10],"loop":[11],"dup":[12,13],"extend":[15,16],"reset":[17,18],"best":[20],"return":[22]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int longestConsecutive(std::vector<int>& nums) {
+                            if (nums.empty()) {
+                                return 0;
+                            }
+                            std::sort(nums.begin(), nums.end()); // sorts the input in place
+                            int best = 1, cur = 1;
+                            for (size_t i = 1; i < nums.size(); ++i) {
+                                if (nums[i] == nums[i - 1]) { // a repeat doesn't break the run
+                                    continue;
+                                }
+                                if (nums[i] == nums[i - 1] + 1) { // at most 10^9 + 1: fits in int
+                                    ++cur;
+                                } else {
+                                    cur = 1; // a gap: a new run starts here
+                                }
+                                best = std::max(best, cur);
+                            }
+                            return best;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6],"sort":[8,9],"loop":[10],"dup":[11,12],"extend":[14,15],"reset":[16,17],"best":[19],"return":[21]}'>
+                    import java.util.*;
+
+                    class Solution {
+                        public int longestConsecutive(int[] nums) {
+                            if (nums.length == 0) {
+                                return 0;
+                            }
+                            Arrays.sort(nums); // sorts the input in place
+                            int best = 1, cur = 1;
+                            for (int i = 1; i < nums.length; i++) {
+                                if (nums[i] == nums[i - 1]) { // a repeat doesn't break the run
+                                    continue;
+                                }
+                                if (nums[i] == nums[i - 1] + 1) { // at most 10^9 + 1: fits in int
+                                    cur++;
+                                } else {
+                                    cur = 1; // a gap: a new run starts here
+                                }
+                                best = Math.max(best, cur);
+                            }
+                            return best;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Start Only at a Run's First Number
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Same set as Approach 1, but only walk up from <code>x</code> when
+                  <code>x - 1</code> is <strong>not</strong> in the set. Any other
+                  number is inside a run that its first number will count.
+                </p>
+                <ul>
+                  <li>
+                    Each number is checked once (is <code>x - 1</code> there?) and
+                    walked over at most once, so at most about 2n lookups.
+                  </li>
+                  <li>
+                    Loop over the <strong>set</strong>, not <code>nums</code>: with
+                    many copies of a run's first number, looping over
+                    <code>nums</code> walks the run once per copy and is O(n²) again.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  The answer the problem asks for. At n = 10⁵ here: Python 34 ms (2×
+                  faster than sorting), C++ 9.5 ms, Java 122 ms. O(n) doesn't mean
+                  faster everywhere: in C++ and Java, hashing every number cost more
+                  than sorting. Java also boxes each <code>int</code> into an
+                  <code>Integer</code>.
+                </p>
+                <div class="code-tabs" data-viz="0128-longest-consecutive-sequence/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"loop":[5],"skip":[6,7],"start":[8],"walk":[9,10],"best":[11],"return":[12]}'>
+                    class Solution(object):
+                        def longestConsecutive(self, nums):
+                            present = set(nums)
+                            best = 0
+                            for x in present:  # the set, so a repeated start is walked only once
+                                if x - 1 in present:  # not the start of a run: its start will cover it
+                                    continue
+                                length = 1
+                                while x + length in present:
+                                    length += 1
+                                best = max(best, length)
+                            return best
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8],"loop":[9],"skip":[10,11],"start":[13],"walk":[14,15],"best":[17],"return":[19]}'>
+                    #include <algorithm>
+                    #include <unordered_set>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int longestConsecutive(std::vector<int>& nums) {
+                            std::unordered_set<int> present(nums.begin(), nums.end());
+                            int best = 0;
+                            for (int x : present) { // the set, so a repeated start is walked only once
+                                if (present.count(x - 1)) { // not the start of a run: its start will cover it
+                                    continue;
+                                }
+                                int length = 1;
+                                while (present.count(x + length)) { // x + length <= 10^9 + 10^5: fits in int
+                                    ++length;
+                                }
+                                best = std::max(best, length);
+                            }
+                            return best;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6,7],"loop":[8],"skip":[9,10],"start":[12],"walk":[13,14],"best":[16],"return":[18]}'>
+                    import java.util.*;
+
+                    class Solution {
+                        public int longestConsecutive(int[] nums) {
+                            Set<Integer> present = new HashSet<>();
+                            for (int x : nums) present.add(x);
+                            int best = 0;
+                            for (int x : present) { // the set, so a repeated start is walked only once
+                                if (present.contains(x - 1)) { // not the start of a run: its start will cover it
+                                    continue;
+                                }
+                                int length = 1;
+                                while (present.contains(x + length)) {
+                                    length++;
+                                }
+                                best = Math.max(best, length);
+                            }
+                            return best;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  Remove repeats and sort, then measure each run:
+                  <code>sorted(set(nums))</code> with
+                  <code>itertools.groupby</code> in Python (inside a run, value minus
+                  position stays the same), <code>std::sort</code> +
+                  <code>std::unique</code> in C++,
+                  <code>IntStream.distinct().sorted()</code> in Java.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    from itertools import groupby
+                    class Solution(object):
+                        def longestConsecutive(self, nums):
+                            vals = sorted(set(nums))  # no repeats, in order
+                            # In a run like 4, 5, 6 at positions 2, 3, 4, value - position stays the same (2),
+                            # so groupby puts each run in its own group.
+                            runs = groupby(enumerate(vals), key=lambda p: p[1] - p[0])
+                            return max((len(list(g)) for _, g in runs), default=0)
+                  </script>
+                  <script type="text/plain" data-lang="C++">
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int longestConsecutive(std::vector<int>& nums) {
+                            std::sort(nums.begin(), nums.end());
+                            nums.erase(std::unique(nums.begin(), nums.end()), nums.end()); // drop repeats
+                            int best = 0;
+                            for (size_t i = 0, j; i < nums.size(); i = j) {
+                                // j = end of the run that starts at i (each next value is one more)
+                                for (j = i + 1; j < nums.size() && nums[j] == nums[j - 1] + 1; ++j) {}
+                                best = std::max(best, static_cast<int>(j - i));
+                            }
+                            return best;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java">
+                    import java.util.stream.IntStream;
+
+                    class Solution {
+                        public int longestConsecutive(int[] nums) {
+                            int[] v = IntStream.of(nums).distinct().sorted().toArray(); // no repeats, in order
+                            int best = 0;
+                            for (int i = 0, j; i < v.length; i = j) {
+                                // j = end of the run that starts at i (each next value is one more)
+                                for (j = i + 1; j < v.length && v[j] == v[j - 1] + 1; j++) {}
+                                best = Math.max(best, j - i);
+                            }
+                            return best;
+                        }
+                    }
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  Short and fast enough: Python 54 ms, C++ 5.8 ms, Java 310 ms (the
+                  stream has setup cost) at n = 10⁵ here. It's Approach 2 in fewer
+                  lines, so it doesn't meet the O(n) rule. In an interview, expect to
+                  be asked for Approach 3.
+                </p>
+              </section>
+
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Walk Up From Every Number</th>
+                        <td>Set, walk from each x</td>
+                        <td>O(n²)</td>
+                        <td>O(n)</td>
+                        <td>One long run makes it quadratic</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Sort, Then Scan</th>
+                        <td>Sort, count +1 steps, skip repeats</td>
+                        <td>O(n log n)</td>
+                        <td>O(1) extra</td>
+                        <td>Fastest in C++ and Java here</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Start Only at a Run's First Number</th>
+                        <td>Set, walk only when x - 1 is missing</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Required answer; loop over the set</td>
                       </tr>
                     </tbody>
                   </table>
@@ -42430,13 +42932,13 @@
           const view = (o = {}) => {
             const marks = {};
             list.forEach((w, k) => {
-              if (o.taken && o.taken.includes(w)) marks[k] = "new";
+              if (o.taken && o.taken.includes(w)) marks[k] = "match";
               else if (used.has(w)) marks[k] = "ghost";
               else if (o.checked && o.checked.includes(w)) marks[k] = "compare";
             });
             if (o.found) marks[list.indexOf(o.found)] = "match";
             return [
-              { type: "array", label: "wordList (grey = used, yellow = compared now, new = one letter apart)", values: list, wide: true, marks },
+              { type: "array", label: "wordList (yellow = compared now, green = one letter apart, dashed = used)", values: list, wide: true, marks },
               { type: "array", label: "queue (front → back)", values: [...queue], wide: true, marks: queue.length && o.front ? { 0: "active" } : {} },
               {
                 type: "vars",
@@ -42655,7 +43157,7 @@
           let tries = 0;
           const set = (s, label, marks = {}) => ({ type: "set", label, items: [...s], marks });
           const view = (o = {}) => [
-            set(front, `front: growing now (from ${frontFrom})`, o.frontMarks || {}),
+            set(front, `front: growing now (from ${frontFrom}; yellow = the word being changed)`, o.frontMarks || {}),
             set(back, `back: waiting (from ${backFrom})`, o.backMarks || {}),
             ...(o.grown ? [set(o.grown, "grown: front's next level", Object.fromEntries([...o.grown].map((w) => [w, o.fresh && o.fresh.includes(w) ? "new" : ""])))] : []),
             set(words, "words (unused)"),
@@ -42718,7 +43220,7 @@
                 steps.push({
                   line: ["pop", "try", "meet"],
                   note: `From "${word}": "${meet}" is in back, so the two searches meet. Return ${count}.`,
-                  view: view({ grown, fresh, frontMarks: { [word]: "active" }, backMarks: { [meet]: "match" }, counted: true }),
+                  view: view({ grown, fresh, frontMarks: { [word]: "compare" }, backMarks: { [meet]: "match" }, counted: true }),
                 });
                 return steps;
               }
@@ -42727,7 +43229,7 @@
                 note: `From "${word}": ${word.length} × 26 one-letter changes. ${
                   fresh.length ? `${fresh.map((w) => `"${w}"`).join(", ")} ${fresh.length === 1 ? "is an unused word" : "are unused words"}: move ${fresh.length === 1 ? "it" : "them"} to grown.` : "No unused word, and nothing from back."
                 }`,
-                view: view({ grown, fresh, frontMarks: { [word]: "active" }, counted: true }),
+                view: view({ grown, fresh, frontMarks: { [word]: "compare" }, counted: true }),
               });
             }
             front = grown;
@@ -42760,6 +43262,207 @@
         return { b, e, list };
       }
       })();
+    </script>
+    <!-- problems/0128-longest-consecutive-sequence/approach1.visual.js -->
+    <script>
+      // From every number, walk up x+1, x+2, ... in a set; keep the longest walk.
+      DSAViz.register("0128-longest-consecutive-sequence/approach1", {
+        inputs: [{ name: "nums", type: "int[]", value: "[5, 4, 3, 2, 1, 9]", maxLength: 10, minValue: -99, maxValue: 99 }],
+        trace({ nums }) {
+          const present = new Set(nums);
+          const steps = [];
+          let best = 0;
+          let lookups = 0;
+          const view = (k, o = {}) => {
+            const setMarks = {};
+            (o.walk || []).forEach((v) => (setMarks[String(v)] = "match"));
+            return [
+              { type: "array", label: "nums", values: nums, marks: k !== undefined ? { [k]: "active" } : {}, pointers: k !== undefined ? { x: k } : {} },
+              { type: "set", label: "present (green = walked up from x)", items: [...present].map(String), marks: setMarks },
+              {
+                type: "vars",
+                items: [
+                  ...(o.length !== undefined ? [{ name: "length", value: o.length }] : []),
+                  { name: "best", value: best, mark: o.better ? "match" : "" },
+                  { name: "set lookups", value: lookups, mark: o.counted ? "new" : "" },
+                ],
+              },
+            ];
+          };
+          steps.push({ line: "init", note: `Put the numbers in a set, so "is x + 1 here?" is one O(1) lookup.`, view: view() });
+          nums.forEach((x, k) => {
+            const walk = [x];
+            let length = 1;
+            lookups++;
+            while (present.has(x + length)) {
+              walk.push(x + length);
+              length++;
+              lookups++;
+            }
+            const better = length > best;
+            if (better) best = length;
+            const missing = x + length;
+            const wasted = !better && length > 1 && present.has(x - 1);
+            steps.push({
+              line: ["loop", "start", "walk", "best"],
+              note:
+                (length > 1
+                  ? `From ${x}: ${walk.slice(1).join(", ")} ${walk.length === 2 ? "is" : "are"} in the set, ${missing} isn't. Length ${length}.`
+                  : `From ${x}: ${missing} isn't in the set. Length 1.`) +
+                (better ? " New best." : wasted ? ` Wasted work: ${x - 1} is in the set, so this run is also walked from a smaller start.` : ""),
+              view: view(k, { walk, length, better, counted: true }),
+            });
+          });
+          steps.push({
+            line: "return",
+            note: `Return ${best}. That took ${lookups} lookups for ${nums.length} numbers: a run of length m is walked again from each of its m numbers, so one long run costs O(n²).`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0128-longest-consecutive-sequence/approach2.visual.js -->
+    <script>
+      // Sort, then scan: a step of +1 grows the run, a repeat changes nothing, anything else starts a new run.
+      DSAViz.register("0128-longest-consecutive-sequence/approach2", {
+        inputs: [{ name: "nums", type: "int[]", value: "[0, 3, 7, 2, 5, 8, 4, 6, 0, 1]", maxLength: 10, minValue: -99, maxValue: 99 }],
+        trace({ nums }) {
+          const steps = [];
+          if (!nums.length) {
+            steps.push({ line: "init", note: "nums is empty: Return 0.", view: [{ type: "array", label: "nums", values: [] }] });
+            return steps;
+          }
+          const a = [...nums].sort((x, y) => x - y);
+          let best = 1;
+          let cur = 1;
+          let runStart = 0;
+          let bestRange = [0, 0];
+          const dups = new Set();
+          const view = (i, o = {}) => {
+            const marks = {};
+            if (!o.final) for (let k = runStart; k <= i; k++) marks[k] = "window";
+            dups.forEach((k) => (marks[k] = "ghost"));
+            if (o.final) for (let k = bestRange[0]; k <= bestRange[1]; k++) if (!dups.has(k)) marks[k] = "match";
+            if (o.mark) marks[i] = o.mark;
+            return [
+              {
+                type: "array",
+                label: "sorted (outlined = current run, dashed = repeat, green = longest run)",
+                values: a,
+                marks,
+                pointers: o.final ? {} : { i },
+              },
+              { type: "vars", items: [{ name: "cur", value: cur, mark: o.curMark || "" }, { name: "best", value: best, mark: o.better ? "match" : "" }] },
+            ];
+          };
+          steps.push({
+            line: ["init", "sort"],
+            note: `Sort: ${a.join(", ")}. Each run now sits side by side. The first number starts a run of 1.`,
+            view: view(0),
+          });
+          for (let i = 1; i < a.length; i++) {
+            if (a[i] === a[i - 1]) {
+              dups.add(i);
+              steps.push({ line: ["loop", "dup"], note: `${a[i]} again: a repeat doesn't break the run or grow it. Skip it.`, view: view(i, { mark: "ghost" }) });
+              continue;
+            }
+            let line;
+            let note;
+            if (a[i] === a[i - 1] + 1) {
+              cur++;
+              line = ["loop", "dup", "extend", "best"];
+              note = `${a[i]} = ${a[i - 1]} + 1: the run grows to ${cur}.`;
+            } else {
+              cur = 1;
+              runStart = i;
+              line = ["loop", "dup", "extend", "reset", "best"];
+              note = `${a[i]} is more than ${a[i - 1]} + 1: a gap, so a new run starts here. cur = 1.`;
+            }
+            const better = cur > best;
+            if (better) {
+              best = cur;
+              bestRange = [runStart, i];
+            }
+            steps.push({ line, note: note + (better ? " New best." : ""), view: view(i, { better, curMark: "new" }) });
+          }
+          steps.push({ line: "return", note: `Return ${best}. Sorting costs O(n log n); the scan is one pass.`, view: view(a.length - 1, { final: true }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0128-longest-consecutive-sequence/approach3.visual.js -->
+    <script>
+      // Only walk up from a run's first number (x - 1 not in the set): every number is walked once.
+      DSAViz.register("0128-longest-consecutive-sequence/approach3", {
+        inputs: [{ name: "nums", type: "int[]", value: "[10, 4, 20, 1, 3, 2, 4]", maxLength: 10, minValue: -99, maxValue: 99 }],
+        trace({ nums }) {
+          const present = new Set(nums);
+          const items = [...present];
+          const steps = [];
+          let best = 0;
+          let lookups = 0;
+          const view = (o = {}) => {
+            const marks = {};
+            (o.walk || []).forEach((v) => (marks[String(v)] = "match"));
+            if (o.x !== undefined && o.skip) marks[String(o.x)] = "compare";
+            return [
+              { type: "array", label: "nums", values: nums },
+              { type: "set", label: "present (yellow = not a start, green = walked now)", items: items.map(String), marks },
+              {
+                type: "vars",
+                items: [
+                  ...(o.x !== undefined ? [{ name: "x", value: o.x }] : []),
+                  ...(o.length !== undefined ? [{ name: "length", value: o.length }] : []),
+                  { name: "best", value: best, mark: o.better ? "match" : "" },
+                  { name: "set lookups", value: lookups, mark: o.counted ? "new" : "" },
+                ],
+              },
+            ];
+          };
+          const repeats = nums.length - present.size;
+          steps.push({
+            line: "init",
+            note: `Put the numbers in a set${repeats ? ` (${repeats} repeat${repeats === 1 ? "" : "s"} dropped)` : ""}. Loop over the set, not nums, so a repeated start is walked only once.`,
+            view: view(),
+          });
+          for (const x of items) {
+            lookups++;
+            if (present.has(x - 1)) {
+              steps.push({
+                line: ["loop", "skip"],
+                note: `${x - 1} is in the set, so ${x} isn't where a run starts. Skip it: that run is counted from its start.`,
+                view: view({ x, skip: true, counted: true }),
+              });
+              continue;
+            }
+            const walk = [x];
+            let length = 1;
+            lookups++;
+            while (present.has(x + length)) {
+              walk.push(x + length);
+              length++;
+              lookups++;
+            }
+            const better = length > best;
+            if (better) best = length;
+            steps.push({
+              line: ["loop", "skip", "start", "walk", "best"],
+              note:
+                `${x - 1} isn't in the set: ${x} starts a run. ` +
+                (length > 1 ? `Walk up: ${walk.slice(1).join(", ")}, then ${x + length} is missing. Length ${length}.` : `${x + 1} isn't there either. Length 1.`) +
+                (better ? " New best." : ""),
+              view: view({ x, walk, length, better, counted: true }),
+            });
+          }
+          steps.push({
+            line: "return",
+            note: `Return ${best}. ${lookups} lookups for ${present.size} distinct number${present.size === 1 ? "" : "s"}: each is checked once as x - 1 and walked at most once, so O(n).`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->
     <script>
