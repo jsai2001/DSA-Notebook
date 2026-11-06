@@ -15663,7 +15663,7 @@
       <details class="pattern-group" id="g-dynamic-programming">
         <summary>
           <span class="g-name">Dynamic Programming</span>
-          <span class="g-count"><span class="g-total">8 problems</span></span>
+          <span class="g-count"><span class="g-total">9 problems</span></span>
           <span class="g-hint">Reuse the answers to smaller problems</span>
         </summary>
         <div class="g-body">
@@ -18858,6 +18858,449 @@
                         <td>O(n)</td>
                         <td>O(1)</td>
                         <td>The usual answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0097-interleaving-string ===== -->
+          <details class="question" data-group="dynamic-programming" data-tags="string dynamic-programming recursion memoization interleave 2d-dp">
+            <summary>
+              <span class="q-title">97. Interleaving String</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">String</span>
+                <span class="tag">Dynamic Programming</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> After using <code>i</code> letters of s1 and
+                <code>j</code> of s2, the next letter of s3 is <code>s3[i + j]</code>,
+                and it must come from s1 or from s2. So
+                <code>dp[i][j]</code> = (s1's i-th letter matches and
+                <code>dp[i − 1][j]</code>) or (s2's j-th letter matches and
+                <code>dp[i][j − 1]</code>). Check the lengths first. One row of the table
+                is enough: O(m · n) time, O(n) space.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/interleaving-string/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Given <code>s1</code>, <code>s2</code> and <code>s3</code>, return
+                  <code>true</code> if s3 can be made by <strong>interleaving</strong>
+                  s1 and s2: using all the letters of both, each in its own order, mixed
+                  together in any way.
+                </p>
+                <ul>
+                  <li><code>0 &lt;= s1.length, s2.length &lt;= 100</code> and <code>0 &lt;= s3.length &lt;= 200</code>.</li>
+                  <li>All three are lowercase English letters.</li>
+                  <li>Follow-up: use only O(s2.length) extra memory.</li>
+                </ul>
+                <p class="note">
+                  Examples: <code>"aabcc"</code>, <code>"dbbca"</code>,
+                  <code>"aadbbcbcac"</code> → <code>true</code>;
+                  <code>"aabcc"</code>, <code>"dbbca"</code>, <code>"aadbbbaccc"</code>
+                  → <code>false</code>; <code>""</code>, <code>""</code>,
+                  <code>""</code> → <code>true</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>""</code>, <code>""</code>, <code>""</code></td>
+                        <td><code>true</code></td>
+                        <td>Nothing from nothing: <code>dp[0][0]</code> must start as true.</td>
+                      </tr>
+                      <tr>
+                        <td><code>""</code>, <code>"abc"</code>, <code>"abc"</code></td>
+                        <td><code>true</code></td>
+                        <td>One string is empty: s3 must simply equal the other.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"ab"</code>, <code>"c"</code>, <code>"abcd"</code></td>
+                        <td><code>false</code></td>
+                        <td>s3 has a letter left over. Without the length check first, the table never looks at the "d" and says true.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"a"</code>, <code>"b"</code>, <code>"ba"</code></td>
+                        <td><code>true</code></td>
+                        <td>s2's letters can come first.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"a"</code>, <code>"b"</code>, <code>"aa"</code></td>
+                        <td><code>false</code></td>
+                        <td>The lengths add up, but s1's one "a" can't be used twice.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"aa"</code>, <code>"ab"</code>, <code>"aaba"</code></td>
+                        <td><code>true</code></td>
+                        <td>Both strings can give the next "a". Greedily taking it from s1 whenever it matches says false; the right choice needs looking ahead.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"abc"</code>, <code>"def"</code>, <code>"abdfce"</code></td>
+                        <td><code>false</code></td>
+                        <td>The same letters, but "f" comes before "e" while s2 has "e" first: each string's order must be kept.</td>
+                      </tr>
+                      <tr>
+                        <td>100 a's, 100 a's, 199 a's then "b"</td>
+                        <td><code>false</code></td>
+                        <td>Every split looks possible until the last letter. Plain recursion tries them all: about 4 times slower for each letter added to both strings.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Plain Recursion</h2>
+                <p class="intuition">
+                  <code>can(i, j)</code> asks: can the rest of s3, from
+                  <code>i + j</code>, be made from <code>s1[i:]</code> and
+                  <code>s2[j:]</code>? The next letter of s3 must equal
+                  <code>s1[i]</code> (then ask <code>can(i + 1, j)</code>) or
+                  <code>s2[j]</code> (then <code>can(i, j + 1)</code>).
+                </p>
+                <ul>
+                  <li>Done when both are used up: <code>i == len(s1)</code> and <code>j == len(s2)</code>.</li>
+                  <li>The length check up front makes sure s3 runs out at the same moment.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(2^(m + n)) in the worst case</span>
+                  <span><strong>Space</strong> O(m + n) stack</span>
+                </div>
+                <p class="note">
+                  The same <code>(i, j)</code> is reached by many different paths and
+                  answered again each time: 1.24 s in Python with just 12 + 12 letters.
+                </p>
+                <div class="code-tabs" data-viz="0097-interleaving-string/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"len":[3,4],"call":[5,8],"base":[6,7],"take1":[9,10],"take2":[11,12],"fail":[13],"answer":[14]}'>
+                    class Solution(object):
+                        def isInterleave(self, s1, s2, s3):
+                            if len(s1) + len(s2) != len(s3):  # the letters have to add up
+                                return False
+                            def can(i, j):  # can s3[i+j:] be made from s1[i:] and s2[j:]?
+                                if i == len(s1) and j == len(s2):  # everything used: done
+                                    return True
+                                k = i + j  # the next letter of s3
+                                if i < len(s1) and s1[i] == s3[k] and can(i + 1, j):  # take it from s1
+                                    return True
+                                if j < len(s2) and s2[j] == s3[k] and can(i, j + 1):  # or from s2
+                                    return True
+                                return False
+                            return can(0, 0)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"len":[5],"answer":[6,7,8,9],"call":[13,15],"base":[14],"take1":[16],"take2":[17],"fail":[18]}'>
+                    #include <string>
+                    class Solution {
+                    public:
+                        bool isInterleave(std::string s1, std::string s2, std::string s3) {
+                            if (s1.size() + s2.size() != s3.size()) return false; // the letters have to add up
+                            a = s1;
+                            b = s2;
+                            c = s3;
+                            return can(0, 0);
+                        }
+                    private:
+                        std::string a, b, c;
+                        bool can(size_t i, size_t j) { // can s3[i+j..] be made from s1[i..] and s2[j..]?
+                            if (i == a.size() && j == b.size()) return true; // everything used: done
+                            size_t k = i + j; // the next letter of s3
+                            if (i < a.size() && a[i] == c[k] && can(i + 1, j)) return true; // take it from s1
+                            if (j < b.size() && b[j] == c[k] && can(i, j + 1)) return true; // or from s2
+                            return false;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"len":[4],"answer":[5,6,7,8],"call":[10,12],"base":[11],"take1":[13],"take2":[14],"fail":[15]}'>
+                    class Solution {
+                        private String a, b, c;
+                        public boolean isInterleave(String s1, String s2, String s3) {
+                            if (s1.length() + s2.length() != s3.length()) return false; // the letters have to add up
+                            a = s1;
+                            b = s2;
+                            c = s3;
+                            return can(0, 0);
+                        }
+                        private boolean can(int i, int j) { // can s3[i+j..] be made from s1[i..] and s2[j..]?
+                            if (i == a.length() && j == b.length()) return true; // everything used: done
+                            int k = i + j; // the next letter of s3
+                            if (i < a.length() && a.charAt(i) == c.charAt(k) && can(i + 1, j)) return true; // take it from s1
+                            if (j < b.length() && b.charAt(j) == c.charAt(k) && can(i, j + 1)) return true; // or from s2
+                            return false;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: 2D DP Table</h2>
+                <p class="intuition">
+                  There are only <code>(m + 1)(n + 1)</code> different questions, so
+                  answer each once, from the front. <code>dp[i][j]</code>: can the first
+                  <code>i</code> letters of s1 and the first <code>j</code> of s2 make
+                  the first <code>i + j</code> of s3?
+                </p>
+                <ul>
+                  <li><code>dp[0][0] = True</code>.</li>
+                  <li><code>dp[i][j]</code> is true if the last letter, <code>s3[i + j − 1]</code>, came from s1 (<code>s1[i − 1]</code> equals it and <code>dp[i − 1][j]</code>) or from s2 (<code>s2[j − 1]</code> and <code>dp[i][j − 1]</code>).</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(m · n)</span>
+                  <span><strong>Space</strong> O(m · n)</span>
+                </div>
+                <p class="note">
+                  1.6 ms in Python at the limit (100 + 100). The table is like a grid:
+                  a true path from the top-left to the bottom-right, moving down for an
+                  s1 letter and right for an s2 letter, is an interleaving.
+                </p>
+                <div class="code-tabs" data-viz="0097-interleaving-string/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,7,8],"len":[4,5],"loop":[9,10],"from1":[11,12],"from2":[13,14],"answer":[15]}'>
+                    class Solution(object):
+                        def isInterleave(self, s1, s2, s3):
+                            m, n = len(s1), len(s2)
+                            if m + n != len(s3):  # the letters have to add up
+                                return False
+                            # dp[i][j]: can the first i letters of s1 and the first j of s2 make the first i + j of s3?
+                            dp = [[False] * (n + 1) for _ in range(m + 1)]
+                            dp[0][0] = True  # nothing from either makes the empty start
+                            for i in range(m + 1):
+                                for j in range(n + 1):
+                                    if i > 0 and s1[i - 1] == s3[i + j - 1] and dp[i - 1][j]:  # the last letter came from s1
+                                        dp[i][j] = True
+                                    if j > 0 and s2[j - 1] == s3[i + j - 1] and dp[i][j - 1]:  # or from s2
+                                        dp[i][j] = True
+                            return dp[m][n]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,9,10],"len":[7],"loop":[11,12],"from1":[13,14],"from2":[15,16],"answer":[19]}'>
+                    #include <string>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool isInterleave(std::string s1, std::string s2, std::string s3) {
+                            size_t m = s1.size(), n = s2.size();
+                            if (m + n != s3.size()) return false; // the letters have to add up
+                            // dp[i][j]: can the first i letters of s1 and the first j of s2 make the first i + j of s3?
+                            std::vector<std::vector<bool>> dp(m + 1, std::vector<bool>(n + 1, false));
+                            dp[0][0] = true; // nothing from either makes the empty start
+                            for (size_t i = 0; i <= m; ++i) {
+                                for (size_t j = 0; j <= n; ++j) {
+                                    if (i > 0 && s1[i - 1] == s3[i + j - 1] && dp[i - 1][j]) // the last letter came from s1
+                                        dp[i][j] = true;
+                                    if (j > 0 && s2[j - 1] == s3[i + j - 1] && dp[i][j - 1]) // or from s2
+                                        dp[i][j] = true;
+                                }
+                            }
+                            return dp[m][n];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,6,7],"len":[4],"loop":[8,9],"from1":[10,11],"from2":[12,13],"answer":[16]}'>
+                    class Solution {
+                        public boolean isInterleave(String s1, String s2, String s3) {
+                            int m = s1.length(), n = s2.length();
+                            if (m + n != s3.length()) return false; // the letters have to add up
+                            // dp[i][j]: can the first i letters of s1 and the first j of s2 make the first i + j of s3?
+                            boolean[][] dp = new boolean[m + 1][n + 1];
+                            dp[0][0] = true; // nothing from either makes the empty start
+                            for (int i = 0; i <= m; i++) {
+                                for (int j = 0; j <= n; j++) {
+                                    if (i > 0 && s1.charAt(i - 1) == s3.charAt(i + j - 1) && dp[i - 1][j]) // the last letter came from s1
+                                        dp[i][j] = true;
+                                    if (j > 0 && s2.charAt(j - 1) == s3.charAt(i + j - 1) && dp[i][j - 1]) // or from s2
+                                        dp[i][j] = true;
+                                }
+                            }
+                            return dp[m][n];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: One Row
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  The follow-up: row <code>i</code> only uses row <code>i − 1</code> and
+                  itself, so keep one row, <code>dp[j]</code>, and overwrite it left to
+                  right.
+                </p>
+                <ul>
+                  <li>Before <code>dp[j]</code> is overwritten it still holds the row above: that's <code>dp[i − 1][j]</code>.</li>
+                  <li><code>dp[j − 1]</code> was just written, so it's already this row: <code>dp[i][j − 1]</code>.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(m · n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  The same work as Approach 2 (1.7 ms) with one row instead of a whole
+                  table. The same one-row trick works for Unique Paths (62) and Edit
+                  Distance (72).
+                </p>
+                <div class="code-tabs" data-viz="0097-interleaving-string/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,6,9,10,11],"len":[4,5],"loop":[7,8],"from1":[12],"from2":[13],"store":[14],"answer":[15]}'>
+                    class Solution(object):
+                        def isInterleave(self, s1, s2, s3):
+                            m, n = len(s1), len(s2)
+                            if m + n != len(s3):  # the letters have to add up
+                                return False
+                            dp = [False] * (n + 1)  # one row of the table; dp[j] is row i once row i is done
+                            for i in range(m + 1):
+                                for j in range(n + 1):
+                                    if i == 0 and j == 0:
+                                        dp[j] = True
+                                        continue
+                                    from1 = i > 0 and dp[j] and s1[i - 1] == s3[i + j - 1]  # dp[j] still holds the row above
+                                    from2 = j > 0 and dp[j - 1] and s2[j - 1] == s3[i + j - 1]  # dp[j - 1] is already this row
+                                    dp[j] = from1 or from2
+                            return dp[n]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,8,11,12,13],"len":[7],"loop":[9,10],"from1":[15],"from2":[16],"store":[17],"answer":[20]}'>
+                    #include <string>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool isInterleave(std::string s1, std::string s2, std::string s3) {
+                            size_t m = s1.size(), n = s2.size();
+                            if (m + n != s3.size()) return false; // the letters have to add up
+                            std::vector<bool> dp(n + 1, false); // one row of the table; dp[j] is row i once row i is done
+                            for (size_t i = 0; i <= m; ++i) {
+                                for (size_t j = 0; j <= n; ++j) {
+                                    if (i == 0 && j == 0) {
+                                        dp[j] = true;
+                                        continue;
+                                    }
+                                    bool from1 = i > 0 && dp[j] && s1[i - 1] == s3[i + j - 1]; // dp[j] still holds the row above
+                                    bool from2 = j > 0 && dp[j - 1] && s2[j - 1] == s3[i + j - 1]; // dp[j - 1] is already this row
+                                    dp[j] = from1 || from2;
+                                }
+                            }
+                            return dp[n];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,5,8,9,10],"len":[4],"loop":[6,7],"from1":[12],"from2":[13],"store":[14],"answer":[17]}'>
+                    class Solution {
+                        public boolean isInterleave(String s1, String s2, String s3) {
+                            int m = s1.length(), n = s2.length();
+                            if (m + n != s3.length()) return false; // the letters have to add up
+                            boolean[] dp = new boolean[n + 1]; // one row of the table; dp[j] is row i once row i is done
+                            for (int i = 0; i <= m; i++) {
+                                for (int j = 0; j <= n; j++) {
+                                    if (i == 0 && j == 0) {
+                                        dp[j] = true;
+                                        continue;
+                                    }
+                                    boolean from1 = i > 0 && dp[j] && s1.charAt(i - 1) == s3.charAt(i + j - 1); // dp[j] still holds the row above
+                                    boolean from2 = j > 0 && dp[j - 1] && s2.charAt(j - 1) == s3.charAt(i + j - 1); // dp[j - 1] is already this row
+                                    dp[j] = from1 || from2;
+                                }
+                            }
+                            return dp[n];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  In Python, <code>@functools.cache</code> on Approach 1 remembers each
+                  <code>can(i, j)</code>, which turns it into O(m · n) with no other
+                  change. C++ and Java have nothing like it: write the table.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    from functools import cache
+                    class Solution(object):
+                        def isInterleave(self, s1, s2, s3):
+                            if len(s1) + len(s2) != len(s3):
+                                return False
+                            @cache  # remembers can(i, j): at most (m + 1)(n + 1) different questions
+                            def can(i, j):
+                                if i == len(s1) and j == len(s2):
+                                    return True
+                                k = i + j
+                                return (i < len(s1) and s1[i] == s3[k] and can(i + 1, j)) or \
+                                       (j < len(s2) and s2[j] == s3[k] and can(i, j + 1))
+                            return can(0, 0)
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(m · n)</span>
+                  <span><strong>Space</strong> O(m · n) for the cache</span>
+                </div>
+                <p class="note">
+                  4.1 ms at the limit. The recursion goes at most 200 deep, well under
+                  Python's default limit of 1000.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Plain Recursion</th>
+                        <td>Next letter from s1 or s2</td>
+                        <td>O(2^(m + n))</td>
+                        <td>O(m + n)</td>
+                        <td>Too slow from about 12 + 12</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">2D Table</th>
+                        <td>dp[i][j] from above and from the left</td>
+                        <td>O(m · n)</td>
+                        <td>O(m · n)</td>
+                        <td>Easy to check by hand</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">One Row</th>
+                        <td>Overwrite dp[j] left to right</td>
+                        <td>O(m · n)</td>
+                        <td>O(n)</td>
+                        <td>The follow-up's answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -34013,6 +34456,239 @@
             steps.push({ line: "shift", note: `Slide: prev2 = ${prev2}, prev1 = ${prev1}.${prev1 === 0 && prev2 === 0 ? " Both are 0, so everything after is 0 too." : ""}`, view: view(i, { shifted: true }) });
           }
           steps.push({ line: "answer", note: `Return prev1 = ${prev1}. O(n) time, and only two numbers kept: O(1) space.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0097-interleaving-string/approach1.visual.js -->
+    <script>
+      // Plain recursion: the next letter of s3 comes from s1 or from s2; try s1 first, then s2.
+      DSAViz.register("0097-interleaving-string/approach1", {
+        inputs: [
+          { name: "s1", type: "string", value: "aab", maxLength: 4 },
+          { name: "s2", type: "string", value: "axy", maxLength: 4 },
+          { name: "s3", type: "string", value: "aaxaby", maxLength: 8 },
+        ],
+        trace({ s1, s2, s3 }) {
+          for (const [name, x] of [["s1", s1], ["s2", s2], ["s3", s3]]) if (!/^[a-z]*$/.test(x)) throw new DSAViz.InputError(`${name} must be lowercase letters (a–z), or "" for empty.`);
+          const m = s1.length;
+          const n = s2.length;
+          const steps = [];
+          const MAX = 300;
+          const runs = {}; // how many times can(i, j) ran
+          const from = []; // for each letter of s3 so far: "1" or "2"
+          const push = (s) => {
+            steps.push(s);
+            if (steps.length > MAX) throw new DSAViz.InputError(`This input takes more than ${MAX} steps to show. Try shorter strings.`);
+          };
+          const view = (i, j, o = {}) => {
+            const s1m = {};
+            const s2m = {};
+            for (let k = 0; k < i; k++) s1m[k] = "visited";
+            for (let k = 0; k < j; k++) s2m[k] = "visited";
+            if (o.try1) s1m[i] = o.bad ? "cut" : "active";
+            if (o.try2) s2m[j] = o.bad ? "cut" : "active";
+            const s3m = {};
+            from.forEach((f, k) => (s3m[k] = f === "1" ? "compare" : "new"));
+            if (o.done) [...s3].forEach((_, k) => (s3m[k] = "match"));
+            else if (i + j < s3.length && (o.try1 || o.try2)) s3m[i + j] = o.bad ? "cut" : "active";
+            const repeat = Object.values(runs).reduce((a, c) => a + Math.max(0, c - 1), 0);
+            return [
+              { type: "array", label: "s1 (faded = used)", values: [...s1], marks: s1m, compact: true },
+              { type: "array", label: "s2 (faded = used)", values: [...s2], marks: s2m, compact: true },
+              { type: "array", label: "s3 (orange = taken from s1, yellow = from s2)", values: [...s3], marks: s3m },
+              { type: "vars", items: [{ name: "now", value: i !== undefined ? `can(${i}, ${j})` : "–" }, { name: "repeated calls", value: repeat, mark: o.again ? "cut" : "" }] },
+            ];
+          };
+          if (m + n !== s3.length) {
+            push({ line: "len", note: `len(s1) + len(s2) = ${m + n}, but s3 has ${s3.length} letters: return false.`, view: view(0, 0) });
+            return steps;
+          }
+          push({ line: "answer", note: "can(i, j): can the rest of s3 be made from s1[i:] and s2[j:]? Start with can(0, 0).", view: view(0, 0) });
+          function can(i, j) {
+            const key = `${i},${j}`;
+            runs[key] = (runs[key] || 0) + 1;
+            const again = runs[key] > 1;
+            if (i === m && j === n) {
+              push({ line: ["call", "base"], note: `can(${i}, ${j}): both strings are used up, and so is s3. Return true.`, view: view(i, j, { done: true }) });
+              return true;
+            }
+            const k = i + j;
+            const ch = s3[k];
+            if (i < m) {
+              const ok = s1[i] === ch;
+              push({ line: ["call", "take1"], note: `can(${i}, ${j})${again ? " (asked before: the same work again)" : ""}: next is s3[${k}] = "${ch}". s1[${i}] = "${s1[i]}": ${ok ? "matches, take it." : "no match."}`, view: view(i, j, { try1: true, bad: !ok, again }) });
+              if (ok) {
+                from.push("1");
+                if (can(i + 1, j)) return true;
+                from.pop();
+              }
+            }
+            if (j < n) {
+              const ok = s2[j] === ch;
+              push({ line: "take2", note: `Back in can(${i}, ${j}): try s2[${j}] = "${s2[j]}" for "${ch}": ${ok ? "matches, take it." : "no match."}`, view: view(i, j, { try2: true, bad: !ok }) });
+              if (ok) {
+                from.push("2");
+                if (can(i, j + 1)) return true;
+                from.pop();
+              }
+            }
+            push({ line: "fail", note: `can(${i}, ${j}): neither choice works. Return false and back up.`, view: view(i, j, { bad: true }) });
+            return false;
+          }
+          const r = can(0, 0);
+          push({ line: "answer", note: r ? "Return true: the colours in s3 show which string each letter came from." : "Return false: no mix of s1 and s2 makes s3.", view: view(m, n, { done: r }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0097-interleaving-string/approach2.visual.js -->
+    <script>
+      // 2D table: dp[i][j] is true when the first i of s1 and the first j of s2 make the first i + j of s3.
+      DSAViz.register("0097-interleaving-string/approach2", {
+        inputs: [
+          { name: "s1", type: "string", value: "aab", maxLength: 5 },
+          { name: "s2", type: "string", value: "axy", maxLength: 5 },
+          { name: "s3", type: "string", value: "aaxaby", maxLength: 10 },
+        ],
+        trace({ s1, s2, s3 }) {
+          for (const [name, x] of [["s1", s1], ["s2", s2], ["s3", s3]]) if (!/^[a-z]*$/.test(x)) throw new DSAViz.InputError(`${name} must be lowercase letters (a–z), or "" for empty.`);
+          const m = s1.length;
+          const n = s2.length;
+          const steps = [];
+          const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(""));
+          const rows = ["·", ...s1].map((c, i) => `${i} ${c}`);
+          const cols = ["·", ...s2].map((c, j) => `${j} ${c}`);
+          const show = (v) => (v === "" ? "" : v ? "T" : "F");
+          const view = (i, j, o = {}) => {
+            const marks = {};
+            for (let r = 0; r <= m; r++) for (let c = 0; c <= n; c++) if (dp[r][c] === true) marks[`${r},${c}`] = "visited";
+            if (o.from1) marks[`${i - 1},${j}`] = "compare";
+            if (o.from2) marks[`${i},${j - 1}`] = "compare";
+            if (i !== undefined) marks[`${i},${j}`] = dp[i][j] === true ? "new" : "active";
+            if (o.path) o.path.forEach(([r, c]) => (marks[`${r},${c}`] = "match"));
+            const s3m = {};
+            if (i !== undefined && i + j > 0) s3m[i + j - 1] = "active";
+            return [
+              { type: "array", label: "s3", values: [...s3], marks: s3m, pointers: i !== undefined && i + j > 0 ? { k: i + j - 1 } : {} },
+              { type: "grid", label: "dp (row i = first i of s1, column j = first j of s2; T = can make the first i + j of s3)", rows, cols, cells: dp.map((r) => r.map(show)), marks, corner: "s1 \\ s2" },
+            ];
+          };
+          if (m + n !== s3.length) {
+            steps.push({ line: "len", note: `len(s1) + len(s2) = ${m} + ${n} = ${m + n}, but s3 has ${s3.length} letters. They can't match: return false.`, view: view() });
+            return steps;
+          }
+          dp[0][0] = true;
+          steps.push({ line: "init", note: "dp[0][0] = T: nothing from either string makes the empty start of s3.", view: view(0, 0) });
+          for (let i = 0; i <= m; i++) {
+            for (let j = 0; j <= n; j++) {
+              if (i === 0 && j === 0) continue;
+              const ch = s3[i + j - 1];
+              const a = i > 0 && s1[i - 1] === ch && dp[i - 1][j] === true;
+              const b = j > 0 && s2[j - 1] === ch && dp[i][j - 1] === true;
+              dp[i][j] = a || b;
+              const why = [];
+              if (i > 0) why.push(s1[i - 1] !== ch ? `s1 gives "${s1[i - 1]}"` : dp[i - 1][j] ? `from s1 ("${ch}", above is T)` : `s1 has "${ch}" but above is F`);
+              if (j > 0) why.push(s2[j - 1] !== ch ? `s2 gives "${s2[j - 1]}"` : dp[i][j - 1] ? `from s2 ("${ch}", left is T)` : `s2 has "${ch}" but left is F`);
+              steps.push({
+                line: ["loop", "from1", "from2"],
+                note: `dp[${i}][${j}]: the last letter is s3[${i + j - 1}] = "${ch}". ${why.join("; ")}. ${dp[i][j] ? "T" : "F"}.`,
+                view: view(i, j, { from1: a, from2: b }),
+              });
+            }
+          }
+          // Walk back along a true path to show one interleaving.
+          let path = null;
+          if (dp[m][n]) {
+            path = [[m, n]];
+            let i = m, j = n;
+            while (i || j) {
+              const ch = s3[i + j - 1];
+              if (i > 0 && s1[i - 1] === ch && dp[i - 1][j]) i--;
+              else j--;
+              path.push([i, j]);
+            }
+          }
+          steps.push({
+            line: "answer",
+            note: dp[m][n] ? `Return true. The green cells are one way through: each step down takes a letter from s1, each step right one from s2.` : `Return false: dp[${m}][${n}] is F, so no mix of s1 and s2 makes s3.`,
+            view: view(undefined, undefined, { path }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0097-interleaving-string/approach3.visual.js -->
+    <script>
+      // One row: dp[j] holds the row above until it's overwritten, and dp[j − 1] is already this row.
+      DSAViz.register("0097-interleaving-string/approach3", {
+        inputs: [
+          { name: "s1", type: "string", value: "aab", maxLength: 5 },
+          { name: "s2", type: "string", value: "axy", maxLength: 5 },
+          { name: "s3", type: "string", value: "aaxaby", maxLength: 10 },
+        ],
+        trace({ s1, s2, s3 }) {
+          for (const [name, x] of [["s1", s1], ["s2", s2], ["s3", s3]]) if (!/^[a-z]*$/.test(x)) throw new DSAViz.InputError(`${name} must be lowercase letters (a–z), or "" for empty.`);
+          const m = s1.length;
+          const n = s2.length;
+          const steps = [];
+          const dp = Array(n + 1).fill("");
+          let row = 0; // which row of the table dp[] holds (left of j: this row; from j on: the row above)
+          const show = (v) => (v === "" ? "" : v ? "T" : "F");
+          const view = (i, j, o = {}) => {
+            const marks = {};
+            if (j !== undefined) {
+              for (let c = 0; c < j; c++) marks[c] = "visited";
+              for (let c = j + 1; c <= n; c++) if (i > 0) marks[c] = "ghost";
+              if (o.from1) marks[j] = "compare";
+              if (o.from2) marks[j - 1] = "compare";
+              if (o.stored) marks[j] = dp[j] ? "new" : "cut";
+            }
+            if (o.final) marks[n] = dp[n] ? "match" : "cut";
+            const s3m = {};
+            if (i !== undefined && i + j > 0) s3m[i + j - 1] = "active";
+            const s1m = i !== undefined && i > 0 ? { [i - 1]: "active" } : {};
+            const s2m = j !== undefined && j > 0 ? { [j - 1]: "active" } : {};
+            return [
+              { type: "array", label: "s1", values: [...s1], marks: s1m, compact: true },
+              { type: "array", label: "s2", values: [...s2], marks: s2m, compact: true },
+              { type: "array", label: "s3", values: [...s3], marks: s3m, pointers: i !== undefined && i + j > 0 ? { k: i + j - 1 } : {} },
+              { type: "array", label: `dp[j], one row (row ${row}; faded = still the row above)`, values: dp.map(show), marks, pointers: j !== undefined ? { j } : {} },
+            ];
+          };
+          if (m + n !== s3.length) {
+            steps.push({ line: "len", note: `len(s1) + len(s2) = ${m + n}, but s3 has ${s3.length} letters: return false.`, view: view() });
+            return steps;
+          }
+          for (let i = 0; i <= m; i++) {
+            row = i;
+            for (let j = 0; j <= n; j++) {
+              if (i === 0 && j === 0) {
+                dp[0] = true;
+                steps.push({ line: ["loop", "init"], note: "Row 0, j = 0: dp[0] = T (nothing makes the empty start).", view: view(0, 0, { stored: true }) });
+                continue;
+              }
+              const ch = s3[i + j - 1];
+              const above = dp[j];
+              const a = i > 0 && above === true && s1[i - 1] === ch;
+              const b = j > 0 && dp[j - 1] === true && s2[j - 1] === ch;
+              const parts = [];
+              if (i > 0) parts.push(`dp[${j}] still holds the row above (${show(above)})${s1[i - 1] === ch ? `, and s1 gives "${ch}"` : `, but s1 gives "${s1[i - 1]}"`}`);
+              if (j > 0) parts.push(`dp[${j - 1}] is this row (${show(dp[j - 1])})${s2[j - 1] === ch ? `, and s2 gives "${ch}"` : `, but s2 gives "${s2[j - 1]}"`}`);
+              dp[j] = a || b;
+              steps.push({
+                line: ["loop", "from1", "from2", "store"],
+                note: `Row ${i}, j = ${j}, next letter "${ch}": ${parts.join("; ")}. dp[${j}] = ${show(dp[j])}.`,
+                view: view(i, j, { from1: a, from2: b, stored: true }),
+              });
+            }
+          }
+          const cells = (k) => `${k} cell${k === 1 ? "" : "s"}`;
+          steps.push({
+            line: "answer",
+            note: `dp[${n}] = ${show(dp[n])}: return ${dp[n] ? "true" : "false"}. ${(m + 1) * (n + 1) > n + 1 ? `${cells(n + 1)} of memory instead of ${cells((m + 1) * (n + 1))}.` : "Only one row here anyway."}`,
+            view: view(undefined, undefined, { final: true }),
+          });
           return steps;
         },
       });

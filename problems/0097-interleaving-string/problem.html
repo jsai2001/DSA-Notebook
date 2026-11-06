@@ -1,0 +1,243 @@
+<details class="question" data-group="dynamic-programming" data-tags="string dynamic-programming recursion memoization interleave 2d-dp">
+  <summary>
+    <span class="q-title">97. Interleaving String</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">String</span>
+      <span class="tag">Dynamic Programming</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> After using <code>i</code> letters of s1 and
+      <code>j</code> of s2, the next letter of s3 is <code>s3[i + j]</code>,
+      and it must come from s1 or from s2. So
+      <code>dp[i][j]</code> = (s1's i-th letter matches and
+      <code>dp[i − 1][j]</code>) or (s2's j-th letter matches and
+      <code>dp[i][j − 1]</code>). Check the lengths first. One row of the table
+      is enough: O(m · n) time, O(n) space.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/interleaving-string/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given <code>s1</code>, <code>s2</code> and <code>s3</code>, return
+        <code>true</code> if s3 can be made by <strong>interleaving</strong>
+        s1 and s2: using all the letters of both, each in its own order, mixed
+        together in any way.
+      </p>
+      <ul>
+        <li><code>0 &lt;= s1.length, s2.length &lt;= 100</code> and <code>0 &lt;= s3.length &lt;= 200</code>.</li>
+        <li>All three are lowercase English letters.</li>
+        <li>Follow-up: use only O(s2.length) extra memory.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>"aabcc"</code>, <code>"dbbca"</code>,
+        <code>"aadbbcbcac"</code> → <code>true</code>;
+        <code>"aabcc"</code>, <code>"dbbca"</code>, <code>"aadbbbaccc"</code>
+        → <code>false</code>; <code>""</code>, <code>""</code>,
+        <code>""</code> → <code>true</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>""</code>, <code>""</code>, <code>""</code></td>
+              <td><code>true</code></td>
+              <td>Nothing from nothing: <code>dp[0][0]</code> must start as true.</td>
+            </tr>
+            <tr>
+              <td><code>""</code>, <code>"abc"</code>, <code>"abc"</code></td>
+              <td><code>true</code></td>
+              <td>One string is empty: s3 must simply equal the other.</td>
+            </tr>
+            <tr>
+              <td><code>"ab"</code>, <code>"c"</code>, <code>"abcd"</code></td>
+              <td><code>false</code></td>
+              <td>s3 has a letter left over. Without the length check first, the table never looks at the "d" and says true.</td>
+            </tr>
+            <tr>
+              <td><code>"a"</code>, <code>"b"</code>, <code>"ba"</code></td>
+              <td><code>true</code></td>
+              <td>s2's letters can come first.</td>
+            </tr>
+            <tr>
+              <td><code>"a"</code>, <code>"b"</code>, <code>"aa"</code></td>
+              <td><code>false</code></td>
+              <td>The lengths add up, but s1's one "a" can't be used twice.</td>
+            </tr>
+            <tr>
+              <td><code>"aa"</code>, <code>"ab"</code>, <code>"aaba"</code></td>
+              <td><code>true</code></td>
+              <td>Both strings can give the next "a". Greedily taking it from s1 whenever it matches says false; the right choice needs looking ahead.</td>
+            </tr>
+            <tr>
+              <td><code>"abc"</code>, <code>"def"</code>, <code>"abdfce"</code></td>
+              <td><code>false</code></td>
+              <td>The same letters, but "f" comes before "e" while s2 has "e" first: each string's order must be kept.</td>
+            </tr>
+            <tr>
+              <td>100 a's, 100 a's, 199 a's then "b"</td>
+              <td><code>false</code></td>
+              <td>Every split looks possible until the last letter. Plain recursion tries them all: about 4 times slower for each letter added to both strings.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Plain Recursion</h2>
+      <p class="intuition">
+        <code>can(i, j)</code> asks: can the rest of s3, from
+        <code>i + j</code>, be made from <code>s1[i:]</code> and
+        <code>s2[j:]</code>? The next letter of s3 must equal
+        <code>s1[i]</code> (then ask <code>can(i + 1, j)</code>) or
+        <code>s2[j]</code> (then <code>can(i, j + 1)</code>).
+      </p>
+      <ul>
+        <li>Done when both are used up: <code>i == len(s1)</code> and <code>j == len(s2)</code>.</li>
+        <li>The length check up front makes sure s3 runs out at the same moment.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(2^(m + n)) in the worst case</span>
+        <span><strong>Space</strong> O(m + n) stack</span>
+      </div>
+      <p class="note">
+        The same <code>(i, j)</code> is reached by many different paths and
+        answered again each time: 1.24 s in Python with just 12 + 12 letters.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: 2D DP Table</h2>
+      <p class="intuition">
+        There are only <code>(m + 1)(n + 1)</code> different questions, so
+        answer each once, from the front. <code>dp[i][j]</code>: can the first
+        <code>i</code> letters of s1 and the first <code>j</code> of s2 make
+        the first <code>i + j</code> of s3?
+      </p>
+      <ul>
+        <li><code>dp[0][0] = True</code>.</li>
+        <li><code>dp[i][j]</code> is true if the last letter, <code>s3[i + j − 1]</code>, came from s1 (<code>s1[i − 1]</code> equals it and <code>dp[i − 1][j]</code>) or from s2 (<code>s2[j − 1]</code> and <code>dp[i][j − 1]</code>).</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m · n)</span>
+        <span><strong>Space</strong> O(m · n)</span>
+      </div>
+      <p class="note">
+        1.6 ms in Python at the limit (100 + 100). The table is like a grid:
+        a true path from the top-left to the bottom-right, moving down for an
+        s1 letter and right for an s2 letter, is an interleaving.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: One Row
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        The follow-up: row <code>i</code> only uses row <code>i − 1</code> and
+        itself, so keep one row, <code>dp[j]</code>, and overwrite it left to
+        right.
+      </p>
+      <ul>
+        <li>Before <code>dp[j]</code> is overwritten it still holds the row above: that's <code>dp[i − 1][j]</code>.</li>
+        <li><code>dp[j − 1]</code> was just written, so it's already this row: <code>dp[i][j − 1]</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m · n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        The same work as Approach 2 (1.7 ms) with one row instead of a whole
+        table. The same one-row trick works for Unique Paths (62) and Edit
+        Distance (72).
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        In Python, <code>@functools.cache</code> on Approach 1 remembers each
+        <code>can(i, j)</code>, which turns it into O(m · n) with no other
+        change. C++ and Java have nothing like it: write the table.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m · n)</span>
+        <span><strong>Space</strong> O(m · n) for the cache</span>
+      </div>
+      <p class="note">
+        4.1 ms at the limit. The recursion goes at most 200 deep, well under
+        Python's default limit of 1000.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Plain Recursion</th>
+              <td>Next letter from s1 or s2</td>
+              <td>O(2^(m + n))</td>
+              <td>O(m + n)</td>
+              <td>Too slow from about 12 + 12</td>
+            </tr>
+            <tr>
+              <th scope="row">2D Table</th>
+              <td>dp[i][j] from above and from the left</td>
+              <td>O(m · n)</td>
+              <td>O(m · n)</td>
+              <td>Easy to check by hand</td>
+            </tr>
+            <tr>
+              <th scope="row">One Row</th>
+              <td>Overwrite dp[j] left to right</td>
+              <td>O(m · n)</td>
+              <td>O(n)</td>
+              <td>The follow-up's answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
