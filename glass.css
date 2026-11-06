@@ -1,0 +1,456 @@
+/* Liquid Glass, the way Apple uses it (iOS 26 / macOS 26):
+   content stays solid; only the controls that float over it are glass.
+
+   - Content: Apple's grouped colors (light grey page, white cards; black page, dark cards).
+   - Glass (.lg-float below): clear, lightly frosted, with a bright rim that catches light
+     at the top-left and bottom-right, a soft inner glow, and a shine that follows the
+     pointer. glass.js adds the lens: the edges bend what's behind (Chrome / Edge only;
+     other browsers get the same glass without the bend).
+   - Press: controls swell a little with a spring, like a drop of liquid.
+   - prefers-reduced-transparency: solid controls. prefers-reduced-motion: no spring.
+   Loaded last; layout and behavior stay in the other files. */
+
+:root {
+  /* Apple system colors (light) */
+  --bg: rgb(242, 242, 247);
+  --card-bg: rgb(255, 255, 255);
+  --surface: rgb(255, 255, 255);
+  --surface-hover: rgb(248, 248, 251);
+  --surface-alt: rgb(242, 242, 247);
+  --chip-bg: rgb(238, 238, 243);
+  --border: rgba(60, 60, 67, 0.3);
+  --border-soft: rgba(60, 60, 67, 0.12);
+  --border-card: rgba(60, 60, 67, 0.12);
+  --text-muted: rgb(90, 90, 96);
+  --code-bg: rgb(28, 28, 32);
+  --inline-code-bg: rgba(120, 120, 128, 0.14);
+  --lg-tint: rgb(0, 113, 227); /* Apple blue; white text on it passes AA */
+
+  /* Glass material */
+  --lg-fill: rgba(255, 255, 255, 0.42);
+  --lg-blur: blur(10px) saturate(190%) brightness(1.04);
+  --lg-rim: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0.25) 28%,
+    rgba(255, 255, 255, 0.08) 55%,
+    rgba(255, 255, 255, 0.7) 100%
+  );
+  --lg-glow: inset 0 0 0.9rem rgba(255, 255, 255, 0.45);
+  --lg-edge: 0 0 0 0.5px rgba(0, 0, 0, 0.08);
+  --lg-shadow: 0 0.5rem 1.6rem -0.4rem rgba(0, 0, 0, 0.18), 0 0.1rem 0.25rem rgba(0, 0, 0, 0.06);
+  --lg-shine: rgba(255, 255, 255, 0.55);
+  --lg-thumb: rgb(255, 255, 255); /* selected part of a segmented control */
+  --lg-thumb-shadow: 0 0.1rem 0.4rem rgba(0, 0, 0, 0.14), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  --lg-track: rgba(120, 120, 128, 0.12);
+}
+
+:root[data-theme="dark"] {
+  --bg: rgb(0, 0, 0);
+  --card-bg: rgb(28, 28, 30);
+  --surface: rgb(28, 28, 30);
+  --surface-hover: rgb(38, 38, 41);
+  --surface-alt: rgb(44, 44, 46);
+  --chip-bg: rgb(44, 44, 46);
+  --border: rgba(235, 235, 245, 0.28);
+  --border-soft: rgba(235, 235, 245, 0.1);
+  --border-card: rgba(235, 235, 245, 0.1);
+  --text-muted: rgb(174, 174, 180);
+  --code-bg: rgb(16, 16, 19);
+  --inline-code-bg: rgba(120, 120, 128, 0.3);
+
+  --lg-fill: rgba(40, 40, 44, 0.42);
+  --lg-rim: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.1) 30%,
+    rgba(255, 255, 255, 0.03) 55%,
+    rgba(255, 255, 255, 0.35) 100%
+  );
+  --lg-glow: inset 0 0 0.9rem rgba(255, 255, 255, 0.07);
+  --lg-edge: 0 0 0 0.5px rgba(255, 255, 255, 0.06);
+  --lg-shadow: 0 0.5rem 1.6rem -0.4rem rgba(0, 0, 0, 0.7), 0 0.1rem 0.25rem rgba(0, 0, 0, 0.4);
+  --lg-shine: rgba(255, 255, 255, 0.16);
+  --lg-thumb: rgb(99, 99, 102);
+  --lg-thumb-shadow: 0 0.1rem 0.4rem rgba(0, 0, 0, 0.4);
+  --lg-track: rgba(120, 120, 128, 0.24);
+}
+
+/* ---------- content: solid, Apple-style cards ---------- */
+.pattern-group,
+.question,
+.approach,
+.deck-card,
+body.deck-read .question.deck-current > .q-body > :not(.q-jump) {
+  border-color: var(--border-card);
+  box-shadow: 0 0.05rem 0.2rem rgba(0, 0, 0, 0.04);
+}
+:root[data-theme="dark"] .pattern-group,
+:root[data-theme="dark"] .question,
+:root[data-theme="dark"] .approach,
+:root[data-theme="dark"] .deck-card {
+  box-shadow: none;
+}
+/* Cards inside cards: a light grey step, like grouped lists */
+.pattern-group .question {
+  background: var(--surface-alt);
+}
+.question .approach,
+.pattern-group .question .approach {
+  background: var(--card-bg);
+}
+:root[data-theme="dark"] .pattern-group .question {
+  background: rgb(22, 22, 24);
+}
+
+/* ---------- the glass material ---------- */
+.dock,
+.theme-toggle,
+.site-nav,
+.view-switch,
+.q-jump,
+.deck-arrow,
+.deck-back,
+.viz-maxclose,
+.viz-maxedit,
+body.deck-read .deck-readtop,
+.viz.is-max .viz-maxbar,
+.viz-footer {
+  background: var(--lg-fill);
+  -webkit-backdrop-filter: var(--lg-blur);
+  backdrop-filter: var(--lg-blur);
+  border-color: transparent;
+  box-shadow: var(--lg-glow), var(--lg-edge), var(--lg-shadow);
+}
+
+/* Rim and pointer shine (not on .q-jump: it scrolls sideways, and the layers would scroll with it) */
+.dock,
+.theme-toggle,
+.site-nav,
+.view-switch,
+.deck-arrow,
+.deck-back,
+.viz-maxclose,
+.viz-maxedit {
+  isolation: isolate;
+}
+.site-nav,
+.view-switch,
+.deck-arrow,
+.deck-back,
+.viz-maxclose,
+.viz-maxedit {
+  position: relative;
+}
+.dock::before,
+.theme-toggle::before,
+.site-nav::before,
+.view-switch::before,
+.deck-arrow::before,
+.deck-back::before,
+.viz-maxclose::before,
+.viz-maxedit::before {
+  /* the bright rim: a 1.5px ring cut out of a diagonal light gradient */
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: var(--lg-rim);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  pointer-events: none;
+}
+.dock::after,
+.theme-toggle::after,
+.site-nav::after,
+.view-switch::after,
+.deck-arrow::after,
+.deck-back::after,
+.viz-maxclose::after,
+.viz-maxedit::after {
+  /* the shine: sits top-left, follows the pointer (glass.js sets --lg-x / --lg-y) */
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  background: radial-gradient(
+    9rem circle at var(--lg-x, 22%) var(--lg-y, 0%),
+    var(--lg-shine),
+    transparent 65%
+  );
+  opacity: 0.7;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.dock:hover::after,
+.theme-toggle:hover::after,
+.site-nav:hover::after,
+.view-switch:hover::after,
+.deck-arrow:hover::after,
+.deck-back:hover::after,
+.viz-maxclose:hover::after,
+.viz-maxedit:hover::after {
+  opacity: 1;
+}
+/* Keep the controls' own content above the shine */
+.dock > *,
+.site-nav > *,
+.view-switch > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Bars that span the screen: no outer ring, softer shadow */
+.q-jump,
+body.deck-read .deck-readtop,
+.viz.is-max .viz-maxbar {
+  border-bottom-color: transparent;
+  box-shadow: inset 0 -0.5px 0 rgba(0, 0, 0, 0.08), 0 0.4rem 1.2rem -0.9rem rgba(0, 0, 0, 0.3);
+}
+.viz-footer {
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.6), 0 -0.5rem 1.2rem -0.9rem rgba(0, 0, 0, 0.3);
+}
+:root[data-theme="dark"] .q-jump,
+:root[data-theme="dark"] body.deck-read .deck-readtop,
+:root[data-theme="dark"] .viz.is-max .viz-maxbar {
+  box-shadow: inset 0 -0.5px 0 rgba(255, 255, 255, 0.1);
+}
+:root[data-theme="dark"] .viz-footer {
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* Buttons that live on the dock's glass: no second layer */
+.dock .dock-btn {
+  background: transparent;
+  border-color: transparent;
+}
+
+/* Glass doesn't go dark on hover: it brightens */
+.theme-toggle:hover,
+.dock-btn:hover,
+.dock-btn[aria-expanded="true"] {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: transparent;
+  color: var(--text-strong);
+}
+.dock .dock-btn:hover,
+.dock .dock-btn[aria-expanded="true"] {
+  background: var(--lg-track);
+}
+:root[data-theme="dark"] .theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+.theme-toggle:hover {
+  background: var(--lg-fill);
+}
+
+/* ---------- press: a springy swell ---------- */
+.theme-toggle,
+.dock-btn,
+.deck-arrow,
+.deck-back,
+.viz-maxclose,
+.viz-maxedit,
+.viz-btn,
+.view-all,
+.filter-chip,
+.deck-chip {
+  transition: scale 0.5s cubic-bezier(0.34, 1.8, 0.5, 1), background-color 0.2s, color 0.2s, opacity 0.2s, visibility 0.2s;
+}
+.theme-toggle:active,
+.dock-btn:active,
+.deck-arrow:active:not(:disabled),
+.deck-back:active,
+.viz-maxclose:active,
+.viz-maxedit:active,
+.viz-btn:active:not(:disabled),
+.view-all:active,
+.filter-chip:active,
+.deck-chip:active {
+  transform: none;
+  scale: 1.08;
+  transition-duration: 0.15s;
+}
+.theme-toggle:active::after,
+.deck-arrow:active::after,
+.deck-back:active::after {
+  opacity: 1;
+}
+
+/* ---------- segmented controls: a raised thumb on a light track ---------- */
+.site-nav a[aria-current="page"],
+.view-switch button[aria-pressed="true"],
+.viz-mode[aria-pressed="true"] {
+  background: var(--lg-thumb);
+  color: var(--text-strong);
+  font-weight: 600;
+  box-shadow: var(--lg-thumb-shadow);
+}
+.site-nav a:hover,
+.view-switch button:hover {
+  background: rgba(120, 120, 128, 0.12);
+}
+.site-nav a[aria-current="page"]:hover,
+.view-switch button[aria-pressed="true"]:hover {
+  background: var(--lg-thumb);
+}
+.viz-modes {
+  border-color: transparent;
+  background: var(--lg-track);
+}
+.viz-mode {
+  transition: background-color 0.25s, box-shadow 0.25s, color 0.25s;
+}
+
+/* ---------- chips and buttons in the content ---------- */
+.filter-chip,
+.q-jump a,
+.view-all,
+.viz-btn,
+.deck-chip,
+.viz-lang {
+  border-color: transparent;
+  background: var(--chip-bg);
+}
+.q-jump a {
+  background: rgba(120, 120, 128, 0.14);
+}
+.filter-chip:hover,
+.q-jump a:hover,
+.view-all:hover,
+.viz-btn:hover:not(:disabled),
+.deck-chip:hover,
+.viz-lang:hover {
+  border-color: transparent;
+  background: rgba(120, 120, 128, 0.24);
+  color: var(--text-strong);
+}
+/* Keep the green outline that marks the optimal approach */
+.q-jump a.is-optimal,
+.deck-chip.is-optimal {
+  border-color: var(--easy-text);
+}
+
+/* Picked chips and the main button: Apple blue */
+.filter-chip[aria-pressed="true"],
+.q-jump a[aria-current="true"],
+.deck-chip[aria-current="true"],
+.viz-lang[aria-pressed="true"],
+.viz-btn-primary,
+.viz-btn-primary:hover:not(:disabled) {
+  background: var(--lg-tint);
+  border-color: var(--lg-tint);
+  color: rgb(255, 255, 255);
+}
+.filter-chip[aria-pressed="true"] *,
+.viz-btn-primary * {
+  color: inherit;
+}
+
+/* Code tabs stay attached to the dark code block */
+.tab {
+  border-color: transparent;
+  background: var(--chip-bg);
+}
+.tab[aria-selected="true"] {
+  background: var(--code-bg);
+  border-color: var(--code-bg);
+}
+
+/* ---------- less transparency, when the system asks ---------- */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --lg-fill: rgb(250, 250, 252);
+  }
+  :root[data-theme="dark"] {
+    --lg-fill: rgb(36, 36, 40);
+  }
+  .dock,
+  .theme-toggle,
+  .site-nav,
+  .view-switch,
+  .q-jump,
+  .deck-arrow,
+  .deck-back,
+  .viz-maxclose,
+  .viz-maxedit,
+  body.deck-read .deck-readtop,
+  .viz.is-max .viz-maxbar,
+  .viz-footer {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
+/* ---------- less motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle,
+  .dock-btn,
+  .deck-arrow,
+  .deck-back,
+  .viz-maxclose,
+  .viz-maxedit,
+  .viz-btn,
+  .view-all,
+  .filter-chip,
+  .deck-chip {
+    transition: none;
+  }
+  .theme-toggle:active,
+  .dock-btn:active,
+  .deck-arrow:active:not(:disabled),
+  .deck-back:active,
+  .viz-maxclose:active,
+  .viz-maxedit:active,
+  .viz-btn:active:not(:disabled),
+  .view-all:active,
+  .filter-chip:active,
+  .deck-chip:active {
+    scale: none;
+  }
+}
+
+/* No blur support: a nearly solid fill so text under the controls doesn't show */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --lg-fill: rgba(250, 250, 252, 0.95);
+  }
+  :root[data-theme="dark"] {
+    --lg-fill: rgba(36, 36, 40, 0.96);
+  }
+}
+
+/* ---------- over dark content: dark glass, light icons (glass.js adds the class) ---------- */
+.lg-over-dark {
+  --lg-fill: rgba(36, 36, 40, 0.5);
+  --lg-rim: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.6) 0%,
+    rgba(255, 255, 255, 0.1) 30%,
+    rgba(255, 255, 255, 0.03) 55%,
+    rgba(255, 255, 255, 0.35) 100%
+  );
+  --lg-glow: inset 0 0 0.9rem rgba(255, 255, 255, 0.08);
+  --lg-shine: rgba(255, 255, 255, 0.18);
+  --text-strong: rgb(245, 245, 247);
+  --text-muted: rgb(200, 200, 206);
+  --chip-bg: rgba(255, 255, 255, 0.14);
+  --lg-track: rgba(255, 255, 255, 0.16);
+  color: var(--text-strong);
+}
+.q-jump.lg-over-dark a:not([aria-current="true"]) {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--text-strong);
+}
+.q-jump.lg-over-dark a.is-optimal:not([aria-current="true"]) {
+  color: rgb(140, 230, 160);
+  border-color: rgb(140, 230, 160);
+}
+.dock,
+.q-jump {
+  transition: background-color 0.3s, color 0.3s, opacity 0.2s, visibility 0.2s;
+}
