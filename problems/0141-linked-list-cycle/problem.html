@@ -1,0 +1,250 @@
+<details class="question" data-group="linked-list" data-tags="linked-list two-pointers hash-table cycle detection floyd tortoise hare brent fast slow">
+  <summary>
+    <span class="q-title">141. Linked List Cycle</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Linked List</span>
+      <span class="tag">Two Pointers</span>
+      <span class="tag">Hash Table</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Two pointers: <code>slow</code> moves one
+      node at a time, <code>fast</code> moves two. Without a cycle,
+      <code>fast</code> reaches the end. With one, both end up going around
+      it, <code>fast</code> gains one node per step, and they meet. O(n)
+      time, O(1) memory.
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/linked-list-cycle/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given the head of a linked list, return <code>true</code> if some
+        node can be reached again by following <code>next</code>, that is, if
+        the list has a cycle. The tests describe the cycle with
+        <code>pos</code>, the index the tail links back to
+        (<code>-1</code> = no cycle), but <code>pos</code> is not passed to
+        your function.
+      </p>
+      <ul>
+        <li>0 to 10⁴ nodes; <code>-10⁵ &lt;= Node.val &lt;= 10⁵</code></li>
+        <li>Follow-up: can you do it with O(1) memory?</li>
+      </ul>
+      <p class="note">
+        Example: <code>[3,2,0,-4]</code>, <code>pos = 1</code> →
+        <code>true</code> (the tail links back to node 1).
+        <code>[1]</code>, <code>pos = -1</code> → <code>false</code>.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[]</code></td>
+              <td><code>false</code></td>
+              <td>head is null. A loop that checks only <code>fast.next</code> crashed here (<code>AttributeError</code>); check <code>fast</code> first.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2]</code>, <code>pos = -1</code></td>
+              <td><code>false</code></td>
+              <td>Even length: <code>fast</code> jumps past the last node to null. Checking only <code>fast.next</code> crashed here too.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,1]</code>, <code>pos = -1</code></td>
+              <td><code>false</code></td>
+              <td>Values repeat. A set of <strong>values</strong> said <code>true</code>; store the nodes.</td>
+            </tr>
+            <tr>
+              <td><code>[1]</code>, <code>pos = 0</code></td>
+              <td><code>true</code></td>
+              <td>One node pointing to itself: the smallest cycle.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2]</code>, <code>pos = 0</code></td>
+              <td><code>true</code></td>
+              <td>The whole list is the cycle.</td>
+            </tr>
+            <tr>
+              <td>10⁴ nodes, the tail pointing to itself</td>
+              <td><code>true</code></td>
+              <td>A long walk to a tiny cycle. Floyd made 29,997 pointer moves here, Brent 16,384.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Remember the Nodes</h2>
+      <p class="intuition">
+        Walk the list and put each node in a hash set. If a node is already
+        in the set, you've come back to it: a cycle. If you reach null, there
+        is none.
+      </p>
+      <ul>
+        <li>
+          Store the node itself (its identity), not its value: different
+          nodes can hold the same value.
+        </li>
+        <li>Easy to write, but the set grows with the list.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        At 10⁴ nodes here: Python 0.5 ms, Java 2.5–2.9 ms, C++ 0.6 ms (the
+        slowest version in C++, because of the hashing). Doesn't meet the
+        O(1)-memory follow-up.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Brent's Method</h2>
+      <p class="intuition">
+        Keep <code>anchor</code> still and walk <code>runner</code> ahead in
+        rounds of 1, 2, 4, 8, … steps. If <code>runner</code> lands on
+        <code>anchor</code>, it went around a cycle. After each round,
+        <code>anchor</code> jumps to where <code>runner</code> is.
+      </p>
+      <ul>
+        <li>
+          Once a round is longer than the cycle, and <code>anchor</code> is
+          inside it, <code>runner</code> comes back to <code>anchor</code>
+          within that round.
+        </li>
+        <li>
+          Only one pointer walks the list, so it makes fewer moves than
+          Floyd: 16,384 vs 29,997 on 10⁴ nodes with a self-loop at the tail,
+          and 10,000 vs 15,000 with no cycle.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Fewer moves didn't mean faster in Python (0.6–1.3 ms vs Floyd's
+        0.2–0.4 ms): each step does more bookkeeping. C++ 0.01–0.03 ms, Java
+        0.5–0.8 ms. Good to know when following <code>next</code> is
+        expensive.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Slow and Fast Pointers (Floyd)
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Move <code>slow</code> one step and <code>fast</code> two steps each
+        round. If <code>fast</code> (or <code>fast.next</code>) is null, the
+        list ends. If they ever point to the same node, there's a cycle.
+      </p>
+      <ul>
+        <li>
+          Why they must meet: inside the cycle, the gap between them shrinks
+          by exactly one node per round, so it can't skip past zero.
+        </li>
+        <li>
+          Loop while <code>fast and fast.next</code>: both are needed for the
+          two-step move.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        At 10⁴ nodes: Python 0.2–0.4 ms, Java 0.4–0.5 ms, C++ 0.01–0.02 ms,
+        the fastest here in every language. The expected answer. The same two
+        pointers also find where the cycle starts (Linked List Cycle II).
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No standard library function checks a linked list for a cycle. A set
+        (<code>set</code>, <code>unordered_set</code>, <code>HashSet</code>)
+        is the only built-in that helps, as in Approach 1.
+      </p>
+      <p class="note">
+        Approach 3 is what you'd write: five lines and no extra memory.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Remember the Nodes</th>
+              <td>Hash set of visited nodes</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Store nodes, not values</td>
+            </tr>
+            <tr>
+              <th scope="row">Brent's Method</th>
+              <td>Runner in rounds of 1, 2, 4, …</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Fewest pointer moves</td>
+            </tr>
+            <tr>
+              <th scope="row">Slow and Fast Pointers (Floyd)</th>
+              <td>1 step vs 2 steps until they meet</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
