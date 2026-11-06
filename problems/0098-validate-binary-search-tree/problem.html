@@ -1,0 +1,233 @@
+<details class="question" data-group="trees" data-tags="tree binary-tree binary-search-tree dfs inorder recursion">
+  <summary>
+    <span class="q-title">98. Validate Binary Search Tree</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Tree</span>
+      <span class="tag">DFS</span>
+      <span class="tag">Binary Search Tree</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Checking each node against its own children
+      is <strong>not enough</strong>: a node must be smaller than
+      <em>every</em> ancestor it sits to the left of, and bigger than every one
+      it sits to the right of. Pass those limits down: going left, the node's
+      value becomes the new upper limit; going right, the new lower limit.
+      Every value must be strictly inside its limits. O(n).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/validate-binary-search-tree/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given the <code>root</code> of a binary tree, return
+        <code>true</code> if it is a valid binary search tree (BST): for every
+        node, all values in its left subtree are <strong>strictly
+        smaller</strong> and all values in its right subtree are
+        <strong>strictly bigger</strong>, and both subtrees are BSTs too.
+      </p>
+      <ul>
+        <li>1 to 10⁴ nodes.</li>
+        <li><code>-2³¹ &lt;= Node.val &lt;= 2³¹ − 1</code>: the full 32-bit int range.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[2,1,3]</code> → <code>true</code>;
+        <code>[5,1,4,null,null,3,6]</code> → <code>false</code> (4 is on the
+        right of 5 but smaller than it).
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[5,4,6,null,null,3,7]</code></td>
+              <td><code>false</code></td>
+              <td>Each node is fine next to its own children, but 3 sits on the right of 5 and is smaller. Checking only children says true.</td>
+            </tr>
+            <tr>
+              <td><code>[2,2,2]</code>, <code>[1,null,1]</code></td>
+              <td><code>false</code></td>
+              <td>Equal values aren't allowed. Using <code>&lt;=</code> instead of <code>&lt;</code> says true.</td>
+            </tr>
+            <tr>
+              <td><code>[2147483647]</code></td>
+              <td><code>true</code></td>
+              <td>The biggest int is a fine value. Starting the upper limit at <code>INT_MAX</code> rejects it; start past it (a <code>long</code>, or infinity).</td>
+            </tr>
+            <tr>
+              <td><code>[-2147483648]</code></td>
+              <td><code>true</code></td>
+              <td>The smallest int. For the in-order check, starting <code>prev</code> at <code>INT_MIN</code> rejects it: use "no value yet" instead.</td>
+            </tr>
+            <tr>
+              <td><code>[1]</code></td>
+              <td><code>true</code></td>
+              <td>One node is always a BST.</td>
+            </tr>
+            <tr>
+              <td><code>[0,null,-1]</code></td>
+              <td><code>false</code></td>
+              <td>A right child smaller than its parent: the plainest failure.</td>
+            </tr>
+            <tr>
+              <td>10⁴ nodes in one line (each the right child of the last)</td>
+              <td><code>true</code></td>
+              <td>The tree is 10⁴ deep. Recursion goes 10⁴ calls deep, past Python's default limit of 1000; the iterative in-order walk doesn't recurse.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Check Each Node Against Its Whole Subtrees</h2>
+      <p class="intuition">
+        Use the definition as it's written: for every node, collect every value
+        in its left subtree and every value in its right subtree, and check
+        they're all smaller or all bigger. Then check the subtrees the same
+        way.
+      </p>
+      <ul>
+        <li>Correct, because it's exactly the rule.</li>
+        <li>But each value is collected again for every ancestor above it.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²) on a tall tree (O(n log n) on a balanced one)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        On a one-line tree it took 0.34 s in Python at 1000 nodes and 2.1 s at
+        2000; the Python version also copies lists, so it grows even faster.
+        Too slow for 10⁴.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: In-Order Walk, Values Must Go Up</h2>
+      <p class="intuition">
+        An in-order walk (left subtree, node, right subtree) visits a BST's
+        values in sorted order. So walk it and check that each value is bigger
+        than the one before. The first time it isn't, the tree is not a BST.
+      </p>
+      <ul>
+        <li>Use a stack instead of recursion: push nodes while going left, pop one, check it, then go to its right child.</li>
+        <li>Keep only the previous value, and start with "none yet" (not <code>INT_MIN</code>, which is a real value here).</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(h) for the stack (h = height)</span>
+      </div>
+      <p class="note">
+        1.1 ms in Python for 10⁴ nodes, even in one line, and it stops at the
+        first value out of order. No recursion, so no depth limit to worry
+        about.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Recursion with Limits
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Pass down the range each node must fit in. The root can be anything.
+        Its left child must be below the root; that child's right child must
+        be below the root <em>and</em> above the child; and so on.
+      </p>
+      <ul>
+        <li><code>check(node, low, high)</code>: fail if <code>node.val</code> isn't strictly between them.</li>
+        <li>Recurse left with <code>(low, node.val)</code> and right with <code>(node.val, high)</code>.</li>
+        <li>In C++ and Java, use <code>long</code> limits so they can sit past the int range.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(h) call stack</span>
+      </div>
+      <p class="note">
+        The answer interviewers expect: each node is checked once (1.5 ms for
+        10⁴ in Python), and the limits say exactly what the rule means. On a
+        10⁴-deep tree, Python needs <code>sys.setrecursionlimit</code> raised
+        (LeetCode does this for you), or use Approach 2.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No library checks a tree like this. Python, C++ and Java all need the
+        walk written out.
+      </p>
+      <p class="note">
+        Write Approach 3, and mention Approach 2 when the tree can be very
+        deep. The three traps: check against all ancestors (not just
+        children), use strict <code>&lt;</code>, and keep the limits outside
+        the int range.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Whole Subtrees</th>
+              <td>Collect each subtree's values, compare</td>
+              <td>O(n²)</td>
+              <td>O(n)</td>
+              <td>The definition, done slowly</td>
+            </tr>
+            <tr>
+              <th scope="row">In-Order Walk</th>
+              <td>Sorted order check with a stack</td>
+              <td>O(n)</td>
+              <td>O(h)</td>
+              <td>No recursion; safe on deep trees</td>
+            </tr>
+            <tr>
+              <th scope="row">Limits</th>
+              <td>Pass (low, high) down the tree</td>
+              <td>O(n)</td>
+              <td>O(h)</td>
+              <td>The usual answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
