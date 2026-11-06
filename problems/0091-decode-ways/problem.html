@@ -1,0 +1,241 @@
+<details class="question" data-group="dynamic-programming" data-tags="string dynamic-programming recursion memoization decode">
+  <summary>
+    <span class="q-title">91. Decode Ways</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">String</span>
+      <span class="tag">Dynamic Programming</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> The last letter used either <strong>one
+      digit</strong> (1–9) or <strong>two digits</strong> (10–26). So
+      <code>dp[i] = dp[i − 1]</code> (if the last digit isn't 0)
+      <code>+ dp[i − 2]</code> (if the last two make 10–26), with
+      <code>dp[0] = 1</code>. Like Climbing Stairs (70), but each step is
+      allowed only when its digits spell a letter. O(n) time, O(1) space.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/decode-ways/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Letters are written as numbers: <code>"A" → "1"</code>,
+        <code>"B" → "2"</code>, …, <code>"Z" → "26"</code>. Given a string of
+        digits <code>s</code>, return how many ways it can be read back as
+        letters. A code can't start with 0: <code>"06"</code> is not
+        <code>"F"</code>.
+      </p>
+      <ul>
+        <li><code>1 &lt;= s.length &lt;= 100</code>; <code>s</code> holds only digits and may start with <code>'0'</code>.</li>
+        <li>The answer fits in a 32-bit int.</li>
+        <li>If nothing works, the answer is <code>0</code>.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>"12"</code> → <code>2</code> ("AB" or "L");
+        <code>"226"</code> → <code>3</code> ("BBF", "BZ", "VF");
+        <code>"06"</code> → <code>0</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>"0"</code>, <code>"06"</code></td>
+              <td><code>0</code></td>
+              <td>A leading 0 can't start a letter. Checking only "two digits ≤ 26" counts <code>"06"</code> as F and says 1.</td>
+            </tr>
+            <tr>
+              <td><code>"10"</code></td>
+              <td><code>1</code></td>
+              <td>The 0 must go with the 1 before it ("J"); it can't stand alone.</td>
+            </tr>
+            <tr>
+              <td><code>"30"</code>, <code>"100"</code></td>
+              <td><code>0</code></td>
+              <td>A 0 with nothing it can join: 30 is too big, and in 100 the second 0 has a 0 before it.</td>
+            </tr>
+            <tr>
+              <td><code>"2101"</code></td>
+              <td><code>1</code></td>
+              <td>The only way is "2 10 1" (B J A). Accepting "01" as a code adds "21 01" and "2 1 01", and says 3.</td>
+            </tr>
+            <tr>
+              <td><code>"27"</code></td>
+              <td><code>1</code></td>
+              <td>27 is past Z: only "2 7".</td>
+            </tr>
+            <tr>
+              <td><code>"26"</code></td>
+              <td><code>2</code></td>
+              <td>26 itself is Z, so the upper limit is <code>&lt;= 26</code>, not <code>&lt; 26</code>.</td>
+            </tr>
+            <tr>
+              <td><code>"12"</code></td>
+              <td><code>2</code></td>
+              <td><code>dp[0]</code> (no digits) must be 1, not 0: it's what the two-digit step "12" adds. Starting it at 0 says 1.</td>
+            </tr>
+            <tr>
+              <td><code>"1"</code> × 45</td>
+              <td><code>1836311903</code></td>
+              <td>Every pair is valid, so the count grows like Fibonacci. Plain recursion would take about 10 minutes here (estimated from 0.47 s at 30 digits).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Plain Recursion</h2>
+      <p class="intuition">
+        <code>ways(i)</code> = the number of ways to decode <code>s[i:]</code>.
+        The next letter is either <code>s[i]</code> alone or
+        <code>s[i:i+2]</code>; add up the ways for whatever is left after each.
+      </p>
+      <ul>
+        <li><code>ways(len(s)) = 1</code>: nothing left is one finished decoding.</li>
+        <li>If <code>s[i] == "0"</code>, return 0: no letter starts with 0.</li>
+        <li>The two-digit choice needs <code>10 &lt;= s[i:i+2] &lt;= 26</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(2ⁿ) (Fibonacci-like growth)</span>
+        <span><strong>Space</strong> O(n) stack</span>
+      </div>
+      <p class="note">
+        The same <code>ways(i)</code> is worked out again and again. On 30
+        ones it took 0.47 s in Python, and each 5 more digits make it about 11
+        times slower.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Bottom-Up DP Array</h2>
+      <p class="intuition">
+        Work from the front instead. <code>dp[i]</code> = ways to decode the
+        first <code>i</code> digits. Look at how the last letter was made: from
+        the last digit alone, or from the last two.
+      </p>
+      <ul>
+        <li><code>dp[0] = 1</code>.</li>
+        <li>If <code>s[i−1] != "0"</code>: <code>dp[i] += dp[i − 1]</code>.</li>
+        <li>If <code>10 &lt;= s[i−2:i] &lt;= 26</code>: <code>dp[i] += dp[i − 2]</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Each <code>dp[i]</code> is computed once: 45 ones take 0.01 ms in
+        Python. The array makes it easy to check by hand.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Two Variables
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        <code>dp[i]</code> only looks back at <code>dp[i − 1]</code> and
+        <code>dp[i − 2]</code>, so keep just those two:
+        <code>prev1</code> and <code>prev2</code>. After each digit, slide them
+        along.
+      </p>
+      <ul>
+        <li>Start with <code>prev1 = dp[0] = 1</code> and <code>prev2 = 0</code> (never used at i = 1, since a two-digit code needs two digits).</li>
+        <li>Once both are 0, every later value is 0 too: the string can't be decoded.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        The same work as Approach 2 without the array (0.008 ms for 45 ones).
+        The two-variable trick is the same as Climbing Stairs (70).
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        In Python, <code>@functools.cache</code> on Approach 1 remembers each
+        <code>ways(i)</code>, which turns the slow recursion into O(n) with no
+        other change. C++ and Java have no such decorator: use an array, as in
+        Approach 2.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n) for the cache and the stack</span>
+      </div>
+      <p class="note">
+        0.018 ms for 45 ones. <code>@cache</code> needs Python 3.9 or later;
+        the recursion is at most 100 deep here, far under Python's limit.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Plain Recursion</th>
+              <td>One digit or two, recurse on the rest</td>
+              <td>O(2ⁿ)</td>
+              <td>O(n)</td>
+              <td>Too slow from about 35 digits</td>
+            </tr>
+            <tr>
+              <th scope="row">DP Array</th>
+              <td>dp[i] from dp[i − 1] and dp[i − 2]</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Easy to check by hand</td>
+            </tr>
+            <tr>
+              <th scope="row">Two Variables</th>
+              <td>Keep only prev1 and prev2</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>The usual answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

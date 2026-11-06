@@ -15184,7 +15184,7 @@
       <details class="pattern-group" id="g-dynamic-programming">
         <summary>
           <span class="g-name">Dynamic Programming</span>
-          <span class="g-count"><span class="g-total">7 problems</span></span>
+          <span class="g-count"><span class="g-total">8 problems</span></span>
           <span class="g-hint">Reuse the answers to smaller problems</span>
         </summary>
         <div class="g-body">
@@ -17956,6 +17956,429 @@
                         <td>O(m·n)</td>
                         <td>O(min(m, n))</td>
                         <td>Least memory; number only</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0091-decode-ways ===== -->
+          <details class="question" data-group="dynamic-programming" data-tags="string dynamic-programming recursion memoization decode">
+            <summary>
+              <span class="q-title">91. Decode Ways</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">String</span>
+                <span class="tag">Dynamic Programming</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> The last letter used either <strong>one
+                digit</strong> (1–9) or <strong>two digits</strong> (10–26). So
+                <code>dp[i] = dp[i − 1]</code> (if the last digit isn't 0)
+                <code>+ dp[i − 2]</code> (if the last two make 10–26), with
+                <code>dp[0] = 1</code>. Like Climbing Stairs (70), but each step is
+                allowed only when its digits spell a letter. O(n) time, O(1) space.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/decode-ways/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Letters are written as numbers: <code>"A" → "1"</code>,
+                  <code>"B" → "2"</code>, …, <code>"Z" → "26"</code>. Given a string of
+                  digits <code>s</code>, return how many ways it can be read back as
+                  letters. A code can't start with 0: <code>"06"</code> is not
+                  <code>"F"</code>.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= s.length &lt;= 100</code>; <code>s</code> holds only digits and may start with <code>'0'</code>.</li>
+                  <li>The answer fits in a 32-bit int.</li>
+                  <li>If nothing works, the answer is <code>0</code>.</li>
+                </ul>
+                <p class="note">
+                  Examples: <code>"12"</code> → <code>2</code> ("AB" or "L");
+                  <code>"226"</code> → <code>3</code> ("BBF", "BZ", "VF");
+                  <code>"06"</code> → <code>0</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>"0"</code>, <code>"06"</code></td>
+                        <td><code>0</code></td>
+                        <td>A leading 0 can't start a letter. Checking only "two digits ≤ 26" counts <code>"06"</code> as F and says 1.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"10"</code></td>
+                        <td><code>1</code></td>
+                        <td>The 0 must go with the 1 before it ("J"); it can't stand alone.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"30"</code>, <code>"100"</code></td>
+                        <td><code>0</code></td>
+                        <td>A 0 with nothing it can join: 30 is too big, and in 100 the second 0 has a 0 before it.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"2101"</code></td>
+                        <td><code>1</code></td>
+                        <td>The only way is "2 10 1" (B J A). Accepting "01" as a code adds "21 01" and "2 1 01", and says 3.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"27"</code></td>
+                        <td><code>1</code></td>
+                        <td>27 is past Z: only "2 7".</td>
+                      </tr>
+                      <tr>
+                        <td><code>"26"</code></td>
+                        <td><code>2</code></td>
+                        <td>26 itself is Z, so the upper limit is <code>&lt;= 26</code>, not <code>&lt; 26</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"12"</code></td>
+                        <td><code>2</code></td>
+                        <td><code>dp[0]</code> (no digits) must be 1, not 0: it's what the two-digit step "12" adds. Starting it at 0 says 1.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"1"</code> × 45</td>
+                        <td><code>1836311903</code></td>
+                        <td>Every pair is valid, so the count grows like Fibonacci. Plain recursion would take about 10 minutes here (estimated from 0.47 s at 30 digits).</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Plain Recursion</h2>
+                <p class="intuition">
+                  <code>ways(i)</code> = the number of ways to decode <code>s[i:]</code>.
+                  The next letter is either <code>s[i]</code> alone or
+                  <code>s[i:i+2]</code>; add up the ways for whatever is left after each.
+                </p>
+                <ul>
+                  <li><code>ways(len(s)) = 1</code>: nothing left is one finished decoding.</li>
+                  <li>If <code>s[i] == "0"</code>, return 0: no letter starts with 0.</li>
+                  <li>The two-digit choice needs <code>10 &lt;= s[i:i+2] &lt;= 26</code>.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(2ⁿ) (Fibonacci-like growth)</span>
+                  <span><strong>Space</strong> O(n) stack</span>
+                </div>
+                <p class="note">
+                  The same <code>ways(i)</code> is worked out again and again. On 30
+                  ones it took 0.47 s in Python, and each 5 more digits make it about 11
+                  times slower.
+                </p>
+                <div class="code-tabs" data-viz="0091-decode-ways/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"call":[3],"base":[4,5],"zero":[6,7],"one":[8],"two":[9,10],"sum":[11],"answer":[12]}'>
+                    class Solution(object):
+                        def numDecodings(self, s):
+                            def ways(i):  # how many ways to decode s[i:]
+                                if i == len(s):  # nothing left: one way (decode nothing)
+                                    return 1
+                                if s[i] == "0":  # no letter's code starts with 0
+                                    return 0
+                                total = ways(i + 1)  # s[i] alone is a letter (1-9)
+                                if i + 1 < len(s) and 10 <= int(s[i:i + 2]) <= 26:  # s[i..i+1] is a letter too (10-26)
+                                    total += ways(i + 2)
+                                return total
+                            return ways(0)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"answer":[5,6],"call":[10],"base":[11],"zero":[12],"one":[13],"two":[14,15,16],"sum":[18]}'>
+                    #include <string>
+                    class Solution {
+                    public:
+                        int numDecodings(std::string s) {
+                            str = s;
+                            return ways(0);
+                        }
+                    private:
+                        std::string str;
+                        int ways(size_t i) { // how many ways to decode s[i..]
+                            if (i == str.size()) return 1; // nothing left: one way (decode nothing)
+                            if (str[i] == '0') return 0; // no letter's code starts with 0
+                            int total = ways(i + 1); // s[i] alone is a letter (1-9)
+                            if (i + 1 < str.size()) {
+                                int two = (str[i] - '0') * 10 + (str[i + 1] - '0');
+                                if (two >= 10 && two <= 26) total += ways(i + 2); // s[i..i+1] is a letter too (10-26)
+                            }
+                            return total;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"answer":[4,5],"call":[7],"base":[8],"zero":[9],"one":[10],"two":[11,12,13],"sum":[15]}'>
+                    class Solution {
+                        private String s;
+                        public int numDecodings(String s) {
+                            this.s = s;
+                            return ways(0);
+                        }
+                        private int ways(int i) { // how many ways to decode s[i..]
+                            if (i == s.length()) return 1; // nothing left: one way (decode nothing)
+                            if (s.charAt(i) == '0') return 0; // no letter's code starts with 0
+                            int total = ways(i + 1); // s[i] alone is a letter (1-9)
+                            if (i + 1 < s.length()) {
+                                int two = (s.charAt(i) - '0') * 10 + (s.charAt(i + 1) - '0');
+                                if (two >= 10 && two <= 26) total += ways(i + 2); // s[i..i+1] is a letter too (10-26)
+                            }
+                            return total;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Bottom-Up DP Array</h2>
+                <p class="intuition">
+                  Work from the front instead. <code>dp[i]</code> = ways to decode the
+                  first <code>i</code> digits. Look at how the last letter was made: from
+                  the last digit alone, or from the last two.
+                </p>
+                <ul>
+                  <li><code>dp[0] = 1</code>.</li>
+                  <li>If <code>s[i−1] != "0"</code>: <code>dp[i] += dp[i − 1]</code>.</li>
+                  <li>If <code>10 &lt;= s[i−2:i] &lt;= 26</code>: <code>dp[i] += dp[i − 2]</code>.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  Each <code>dp[i]</code> is computed once: 45 ones take 0.01 ms in
+                  Python. The array makes it easy to check by hand.
+                </p>
+                <div class="code-tabs" data-viz="0091-decode-ways/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"loop":[6],"one":[7,8],"two":[9,10],"answer":[11]}'>
+                    class Solution(object):
+                        def numDecodings(self, s):
+                            n = len(s)
+                            dp = [0] * (n + 1)  # dp[i] = ways to decode the first i digits
+                            dp[0] = 1  # no digits: one way (decode nothing)
+                            for i in range(1, n + 1):
+                                if s[i - 1] != "0":  # the last digit alone is a letter (1-9)
+                                    dp[i] += dp[i - 1]
+                                if i >= 2 and 10 <= int(s[i - 2:i]) <= 26:  # the last two digits are a letter (10-26)
+                                    dp[i] += dp[i - 2]
+                            return dp[n]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8],"loop":[9],"one":[10,11],"two":[12,13,14],"answer":[17]}'>
+                    #include <string>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int numDecodings(std::string s) {
+                            int n = (int)s.size();
+                            std::vector<int> dp(n + 1, 0); // dp[i] = ways to decode the first i digits
+                            dp[0] = 1; // no digits: one way (decode nothing)
+                            for (int i = 1; i <= n; ++i) {
+                                if (s[i - 1] != '0') // the last digit alone is a letter (1-9)
+                                    dp[i] += dp[i - 1];
+                                if (i >= 2) {
+                                    int two = (s[i - 2] - '0') * 10 + (s[i - 1] - '0');
+                                    if (two >= 10 && two <= 26) dp[i] += dp[i - 2]; // the last two digits are a letter (10-26)
+                                }
+                            }
+                            return dp[n];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5],"loop":[6],"one":[7,8],"two":[9,10,11],"answer":[14]}'>
+                    class Solution {
+                        public int numDecodings(String s) {
+                            int n = s.length();
+                            int[] dp = new int[n + 1]; // dp[i] = ways to decode the first i digits
+                            dp[0] = 1; // no digits: one way (decode nothing)
+                            for (int i = 1; i <= n; i++) {
+                                if (s.charAt(i - 1) != '0') // the last digit alone is a letter (1-9)
+                                    dp[i] += dp[i - 1];
+                                if (i >= 2) {
+                                    int two = (s.charAt(i - 2) - '0') * 10 + (s.charAt(i - 1) - '0');
+                                    if (two >= 10 && two <= 26) dp[i] += dp[i - 2]; // the last two digits are a letter (10-26)
+                                }
+                            }
+                            return dp[n];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Two Variables
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  <code>dp[i]</code> only looks back at <code>dp[i − 1]</code> and
+                  <code>dp[i − 2]</code>, so keep just those two:
+                  <code>prev1</code> and <code>prev2</code>. After each digit, slide them
+                  along.
+                </p>
+                <ul>
+                  <li>Start with <code>prev1 = dp[0] = 1</code> and <code>prev2 = 0</code> (never used at i = 1, since a two-digit code needs two digits).</li>
+                  <li>Once both are 0, every later value is 0 too: the string can't be decoded.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  The same work as Approach 2 without the array (0.008 ms for 45 ones).
+                  The two-variable trick is the same as Climbing Stairs (70).
+                </p>
+                <div class="code-tabs" data-viz="0091-decode-ways/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"loop":[4,5],"one":[6,7],"two":[8,9],"shift":[10],"answer":[11]}'>
+                    class Solution(object):
+                        def numDecodings(self, s):
+                            prev2, prev1 = 0, 1  # dp[i - 2] and dp[i - 1]; start: dp[-1] (unused) = 0, dp[0] = 1
+                            for i in range(1, len(s) + 1):
+                                cur = 0
+                                if s[i - 1] != "0":  # the last digit alone is a letter (1-9)
+                                    cur += prev1
+                                if i >= 2 and 10 <= int(s[i - 2:i]) <= 26:  # the last two digits are a letter (10-26)
+                                    cur += prev2
+                                prev2, prev1 = prev1, cur  # slide: only the last two values are ever needed
+                            return prev1
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"loop":[6,7],"one":[8,9],"two":[10,11,12],"shift":[14,15],"answer":[17]}'>
+                    #include <string>
+                    class Solution {
+                    public:
+                        int numDecodings(std::string s) {
+                            int prev2 = 0, prev1 = 1; // dp[i - 2] and dp[i - 1]; start: dp[-1] (unused) = 0, dp[0] = 1
+                            for (size_t i = 1; i <= s.size(); ++i) {
+                                int cur = 0;
+                                if (s[i - 1] != '0') // the last digit alone is a letter (1-9)
+                                    cur += prev1;
+                                if (i >= 2) {
+                                    int two = (s[i - 2] - '0') * 10 + (s[i - 1] - '0');
+                                    if (two >= 10 && two <= 26) cur += prev2; // the last two digits are a letter (10-26)
+                                }
+                                prev2 = prev1; // slide: only the last two values are ever needed
+                                prev1 = cur;
+                            }
+                            return prev1;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"loop":[4,5],"one":[6,7],"two":[8,9,10],"shift":[12,13],"answer":[15]}'>
+                    class Solution {
+                        public int numDecodings(String s) {
+                            int prev2 = 0, prev1 = 1; // dp[i - 2] and dp[i - 1]; start: dp[-1] (unused) = 0, dp[0] = 1
+                            for (int i = 1; i <= s.length(); i++) {
+                                int cur = 0;
+                                if (s.charAt(i - 1) != '0') // the last digit alone is a letter (1-9)
+                                    cur += prev1;
+                                if (i >= 2) {
+                                    int two = (s.charAt(i - 2) - '0') * 10 + (s.charAt(i - 1) - '0');
+                                    if (two >= 10 && two <= 26) cur += prev2; // the last two digits are a letter (10-26)
+                                }
+                                prev2 = prev1; // slide: only the last two values are ever needed
+                                prev1 = cur;
+                            }
+                            return prev1;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  In Python, <code>@functools.cache</code> on Approach 1 remembers each
+                  <code>ways(i)</code>, which turns the slow recursion into O(n) with no
+                  other change. C++ and Java have no such decorator: use an array, as in
+                  Approach 2.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    from functools import cache
+                    class Solution(object):
+                        def numDecodings(self, s):
+                            @cache  # remembers ways(i) the first time, so each i is worked out once
+                            def ways(i):
+                                if i == len(s):
+                                    return 1
+                                if s[i] == "0":
+                                    return 0
+                                total = ways(i + 1)
+                                if i + 1 < len(s) and 10 <= int(s[i:i + 2]) <= 26:
+                                    total += ways(i + 2)
+                                return total
+                            return ways(0)
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n) for the cache and the stack</span>
+                </div>
+                <p class="note">
+                  0.018 ms for 45 ones. <code>@cache</code> needs Python 3.9 or later;
+                  the recursion is at most 100 deep here, far under Python's limit.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Plain Recursion</th>
+                        <td>One digit or two, recurse on the rest</td>
+                        <td>O(2ⁿ)</td>
+                        <td>O(n)</td>
+                        <td>Too slow from about 35 digits</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">DP Array</th>
+                        <td>dp[i] from dp[i − 1] and dp[i − 2]</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Easy to check by hand</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Two Variables</th>
+                        <td>Keep only prev1 and prev2</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>The usual answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -32936,6 +33359,181 @@
             });
           });
           steps.push({ line: "return", note: `Return all ${result.length}. No repeats were ever built, and no recursion.`, view: view(undefined, { all: true }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0091-decode-ways/approach1.visual.js -->
+    <script>
+      // Plain recursion: ways(i) tries s[i] alone and s[i..i+1] as the next letter, and adds up the ways for the rest.
+      DSAViz.register("0091-decode-ways/approach1", {
+        inputs: [{ name: "s", type: "string", value: "1121", maxLength: 6 }],
+        trace({ s }) {
+          if (!/^[0-9]+$/.test(s)) throw new DSAViz.InputError("s must be 1 or more digits (0–9).");
+          const n = s.length;
+          const steps = [];
+          const stack = []; // the calls in progress: their i
+          const letters = []; // the letters picked along the current path
+          const calls = Array(n + 1).fill(0); // how many times ways(i) has run
+          let found = 0;
+          const view = (i, o = {}) => {
+            const marks = {};
+            for (let k = 0; k < i && k < n; k++) marks[k] = "visited";
+            if (o.take) for (let k = i; k < i + o.take; k++) marks[k] = "active";
+            if (o.bad !== undefined) marks[o.bad] = "cut";
+            return [
+              { type: "array", label: "s (faded = already turned into letters)", values: [...s], marks, pointers: i < n ? { i } : {} },
+              { type: "array", label: "letters so far", values: letters.slice(), marks: o.done ? Object.fromEntries(letters.map((_, k) => [k, "match"])) : {}, wide: true },
+              { type: "array", label: "times ways(i) ran, for i = 0..n (above 1 = repeated work)", values: calls.slice(), marks: Object.fromEntries(calls.map((c, k) => [k, c > 1 ? "cut" : c ? "visited" : ""]).filter(([, m]) => m)), compact: true },
+              { type: "vars", items: [{ name: "decodings found", value: found, mark: o.done ? "new" : "" }, { name: "call stack", value: stack.length ? stack.map((k) => `ways(${k})`).join(" → ") : "empty" }] },
+            ];
+          };
+          const letter = (code) => `${code}=${String.fromCharCode(64 + Number(code))}`;
+          steps.push({ line: "answer", note: `ways(i) counts the ways to decode s[i:]. Start with ways(0).`, view: view(0) });
+          function ways(i) {
+            calls[i]++;
+            stack.push(i);
+            if (i === n) {
+              found++;
+              steps.push({ line: ["call", "base"], note: `ways(${n}): nothing left, so this is one finished decoding: ${letters.join(" ")}. Return 1.`, view: view(i, { done: true }) });
+              stack.pop();
+              return 1;
+            }
+            if (s[i] === "0") {
+              steps.push({ line: ["call", "zero"], note: `ways(${i}): s[${i}] is "0", and no letter starts with 0. Return 0.`, view: view(i, { bad: i }) });
+              stack.pop();
+              return 0;
+            }
+            steps.push({ line: ["call", "one"], note: `ways(${i})${calls[i] > 1 ? ` (run #${calls[i]}: the same question again)` : ""}: take "${s[i]}" alone as ${letter(s[i])}.`, view: view(i, { take: 1 }) });
+            letters.push(letter(s[i]));
+            let total = ways(i + 1);
+            letters.pop();
+            const two = s.slice(i, i + 2);
+            if (i + 1 < n && Number(two) >= 10 && Number(two) <= 26) {
+              steps.push({ line: "two", note: `Back in ways(${i}): "${two}" is also a letter, ${letter(two)}. Try it.`, view: view(i, { take: 2 }) });
+              letters.push(letter(two));
+              total += ways(i + 2);
+              letters.pop();
+            } else if (i + 1 < n) steps.push({ line: "two", note: `Back in ways(${i}): "${two}" ${two[0] === "0" ? "starts with 0" : "is over 26"}, not a letter.`, view: view(i, { bad: i + 1 }) });
+            steps.push({ line: "sum", note: `ways(${i}) = ${total}.`, view: view(i) });
+            stack.pop();
+            return total;
+          }
+          const total = ways(0);
+          const extra = calls.reduce((a, c) => a + Math.max(0, c - 1), 0);
+          steps.push({ line: "answer", note: `Return ${total}.${extra ? ` ${extra} of the calls asked a question already answered: that repeated work is what grows exponentially.` : ""}`, view: view(n) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0091-decode-ways/approach2.visual.js -->
+    <script>
+      // Bottom-up: dp[i] = ways to decode the first i digits, from dp[i − 1] (last digit alone) and dp[i − 2] (last two).
+      DSAViz.register("0091-decode-ways/approach2", {
+        inputs: [{ name: "s", type: "string", value: "2101", maxLength: 10 }],
+        trace({ s }) {
+          if (!/^[0-9]+$/.test(s)) throw new DSAViz.InputError("s must be 1 or more digits (0–9).");
+          const n = s.length;
+          const dp = Array(n + 1).fill("");
+          dp[0] = 1;
+          const steps = [];
+          const view = (i, o = {}) => {
+            const sm = {};
+            if (i !== undefined && i >= 1) sm[i - 1] = o.one === false ? "cut" : "active";
+            if (o.pair) {
+              sm[i - 2] = o.pairOk ? "compare" : "cut";
+              if (o.pairOk) sm[i - 1] = "compare"; // both digits of the pair
+            }
+            const dm = {};
+            for (let k = 0; k < (i ?? n + 1); k++) dm[k] = "visited";
+            if (o.from1) dm[i - 1] = "compare";
+            if (o.from2) dm[i - 2] = "compare";
+            if (i !== undefined && i <= n) dm[i] = o.done ? "new" : "active";
+            if (o.final) dm[n] = "match";
+            return [
+              { type: "array", label: "s", values: [...s], marks: sm },
+              { type: "array", label: "dp[i] = ways to decode the first i digits", values: dp.slice(), marks: dm, pointers: i !== undefined && i <= n && !o.final ? { i } : {} },
+            ];
+          };
+          steps.push({ line: "init", note: "dp[0] = 1: no digits can be read in exactly one way (read nothing). It's what a two-digit letter at the start adds onto.", view: view(1) });
+          for (let i = 1; i <= n; i++) {
+            dp[i] = 0;
+            const d = s[i - 1];
+            const one = d !== "0";
+            if (one) dp[i] += dp[i - 1];
+            steps.push({
+              line: ["loop", "one"],
+              note: one ? `Last digit "${d}" alone is a letter: add dp[${i - 1}] = ${dp[i - 1]}. dp[${i}] = ${dp[i]} so far.` : `Last digit is "0": it can't be a letter on its own. Add nothing.`,
+              view: view(i, { one, from1: one }),
+            });
+            if (i >= 2) {
+              const two = s.slice(i - 2, i);
+              const ok = Number(two) >= 10 && Number(two) <= 26;
+              if (ok) dp[i] += dp[i - 2];
+              steps.push({
+                line: "two",
+                note: ok ? `Last two "${two}" are a letter (10–26): add dp[${i - 2}] = ${dp[i - 2]}. dp[${i}] = ${dp[i]}.` : `Last two "${two}" ${two[0] === "0" ? "start with 0" : "are more than 26"}: not a letter. dp[${i}] = ${dp[i]}.`,
+                view: view(i, { pair: true, pairOk: ok, one, from2: ok, done: true }),
+              });
+            } else steps.push({ line: "two", note: `Only one digit so far: no two-digit letter. dp[1] = ${dp[1]}.`, view: view(i, { one, done: true }) });
+          }
+          steps.push({ line: "answer", note: `Return dp[${n}] = ${dp[n]}. ${n} digits, constant work each: O(n).`, view: view(n + 1, { final: true }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0091-decode-ways/approach3.visual.js -->
+    <script>
+      // The same DP with two variables: prev1 = dp[i − 1], prev2 = dp[i − 2], slid along after each digit.
+      DSAViz.register("0091-decode-ways/approach3", {
+        inputs: [{ name: "s", type: "string", value: "226", maxLength: 12 }],
+        trace({ s }) {
+          if (!/^[0-9]+$/.test(s)) throw new DSAViz.InputError("s must be 1 or more digits (0–9).");
+          const n = s.length;
+          let prev2 = 0;
+          let prev1 = 1;
+          const steps = [];
+          const view = (i, o = {}) => {
+            const sm = {};
+            for (let k = 0; k < (i ?? n + 1) - 1; k++) sm[k] = "visited";
+            if (i !== undefined && i <= n) {
+              sm[i - 1] = o.oneOk === false ? "cut" : "active";
+              if (o.pair) sm[i - 2] = o.pairOk ? "compare" : "cut";
+              if (o.pair && o.pairOk) sm[i - 1] = "compare"; // both digits of the pair
+            }
+            return [
+              { type: "array", label: "s", values: [...s], marks: sm, pointers: i !== undefined && i <= n ? { i: i - 1 } : {} },
+              {
+                type: "vars",
+                items: [
+                  { name: "prev2 (dp[i−2])", value: prev2, mark: o.used2 ? "compare" : "" },
+                  { name: "prev1 (dp[i−1])", value: prev1, mark: o.used1 ? "compare" : o.shifted ? "new" : "" },
+                  ...(o.cur !== undefined ? [{ name: "cur (dp[i])", value: o.cur, mark: "new" }] : []),
+                ],
+              },
+            ];
+          };
+          steps.push({ line: "init", note: "prev1 = dp[0] = 1 (reading nothing is one way), prev2 = 0 (no value before it; the first digit can't make a two-digit letter anyway).", view: view() });
+          for (let i = 1; i <= n; i++) {
+            let cur = 0;
+            const oneOk = s[i - 1] !== "0";
+            if (oneOk) cur += prev1;
+            const two = i >= 2 ? s.slice(i - 2, i) : "";
+            const pairOk = i >= 2 && Number(two) >= 10 && Number(two) <= 26;
+            if (pairOk) cur += prev2;
+            const parts = [];
+            parts.push(oneOk ? `"${s[i - 1]}" alone: + prev1 (${prev1})` : `"0" alone: no letter`);
+            if (i >= 2) parts.push(pairOk ? `"${two}": + prev2 (${prev2})` : `"${two}": not a letter`);
+            steps.push({
+              line: ["loop", "one", "two"],
+              note: `Digit ${i}: ${parts.join("; ")}. cur = ${cur}.`,
+              view: view(i, { oneOk, pair: i >= 2, pairOk, used1: oneOk, used2: pairOk, cur }),
+            });
+            prev2 = prev1;
+            prev1 = cur;
+            steps.push({ line: "shift", note: `Slide: prev2 = ${prev2}, prev1 = ${prev1}.${prev1 === 0 && prev2 === 0 ? " Both are 0, so everything after is 0 too." : ""}`, view: view(i, { shifted: true }) });
+          }
+          steps.push({ line: "answer", note: `Return prev1 = ${prev1}. O(n) time, and only two numbers kept: O(1) space.`, view: view() });
           return steps;
         },
       });
