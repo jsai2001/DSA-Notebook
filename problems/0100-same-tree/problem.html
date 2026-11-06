@@ -1,0 +1,225 @@
+<details class="question" data-group="trees" data-tags="tree binary-tree dfs bfs recursion compare">
+  <summary>
+    <span class="q-title">100. Same Tree</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Tree</span>
+      <span class="tag">DFS</span>
+      <span class="tag">BFS</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Walk both trees together. At each spot: both
+      missing is a match; <strong>only one</strong> missing, or different
+      values, is a mismatch; otherwise compare the left children with each
+      other and the right children with each other. O(n), and it stops at
+      the first difference.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/same-tree/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given the roots of two binary trees <code>p</code> and
+        <code>q</code>, return <code>true</code> if they are the same: the
+        same shape, with the same value at every node.
+      </p>
+      <ul>
+        <li>Each tree has 0 to 100 nodes (a tree can be empty).</li>
+        <li><code>-10⁴ &lt;= Node.val &lt;= 10⁴</code>.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[1,2,3]</code> and <code>[1,2,3]</code> →
+        <code>true</code>; <code>[1,2]</code> and <code>[1,null,2]</code> →
+        <code>false</code>; <code>[1,2,1]</code> and <code>[1,1,2]</code> →
+        <code>false</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[]</code>, <code>[]</code></td>
+              <td><code>true</code></td>
+              <td>Two empty trees are the same. Reading <code>p.val</code> before checking for null crashes here.</td>
+            </tr>
+            <tr>
+              <td><code>[]</code>, <code>[0]</code></td>
+              <td><code>false</code></td>
+              <td>Only one is empty. Treating a missing node like a node with value 0 says true.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2]</code>, <code>[1,null,2]</code></td>
+              <td><code>false</code></td>
+              <td>The same values, but 2 is on the left in one and on the right in the other. Comparing only the values in order (with no marks for missing children) says true.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,1]</code>, <code>[1,1,2]</code></td>
+              <td><code>false</code></td>
+              <td>The children are swapped: the same set of values, not the same tree.</td>
+            </tr>
+            <tr>
+              <td><code>[12,3]</code>, <code>[1,23]</code></td>
+              <td><code>false</code></td>
+              <td>When comparing as text, separate the values: without commas both become "123##…".</td>
+            </tr>
+            <tr>
+              <td><code>[1,1]</code>, <code>[1,null,1]</code></td>
+              <td><code>false</code></td>
+              <td>Every value is 1: only the shape differs.</td>
+            </tr>
+            <tr>
+              <td><code>[1]</code>, <code>[1]</code></td>
+              <td><code>true</code></td>
+              <td>One node each, with both children missing on both sides.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Write Both Trees as Text, Compare</h2>
+      <p class="intuition">
+        Turn each tree into a string with a pre-order walk (node, left,
+        right), writing <code>#</code> for every missing child. Two trees are
+        the same exactly when their strings are equal.
+      </p>
+      <ul>
+        <li>The <code>#</code> marks are what record the shape; without them <code>[1,2]</code> and <code>[1,null,2]</code> look alike.</li>
+        <li>Put a separator between values, or <code>12</code>, <code>3</code> and <code>1</code>, <code>23</code> blur together.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n + m)</span>
+        <span><strong>Space</strong> O(n + m) for the two strings</span>
+      </div>
+      <p class="note">
+        Easy to trust, but it always writes out both whole trees, even when
+        the roots already differ. 0.044 ms for two 100-node trees in Python.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Recursion on Both Trees
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Compare the two roots, then ask the same question of the two left
+        children and of the two right children.
+      </p>
+      <ul>
+        <li>Both null: true. Exactly one null: false. Different values: false.</li>
+        <li>Otherwise: <code>same(p.left, q.left) and same(p.right, q.right)</code>. The <code>and</code> stops at the first false.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(min(n, m))</span>
+        <span><strong>Space</strong> O(h) call stack</span>
+      </div>
+      <p class="note">
+        Four lines, no extra memory, and it stops at the first difference:
+        0.019 ms in Python. The same check is the core of Subtree of Another
+        Tree (572).
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Queue of Pairs (BFS)</h2>
+      <p class="intuition">
+        The same checks without recursion: keep a queue of node pairs that
+        should match, starting with <code>(p, q)</code>. Take a pair, check
+        it, and add its two child pairs.
+      </p>
+      <ul>
+        <li>A pair of two nulls is fine: skip it.</li>
+        <li>In Java, <code>ArrayDeque</code> can't store <code>null</code>, so store each pair as a small array.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(min(n, m))</span>
+        <span><strong>Space</strong> O(width) for the queue</span>
+      </div>
+      <p class="note">
+        Compares the trees level by level (0.026 ms). Useful when trees can be
+        very deep; here they have at most 100 nodes, so recursion is fine.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        LeetCode's <code>TreeNode</code> has no equality built in: in Python
+        <code>p == q</code> only checks that they're the same object, in Java
+        <code>equals</code> does the same, and in C++ <code>p == q</code>
+        compares pointers.
+      </p>
+      <p class="note">
+        Write Approach 2. Check the null cases before reading
+        <code>.val</code>.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Text</th>
+              <td>Pre-order with # for missing children</td>
+              <td>O(n + m)</td>
+              <td>O(n + m)</td>
+              <td>Always writes both trees out</td>
+            </tr>
+            <tr>
+              <th scope="row">Recursion</th>
+              <td>Compare roots, then left with left, right with right</td>
+              <td>O(min(n, m))</td>
+              <td>O(h)</td>
+              <td>The usual answer</td>
+            </tr>
+            <tr>
+              <th scope="row">Queue of Pairs</th>
+              <td>BFS over matching pairs</td>
+              <td>O(min(n, m))</td>
+              <td>O(width)</td>
+              <td>No recursion</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

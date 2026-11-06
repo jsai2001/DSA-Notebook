@@ -9290,7 +9290,7 @@
       <details class="pattern-group" id="g-trees">
         <summary>
           <span class="g-name">Trees</span>
-          <span class="g-count"><span class="g-total">4 problems</span></span>
+          <span class="g-count"><span class="g-total">5 problems</span></span>
           <span class="g-hint">A DFS that returns something to the parent</span>
         </summary>
         <div class="g-body">
@@ -9798,6 +9798,475 @@
                         <td>O(n)</td>
                         <td>O(h)</td>
                         <td>The usual answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0100-same-tree ===== -->
+          <details class="question" data-group="trees" data-tags="tree binary-tree dfs bfs recursion compare">
+            <summary>
+              <span class="q-title">100. Same Tree</span>
+              <span class="q-meta">
+                <span class="badge easy">Easy</span>
+                <span class="tag">Tree</span>
+                <span class="tag">DFS</span>
+                <span class="tag">BFS</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Walk both trees together. At each spot: both
+                missing is a match; <strong>only one</strong> missing, or different
+                values, is a mismatch; otherwise compare the left children with each
+                other and the right children with each other. O(n), and it stops at
+                the first difference.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/same-tree/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Given the roots of two binary trees <code>p</code> and
+                  <code>q</code>, return <code>true</code> if they are the same: the
+                  same shape, with the same value at every node.
+                </p>
+                <ul>
+                  <li>Each tree has 0 to 100 nodes (a tree can be empty).</li>
+                  <li><code>-10⁴ &lt;= Node.val &lt;= 10⁴</code>.</li>
+                </ul>
+                <p class="note">
+                  Examples: <code>[1,2,3]</code> and <code>[1,2,3]</code> →
+                  <code>true</code>; <code>[1,2]</code> and <code>[1,null,2]</code> →
+                  <code>false</code>; <code>[1,2,1]</code> and <code>[1,1,2]</code> →
+                  <code>false</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[]</code>, <code>[]</code></td>
+                        <td><code>true</code></td>
+                        <td>Two empty trees are the same. Reading <code>p.val</code> before checking for null crashes here.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[]</code>, <code>[0]</code></td>
+                        <td><code>false</code></td>
+                        <td>Only one is empty. Treating a missing node like a node with value 0 says true.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2]</code>, <code>[1,null,2]</code></td>
+                        <td><code>false</code></td>
+                        <td>The same values, but 2 is on the left in one and on the right in the other. Comparing only the values in order (with no marks for missing children) says true.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2,1]</code>, <code>[1,1,2]</code></td>
+                        <td><code>false</code></td>
+                        <td>The children are swapped: the same set of values, not the same tree.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[12,3]</code>, <code>[1,23]</code></td>
+                        <td><code>false</code></td>
+                        <td>When comparing as text, separate the values: without commas both become "123##…".</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,1]</code>, <code>[1,null,1]</code></td>
+                        <td><code>false</code></td>
+                        <td>Every value is 1: only the shape differs.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1]</code>, <code>[1]</code></td>
+                        <td><code>true</code></td>
+                        <td>One node each, with both children missing on both sides.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Write Both Trees as Text, Compare</h2>
+                <p class="intuition">
+                  Turn each tree into a string with a pre-order walk (node, left,
+                  right), writing <code>#</code> for every missing child. Two trees are
+                  the same exactly when their strings are equal.
+                </p>
+                <ul>
+                  <li>The <code>#</code> marks are what record the shape; without them <code>[1,2]</code> and <code>[1,null,2]</code> look alike.</li>
+                  <li>Put a separator between values, or <code>12</code>, <code>3</code> and <code>1</code>, <code>23</code> blur together.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n + m)</span>
+                  <span><strong>Space</strong> O(n + m) for the two strings</span>
+                </div>
+                <p class="note">
+                  Easy to trust, but it always writes out both whole trees, even when
+                  the roots already differ. 0.044 ms for two 100-node trees in Python.
+                </p>
+                <div class="code-tabs" data-viz="0100-same-tree/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"write":[9,10,11,12,13,14,15],"init":[16,17,18],"compare":[19]}'>
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def isSameTree(self, p, q):
+                            def write(node, out):  # the tree as text, with "#" for every missing child
+                                if not node:
+                                    out.append("#")  # without this, [1,2] and [1,null,2] would both give "1,2"
+                                    return
+                                out.append(str(node.val))
+                                write(node.left, out)
+                                write(node.right, out)
+                            a, b = [], []
+                            write(p, a)
+                            write(q, b)
+                            return a == b  # same text means same shape and same values
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[16,17,18],"compare":[19],"write":[22,23,24,25,27,28,29]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <string>
+                    class Solution {
+                    public:
+                        bool isSameTree(TreeNode* p, TreeNode* q) {
+                            std::string a, b;
+                            write(p, a);
+                            write(q, b);
+                            return a == b; // same text means same shape and same values
+                        }
+                    private:
+                        void write(TreeNode* node, std::string& out) { // the tree as text, with "#" for every missing child
+                            if (!node) {
+                                out += "#,"; // without this, [1,2] and [1,null,2] would both give "1,2"
+                                return;
+                            }
+                            out += std::to_string(node->val) + ","; // the comma keeps 1,23 apart from 12,3
+                            write(node->left, out);
+                            write(node->right, out);
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[18,19,20],"compare":[21],"write":[23,24,25,26,28,29,30]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    class Solution {
+                        public boolean isSameTree(TreeNode p, TreeNode q) {
+                            StringBuilder a = new StringBuilder(), b = new StringBuilder();
+                            write(p, a);
+                            write(q, b);
+                            return a.toString().equals(b.toString()); // same text means same shape and same values
+                        }
+                        private void write(TreeNode node, StringBuilder out) { // the tree as text, with "#" for every missing child
+                            if (node == null) {
+                                out.append("#,"); // without this, [1,2] and [1,null,2] would both give "1,2"
+                                return;
+                            }
+                            out.append(node.val).append(','); // the comma keeps 1,23 apart from 12,3
+                            write(node.left, out);
+                            write(node.right, out);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>
+                  Approach 2: Recursion on Both Trees
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Compare the two roots, then ask the same question of the two left
+                  children and of the two right children.
+                </p>
+                <ul>
+                  <li>Both null: true. Exactly one null: false. Different values: false.</li>
+                  <li>Otherwise: <code>same(p.left, q.left) and same(p.right, q.right)</code>. The <code>and</code> stops at the first false.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(min(n, m))</span>
+                  <span><strong>Space</strong> O(h) call stack</span>
+                </div>
+                <p class="note">
+                  Four lines, no extra memory, and it stops at the first difference:
+                  0.019 ms in Python. The same check is the core of Subtree of Another
+                  Tree (572).
+                </p>
+                <div class="code-tabs" data-viz="0100-same-tree/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"both":[9,10],"one":[11,12],"val":[13,14],"recurse":[15]}'>
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def isSameTree(self, p, q):
+                            if not p and not q:  # both missing: the same (nothing)
+                                return True
+                            if not p or not q:  # only one is missing: different shapes
+                                return False
+                            if p.val != q.val:
+                                return False
+                            return self.isSameTree(p.left, q.left) and self.isSameTree(p.right, q.right)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"both":[15],"one":[16],"val":[17],"recurse":[18]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    class Solution {
+                    public:
+                        bool isSameTree(TreeNode* p, TreeNode* q) {
+                            if (!p && !q) return true; // both missing: the same (nothing)
+                            if (!p || !q) return false; // only one is missing: different shapes
+                            if (p->val != q->val) return false;
+                            return isSameTree(p->left, q->left) && isSameTree(p->right, q->right);
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"both":[18],"one":[19],"val":[20],"recurse":[21]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    class Solution {
+                        public boolean isSameTree(TreeNode p, TreeNode q) {
+                            if (p == null && q == null) return true; // both missing: the same (nothing)
+                            if (p == null || q == null) return false; // only one is missing: different shapes
+                            if (p.val != q.val) return false;
+                            return isSameTree(p.left, q.left) && isSameTree(p.right, q.right);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>Approach 3: Queue of Pairs (BFS)</h2>
+                <p class="intuition">
+                  The same checks without recursion: keep a queue of node pairs that
+                  should match, starting with <code>(p, q)</code>. Take a pair, check
+                  it, and add its two child pairs.
+                </p>
+                <ul>
+                  <li>A pair of two nulls is fine: skip it.</li>
+                  <li>In Java, <code>ArrayDeque</code> can't store <code>null</code>, so store each pair as a small array.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(min(n, m))</span>
+                  <span><strong>Space</strong> O(width) for the queue</span>
+                </div>
+                <p class="note">
+                  Compares the trees level by level (0.026 ms). Useful when trees can be
+                  very deep; here they have at most 100 nodes, so recursion is fine.
+                </p>
+                <div class="code-tabs" data-viz="0100-same-tree/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[10],"loop":[11,12],"both":[13,14],"diff":[15,16],"push":[17,18],"return":[19]}'>
+                    from collections import deque
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def isSameTree(self, p, q):
+                            queue = deque([(p, q)])  # pairs of nodes at the same spot in both trees
+                            while queue:
+                                a, b = queue.popleft()
+                                if not a and not b:  # both missing: fine
+                                    continue
+                                if not a or not b or a.val != b.val:  # one missing, or different values
+                                    return False
+                                queue.append((a.left, b.left))
+                                queue.append((a.right, b.right))
+                            return True  # every pair matched
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[17,18],"loop":[19,20,21],"both":[22],"diff":[23],"push":[24,25],"return":[27]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <queue>
+                    #include <utility>
+                    class Solution {
+                    public:
+                        bool isSameTree(TreeNode* p, TreeNode* q) {
+                            std::queue<std::pair<TreeNode*, TreeNode*>> queue; // pairs of nodes at the same spot in both trees
+                            queue.push({p, q});
+                            while (!queue.empty()) {
+                                auto [a, b] = queue.front();
+                                queue.pop();
+                                if (!a && !b) continue; // both missing: fine
+                                if (!a || !b || a->val != b->val) return false; // one missing, or different values
+                                queue.push({a->left, b->left});
+                                queue.push({a->right, b->right});
+                            }
+                            return true; // every pair matched
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[21,22],"loop":[23,24,25],"both":[26],"diff":[27],"push":[28,29],"return":[31]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    import java.util.ArrayDeque;
+                    import java.util.Deque;
+                    class Solution {
+                        public boolean isSameTree(TreeNode p, TreeNode q) {
+                            // ArrayDeque can't hold null, so pairs go in as a small array (null entries inside are fine).
+                            Deque<TreeNode[]> queue = new ArrayDeque<>(); // pairs of nodes at the same spot in both trees
+                            queue.add(new TreeNode[] {p, q});
+                            while (!queue.isEmpty()) {
+                                TreeNode[] pair = queue.poll();
+                                TreeNode a = pair[0], b = pair[1];
+                                if (a == null && b == null) continue; // both missing: fine
+                                if (a == null || b == null || a.val != b.val) return false; // one missing, or different values
+                                queue.add(new TreeNode[] {a.left, b.left});
+                                queue.add(new TreeNode[] {a.right, b.right});
+                            }
+                            return true; // every pair matched
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  LeetCode's <code>TreeNode</code> has no equality built in: in Python
+                  <code>p == q</code> only checks that they're the same object, in Java
+                  <code>equals</code> does the same, and in C++ <code>p == q</code>
+                  compares pointers.
+                </p>
+                <p class="note">
+                  Write Approach 2. Check the null cases before reading
+                  <code>.val</code>.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Text</th>
+                        <td>Pre-order with # for missing children</td>
+                        <td>O(n + m)</td>
+                        <td>O(n + m)</td>
+                        <td>Always writes both trees out</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Recursion</th>
+                        <td>Compare roots, then left with left, right with right</td>
+                        <td>O(min(n, m))</td>
+                        <td>O(h)</td>
+                        <td>The usual answer</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Queue of Pairs</th>
+                        <td>BFS over matching pairs</td>
+                        <td>O(min(n, m))</td>
+                        <td>O(width)</td>
+                        <td>No recursion</td>
                       </tr>
                     </tbody>
                   </table>
@@ -35365,6 +35834,171 @@
           }
           const r = check(root, -Infinity, Infinity);
           steps.push({ line: "return", note: r ? "Every node fit its range: return true. Each node was checked once, O(n)." : "Return false. No need to look at the rest.", view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0100-same-tree/approach1.visual.js -->
+    <script>
+      // Write each tree as text (pre-order, "#" for a missing child), then compare the two texts.
+      DSAViz.register("0100-same-tree/approach1", {
+        inputs: [
+          { name: "p", type: "tree", value: "[1, 2]", maxLength: 11 },
+          { name: "q", type: "tree", value: "[1, null, 2]", maxLength: 11 },
+        ],
+        trace({ p: pv, q: qv }) {
+          const P = DSAViz.buildTree(pv);
+          const Q = DSAViz.buildTree(qv);
+          const steps = [];
+          const out = { p: [], q: [] };
+          const done = { p: {}, q: {} };
+          const view = (which, at, o = {}) => {
+            const tm = (k) => {
+              const m = { ...done[k] };
+              if (which === k && at >= 0) m[at] = "active";
+              return m;
+            };
+            const diff = o.diff ?? -1;
+            const sm = (k) => {
+              const m = {};
+              out[k].forEach((_, i) => (m[i] = o.final ? (i === diff ? "cut" : i < diff || diff < 0 ? "match" : "") : ""));
+              if (!o.final && which === k && out[k].length) m[out[k].length - 1] = "new";
+              return m;
+            };
+            return [
+              { type: "tree", label: "p", values: pv, marks: tm("p") },
+              { type: "array", label: "text of p", values: out.p.slice(), marks: sm("p") },
+              { type: "tree", label: "q", values: qv, marks: tm("q") },
+              { type: "array", label: "text of q", values: out.q.slice(), marks: sm("q") },
+            ];
+          };
+          steps.push({ line: "init", note: 'Write each tree in pre-order (node, then left, then right), with "#" for every missing child.', view: view() });
+          for (const [k, T] of [["p", P], ["q", Q]]) {
+            const walk = (id, from) => {
+              if (id < 0) {
+                out[k].push("#");
+                steps.push({ line: "write", note: `${k}: ${from} is missing: write "#". That's what keeps the shape in the text.`, view: view(k, -1) });
+                return;
+              }
+              out[k].push(String(T.nodes[id].val));
+              done[k][id] = "visited";
+              steps.push({ line: "write", note: `${k}: write ${T.nodes[id].val}.`, view: view(k, id) });
+              walk(T.nodes[id].left, `the left child of ${T.nodes[id].val}`);
+              walk(T.nodes[id].right, `the right child of ${T.nodes[id].val}`);
+            };
+            walk(T.root, "the root");
+          }
+          const a = out.p, b = out.q;
+          let diff = -1;
+          for (let i = 0; i < Math.max(a.length, b.length); i++) if (a[i] !== b[i]) { diff = i; break; }
+          steps.push({
+            line: "compare",
+            note: diff < 0 ? "The two texts are the same: return true." : `The texts first differ at position ${diff}: "${a[diff] ?? "(end)"}" vs "${b[diff] ?? "(end)"}". Return false.`,
+            view: view(undefined, -1, { final: true, diff }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0100-same-tree/approach2.visual.js -->
+    <script>
+      // Recursion on both trees together: both missing = same; one missing or different values = not same; else recurse left and right.
+      DSAViz.register("0100-same-tree/approach2", {
+        inputs: [
+          { name: "p", type: "tree", value: "[1, 2, 3, 4]", maxLength: 11 },
+          { name: "q", type: "tree", value: "[1, 2, 3, null, 4]", maxLength: 11 },
+        ],
+        trace({ p: pv, q: qv }) {
+          const P = DSAViz.buildTree(pv);
+          const Q = DSAViz.buildTree(qv);
+          const steps = [];
+          const pm = {};
+          const qm = {};
+          const name = (T, id) => (id < 0 ? "nothing there" : String(T.nodes[id].val));
+          const view = (a, b, mark) => {
+            const x = { ...pm };
+            const y = { ...qm };
+            if (a >= 0) x[a] = mark;
+            if (b >= 0) y[b] = mark;
+            return [
+              { type: "tree", label: "p (green = matched)", values: pv, marks: x },
+              { type: "tree", label: "q", values: qv, marks: y },
+            ];
+          };
+          steps.push({ line: "both", note: "Compare the two roots, then the two left children, then the two right children.", view: view(-1, -1) });
+          function same(a, b, where) {
+            if (a < 0 && b < 0) return true;
+            if (a < 0 || b < 0) {
+              steps.push({ line: ["both", "one"], note: `${where}: p has ${name(P, a)}, q has ${name(Q, b)}. Only one is missing: the shapes differ. Return false.`, view: view(a, b, "cut") });
+              return false;
+            }
+            const va = P.nodes[a].val;
+            const vb = Q.nodes[b].val;
+            if (va !== vb) {
+              steps.push({ line: ["both", "one", "val"], note: `${where}: ${va} in p, ${vb} in q. Different values: return false.`, view: view(a, b, "cut") });
+              return false;
+            }
+            pm[a] = qm[b] = "match";
+            steps.push({ line: ["both", "one", "val", "recurse"], note: `${where}: both ${va}. Now compare their left children, then their right children.`, view: view(a, b, "match") });
+            return same(P.nodes[a].left, Q.nodes[b].left, `Left of ${va}`) && same(P.nodes[a].right, Q.nodes[b].right, `Right of ${va}`);
+          }
+          const r = same(P.root, Q.root, "Roots");
+          steps.push({ line: r ? "recurse" : "one", note: r ? "Every spot matched (missing children on both sides count as a match): return true." : "Return false, without looking at the rest.", view: view(-1, -1) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0100-same-tree/approach3.visual.js -->
+    <script>
+      // Queue of pairs: take the next pair of nodes at the same spot in both trees, check it, add its two child pairs.
+      DSAViz.register("0100-same-tree/approach3", {
+        inputs: [
+          { name: "p", type: "tree", value: "[1, 2, 3, 4]", maxLength: 11 },
+          { name: "q", type: "tree", value: "[1, 2, 3, null, 4]", maxLength: 11 },
+        ],
+        trace({ p: pv, q: qv }) {
+          const P = DSAViz.buildTree(pv);
+          const Q = DSAViz.buildTree(qv);
+          const steps = [];
+          const pm = {};
+          const qm = {};
+          const queue = [[P.root, Q.root]];
+          const name = (T, id) => (id < 0 ? "–" : String(T.nodes[id].val));
+          const view = (a, b, mark) => {
+            const x = { ...pm };
+            const y = { ...qm };
+            queue.forEach(([i, j]) => {
+              if (i >= 0 && !x[i]) x[i] = "new";
+              if (j >= 0 && !y[j]) y[j] = "new";
+            });
+            if (a !== undefined && a >= 0) x[a] = mark;
+            if (b !== undefined && b >= 0) y[b] = mark;
+            return [
+              { type: "tree", label: "p (green = matched, yellow = waiting in the queue)", values: pv, marks: x },
+              { type: "tree", label: "q", values: qv, marks: y },
+              { type: "array", label: "queue of pairs (front first; – = missing)", values: queue.map(([i, j]) => `(${name(P, i)}, ${name(Q, j)})`), wide: true, marks: queue.length ? { 0: "active" } : {} },
+            ];
+          };
+          steps.push({ line: "init", note: "Start with the pair of roots.", view: view() });
+          while (queue.length) {
+            const [a, b] = queue.shift();
+            if (a < 0 && b < 0) {
+              steps.push({ line: ["loop", "both"], note: "Take a pair of two missing children: they match. Skip it.", view: view() });
+              continue;
+            }
+            if (a < 0 || b < 0 || P.nodes[a].val !== Q.nodes[b].val) {
+              steps.push({
+                line: ["loop", "both", "diff"],
+                note: a < 0 || b < 0 ? `Take (${name(P, a)}, ${name(Q, b)}): only one is missing. Return false.` : `Take (${P.nodes[a].val}, ${Q.nodes[b].val}): different values. Return false.`,
+                view: view(a, b, "cut"),
+              });
+              return steps;
+            }
+            pm[a] = qm[b] = "match";
+            queue.push([P.nodes[a].left, Q.nodes[b].left], [P.nodes[a].right, Q.nodes[b].right]);
+            steps.push({ line: ["loop", "both", "diff", "push"], note: `Take (${P.nodes[a].val}, ${Q.nodes[b].val}): they match. Add the pair of left children and the pair of right children.`, view: view(a, b, "match") });
+          }
+          steps.push({ line: "return", note: "The queue is empty and every pair matched: return true.", view: view() });
           return steps;
         },
       });
