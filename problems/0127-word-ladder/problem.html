@@ -1,0 +1,279 @@
+<details class="question" data-group="graphs" data-tags="graph bfs breadth-first search hash-table string word ladder shortest path bidirectional">
+  <summary>
+    <span class="q-title">127. Word Ladder</span>
+    <span class="q-meta">
+      <span class="badge hard">Hard</span>
+      <span class="tag">Hash Table</span>
+      <span class="tag">String</span>
+      <span class="tag">BFS</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Words are nodes, and two words are joined if
+      they differ by one letter. The shortest ladder is a <strong>BFS</strong>
+      from <code>beginWord</code>. Find neighbors by changing each letter to
+      a…z and looking the result up in a set, and remove a word from the set
+      as soon as it's queued. Searching from both ends at once is faster
+      still.
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/word-ladder/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        A ladder goes from <code>beginWord</code> to <code>endWord</code>,
+        changing one letter at a time. Every word after the first must be in
+        <code>wordList</code> (<code>beginWord</code> itself doesn't have to
+        be). Return the number of <strong>words</strong> in the shortest
+        ladder, or <code>0</code> if there is none.
+      </p>
+      <ul>
+        <li><code>1 &lt;= beginWord.length &lt;= 10</code>; <code>endWord</code> and every word in <code>wordList</code> have the same length</li>
+        <li><code>1 &lt;= wordList.length &lt;= 5000</code></li>
+        <li>Lowercase letters only; <code>beginWord != endWord</code>; the words in <code>wordList</code> are unique</li>
+      </ul>
+      <p class="note">
+        Example: <code>"hit"</code> → <code>"cog"</code> with
+        <code>["hot","dot","dog","lot","log","cog"]</code> →
+        <code>5</code> (hit → hot → dot → dog → cog). Without
+        <code>"cog"</code> in the list → <code>0</code>.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>"hit"</code>, <code>"cog"</code>, <code>["hot","dot","dog","lot","log"]</code></td>
+              <td><code>0</code></td>
+              <td><code>endWord</code> isn't in the list. A two-ended search that skips this check starts its back side at <code>"cog"</code> anyway and said <code>5</code> here.</td>
+            </tr>
+            <tr>
+              <td><code>"hit"</code>, <code>"cog"</code>, <code>["hot","dot","dog","lot","log","cog"]</code></td>
+              <td><code>5</code></td>
+              <td>Count the <strong>words</strong>, not the moves. Starting the count at 0 says <code>4</code>.</td>
+            </tr>
+            <tr>
+              <td><code>"hit"</code>, <code>"hot"</code>, <code>["hot"]</code></td>
+              <td><code>2</code></td>
+              <td>One change: the shortest possible ladder.</td>
+            </tr>
+            <tr>
+              <td><code>"a"</code>, <code>"c"</code>, <code>["a","b","c"]</code></td>
+              <td><code>2</code></td>
+              <td>One-letter words: every word is next to every other. <code>beginWord</code> is in the list too; don't visit it again.</td>
+            </tr>
+            <tr>
+              <td><code>"hot"</code>, <code>"dog"</code>, <code>["hot","dog"]</code></td>
+              <td><code>0</code></td>
+              <td><code>endWord</code> is in the list but two letters away, with nothing in between.</td>
+            </tr>
+            <tr>
+              <td><code>"hot"</code>, <code>"dog"</code>, <code>["hot","dot","dog"]</code></td>
+              <td><code>3</code></td>
+              <td>The list holds <code>beginWord</code>. Remove it from the set first, or it can be queued again later.</td>
+            </tr>
+            <tr>
+              <td>5,000 words of length 10, <code>endWord</code> with no neighbors</td>
+              <td><code>0</code></td>
+              <td>A one-way BFS visits every reachable word before giving up. The two-ended search stops at once: its back side is empty after one level.</td>
+            </tr>
+            <tr>
+              <td>5,000 words of length 10, about 12 neighbors each</td>
+              <td><code>9</code></td>
+              <td>Comparing each queued word with every unused word came to 7.2 million comparisons; Python took 2.7 s here.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: BFS, Comparing With Every Word</h2>
+      <p class="intuition">
+        BFS from <code>beginWord</code>, one level per extra word. For each
+        word taken from the queue, compare it letter by letter with every
+        word not used yet; the ones that differ in exactly one place join the
+        queue.
+      </p>
+      <ul>
+        <li>
+          BFS finds the shortest ladder because it reaches every word with
+          the fewest steps first.
+        </li>
+        <li>
+          Mark a word used <strong>when it's queued</strong>, not when it's
+          taken out, so it's never in the queue twice.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n² · L)</span>
+        <span><strong>Space</strong> O(n · L)</span>
+      </div>
+      <p class="note">
+        n = number of words, L = word length. Each word is compared with up to
+        n others. Measured here on 5,000 words of length 10: Python 2.7 s,
+        Java 0.2 s, C++ 71 ms. Fine when the words are long and few; slow
+        when there are many short ones.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: BFS, Trying Every One-Letter Change</h2>
+      <p class="intuition">
+        Instead of comparing with all n words, make the neighbors: change
+        each of the L letters to each of a…z and check whether the result is
+        in a set of unused words. That's 26 · L lookups per word, no matter
+        how long the list is.
+      </p>
+      <ul>
+        <li>
+          Removing a word from the set when it's queued doubles as the
+          "used" mark.
+        </li>
+        <li>
+          Marking it only when it comes out of the queue still gives the
+          right answer, but the same word gets queued many times: 28,691
+          pushes instead of 4,960 on the 5,000-word test.
+        </li>
+        <li>
+          In C++ and Java, change the letter in place and put it back, instead
+          of building a new string for every try.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · 26 · L²)</span>
+        <span><strong>Space</strong> O(n · L)</span>
+      </div>
+      <p class="note">
+        26 · L tries per word, each costing O(L) to build and hash. On the
+        same 5,000 words: Python 0.2 s (13× faster than Approach 1), Java
+        36 ms, C++ 13 ms. The standard interview answer.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Two-Ended BFS
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Grow one level from <code>beginWord</code> and one from
+        <code>endWord</code>, taking turns, and stop when a new word is
+        already on the other side. Always grow the
+        <strong>smaller</strong> side.
+      </p>
+      <ul>
+        <li>
+          If each word has about d neighbors and the ladder has k steps, a
+          one-way BFS looks at about d<sup>k</sup> words. Two searches that
+          meet in the middle look at about 2 · d<sup>k/2</sup>.
+        </li>
+        <li>
+          Keep the <code>endWord</code> check: without it, the back side
+          starts at a word that isn't allowed.
+        </li>
+        <li>
+          Swapping to the smaller side is what makes it fast: without the
+          swap it took 192 ms here instead of 26 ms in Python.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · 26 · L²) worst case</span>
+        <span><strong>Space</strong> O(n · L)</span>
+      </div>
+      <p class="note">
+        Same worst case as Approach 2, but far less work in practice. On the
+        5,000 words: Python 25 ms (8× faster than Approach 2), Java 15 ms,
+        C++ 6 ms. When <code>endWord</code> has no neighbors, it stops after
+        one level (0 ms vs 0.2 s). A strong follow-up after Approach 2.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        Python, C++ and Java have no shortest-path helper for this. The parts
+        that matter are the set (<code>set</code>,
+        <code>unordered_set</code>, <code>HashSet</code>) and the queue
+        (<code>deque</code>, <code>std::queue</code>,
+        <code>ArrayDeque</code>), both used above.
+      </p>
+      <p class="note">
+        Approach 2 is what you'd write first; switch to Approach 3 when the
+        list is large or the ladders are long.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">BFS, Comparing With Every Word</th>
+              <td>Compare each queued word with all unused words</td>
+              <td>O(n² · L)</td>
+              <td>O(n · L)</td>
+              <td>2.7 s in Python at 5,000 words</td>
+            </tr>
+            <tr>
+              <th scope="row">BFS, Trying Every One-Letter Change</th>
+              <td>26 · L set lookups per word</td>
+              <td>O(n · 26 · L²)</td>
+              <td>O(n · L)</td>
+              <td>Standard answer; mark words when queued</td>
+            </tr>
+            <tr>
+              <th scope="row">Two-Ended BFS</th>
+              <td>Grow the smaller side until they meet</td>
+              <td>O(n · 26 · L²) worst</td>
+              <td>O(n · L)</td>
+              <td>8× faster than Approach 2 here; check endWord first</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

@@ -15294,10 +15294,631 @@
       <details class="pattern-group" id="g-graphs">
         <summary>
           <span class="g-name">Graphs</span>
-          <span class="g-count"><span class="g-total">1 problem</span></span>
+          <span class="g-count"><span class="g-total">2 problems</span></span>
           <span class="g-hint">BFS, level by level</span>
         </summary>
         <div class="g-body">
+          <!-- ===== problems/0127-word-ladder ===== -->
+          <details class="question" data-group="graphs" data-tags="graph bfs breadth-first search hash-table string word ladder shortest path bidirectional">
+            <summary>
+              <span class="q-title">127. Word Ladder</span>
+              <span class="q-meta">
+                <span class="badge hard">Hard</span>
+                <span class="tag">Hash Table</span>
+                <span class="tag">String</span>
+                <span class="tag">BFS</span>
+              </span>
+            </summary>
+
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Words are nodes, and two words are joined if
+                they differ by one letter. The shortest ladder is a <strong>BFS</strong>
+                from <code>beginWord</code>. Find neighbors by changing each letter to
+                a…z and looking the result up in a set, and remove a word from the set
+                as soon as it's queued. Searching from both ends at once is faster
+                still.
+              </div>
+
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/word-ladder/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  A ladder goes from <code>beginWord</code> to <code>endWord</code>,
+                  changing one letter at a time. Every word after the first must be in
+                  <code>wordList</code> (<code>beginWord</code> itself doesn't have to
+                  be). Return the number of <strong>words</strong> in the shortest
+                  ladder, or <code>0</code> if there is none.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= beginWord.length &lt;= 10</code>; <code>endWord</code> and every word in <code>wordList</code> have the same length</li>
+                  <li><code>1 &lt;= wordList.length &lt;= 5000</code></li>
+                  <li>Lowercase letters only; <code>beginWord != endWord</code>; the words in <code>wordList</code> are unique</li>
+                </ul>
+                <p class="note">
+                  Example: <code>"hit"</code> → <code>"cog"</code> with
+                  <code>["hot","dot","dog","lot","log","cog"]</code> →
+                  <code>5</code> (hit → hot → dot → dog → cog). Without
+                  <code>"cog"</code> in the list → <code>0</code>.
+                </p>
+              </section>
+
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>"hit"</code>, <code>"cog"</code>, <code>["hot","dot","dog","lot","log"]</code></td>
+                        <td><code>0</code></td>
+                        <td><code>endWord</code> isn't in the list. A two-ended search that skips this check starts its back side at <code>"cog"</code> anyway and said <code>5</code> here.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"hit"</code>, <code>"cog"</code>, <code>["hot","dot","dog","lot","log","cog"]</code></td>
+                        <td><code>5</code></td>
+                        <td>Count the <strong>words</strong>, not the moves. Starting the count at 0 says <code>4</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"hit"</code>, <code>"hot"</code>, <code>["hot"]</code></td>
+                        <td><code>2</code></td>
+                        <td>One change: the shortest possible ladder.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"a"</code>, <code>"c"</code>, <code>["a","b","c"]</code></td>
+                        <td><code>2</code></td>
+                        <td>One-letter words: every word is next to every other. <code>beginWord</code> is in the list too; don't visit it again.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"hot"</code>, <code>"dog"</code>, <code>["hot","dog"]</code></td>
+                        <td><code>0</code></td>
+                        <td><code>endWord</code> is in the list but two letters away, with nothing in between.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"hot"</code>, <code>"dog"</code>, <code>["hot","dot","dog"]</code></td>
+                        <td><code>3</code></td>
+                        <td>The list holds <code>beginWord</code>. Remove it from the set first, or it can be queued again later.</td>
+                      </tr>
+                      <tr>
+                        <td>5,000 words of length 10, <code>endWord</code> with no neighbors</td>
+                        <td><code>0</code></td>
+                        <td>A one-way BFS visits every reachable word before giving up. The two-ended search stops at once: its back side is empty after one level.</td>
+                      </tr>
+                      <tr>
+                        <td>5,000 words of length 10, about 12 neighbors each</td>
+                        <td><code>9</code></td>
+                        <td>Comparing each queued word with every unused word came to 7.2 million comparisons; Python took 2.7 s here.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: BFS, Comparing With Every Word</h2>
+                <p class="intuition">
+                  BFS from <code>beginWord</code>, one level per extra word. For each
+                  word taken from the queue, compare it letter by letter with every
+                  word not used yet; the ones that differ in exactly one place join the
+                  queue.
+                </p>
+                <ul>
+                  <li>
+                    BFS finds the shortest ladder because it reaches every word with
+                    the fewest steps first.
+                  </li>
+                  <li>
+                    Mark a word used <strong>when it's queued</strong>, not when it's
+                    taken out, so it's never in the queue twice.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n² · L)</span>
+                  <span><strong>Space</strong> O(n · L)</span>
+                </div>
+                <p class="note">
+                  n = number of words, L = word length. Each word is compared with up to
+                  n others. Measured here on 5,000 words of length 10: Python 2.7 s,
+                  Java 0.2 s, C++ 71 ms. Fine when the words are long and few; slow
+                  when there are many short ones.
+                </p>
+                <div class="code-tabs" data-viz="0127-word-ladder/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5,6,7,8,9],"level":[10,11],"pop":[12],"found":[13,14],"scan":[15,16],"take":[17,18],"next":[19],"none":[20]}'>
+                    from collections import deque
+                    class Solution(object):
+                        def ladderLength(self, beginWord, endWord, wordList):
+                            unseen = set(wordList)
+                            if endWord not in unseen:
+                                return 0
+                            unseen.discard(beginWord)
+                            queue = deque([beginWord])
+                            steps = 1  # words in the ladder so far
+                            while queue:
+                                for _ in range(len(queue)):  # one BFS level = one more word
+                                    word = queue.popleft()
+                                    if word == endWord:
+                                        return steps
+                                    for other in list(unseen):  # compare with every word not used yet
+                                        if self.one_apart(word, other):
+                                            unseen.remove(other)  # mark it used when it's queued
+                                            queue.append(other)
+                                steps += 1
+                            return 0
+
+                        def one_apart(self, a, b):
+                            diff = 0
+                            for x, y in zip(a, b):
+                                if x != y:
+                                    diff += 1
+                                    if diff > 1:
+                                        return False
+                            return diff == 1
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[8,9,10,12,13,14,15],"level":[16,17],"pop":[18,19],"found":[20,21],"scan":[23,24],"take":[25,26],"next":[32],"none":[34]}'>
+                    #include <queue>
+                    #include <string>
+                    #include <unordered_set>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int ladderLength(std::string beginWord, std::string endWord, std::vector<std::string>& wordList) {
+                            std::unordered_set<std::string> unseen(wordList.begin(), wordList.end());
+                            if (!unseen.count(endWord)) {
+                                return 0;
+                            }
+                            unseen.erase(beginWord);
+                            std::queue<std::string> q;
+                            q.push(beginWord);
+                            int steps = 1; // words in the ladder so far
+                            while (!q.empty()) {
+                                for (int k = q.size(); k > 0; --k) { // one BFS level = one more word
+                                    std::string word = q.front();
+                                    q.pop();
+                                    if (word == endWord) {
+                                        return steps;
+                                    }
+                                    for (auto it = unseen.begin(); it != unseen.end();) { // compare with every word not used yet
+                                        if (oneApart(word, *it)) {
+                                            q.push(*it);
+                                            it = unseen.erase(it); // mark it used when it's queued
+                                        } else {
+                                            ++it;
+                                        }
+                                    }
+                                }
+                                ++steps;
+                            }
+                            return 0;
+                        }
+
+                    private:
+                        static bool oneApart(const std::string& a, const std::string& b) {
+                            int diff = 0;
+                            for (size_t i = 0; i < a.size(); ++i) {
+                                if (a[i] != b[i] && ++diff > 1) return false;
+                            }
+                            return diff == 1;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6,7,9,10,11,12],"level":[13,14],"pop":[15],"found":[16,17],"scan":[19,20,21],"take":[22,23],"next":[27],"none":[29]}'>
+                    import java.util.*;
+
+                    class Solution {
+                        public int ladderLength(String beginWord, String endWord, List<String> wordList) {
+                            Set<String> unseen = new HashSet<>(wordList);
+                            if (!unseen.contains(endWord)) {
+                                return 0;
+                            }
+                            unseen.remove(beginWord);
+                            ArrayDeque<String> queue = new ArrayDeque<>();
+                            queue.add(beginWord);
+                            int steps = 1; // words in the ladder so far
+                            while (!queue.isEmpty()) {
+                                for (int k = queue.size(); k > 0; k--) { // one BFS level = one more word
+                                    String word = queue.poll();
+                                    if (word.equals(endWord)) {
+                                        return steps;
+                                    }
+                                    for (Iterator<String> it = unseen.iterator(); it.hasNext();) { // compare with every word not used yet
+                                        String other = it.next();
+                                        if (oneApart(word, other)) {
+                                            it.remove(); // mark it used when it's queued
+                                            queue.add(other);
+                                        }
+                                    }
+                                }
+                                steps++;
+                            }
+                            return 0;
+                        }
+
+                        private static boolean oneApart(String a, String b) {
+                            int diff = 0;
+                            for (int i = 0; i < a.length(); i++) {
+                                if (a.charAt(i) != b.charAt(i) && ++diff > 1) return false;
+                            }
+                            return diff == 1;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: BFS, Trying Every One-Letter Change</h2>
+                <p class="intuition">
+                  Instead of comparing with all n words, make the neighbors: change
+                  each of the L letters to each of a…z and check whether the result is
+                  in a set of unused words. That's 26 · L lookups per word, no matter
+                  how long the list is.
+                </p>
+                <ul>
+                  <li>
+                    Removing a word from the set when it's queued doubles as the
+                    "used" mark.
+                  </li>
+                  <li>
+                    Marking it only when it comes out of the queue still gives the
+                    right answer, but the same word gets queued many times: 28,691
+                    pushes instead of 4,960 on the 5,000-word test.
+                  </li>
+                  <li>
+                    In C++ and Java, change the letter in place and put it back, instead
+                    of building a new string for every try.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · 26 · L²)</span>
+                  <span><strong>Space</strong> O(n · L)</span>
+                </div>
+                <p class="note">
+                  26 · L tries per word, each costing O(L) to build and hash. On the
+                  same 5,000 words: Python 0.2 s (13× faster than Approach 1), Java
+                  36 ms, C++ 13 ms. The standard interview answer.
+                </p>
+                <div class="code-tabs" data-viz="0127-word-ladder/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5,6,7,8,9],"level":[10,11,12],"pop":[13],"try":[14,15,16],"hit":[17],"found":[18,19],"take":[20,21],"none":[22]}'>
+                    from collections import deque
+                    class Solution(object):
+                        def ladderLength(self, beginWord, endWord, wordList):
+                            words = set(wordList)
+                            if endWord not in words:
+                                return 0
+                            words.discard(beginWord)
+                            queue = deque([beginWord])
+                            steps = 1  # words in the ladder so far
+                            while queue:
+                                steps += 1  # every word found in this level is one more step away
+                                for _ in range(len(queue)):
+                                    word = queue.popleft()
+                                    for i in range(len(word)):
+                                        for c in "abcdefghijklmnopqrstuvwxyz":
+                                            nxt = word[:i] + c + word[i + 1:]  # change one letter
+                                            if nxt in words:  # a real word not used yet
+                                                if nxt == endWord:
+                                                    return steps
+                                                words.remove(nxt)  # removing it = marking it used
+                                                queue.append(nxt)
+                            return 0
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[8,9,10,12,13,14,15],"level":[16,17,18],"pop":[19,20],"try":[21,22,23,24,33],"hit":[25,26],"found":[27,28],"take":[30,31],"none":[37]}'>
+                    #include <queue>
+                    #include <string>
+                    #include <unordered_set>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int ladderLength(std::string beginWord, std::string endWord, std::vector<std::string>& wordList) {
+                            std::unordered_set<std::string> words(wordList.begin(), wordList.end());
+                            if (!words.count(endWord)) {
+                                return 0;
+                            }
+                            words.erase(beginWord);
+                            std::queue<std::string> q;
+                            q.push(beginWord);
+                            int steps = 1; // words in the ladder so far
+                            while (!q.empty()) {
+                                ++steps; // every word found in this level is one more step away
+                                for (int k = q.size(); k > 0; --k) {
+                                    std::string word = q.front();
+                                    q.pop();
+                                    for (size_t i = 0; i < word.size(); ++i) {
+                                        const char orig = word[i];
+                                        for (char c = 'a'; c <= 'z'; ++c) {
+                                            word[i] = c; // change one letter (in place, put back below)
+                                            auto it = words.find(word);
+                                            if (it == words.end()) continue; // not a word, or already used
+                                            if (word == endWord) {
+                                                return steps;
+                                            }
+                                            q.push(word);
+                                            words.erase(it); // removing it = marking it used
+                                        }
+                                        word[i] = orig;
+                                    }
+                                }
+                            }
+                            return 0;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6,7,9,10,11,12],"level":[13,14,15],"pop":[16],"try":[17,18,19,20,21,28],"hit":[22],"found":[23,24],"take":[26],"none":[32]}'>
+                    import java.util.*;
+
+                    class Solution {
+                        public int ladderLength(String beginWord, String endWord, List<String> wordList) {
+                            Set<String> words = new HashSet<>(wordList);
+                            if (!words.contains(endWord)) {
+                                return 0;
+                            }
+                            words.remove(beginWord);
+                            ArrayDeque<String> queue = new ArrayDeque<>();
+                            queue.add(beginWord);
+                            int steps = 1; // words in the ladder so far
+                            while (!queue.isEmpty()) {
+                                steps++; // every word found in this level is one more step away
+                                for (int k = queue.size(); k > 0; k--) {
+                                    char[] word = queue.poll().toCharArray();
+                                    for (int i = 0; i < word.length; i++) {
+                                        char orig = word[i];
+                                        for (char c = 'a'; c <= 'z'; c++) {
+                                            word[i] = c; // change one letter (in place, put back below)
+                                            String next = new String(word);
+                                            if (!words.remove(next)) continue; // not a word, or already used
+                                            if (next.equals(endWord)) {
+                                                return steps;
+                                            }
+                                            queue.add(next); // removed above = marked used
+                                        }
+                                        word[i] = orig;
+                                    }
+                                }
+                            }
+                            return 0;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Two-Ended BFS
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Grow one level from <code>beginWord</code> and one from
+                  <code>endWord</code>, taking turns, and stop when a new word is
+                  already on the other side. Always grow the
+                  <strong>smaller</strong> side.
+                </p>
+                <ul>
+                  <li>
+                    If each word has about d neighbors and the ladder has k steps, a
+                    one-way BFS looks at about d<sup>k</sup> words. Two searches that
+                    meet in the middle look at about 2 · d<sup>k/2</sup>.
+                  </li>
+                  <li>
+                    Keep the <code>endWord</code> check: without it, the back side
+                    starts at a word that isn't allowed.
+                  </li>
+                  <li>
+                    Swapping to the smaller side is what makes it fast: without the
+                    swap it took 192 ms here instead of 26 ms in Python.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · 26 · L²) worst case</span>
+                  <span><strong>Space</strong> O(n · L)</span>
+                </div>
+                <p class="note">
+                  Same worst case as Approach 2, but far less work in practice. On the
+                  5,000 words: Python 25 ms (8× faster than Approach 2), Java 15 ms,
+                  C++ 6 ms. When <code>endWord</code> has no neighbors, it stops after
+                  one level (0 ms vs 0.2 s). A strong follow-up after Approach 2.
+                </p>
+                <div class="code-tabs" data-viz="0127-word-ladder/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5,6,7,8,9],"loop":[10],"swap":[11,12],"grow":[13,14],"pop":[15],"try":[16,17,18],"meet":[19,20],"take":[21,22,23],"next":[24],"none":[25]}'>
+                    class Solution(object):
+                        def ladderLength(self, beginWord, endWord, wordList):
+                            words = set(wordList)
+                            if endWord not in words:  # without this, the back side would start at a word that isn't allowed
+                                return 0
+                            front, back = {beginWord}, {endWord}
+                            words.discard(beginWord)
+                            words.discard(endWord)
+                            steps = 1  # words in the ladder so far
+                            while front and back:
+                                if len(front) > len(back):  # always grow the smaller side
+                                    front, back = back, front
+                                steps += 1
+                                grown = set()
+                                for word in front:
+                                    for i in range(len(word)):
+                                        for c in "abcdefghijklmnopqrstuvwxyz":
+                                            nxt = word[:i] + c + word[i + 1:]
+                                            if nxt in back:  # the two searches meet
+                                                return steps
+                                            if nxt in words:
+                                                words.remove(nxt)
+                                                grown.add(nxt)
+                                front = grown
+                            return 0
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[8,9,10,12,13,14,15],"loop":[16],"swap":[17,18],"grow":[20,21],"pop":[22],"try":[23,24,25,26,36],"meet":[27,28],"take":[30,31,32,33],"next":[39],"none":[41]}'>
+                    #include <string>
+                    #include <unordered_set>
+                    #include <utility>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int ladderLength(std::string beginWord, std::string endWord, std::vector<std::string>& wordList) {
+                            std::unordered_set<std::string> words(wordList.begin(), wordList.end());
+                            if (!words.count(endWord)) { // without this, the back side would start at a word that isn't allowed
+                                return 0;
+                            }
+                            std::unordered_set<std::string> front{beginWord}, back{endWord};
+                            words.erase(beginWord);
+                            words.erase(endWord);
+                            int steps = 1; // words in the ladder so far
+                            while (!front.empty() && !back.empty()) {
+                                if (front.size() > back.size()) { // always grow the smaller side
+                                    std::swap(front, back); // O(1): swaps the insides
+                                }
+                                ++steps;
+                                std::unordered_set<std::string> grown;
+                                for (std::string word : front) { // a copy, so letters can change in place
+                                    for (size_t i = 0; i < word.size(); ++i) {
+                                        const char orig = word[i];
+                                        for (char c = 'a'; c <= 'z'; ++c) {
+                                            word[i] = c;
+                                            if (back.count(word)) { // the two searches meet
+                                                return steps;
+                                            }
+                                            auto it = words.find(word);
+                                            if (it != words.end()) {
+                                                words.erase(it);
+                                                grown.insert(word);
+                                            }
+                                        }
+                                        word[i] = orig;
+                                    }
+                                }
+                                front = std::move(grown);
+                            }
+                            return 0;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6,7,9,10,11,12,13],"loop":[14],"swap":[15,16,17,18],"grow":[20,21],"pop":[22,23],"try":[24,25,26,27,28,36],"meet":[29,30],"take":[32,33],"next":[39],"none":[41]}'>
+                    import java.util.*;
+
+                    class Solution {
+                        public int ladderLength(String beginWord, String endWord, List<String> wordList) {
+                            Set<String> words = new HashSet<>(wordList);
+                            if (!words.contains(endWord)) { // without this, the back side would start at a word that isn't allowed
+                                return 0;
+                            }
+                            Set<String> front = new HashSet<>(List.of(beginWord));
+                            Set<String> back = new HashSet<>(List.of(endWord));
+                            words.remove(beginWord);
+                            words.remove(endWord);
+                            int steps = 1; // words in the ladder so far
+                            while (!front.isEmpty() && !back.isEmpty()) {
+                                if (front.size() > back.size()) { // always grow the smaller side
+                                    Set<String> t = front;
+                                    front = back;
+                                    back = t;
+                                }
+                                steps++;
+                                Set<String> grown = new HashSet<>();
+                                for (String w : front) {
+                                    char[] word = w.toCharArray();
+                                    for (int i = 0; i < word.length; i++) {
+                                        char orig = word[i];
+                                        for (char c = 'a'; c <= 'z'; c++) {
+                                            word[i] = c;
+                                            String next = new String(word);
+                                            if (back.contains(next)) { // the two searches meet
+                                                return steps;
+                                            }
+                                            if (words.remove(next)) {
+                                                grown.add(next);
+                                            }
+                                        }
+                                        word[i] = orig;
+                                    }
+                                }
+                                front = grown;
+                            }
+                            return 0;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  Python, C++ and Java have no shortest-path helper for this. The parts
+                  that matter are the set (<code>set</code>,
+                  <code>unordered_set</code>, <code>HashSet</code>) and the queue
+                  (<code>deque</code>, <code>std::queue</code>,
+                  <code>ArrayDeque</code>), both used above.
+                </p>
+                <p class="note">
+                  Approach 2 is what you'd write first; switch to Approach 3 when the
+                  list is large or the ladders are long.
+                </p>
+              </section>
+
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">BFS, Comparing With Every Word</th>
+                        <td>Compare each queued word with all unused words</td>
+                        <td>O(n² · L)</td>
+                        <td>O(n · L)</td>
+                        <td>2.7 s in Python at 5,000 words</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">BFS, Trying Every One-Letter Change</th>
+                        <td>26 · L set lookups per word</td>
+                        <td>O(n · 26 · L²)</td>
+                        <td>O(n · L)</td>
+                        <td>Standard answer; mark words when queued</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Two-Ended BFS</th>
+                        <td>Grow the smaller side until they meet</td>
+                        <td>O(n · 26 · L²) worst</td>
+                        <td>O(n · L)</td>
+                        <td>8× faster than Approach 2 here; check endWord first</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
           <!-- ===== problems/0994-rotting-oranges ===== -->
           <details class="question" data-group="graphs" data-tags="matrix grid bfs breadth-first-search multi-source-bfs queue simulation graph">
             <summary>
@@ -41788,6 +42409,357 @@
           return steps;
         },
       });
+    </script>
+    <!-- problems/0127-word-ladder/approach1.visual.js -->
+    <script>
+      // BFS, comparing the word just taken from the queue with every unused word in the list.
+      (function () {
+      DSAViz.register("0127-word-ladder/approach1", {
+        inputs: [
+          { name: "beginWord", type: "string", value: "hit", maxLength: 5 },
+          { name: "endWord", type: "string", value: "cog", maxLength: 5 },
+          { name: "wordList", label: "wordList (comma-separated)", type: "string", value: "hot, dot, dog, lot, log, cog", maxLength: 70, raw: true },
+        ],
+        trace({ beginWord, endWord, wordList }) {
+          const { b, e, list } = parseLadder(beginWord, endWord, wordList);
+          const steps = [];
+          const used = new Set(); // list words already queued
+          const queue = [];
+          let count = 1;
+          let compares = 0;
+          const view = (o = {}) => {
+            const marks = {};
+            list.forEach((w, k) => {
+              if (o.taken && o.taken.includes(w)) marks[k] = "new";
+              else if (used.has(w)) marks[k] = "ghost";
+              else if (o.checked && o.checked.includes(w)) marks[k] = "compare";
+            });
+            if (o.found) marks[list.indexOf(o.found)] = "match";
+            return [
+              { type: "array", label: "wordList (grey = used, yellow = compared now, new = one letter apart)", values: list, wide: true, marks },
+              { type: "array", label: "queue (front → back)", values: [...queue], wide: true, marks: queue.length && o.front ? { 0: "active" } : {} },
+              {
+                type: "vars",
+                items: [
+                  ...(o.word ? [{ name: "word", value: o.word }] : []),
+                  { name: "steps (words in the ladder)", value: count },
+                  { name: "letter-by-letter comparisons", value: compares, mark: o.counted ? "new" : "" },
+                ],
+              },
+            ];
+          };
+          if (!list.includes(e)) {
+            steps.push({ line: "init", note: `endWord "${e}" isn't in wordList, so no ladder can end there. Return 0.`, view: view() });
+            return steps;
+          }
+          used.add(b);
+          queue.push(b);
+          steps.push({
+            line: "init",
+            note: `Keep a set of the words not used yet, and start the queue with "${b}". The ladder so far has 1 word.`,
+            view: view({ front: true }),
+          });
+          let first = true;
+          while (queue.length) {
+            steps.push({
+              line: first ? "level" : ["next", "level"],
+              note: `${first ? "" : `steps = ${count}. `}Every word in the queue now ends a ladder of ${count} word${count === 1 ? "" : "s"}: ${queue.map((w) => `"${w}"`).join(", ")}.`,
+              view: view({ front: true }),
+            });
+            first = false;
+            for (let k = queue.length; k > 0; k--) {
+              const word = queue.shift();
+              if (word === e) {
+                steps.push({ line: ["pop", "found"], note: `Take "${word}": it's endWord. Return ${count}.`, view: view({ word, found: word }) });
+                return steps;
+              }
+              const unused = list.filter((w) => !used.has(w));
+              compares += unused.length;
+              const taken = unused.filter((w) => oneApart(word, w));
+              taken.forEach((w) => {
+                used.add(w);
+                queue.push(w);
+              });
+              steps.push({
+                line: taken.length ? ["pop", "found", "scan", "take"] : ["pop", "found", "scan"],
+                note:
+                  `Take "${word}" and compare it with all ${unused.length} unused word${unused.length === 1 ? "" : "s"}. ` +
+                  (taken.length
+                    ? `${taken.map((w) => `"${w}"`).join(", ")} ${taken.length === 1 ? "differs" : "differ"} by one letter: queue ${taken.length === 1 ? "it" : "them"} and mark ${taken.length === 1 ? "it" : "them"} used.`
+                    : "None differ by exactly one letter."),
+                view: view({ word, checked: unused, taken, counted: true }),
+              });
+            }
+            count++;
+          }
+          steps.push({ line: "none", note: `The queue is empty and "${e}" was never reached. Return 0.`, view: view() });
+          return steps;
+        },
+      });
+
+      function oneApart(a, b) {
+        let diff = 0;
+        for (let i = 0; i < a.length; i++) if (a[i] !== b[i] && ++diff > 1) return false;
+        return diff === 1;
+      }
+
+      // Read and check the three inputs (the same check in each Word Ladder visualizer).
+      function parseLadder(beginWord, endWord, wordList) {
+        const b = beginWord.trim();
+        const e = endWord.trim();
+        const list = wordList.split(",").map((w) => w.trim()).filter(Boolean);
+        const word = /^[a-z]{1,5}$/;
+        if (!word.test(b)) throw new DSAViz.InputError("beginWord: 1 to 5 lowercase letters, like hit.");
+        if (!word.test(e)) throw new DSAViz.InputError("endWord: 1 to 5 lowercase letters, like cog.");
+        if (e.length !== b.length) throw new DSAViz.InputError("endWord must have as many letters as beginWord.");
+        if (b === e) throw new DSAViz.InputError("beginWord and endWord must be different.");
+        if (!list.length) throw new DSAViz.InputError("Type the words separated by commas, like hot, dot, dog.");
+        if (list.length > 10) throw new DSAViz.InputError("Up to 10 words here, so the steps stay readable.");
+        const bad = list.find((w) => !/^[a-z]+$/.test(w) || w.length !== b.length);
+        if (bad !== undefined) throw new DSAViz.InputError(`Every word needs ${b.length} lowercase letters, like beginWord ("${bad}" doesn't).`);
+        if (new Set(list).size !== list.length) throw new DSAViz.InputError("Each word can appear only once.");
+        return { b, e, list };
+      }
+      })();
+    </script>
+    <!-- problems/0127-word-ladder/approach2.visual.js -->
+    <script>
+      // BFS that tries every one-letter change of a word and looks it up in a set of unused words.
+      (function () {
+      DSAViz.register("0127-word-ladder/approach2", {
+        inputs: [
+          { name: "beginWord", type: "string", value: "hit", maxLength: 5 },
+          { name: "endWord", type: "string", value: "cog", maxLength: 5 },
+          { name: "wordList", label: "wordList (comma-separated)", type: "string", value: "hot, dot, dog, lot, log, cog", maxLength: 70, raw: true },
+        ],
+        trace({ beginWord, endWord, wordList }) {
+          const { b, e, list } = parseLadder(beginWord, endWord, wordList);
+          const steps = [];
+          const words = new Set(list);
+          const queue = [];
+          let count = 1;
+          let tries = 0;
+          const view = (o = {}) => [
+            { type: "set", label: "words (unused; a word leaves the set when it's queued)", items: [...words], marks: Object.fromEntries((o.hits || []).map((w) => [w, o.found === w ? "match" : "new"])) },
+            { type: "array", label: "queue (front → back)", values: [...queue], wide: true, marks: o.front && queue.length ? { 0: "active" } : {} },
+            {
+              type: "vars",
+              items: [
+                ...(o.word ? [{ name: "word", value: o.word }] : []),
+                ...(o.pattern ? [{ name: "changing", value: o.pattern }] : []),
+                { name: "steps (words in the ladder)", value: count },
+                { name: "one-letter changes tried", value: tries, mark: o.counted ? "new" : "" },
+              ],
+            },
+          ];
+          if (!words.has(e)) {
+            steps.push({ line: "init", note: `endWord "${e}" isn't in wordList, so no ladder can end there. Return 0.`, view: view() });
+            return steps;
+          }
+          words.delete(b);
+          queue.push(b);
+          steps.push({
+            line: "init",
+            note: `Put wordList in a set, so checking "is this a word?" is O(1). Start the queue with "${b}": a ladder of 1 word.`,
+            view: view({ front: true }),
+          });
+          while (queue.length) {
+            count++;
+            steps.push({
+              line: "level",
+              note: `steps = ${count}: any word found from ${queue.map((w) => `"${w}"`).join(", ")} ends a ladder of ${count} words.`,
+              view: view({ front: true }),
+            });
+            for (let k = queue.length; k > 0; k--) {
+              const word = queue.shift();
+              steps.push({ line: "pop", note: `Take "${word}". Try changing each of its ${word.length} letters to a…z.`, view: view({ word }) });
+              for (let i = 0; i < word.length; i++) {
+                const pattern = word.slice(0, i) + "*" + word.slice(i + 1);
+                const hits = [];
+                let found = null;
+                for (const c of "abcdefghijklmnopqrstuvwxyz") {
+                  tries++;
+                  const nxt = word.slice(0, i) + c + word.slice(i + 1);
+                  if (!words.has(nxt)) continue;
+                  hits.push(nxt);
+                  if (nxt === e) {
+                    found = nxt;
+                    break;
+                  }
+                }
+                if (found) {
+                  steps.push({
+                    line: ["try", "hit", "found"],
+                    note: `${pattern}: "${found}" is in the set and it's endWord. Return ${count}.`,
+                    view: view({ word, pattern, hits, found, counted: true }),
+                  });
+                  return steps;
+                }
+                hits.forEach((w) => {
+                  words.delete(w);
+                  queue.push(w);
+                });
+                steps.push({
+                  line: hits.length ? ["try", "hit", "take"] : ["try", "hit"],
+                  note: hits.length
+                    ? `${pattern}: 26 tries, ${hits.map((w) => `"${w}"`).join(", ")} ${hits.length === 1 ? "is a word" : "are words"} not used yet. Queue ${hits.length === 1 ? "it" : "them"} and remove ${hits.length === 1 ? "it" : "them"} from the set.`
+                    : `${pattern}: 26 tries, no unused word.`,
+                  view: view({ word, pattern, hits, counted: true }),
+                });
+              }
+            }
+          }
+          steps.push({ line: "none", note: `The queue is empty and "${e}" was never reached. Return 0.`, view: view() });
+          return steps;
+        },
+      });
+
+      // Read and check the three inputs (the same check in each Word Ladder visualizer).
+      function parseLadder(beginWord, endWord, wordList) {
+        const b = beginWord.trim();
+        const e = endWord.trim();
+        const list = wordList.split(",").map((w) => w.trim()).filter(Boolean);
+        const word = /^[a-z]{1,5}$/;
+        if (!word.test(b)) throw new DSAViz.InputError("beginWord: 1 to 5 lowercase letters, like hit.");
+        if (!word.test(e)) throw new DSAViz.InputError("endWord: 1 to 5 lowercase letters, like cog.");
+        if (e.length !== b.length) throw new DSAViz.InputError("endWord must have as many letters as beginWord.");
+        if (b === e) throw new DSAViz.InputError("beginWord and endWord must be different.");
+        if (!list.length) throw new DSAViz.InputError("Type the words separated by commas, like hot, dot, dog.");
+        if (list.length > 10) throw new DSAViz.InputError("Up to 10 words here, so the steps stay readable.");
+        const bad = list.find((w) => !/^[a-z]+$/.test(w) || w.length !== b.length);
+        if (bad !== undefined) throw new DSAViz.InputError(`Every word needs ${b.length} lowercase letters, like beginWord ("${bad}" doesn't).`);
+        if (new Set(list).size !== list.length) throw new DSAViz.InputError("Each word can appear only once.");
+        return { b, e, list };
+      }
+      })();
+    </script>
+    <!-- problems/0127-word-ladder/approach3.visual.js -->
+    <script>
+      // Two-ended BFS: grow from beginWord and from endWord, always the smaller side, until they meet.
+      (function () {
+      DSAViz.register("0127-word-ladder/approach3", {
+        inputs: [
+          { name: "beginWord", type: "string", value: "hit", maxLength: 5 },
+          { name: "endWord", type: "string", value: "cog", maxLength: 5 },
+          { name: "wordList", label: "wordList (comma-separated)", type: "string", value: "hot, dot, dog, lot, log, cog", maxLength: 70, raw: true },
+        ],
+        trace({ beginWord, endWord, wordList }) {
+          const { b, e, list } = parseLadder(beginWord, endWord, wordList);
+          const steps = [];
+          const words = new Set(list);
+          let front = new Set([b]);
+          let back = new Set([e]);
+          let frontFrom = "beginWord";
+          let backFrom = "endWord";
+          let count = 1;
+          let tries = 0;
+          const set = (s, label, marks = {}) => ({ type: "set", label, items: [...s], marks });
+          const view = (o = {}) => [
+            set(front, `front: growing now (from ${frontFrom})`, o.frontMarks || {}),
+            set(back, `back: waiting (from ${backFrom})`, o.backMarks || {}),
+            ...(o.grown ? [set(o.grown, "grown: front's next level", Object.fromEntries([...o.grown].map((w) => [w, o.fresh && o.fresh.includes(w) ? "new" : ""])))] : []),
+            set(words, "words (unused)"),
+            {
+              type: "vars",
+              items: [
+                { name: "steps (words in the ladder)", value: count },
+                { name: "one-letter changes tried", value: tries, mark: o.counted ? "new" : "" },
+              ],
+            },
+          ];
+          if (!words.has(e)) {
+            steps.push({ line: "init", note: `endWord "${e}" isn't in wordList. Return 0 right away: otherwise the back side would start at a word that isn't allowed.`, view: view() });
+            return steps;
+          }
+          words.delete(b);
+          words.delete(e);
+          steps.push({
+            line: "init",
+            note: `Search from both ends: front = {"${b}"}, back = {"${e}"}. A ladder of 1 word so far.`,
+            view: view(),
+          });
+          while (front.size && back.size) {
+            const swapped = front.size > back.size;
+            if (swapped) {
+              [front, back] = [back, front];
+              [frontFrom, backFrom] = [backFrom, frontFrom];
+              steps.push({
+                line: ["loop", "swap"],
+                note: `The back side is smaller (${front.size} vs ${back.size}): swap, so the next level is grown from the smaller side.`,
+                view: view(),
+              });
+            }
+            count++;
+            const grown = new Set();
+            steps.push({
+              line: swapped ? "grow" : ["loop", "grow"],
+              note: `steps = ${count}. Grow front (${front.size} word${front.size === 1 ? "" : "s"}, from ${frontFrom}) by one level.`,
+              view: view({ grown }),
+            });
+            for (const word of front) {
+              const fresh = [];
+              let meet = null;
+              outer: for (let i = 0; i < word.length; i++) {
+                for (const c of "abcdefghijklmnopqrstuvwxyz") {
+                  tries++;
+                  const nxt = word.slice(0, i) + c + word.slice(i + 1);
+                  if (back.has(nxt)) {
+                    meet = nxt;
+                    break outer;
+                  }
+                  if (words.has(nxt)) {
+                    words.delete(nxt);
+                    grown.add(nxt);
+                    fresh.push(nxt);
+                  }
+                }
+              }
+              if (meet) {
+                steps.push({
+                  line: ["pop", "try", "meet"],
+                  note: `From "${word}": "${meet}" is in back, so the two searches meet. Return ${count}.`,
+                  view: view({ grown, fresh, frontMarks: { [word]: "active" }, backMarks: { [meet]: "match" }, counted: true }),
+                });
+                return steps;
+              }
+              steps.push({
+                line: fresh.length ? ["pop", "try", "take"] : ["pop", "try"],
+                note: `From "${word}": ${word.length} × 26 one-letter changes. ${
+                  fresh.length ? `${fresh.map((w) => `"${w}"`).join(", ")} ${fresh.length === 1 ? "is an unused word" : "are unused words"}: move ${fresh.length === 1 ? "it" : "them"} to grown.` : "No unused word, and nothing from back."
+                }`,
+                view: view({ grown, fresh, frontMarks: { [word]: "active" }, counted: true }),
+              });
+            }
+            front = grown;
+            steps.push({
+              line: ["next", "loop"],
+              note: front.size ? `front = grown: ${[...front].map((w) => `"${w}"`).join(", ")}.` : "grown is empty: this side can't go any further.",
+              view: view(),
+            });
+          }
+          steps.push({ line: "none", note: `One side ran out of words before the two met. Return 0.`, view: view() });
+          return steps;
+        },
+      });
+
+      // Read and check the three inputs (the same check in each Word Ladder visualizer).
+      function parseLadder(beginWord, endWord, wordList) {
+        const b = beginWord.trim();
+        const e = endWord.trim();
+        const list = wordList.split(",").map((w) => w.trim()).filter(Boolean);
+        const word = /^[a-z]{1,5}$/;
+        if (!word.test(b)) throw new DSAViz.InputError("beginWord: 1 to 5 lowercase letters, like hit.");
+        if (!word.test(e)) throw new DSAViz.InputError("endWord: 1 to 5 lowercase letters, like cog.");
+        if (e.length !== b.length) throw new DSAViz.InputError("endWord must have as many letters as beginWord.");
+        if (b === e) throw new DSAViz.InputError("beginWord and endWord must be different.");
+        if (!list.length) throw new DSAViz.InputError("Type the words separated by commas, like hot, dot, dog.");
+        if (list.length > 10) throw new DSAViz.InputError("Up to 10 words here, so the steps stay readable.");
+        const bad = list.find((w) => !/^[a-z]+$/.test(w) || w.length !== b.length);
+        if (bad !== undefined) throw new DSAViz.InputError(`Every word needs ${b.length} lowercase letters, like beginWord ("${bad}" doesn't).`);
+        if (new Set(list).size !== list.length) throw new DSAViz.InputError("Each word can appear only once.");
+        return { b, e, list };
+      }
+      })();
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->
     <script>
