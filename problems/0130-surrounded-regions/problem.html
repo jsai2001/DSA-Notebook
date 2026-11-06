@@ -1,0 +1,255 @@
+<details class="question" data-group="graphs" data-tags="matrix graph bfs dfs breadth-first search depth-first search union-find flood fill border surrounded regions">
+  <summary>
+    <span class="q-title">130. Surrounded Regions</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Matrix</span>
+      <span class="tag">BFS</span>
+      <span class="tag">Union Find</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Flip the question around. Instead of asking
+      which O's are surrounded, find the ones that <strong>aren't</strong>:
+      start from every O on the border and mark everything connected to it
+      as safe. Every O left unmarked is surrounded, so flip it. One pass,
+      O(m · n).
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/surrounded-regions/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>board</code> is a grid of <code>'X'</code> and
+        <code>'O'</code>. A region is a group of O's joined up, down, left or
+        right. A region is <strong>surrounded</strong> if none of its cells is
+        on the edge of the board. Change every surrounded region to X, in
+        place.
+      </p>
+      <ul>
+        <li><code>1 &lt;= m, n &lt;= 200</code></li>
+        <li><code>board[i][j]</code> is <code>'X'</code> or <code>'O'</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>XXXX / XOOX / XXOX / XOXX</code> →
+        <code>XXXX / XXXX / XXXX / XOXX</code>. The O at the bottom touches
+        the edge, so it stays.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>XOX / XOX / XXX</code></td>
+              <td><code>XOX / XOX / XXX</code></td>
+              <td>The middle O isn't on the edge, but it connects to one that is. Flipping every inner O said <code>XOX / XXX / XXX</code>.</td>
+            </tr>
+            <tr>
+              <td><code>O</code></td>
+              <td><code>O</code></td>
+              <td>A 1 × 1 board: the only cell is on the edge.</td>
+            </tr>
+            <tr>
+              <td><code>OOO / OXO / OOO</code></td>
+              <td>unchanged</td>
+              <td>Every O is on the edge; nothing flips.</td>
+            </tr>
+            <tr>
+              <td><code>XXXXX / XOOOX / XOXOX / XOOOX / XXXXX</code></td>
+              <td>all X</td>
+              <td>A ring of O's with an X in the middle: the whole ring is surrounded.</td>
+            </tr>
+            <tr>
+              <td>200 × 200, one path of 19,701 O's zigzagging to the edge</td>
+              <td>unchanged</td>
+              <td>A recursive DFS goes 19,701 calls deep. Python's limit is 1,000: it raised <code>RecursionError</code> here. Use a queue or an explicit stack.</td>
+            </tr>
+            <tr>
+              <td>200 × 200, all O inside a ring of X</td>
+              <td>all X</td>
+              <td>One huge surrounded region. Searching it again from each of its 39,204 cells took 7.6 s in C++.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Search From Every O</h2>
+      <p class="intuition">
+        For each O, run a fresh search through the O's next to it. If the
+        search reaches the edge, the O stays; otherwise it's trapped. Flip the
+        trapped ones at the end, after all the checks.
+      </p>
+      <ul>
+        <li>
+          Simple, and each check is clearly right.
+        </li>
+        <li>
+          Wasteful: every O in a region searches that whole region again, so
+          a region of k cells costs k².
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O((m · n)²)</span>
+        <span><strong>Space</strong> O(m · n)</span>
+      </div>
+      <p class="note">
+        Measured on 200 × 200 boards. Random half-O: Python 0.6 s, C++
+        0.12 s. One big surrounded region: C++ 7.6 s, Java 22 s. The
+        zigzag path: Python 172 s, C++ 1.6 s. Far too slow at full size.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Spread From the Border (BFS)
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        An O survives only if it connects to the edge. So put every O on the
+        edge in a queue, mark it safe (<code>S</code>), and spread through
+        neighboring O's. When the queue is empty, any O still left is
+        surrounded: turn it into X, and turn every S back into O.
+      </p>
+      <ul>
+        <li>
+          Mark a cell S when it's <strong>queued</strong>, not when it's taken
+          out, so no cell is queued twice.
+        </li>
+        <li>
+          The board itself holds the marks: no extra visited array.
+        </li>
+        <li>
+          A recursive DFS works the same way on small boards, but a long path
+          overflows Python's recursion limit (and can overflow the stack in
+          C++ and Java). The queue has no such limit.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m · n)</span>
+        <span><strong>Space</strong> O(m · n) for the queue</span>
+      </div>
+      <p class="note">
+        Every cell is queued at most once. On every 200 × 200 test here:
+        Python 7–16 ms, Java 2–4 ms, C++ under 0.1 ms. The standard answer.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Union-Find With a Border Node</h2>
+      <p class="intuition">
+        Give each cell an id, <code>r · n + c</code>, plus one extra node that
+        stands for "the border". Join each O with the O below and the O to
+        the right, and join every edge O with the border node. Then an O stays
+        only if it's in the border node's group.
+      </p>
+      <ul>
+        <li>
+          Joining only down and right is enough: every pair of neighbors is
+          visited once from its top or left cell.
+        </li>
+        <li>
+          Path halving in <code>find</code> keeps the trees flat, so each call
+          is close to O(1).
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m · n · α(m · n)) ≈ O(m · n)</span>
+        <span><strong>Space</strong> O(m · n)</span>
+      </div>
+      <p class="note">
+        Python 14–48 ms, Java 3–5 ms, C++ 0.2–1.1 ms on the 200 × 200 tests:
+        a bit slower than Approach 2, with no recursion. Worth knowing because
+        the same "extra node" trick solves other connected-to-the-edge
+        problems.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        The standard libraries have no flood fill. The only built-in that
+        helps is the queue (<code>collections.deque</code>,
+        <code>std::queue</code>, <code>ArrayDeque</code>), used in
+        Approach 2.
+      </p>
+      <p class="note">
+        Approach 2 is what you'd write: a dozen lines, no recursion, and each
+        cell is touched a fixed number of times.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Search From Every O</th>
+              <td>A fresh search per O</td>
+              <td>O((m · n)²)</td>
+              <td>O(m · n)</td>
+              <td>7.6 s in C++ on one big region</td>
+            </tr>
+            <tr>
+              <th scope="row">Spread From the Border (BFS)</th>
+              <td>Mark safe from the edge, flip the rest</td>
+              <td>O(m · n)</td>
+              <td>O(m · n)</td>
+              <td>Standard answer; use a queue, not recursion</td>
+            </tr>
+            <tr>
+              <th scope="row">Union-Find With a Border Node</th>
+              <td>Join neighbors; flip O's not in the border's group</td>
+              <td>≈ O(m · n)</td>
+              <td>O(m · n)</td>
+              <td>Same trick works for other edge problems</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
