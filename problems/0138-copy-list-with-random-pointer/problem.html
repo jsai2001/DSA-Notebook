@@ -1,0 +1,254 @@
+<details class="question" data-group="linked-list" data-tags="linked-list hash-table random pointer deep copy clone interweave">
+  <summary>
+    <span class="q-title">138. Copy List with Random Pointer</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Linked List</span>
+      <span class="tag">Hash Table</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> The hard part is <code>random</code>: it
+      can point to a node whose copy doesn't exist yet. Either keep a map
+      from each original node to its copy, or put each copy right after its
+      original (A → A′ → B → B′), so the copy of X is always
+      <code>X.next</code>. Then <code>A′.random = A.random.next</code>, and
+      you split the two lists apart at the end.
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/copy-list-with-random-pointer/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Each node of a linked list has <code>next</code> and also
+        <code>random</code>, which points to any node in the list or to
+        <code>null</code>. Return a <strong>deep copy</strong>: new nodes with
+        the same values, where every <code>next</code> and
+        <code>random</code> points to the matching <strong>new</strong> node.
+      </p>
+      <ul>
+        <li><code>0 &lt;= n &lt;= 1000</code></li>
+        <li><code>-10⁴ &lt;= Node.val &lt;= 10⁴</code></li>
+        <li>The input is written as <code>[val, random_index]</code> per node, with <code>null</code> for no random pointer</li>
+      </ul>
+      <p class="note">
+        Example: <code>[[7,null],[13,0],[11,4],[10,2],[1,0]]</code> → a new
+        list written the same way.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[]</code></td>
+              <td><code>[]</code></td>
+              <td>An empty list: return <code>null</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[[7,null],[13,0],[11,4],[10,2],[1,0]]</code></td>
+              <td>same shape</td>
+              <td>Copying <code>random</code> straight across (<code>copy.random = node.random</code>) makes the copies point at <strong>original</strong> nodes: not a deep copy.</td>
+            </tr>
+            <tr>
+              <td><code>[[7,null],[13,0]]</code></td>
+              <td>same shape</td>
+              <td>In the woven version, <code>random</code> can be <code>null</code>: <code>node.random.next</code> without a check raised <code>AttributeError</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,1],[2,1]]</code></td>
+              <td>same shape</td>
+              <td>A random pointer can point to the node itself (node 1 here).</td>
+            </tr>
+            <tr>
+              <td><code>[[3,null],[3,0],[3,null]]</code></td>
+              <td>same shape</td>
+              <td>Values repeat, so they can't identify nodes. Map nodes, not values.</td>
+            </tr>
+            <tr>
+              <td>any list, woven version</td>
+              <td>original unchanged</td>
+              <td>Splitting out only the copies leaves the original's <code>next</code> pointers aimed at copies. Put each <code>node.next</code> back during the split.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Map, Two Passes</h2>
+      <p class="intuition">
+        Pass 1: make a copy of every node and store
+        <code>copies[original] = copy</code>, without linking anything. Pass
+        2: link each copy, <code>copy.next = copies[node.next]</code> and
+        <code>copy.random = copies[node.random]</code>.
+      </p>
+      <ul>
+        <li>
+          Making all the copies first means every <code>random</code> target
+          already has a copy when it's linked.
+        </li>
+        <li>
+          Mapping <code>None</code> to <code>None</code> removes the null
+          checks.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n) for the map</span>
+      </div>
+      <p class="note">
+        The clearest version. At n = 1000 here: Python 0.23 ms, Java 1.2 ms,
+        C++ 0.11 ms.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Map, One Pass</h2>
+      <p class="intuition">
+        Walk the list once. A helper <code>copy_of(node)</code> returns the
+        node's copy, making it the first time it's asked for. For each node,
+        set <code>next</code> and <code>random</code> of its copy through the
+        helper.
+      </p>
+      <ul>
+        <li>
+          A copy may be made early (a <code>random</code> pointing ahead) or
+          reused (pointing behind); the map handles both.
+        </li>
+        <li>
+          Same idea as Clone Graph (133): record the copy as soon as it's
+          made.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n) for the map</span>
+      </div>
+      <p class="note">
+        One pass, but more map lookups per node, so not faster: at n = 1000,
+        Python 0.4–0.7 ms, Java 4.7–5.6 ms, C++ 0.09 ms.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Weave the Copies In
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Three passes, no map. (1) Insert each copy right after its original:
+        A → A′ → B → B′. (2) For each original X, set
+        <code>X′.random = X.random.next</code>, since the copy of any node is
+        the node right after it. (3) Unweave: point each original back at the
+        next original, and each copy at the next copy.
+      </p>
+      <ul>
+        <li>
+          The list itself stands in for the map: "copy of X" is just
+          <code>X.next</code>.
+        </li>
+        <li>
+          Check <code>X.random</code> for null in step 2, and restore the
+          original's <code>next</code> pointers in step 3.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1) besides the copy</span>
+      </div>
+      <p class="note">
+        Fastest here, since there's no hashing: at n = 1000, Python 0.2 ms,
+        Java 0.4 ms, C++ 0.02 ms. The usual follow-up after the map version:
+        "can you do it without extra memory?"
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Python's <code>copy.deepcopy(head)</code> copies the nodes and keeps
+        <code>random</code> pointing at the right copies, since it keeps its
+        own map from old object to copy. C++ and Java have no deep copy for
+        linked objects.
+      </p>
+      <p class="note">
+        It copied all 500 test lists correctly here, but it recurses along
+        <code>next</code>: 200 nodes were fine, while 300 raised
+        <code>RecursionError</code>, well under this problem's limit of 1,000.
+        Write Approach 1 or 3.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Map, Two Passes</th>
+              <td>Make all copies, then link through the map</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Clearest</td>
+            </tr>
+            <tr>
+              <th scope="row">Map, One Pass</th>
+              <td>Make each copy when first needed</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Same idea as Clone Graph</td>
+            </tr>
+            <tr>
+              <th scope="row">Weave the Copies In</th>
+              <td>A → A′ → B → B′, then split</td>
+              <td>O(n)</td>
+              <td>O(1) extra</td>
+              <td>Expected follow-up; restore the original</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

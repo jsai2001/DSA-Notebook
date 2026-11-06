@@ -7081,7 +7081,7 @@
       <details class="pattern-group" id="g-linked-list">
         <summary>
           <span class="g-name">Linked List</span>
-          <span class="g-count"><span class="g-total">5 problems</span></span>
+          <span class="g-count"><span class="g-total">6 problems</span></span>
           <span class="g-hint">Pointer rewiring and dummy heads</span>
         </summary>
         <div class="g-body">
@@ -9810,6 +9810,534 @@
                         <td>O(n)</td>
                         <td>O(1)</td>
                         <td>Answer to the follow-up</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0138-copy-list-with-random-pointer ===== -->
+          <details class="question" data-group="linked-list" data-tags="linked-list hash-table random pointer deep copy clone interweave">
+            <summary>
+              <span class="q-title">138. Copy List with Random Pointer</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Linked List</span>
+                <span class="tag">Hash Table</span>
+              </span>
+            </summary>
+
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> The hard part is <code>random</code>: it
+                can point to a node whose copy doesn't exist yet. Either keep a map
+                from each original node to its copy, or put each copy right after its
+                original (A → A′ → B → B′), so the copy of X is always
+                <code>X.next</code>. Then <code>A′.random = A.random.next</code>, and
+                you split the two lists apart at the end.
+              </div>
+
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/copy-list-with-random-pointer/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Each node of a linked list has <code>next</code> and also
+                  <code>random</code>, which points to any node in the list or to
+                  <code>null</code>. Return a <strong>deep copy</strong>: new nodes with
+                  the same values, where every <code>next</code> and
+                  <code>random</code> points to the matching <strong>new</strong> node.
+                </p>
+                <ul>
+                  <li><code>0 &lt;= n &lt;= 1000</code></li>
+                  <li><code>-10⁴ &lt;= Node.val &lt;= 10⁴</code></li>
+                  <li>The input is written as <code>[val, random_index]</code> per node, with <code>null</code> for no random pointer</li>
+                </ul>
+                <p class="note">
+                  Example: <code>[[7,null],[13,0],[11,4],[10,2],[1,0]]</code> → a new
+                  list written the same way.
+                </p>
+              </section>
+
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[]</code></td>
+                        <td><code>[]</code></td>
+                        <td>An empty list: return <code>null</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[7,null],[13,0],[11,4],[10,2],[1,0]]</code></td>
+                        <td>same shape</td>
+                        <td>Copying <code>random</code> straight across (<code>copy.random = node.random</code>) makes the copies point at <strong>original</strong> nodes: not a deep copy.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[7,null],[13,0]]</code></td>
+                        <td>same shape</td>
+                        <td>In the woven version, <code>random</code> can be <code>null</code>: <code>node.random.next</code> without a check raised <code>AttributeError</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[1,1],[2,1]]</code></td>
+                        <td>same shape</td>
+                        <td>A random pointer can point to the node itself (node 1 here).</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[3,null],[3,0],[3,null]]</code></td>
+                        <td>same shape</td>
+                        <td>Values repeat, so they can't identify nodes. Map nodes, not values.</td>
+                      </tr>
+                      <tr>
+                        <td>any list, woven version</td>
+                        <td>original unchanged</td>
+                        <td>Splitting out only the copies leaves the original's <code>next</code> pointers aimed at copies. Put each <code>node.next</code> back during the split.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Map, Two Passes</h2>
+                <p class="intuition">
+                  Pass 1: make a copy of every node and store
+                  <code>copies[original] = copy</code>, without linking anything. Pass
+                  2: link each copy, <code>copy.next = copies[node.next]</code> and
+                  <code>copy.random = copies[node.random]</code>.
+                </p>
+                <ul>
+                  <li>
+                    Making all the copies first means every <code>random</code> target
+                    already has a copy when it's linked.
+                  </li>
+                  <li>
+                    Mapping <code>None</code> to <code>None</code> removes the null
+                    checks.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n) for the map</span>
+                </div>
+                <p class="note">
+                  The clearest version. At n = 1000 here: Python 0.23 ms, Java 1.2 ms,
+                  C++ 0.11 ms.
+                </p>
+                <div class="code-tabs" data-viz="0138-copy-list-with-random-pointer/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[9,10],"make":[11,12,13],"link":[14,15,16,17,18],"return":[19]}'>
+                    # Definition for a Node.
+                    # class Node:
+                    #     def __init__(self, x, next=None, random=None):
+                    #         self.val = int(x)
+                    #         self.next = next
+                    #         self.random = random
+                    class Solution(object):
+                        def copyRandomList(self, head):
+                            copies = {None: None}  # original -> copy; None maps to None
+                            cur = head
+                            while cur:  # pass 1: one copy per node, not linked yet
+                                copies[cur] = Node(cur.val)
+                                cur = cur.next
+                            cur = head
+                            while cur:  # pass 2: link the copies the same way as the originals
+                                copies[cur].next = copies[cur.next]
+                                copies[cur].random = copies[cur.random]
+                                cur = cur.next
+                            return copies[head]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[15],"make":[16,17],"link":[19,20,21],"return":[23]}'>
+                    /*
+                    // Definition for a Node.
+                    class Node {
+                    public:
+                        int val;
+                        Node* next;
+                        Node* random;
+                        Node(int _val) : val(_val), next(nullptr), random(nullptr) {}
+                    };
+                    */
+                    #include <unordered_map>
+                    class Solution {
+                    public:
+                        Node* copyRandomList(Node* head) {
+                            std::unordered_map<Node*, Node*> copies{{nullptr, nullptr}}; // original -> copy; null maps to null
+                            for (Node* cur = head; cur; cur = cur->next) { // pass 1: one copy per node, not linked yet
+                                copies[cur] = new Node(cur->val);
+                            }
+                            for (Node* cur = head; cur; cur = cur->next) { // pass 2: link the copies the same way as the originals
+                                copies[cur]->next = copies[cur->next];
+                                copies[cur]->random = copies[cur->random];
+                            }
+                            return copies[head];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[18],"make":[19,20],"link":[22,23,24],"return":[26]}'>
+                    /*
+                    // Definition for a Node.
+                    class Node {
+                        int val;
+                        Node next;
+                        Node random;
+                        public Node(int val) {
+                            this.val = val;
+                            this.next = null;
+                            this.random = null;
+                        }
+                    }
+                    */
+                    import java.util.*;
+
+                    class Solution {
+                        public Node copyRandomList(Node head) {
+                            Map<Node, Node> copies = new HashMap<>(); // original -> copy; get(null) is null
+                            for (Node cur = head; cur != null; cur = cur.next) { // pass 1: one copy per node, not linked yet
+                                copies.put(cur, new Node(cur.val));
+                            }
+                            for (Node cur = head; cur != null; cur = cur.next) { // pass 2: link the copies the same way as the originals
+                                copies.get(cur).next = copies.get(cur.next);
+                                copies.get(cur).random = copies.get(cur.random);
+                            }
+                            return copies.get(head);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Map, One Pass</h2>
+                <p class="intuition">
+                  Walk the list once. A helper <code>copy_of(node)</code> returns the
+                  node's copy, making it the first time it's asked for. For each node,
+                  set <code>next</code> and <code>random</code> of its copy through the
+                  helper.
+                </p>
+                <ul>
+                  <li>
+                    A copy may be made early (a <code>random</code> pointing ahead) or
+                    reused (pointing behind); the map handles both.
+                  </li>
+                  <li>
+                    Same idea as Clone Graph (133): record the copy as soon as it's
+                    made.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n) for the map</span>
+                </div>
+                <p class="note">
+                  One pass, but more map lookups per node, so not faster: at n = 1000,
+                  Python 0.4–0.7 ms, Java 4.7–5.6 ms, C++ 0.09 ms.
+                </p>
+                <div class="code-tabs" data-viz="0138-copy-list-with-random-pointer/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[9,18],"get":[12,13,14,15,16],"walk":[19,20,23],"link":[21,22],"return":[24]}'>
+                    # Definition for a Node.
+                    # class Node:
+                    #     def __init__(self, x, next=None, random=None):
+                    #         self.val = int(x)
+                    #         self.next = next
+                    #         self.random = random
+                    class Solution(object):
+                        def copyRandomList(self, head):
+                            copies = {}  # original -> copy
+
+                            def copy_of(node):  # get the copy, making it the first time it's needed
+                                if node is None:
+                                    return None
+                                if node not in copies:
+                                    copies[node] = Node(node.val)
+                                return copies[node]
+
+                            cur = head
+                            while cur:  # one pass
+                                c = copy_of(cur)
+                                c.next = copy_of(cur.next)  # may make the next copy early
+                                c.random = copy_of(cur.random)  # may make a copy far ahead, or reuse one behind
+                                cur = cur.next
+                            return copy_of(head)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"walk":[15,16],"link":[17,18],"return":[20],"init":[24],"get":[27,28,29,30]}'>
+                    /*
+                    // Definition for a Node.
+                    class Node {
+                    public:
+                        int val;
+                        Node* next;
+                        Node* random;
+                        Node(int _val) : val(_val), next(nullptr), random(nullptr) {}
+                    };
+                    */
+                    #include <unordered_map>
+                    class Solution {
+                    public:
+                        Node* copyRandomList(Node* head) {
+                            for (Node* cur = head; cur; cur = cur->next) { // one pass
+                                Node* c = copyOf(cur);
+                                c->next = copyOf(cur->next); // may make the next copy early
+                                c->random = copyOf(cur->random); // may make a copy far ahead, or reuse one behind
+                            }
+                            return copyOf(head);
+                        }
+
+                    private:
+                        std::unordered_map<Node*, Node*> copies; // original -> copy
+
+                        Node* copyOf(Node* node) { // get the copy, making it the first time it's needed
+                            if (!node) return nullptr;
+                            auto it = copies.find(node);
+                            if (it != copies.end()) return it->second;
+                            return copies[node] = new Node(node->val);
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[17],"walk":[20,21],"link":[22,23],"return":[25],"get":[29,30]}'>
+                    /*
+                    // Definition for a Node.
+                    class Node {
+                        int val;
+                        Node next;
+                        Node random;
+                        public Node(int val) {
+                            this.val = val;
+                            this.next = null;
+                            this.random = null;
+                        }
+                    }
+                    */
+                    import java.util.*;
+
+                    class Solution {
+                        private final Map<Node, Node> copies = new HashMap<>(); // original -> copy
+
+                        public Node copyRandomList(Node head) {
+                            for (Node cur = head; cur != null; cur = cur.next) { // one pass
+                                Node c = copyOf(cur);
+                                c.next = copyOf(cur.next); // may make the next copy early
+                                c.random = copyOf(cur.random); // may make a copy far ahead, or reuse one behind
+                            }
+                            return copyOf(head);
+                        }
+
+                        private Node copyOf(Node node) { // get the copy, making it the first time it's needed
+                            if (node == null) return null;
+                            return copies.computeIfAbsent(node, n -> new Node(n.val));
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Weave the Copies In
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Three passes, no map. (1) Insert each copy right after its original:
+                  A → A′ → B → B′. (2) For each original X, set
+                  <code>X′.random = X.random.next</code>, since the copy of any node is
+                  the node right after it. (3) Unweave: point each original back at the
+                  next original, and each copy at the next copy.
+                </p>
+                <ul>
+                  <li>
+                    The list itself stands in for the map: "copy of X" is just
+                    <code>X.next</code>.
+                  </li>
+                  <li>
+                    Check <code>X.random</code> for null in step 2, and restore the
+                    original's <code>next</code> pointers in step 3.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1) besides the copy</span>
+                </div>
+                <p class="note">
+                  Fastest here, since there's no hashing: at n = 1000, Python 0.2 ms,
+                  Java 0.4 ms, C++ 0.02 ms. The usual follow-up after the map version:
+                  "can you do it without extra memory?"
+                </p>
+                <div class="code-tabs" data-viz="0138-copy-list-with-random-pointer/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[9,10],"weave":[11,12,13,14],"random":[15,16,17,18,19],"split":[20,21,22,23,24,25,26],"return":[27]}'>
+                    # Definition for a Node.
+                    # class Node:
+                    #     def __init__(self, x, next=None, random=None):
+                    #         self.val = int(x)
+                    #         self.next = next
+                    #         self.random = random
+                    class Solution(object):
+                        def copyRandomList(self, head):
+                            if not head:
+                                return None
+                            cur = head
+                            while cur:  # step 1: A -> B becomes A -> A' -> B -> B'
+                                cur.next = Node(cur.val, cur.next)
+                                cur = cur.next.next
+                            cur = head
+                            while cur:  # step 2: the copy of X.random sits right after X.random
+                                if cur.random:  # random can be None
+                                    cur.next.random = cur.random.next
+                                cur = cur.next.next
+                            new_head = head.next
+                            cur = head
+                            while cur:  # step 3: pull the copies out and put the original back
+                                copy = cur.next
+                                cur.next = copy.next
+                                copy.next = copy.next.next if copy.next else None
+                                cur = cur.next
+                            return new_head
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[14],"weave":[15,16,17,18],"random":[20,21],"split":[23,24,25,26,27],"return":[29]}'>
+                    /*
+                    // Definition for a Node.
+                    class Node {
+                    public:
+                        int val;
+                        Node* next;
+                        Node* random;
+                        Node(int _val) : val(_val), next(nullptr), random(nullptr) {}
+                    };
+                    */
+                    class Solution {
+                    public:
+                        Node* copyRandomList(Node* head) {
+                            if (!head) return nullptr;
+                            for (Node* cur = head; cur; cur = cur->next->next) { // step 1: A -> B becomes A -> A' -> B -> B'
+                                Node* copy = new Node(cur->val);
+                                copy->next = cur->next;
+                                cur->next = copy;
+                            }
+                            for (Node* cur = head; cur; cur = cur->next->next) { // step 2: the copy of X.random sits right after X.random
+                                if (cur->random) cur->next->random = cur->random->next; // random can be null
+                            }
+                            Node* newHead = head->next;
+                            for (Node* cur = head; cur; cur = cur->next) { // step 3: pull the copies out and put the original back
+                                Node* copy = cur->next;
+                                cur->next = copy->next;
+                                copy->next = copy->next ? copy->next->next : nullptr;
+                            }
+                            return newHead;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[16],"weave":[17,18,19,20],"random":[22,23],"split":[25,26,27,28,29],"return":[31]}'>
+                    /*
+                    // Definition for a Node.
+                    class Node {
+                        int val;
+                        Node next;
+                        Node random;
+                        public Node(int val) {
+                            this.val = val;
+                            this.next = null;
+                            this.random = null;
+                        }
+                    }
+                    */
+                    class Solution {
+                        public Node copyRandomList(Node head) {
+                            if (head == null) return null;
+                            for (Node cur = head; cur != null; cur = cur.next.next) { // step 1: A -> B becomes A -> A' -> B -> B'
+                                Node copy = new Node(cur.val);
+                                copy.next = cur.next;
+                                cur.next = copy;
+                            }
+                            for (Node cur = head; cur != null; cur = cur.next.next) { // step 2: the copy of X.random sits right after X.random
+                                if (cur.random != null) cur.next.random = cur.random.next; // random can be null
+                            }
+                            Node newHead = head.next;
+                            for (Node cur = head; cur != null; cur = cur.next) { // step 3: pull the copies out and put the original back
+                                Node copy = cur.next;
+                                cur.next = copy.next;
+                                copy.next = copy.next != null ? copy.next.next : null;
+                            }
+                            return newHead;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  Python's <code>copy.deepcopy(head)</code> copies the nodes and keeps
+                  <code>random</code> pointing at the right copies, since it keeps its
+                  own map from old object to copy. C++ and Java have no deep copy for
+                  linked objects.
+                </p>
+                <p class="note">
+                  It copied all 500 test lists correctly here, but it recurses along
+                  <code>next</code>: 200 nodes were fine, while 300 raised
+                  <code>RecursionError</code>, well under this problem's limit of 1,000.
+                  Write Approach 1 or 3.
+                </p>
+              </section>
+
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Map, Two Passes</th>
+                        <td>Make all copies, then link through the map</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Clearest</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Map, One Pass</th>
+                        <td>Make each copy when first needed</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Same idea as Clone Graph</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Weave the Copies In</th>
+                        <td>A → A′ → B → B′, then split</td>
+                        <td>O(n)</td>
+                        <td>O(1) extra</td>
+                        <td>Expected follow-up; restore the original</td>
                       </tr>
                     </tbody>
                   </table>
@@ -47433,6 +47961,219 @@
         nums.forEach((x) => c.set(x, (c.get(x) || 0) + 1));
         const once = [...c].filter(([, k]) => k === 1);
         if ([...c.values()].some((k) => k > 2) || once.length !== 1) throw new DSAViz.InputError("Every number must appear exactly twice, except one that appears once, like [4, 1, 2, 1, 2].");
+      }
+      })();
+    </script>
+    <!-- problems/0138-copy-list-with-random-pointer/approach1.visual.js -->
+    <script>
+      // Two passes with a map: make every copy first, then link next and random through the map.
+      (function () {
+      DSAViz.register("0138-copy-list-with-random-pointer/approach1", {
+        inputs: [{ name: "head", label: "head ([value, random index] per node)", type: "string", value: "[[7, null], [13, 0], [11, 4], [10, 2], [1, 0]]", maxLength: 90, raw: true }],
+        trace({ head }) {
+          const L = parseList(head);
+          const n = L.length;
+          const steps = [];
+
+          const rnd = (r, p = "") => (r === null ? "r→∅" : `r→${r}${p}`);
+          const origList = (o = {}) => ({
+            type: "list",
+            label: "original list (under each node: its index, then r→ where random points; ∅ = null)",
+            nodes: L.map((x, i) => ({ value: String(x.val), caption: `${i} ${rnd(x.random)}`, mark: o.at === i ? "active" : o.seen && o.seen.includes(i) ? "visited" : "" })),
+          });
+
+          const made = [];
+          const linked = [];
+          const view = (o = {}) => [
+            origList(o),
+            { type: "map", label: "copies (original index → its copy)", columns: ["original", "copy"], entries: [["null", "null"], ...made.map((i) => [String(i), `${i}′ (value ${L[i].val})`])], marks: o.fresh !== undefined ? { [String(o.fresh)]: "new" } : {} },
+            {
+              type: "list",
+              label: "the copy (′ = new node; r→? = not linked yet)",
+              nodes: made.map((i) => ({ value: String(L[i].val), caption: `${i}′ ${linked.includes(i) ? rnd(L[i].random, "′") : "r→?"}`, mark: o.at === i && o.linking ? "new" : "" })),
+            },
+          ];
+          steps.push({ line: "init", note: "Map each original node to its copy. null maps to null, so a missing next or random needs no special case.", view: view() });
+          for (let i = 0; i < n; i++) {
+            made.push(i);
+            steps.push({ line: "make", note: `Pass 1: make ${i}′ with value ${L[i].val}. Don't link anything yet: the node its random points to may not have a copy yet.`, view: view({ at: i, fresh: i }) });
+          }
+          for (let i = 0; i < n; i++) {
+            linked.push(i);
+            const nxt = i + 1 < n ? `${i + 1}′` : "null";
+            const r = L[i].random === null ? "null" : `${L[i].random}′`;
+            steps.push({ line: "link", note: `Pass 2: ${i}′.next = copies[${i + 1 < n ? i + 1 : "null"}] = ${nxt}; ${i}′.random = copies[${L[i].random === null ? "null" : L[i].random}] = ${r}.`, view: view({ at: i, linking: true }) });
+          }
+          steps.push({ line: "return", note: n ? `Return 0′. Every copy points only at copies. O(n) time, O(n) for the map.` : "The list is empty: return null.", view: view() });
+          return steps;
+        },
+      });
+
+      // Read LeetCode's form: [[val, random_index], ...], with null for no random pointer.
+      function parseList(text) {
+        let a;
+        try {
+          a = JSON.parse(text.trim() || "[]");
+        } catch (e) {
+          throw new DSAViz.InputError("Type the list like [[7, null], [13, 0], [11, 4]]: each pair is [value, index of its random node or null].");
+        }
+        if (!Array.isArray(a) || a.some((p) => !Array.isArray(p) || p.length !== 2 || !Number.isInteger(p[0]) || !(p[1] === null || Number.isInteger(p[1])))) {
+          throw new DSAViz.InputError("Each node is [value, random index or null], like [13, 0].");
+        }
+        if (a.length > 6) throw new DSAViz.InputError("Up to 6 nodes here, so the steps stay readable.");
+        if (a.some(([v]) => v < -99 || v > 99)) throw new DSAViz.InputError("Values must be between -99 and 99 here.");
+        if (a.some(([, r]) => r !== null && (r < 0 || r >= a.length))) throw new DSAViz.InputError(`A random index must be null or between 0 and ${a.length - 1}.`);
+        return a.map(([val, random]) => ({ val, random }));
+      }
+      })();
+    </script>
+    <!-- problems/0138-copy-list-with-random-pointer/approach2.visual.js -->
+    <script>
+      // One pass with a map: copy_of(node) makes a copy the first time it's asked for.
+      (function () {
+      DSAViz.register("0138-copy-list-with-random-pointer/approach2", {
+        inputs: [{ name: "head", label: "head ([value, random index] per node)", type: "string", value: "[[7, null], [13, 0], [11, 4], [10, 2], [1, 0]]", maxLength: 90, raw: true }],
+        trace({ head }) {
+          const L = parseList(head);
+          const n = L.length;
+          const steps = [];
+
+          const rnd = (r, p = "") => (r === null ? "r→∅" : `r→${r}${p}`);
+          const origList = (o = {}) => ({
+            type: "list",
+            label: "original list (under each node: its index, then r→ where random points; ∅ = null)",
+            nodes: L.map((x, i) => ({ value: String(x.val), caption: `${i} ${rnd(x.random)}`, mark: o.at === i ? "active" : o.seen && o.seen.includes(i) ? "visited" : "" })),
+          });
+
+          const made = new Set();
+          const order = [];
+          const links = {};
+          const copyOf = (i) => {
+            if (i === null) return "null";
+            if (!made.has(i)) { made.add(i); order.push(i); return `${i}′ (new)`; }
+            return `${i}′`;
+          };
+          const view = (o = {}) => [
+            origList(o),
+            { type: "map", label: "copies (made the first time they're needed)", columns: ["original", "copy"], entries: order.map((i) => [String(i), `${i}′${links[i] ? `: next → ${links[i].next}, ${links[i].random}` : " (not linked yet)"}`]), marks: Object.fromEntries((o.fresh || []).map((i) => [String(i), "new"])) },
+          ];
+          steps.push({ line: "init", note: "Walk the list once. copy_of(x) returns x's copy, making it if this is the first time x is asked for.", view: view() });
+          for (let i = 0; i < n; i++) {
+            const before = new Set(made);
+            const c = copyOf(i);
+            const nx = copyOf(i + 1 < n ? i + 1 : null);
+            const r = copyOf(L[i].random);
+            links[i] = { next: nx.replace(" (new)", ""), random: `random → ${r.replace(" (new)", "")}` };
+            const fresh = order.filter((k) => !before.has(k));
+            steps.push({
+              line: ["walk", "get", "link"],
+              note: `At ${i}: copy is ${c}; next = ${nx}; random = ${r}.${fresh.length ? ` Made ${fresh.map((k) => `${k}′`).join(", ")} just now.` : " No new copies needed."}`,
+              view: view({ at: i, fresh }),
+            });
+          }
+          steps.push({ line: ["return", "get"], note: n ? `Return copy_of(head) = 0′. One pass, each copy made exactly once. O(n) time, O(n) for the map.` : "The list is empty: return null.", view: view() });
+          return steps;
+        },
+      });
+
+      // Read LeetCode's form: [[val, random_index], ...], with null for no random pointer.
+      function parseList(text) {
+        let a;
+        try {
+          a = JSON.parse(text.trim() || "[]");
+        } catch (e) {
+          throw new DSAViz.InputError("Type the list like [[7, null], [13, 0], [11, 4]]: each pair is [value, index of its random node or null].");
+        }
+        if (!Array.isArray(a) || a.some((p) => !Array.isArray(p) || p.length !== 2 || !Number.isInteger(p[0]) || !(p[1] === null || Number.isInteger(p[1])))) {
+          throw new DSAViz.InputError("Each node is [value, random index or null], like [13, 0].");
+        }
+        if (a.length > 6) throw new DSAViz.InputError("Up to 6 nodes here, so the steps stay readable.");
+        if (a.some(([v]) => v < -99 || v > 99)) throw new DSAViz.InputError("Values must be between -99 and 99 here.");
+        if (a.some(([, r]) => r !== null && (r < 0 || r >= a.length))) throw new DSAViz.InputError(`A random index must be null or between 0 and ${a.length - 1}.`);
+        return a.map(([val, random]) => ({ val, random }));
+      }
+      })();
+    </script>
+    <!-- problems/0138-copy-list-with-random-pointer/approach3.visual.js -->
+    <script>
+      // No map: put each copy right after its original, set random through that, then split the lists.
+      (function () {
+      DSAViz.register("0138-copy-list-with-random-pointer/approach3", {
+        inputs: [{ name: "head", label: "head ([value, random index] per node)", type: "string", value: "[[7, null], [13, 0], [11, 4], [10, 2], [1, 0]]", maxLength: 90, raw: true }],
+        trace({ head }) {
+          const L = parseList(head);
+          const n = L.length;
+          const steps = [];
+          // The woven list: entries {i, copy}; copies get their random set in step 2.
+          let woven = L.map((_, i) => ({ i, copy: false }));
+          const crand = {};
+          const name = (e) => (e.copy ? `${e.i}′` : `${e.i}`);
+          const listView = (o = {}) => ({
+            type: "list",
+            label: o.label || "the list (under each node: its name, ′ = copy, then r→ where random points; ? = not set yet)",
+            nodes: woven.map((e, k) => ({
+              value: String(L[e.i].val),
+              caption: `${name(e)} ${e.copy ? (e.i in crand ? (crand[e.i] === null ? "r→∅" : `r→${crand[e.i]}′`) : "r→?") : L[e.i].random === null ? "r→∅" : `r→${L[e.i].random}`}`,
+              mark: o.at === k ? "active" : o.fresh === k ? "new" : e.copy ? "window" : "",
+            })),
+          });
+          if (!n) {
+            steps.push({ line: "init", note: "The list is empty: return null.", view: [listView()] });
+            return steps;
+          }
+          steps.push({ line: "init", note: "No map this time. The trick: put each copy right after its original, so X's copy is always X.next.", view: [listView()] });
+          for (let i = 0; i < n; i++) {
+            const k = woven.findIndex((e) => !e.copy && e.i === i);
+            woven.splice(k + 1, 0, { i, copy: true });
+            steps.push({ line: "weave", note: `Step 1: insert ${i}′ right after ${i}.`, view: [listView({ at: k, fresh: k + 1 })] });
+          }
+          for (let i = 0; i < n; i++) {
+            const r = L[i].random;
+            crand[i] = r;
+            const k = woven.findIndex((e) => !e.copy && e.i === i);
+            steps.push({
+              line: "random",
+              note: r === null ? `Step 2: ${i}.random is null, so ${i}′.random stays null.` : `Step 2: ${i}.random = ${r}, and ${r}'s copy is ${r}.next = ${r}′. So ${i}′.random = ${i}.random.next = ${r}′.`,
+              view: [listView({ at: k, fresh: k + 1 })],
+            });
+          }
+          const copies = [];
+          for (let i = 0; i < n; i++) {
+            copies.push(i);
+            woven = woven.filter((e) => !(e.copy && e.i === i));
+            steps.push({
+              line: "split",
+              note: `Step 3: ${i}.next goes back to ${i + 1 < n ? i + 1 : "null"}, and ${i}′.next skips to ${i + 1 < n ? `${i + 1}′` : "null"}.`,
+              view: [
+                listView({ label: "original (back to how it was)", at: woven.findIndex((e) => e.i === i) }),
+                { type: "list", label: "the copy", nodes: copies.map((c) => ({ value: String(L[c].val), caption: `${c}′ ${crand[c] === null ? "r→∅" : `r→${crand[c]}′`}`, mark: c === i ? "new" : "" })) },
+              ],
+            });
+          }
+          steps.push({
+            line: "return",
+            note: "Return 0′. The original list is unchanged, and the only extra memory is the copy itself: O(n) time, O(1) extra.",
+            view: [listView({ label: "original" }), { type: "list", label: "the copy", nodes: copies.map((c) => ({ value: String(L[c].val), caption: `${c}′ ${crand[c] === null ? "r→∅" : `r→${crand[c]}′`}` })) }],
+          });
+          return steps;
+        },
+      });
+
+      // Read LeetCode's form: [[val, random_index], ...], with null for no random pointer.
+      function parseList(text) {
+        let a;
+        try {
+          a = JSON.parse(text.trim() || "[]");
+        } catch (e) {
+          throw new DSAViz.InputError("Type the list like [[7, null], [13, 0], [11, 4]]: each pair is [value, index of its random node or null].");
+        }
+        if (!Array.isArray(a) || a.some((p) => !Array.isArray(p) || p.length !== 2 || !Number.isInteger(p[0]) || !(p[1] === null || Number.isInteger(p[1])))) {
+          throw new DSAViz.InputError("Each node is [value, random index or null], like [13, 0].");
+        }
+        if (a.length > 6) throw new DSAViz.InputError("Up to 6 nodes here, so the steps stay readable.");
+        if (a.some(([v]) => v < -99 || v > 99)) throw new DSAViz.InputError("Values must be between -99 and 99 here.");
+        if (a.some(([, r]) => r !== null && (r < 0 || r >= a.length))) throw new DSAViz.InputError(`A random index must be null or between 0 and ${a.length - 1}.`);
+        return a.map(([val, random]) => ({ val, random }));
       }
       })();
     </script>
