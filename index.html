@@ -10987,7 +10987,7 @@
       <details class="pattern-group" id="g-backtracking">
         <summary>
           <span class="g-name">Backtracking</span>
-          <span class="g-count"><span class="g-total">8 problems</span></span>
+          <span class="g-count"><span class="g-total">9 problems</span></span>
           <span class="g-hint">Choose, explore, undo</span>
         </summary>
         <div class="g-body">
@@ -14710,6 +14710,466 @@
                         <td>O(R · C · 3ᴸ) worst</td>
                         <td>O(L)</td>
                         <td>The bad cases become instant</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0090-subsets-ii ===== -->
+          <details class="question" data-group="backtracking" data-tags="array backtracking bit-manipulation recursion subsets duplicates sorting">
+            <summary>
+              <span class="q-title">90. Subsets II</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Array</span>
+                <span class="tag">Backtracking</span>
+                <span class="tag">Sorting</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Subsets (78) with repeated numbers.
+                <strong>Sort first</strong> so equal numbers sit side by side. Then
+                backtrack with a start index, and in each loop skip a number equal to
+                the one before it (<code>i &gt; start and nums[i] == nums[i − 1]</code>):
+                putting the same value in the same place again would build the same
+                subsets again. O(n · 2ⁿ).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/subsets-ii/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Given an array <code>nums</code> that may contain duplicates, return
+                  all possible subsets. The answer must not contain the same subset
+                  twice; any order is fine.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= nums.length &lt;= 10</code> and <code>-10 &lt;= nums[i] &lt;= 10</code>.</li>
+                  <li>Subsets with the same numbers count as the same, whatever order they're listed in: <code>[1,2]</code> and <code>[2,1]</code> are one subset.</li>
+                </ul>
+                <p class="note">
+                  Examples: <code>[1,2,2]</code> →
+                  <code>[[],[1],[1,2],[1,2,2],[2],[2,2]]</code>; <code>[0]</code> →
+                  <code>[[],[0]]</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[1,1]</code></td>
+                        <td><code>[[],[1],[1,1]]</code></td>
+                        <td>The smallest repeat. The plain Subsets code gives 4 lists, with <code>[1]</code> twice.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[2,2,2]</code></td>
+                        <td>4 subsets</td>
+                        <td>All equal: the only choice is how many 2's to take (0 to 3).</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2,2]</code> with <code>i &gt; 0</code></td>
+                        <td>6 subsets</td>
+                        <td>Skipping on <code>i &gt; 0</code> instead of <code>i &gt; start</code> also skips the second 2 when it comes right after the first, so <code>[1,2,2]</code> and <code>[2,2]</code> go missing (only 4 come out).</td>
+                      </tr>
+                      <tr>
+                        <td><code>[2,1,2]</code> without sorting</td>
+                        <td>6 subsets</td>
+                        <td>The equal 2's aren't next to each other, so the skip never fires: 8 lists, with <code>[2]</code> twice and <code>[1,2]</code> plus <code>[2,1]</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[2,1,2]</code> with a set, unsorted</td>
+                        <td>6 subsets</td>
+                        <td>A set of tuples still keeps <code>(1,2)</code> and <code>(2,1)</code> as two: 7 lists. Sort before building them.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[4,4,4,1,4]</code></td>
+                        <td>10 subsets</td>
+                        <td>The repeats aren't all at the start. With k copies of a value, there are k + 1 ways to use it: 5 · 2 = 10.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2,3]</code></td>
+                        <td>8 subsets</td>
+                        <td>No repeats at all: it must still give every subset, the same as Subsets.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[5,5,5,5,5,5,5,5,5,5]</code></td>
+                        <td>11 subsets</td>
+                        <td>2¹⁰ = 1024 ways to pick, but only 11 different subsets. A good solution never builds the other 1013.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: All Subsets, Then Remove Repeats</h2>
+                <p class="intuition">
+                  Generate every subset as in Subsets (take or skip each number) and put
+                  them in a set, which keeps one copy of each. Sort first, so the same
+                  numbers always come out in the same order.
+                </p>
+                <ul>
+                  <li>Python: a set of tuples (lists can't go in a set). C++: <code>std::set&lt;std::vector&lt;int&gt;&gt;</code>. Java: <code>Set&lt;List&lt;Integer&gt;&gt;</code>.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · 2ⁿ)</span>
+                  <span><strong>Space</strong> O(n · 2ⁿ) for the set</span>
+                </div>
+                <p class="note">
+                  Always builds all 2ⁿ, even when most are repeats: with ten 5's it
+                  makes 1024 subsets to keep 11 (0.28 ms in Python, against 0.01 ms for
+                  Approach 2).
+                </p>
+                <div class="code-tabs" data-viz="0090-subsets-ii/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,13],"call":[5],"done":[6,7,8],"take":[9,10],"skip":[11,12],"return":[14]}'>
+                    class Solution(object):
+                        def subsetsWithDup(self, nums):
+                            nums = sorted(nums)  # equal subsets now come out in the same order: [1,2] never [2,1]
+                            seen, path = set(), []
+                            def backtrack(i):  # decide nums[i], nums[i+1], ...
+                                if i == len(nums):
+                                    seen.add(tuple(path))  # a set keeps one copy of each
+                                    return
+                                path.append(nums[i])  # take nums[i]
+                                backtrack(i + 1)
+                                path.pop()  # leave it out
+                                backtrack(i + 1)
+                            backtrack(0)
+                            return [list(s) for s in seen]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8,9,10,11],"return":[12],"call":[17],"done":[18,19,20],"take":[22,23],"skip":[24,25]}'>
+                    #include <algorithm>
+                    #include <set>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<std::vector<int>> subsetsWithDup(std::vector<int>& nums) {
+                            sorted = nums;
+                            std::sort(sorted.begin(), sorted.end()); // equal subsets now come out in the same order: [1,2] never [2,1]
+                            seen.clear();
+                            path.clear();
+                            backtrack(0);
+                            return std::vector<std::vector<int>>(seen.begin(), seen.end());
+                        }
+                    private:
+                        std::vector<int> sorted, path;
+                        std::set<std::vector<int>> seen; // a set keeps one copy of each
+                        void backtrack(size_t i) { // decide sorted[i], sorted[i+1], ...
+                            if (i == sorted.size()) {
+                                seen.insert(path);
+                                return;
+                            }
+                            path.push_back(sorted[i]); // take sorted[i]
+                            backtrack(i + 1);
+                            path.pop_back(); // leave it out
+                            backtrack(i + 1);
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[11,12,13,14,15],"return":[16],"call":[18],"done":[19,20,21],"take":[23,24],"skip":[25,26]}'>
+                    import java.util.ArrayList;
+                    import java.util.Arrays;
+                    import java.util.HashSet;
+                    import java.util.List;
+                    import java.util.Set;
+                    class Solution {
+                        private int[] sorted;
+                        private Set<List<Integer>> seen; // a set keeps one copy of each
+                        private List<Integer> path;
+                        public List<List<Integer>> subsetsWithDup(int[] nums) {
+                            sorted = nums.clone();
+                            Arrays.sort(sorted); // equal subsets now come out in the same order: [1,2] never [2,1]
+                            seen = new HashSet<>();
+                            path = new ArrayList<>();
+                            backtrack(0);
+                            return new ArrayList<>(seen);
+                        }
+                        private void backtrack(int i) { // decide sorted[i], sorted[i+1], ...
+                            if (i == sorted.length) {
+                                seen.add(new ArrayList<>(path)); // a copy: path keeps changing
+                                return;
+                            }
+                            path.add(sorted[i]); // take sorted[i]
+                            backtrack(i + 1);
+                            path.remove(path.size() - 1); // leave it out
+                            backtrack(i + 1);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>
+                  Approach 2: Backtracking, Skip Equal Neighbours
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Subsets' start-index backtracking, plus one line. In one call, each
+                  loop step picks the number that goes in the next place. Two equal
+                  numbers in that place lead to exactly the same subsets, so only the
+                  first of a run of equal numbers gets a turn.
+                </p>
+                <ul>
+                  <li>Skip when <code>i &gt; start and nums[i] == nums[i − 1]</code>. <code>i == start</code> is the first in this place, so it always gets its turn; that's how <code>[2,2]</code> is still built.</li>
+                  <li>Sorting is what puts equal numbers next to each other.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · 2ⁿ)</span>
+                  <span><strong>Space</strong> O(n) besides the answer</span>
+                </div>
+                <p class="note">
+                  Each call adds one new subset and nothing is thrown away. The same
+                  skip line handles Combination Sum II (40) and Permutations II.
+                </p>
+                <div class="code-tabs" data-viz="0090-subsets-ii/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,13],"call":[5],"record":[6],"choose":[7,10,11],"dup":[8,9],"undo":[12],"return":[14]}'>
+                    class Solution(object):
+                        def subsetsWithDup(self, nums):
+                            nums = sorted(nums)  # equal numbers side by side
+                            result, path = [], []
+                            def backtrack(start):  # path is a subset; extend it only with numbers after it
+                                result.append(path[:])  # every path is an answer, even the empty one
+                                for i in range(start, len(nums)):
+                                    if i > start and nums[i] == nums[i - 1]:  # same number in the same place: same subsets again
+                                        continue
+                                    path.append(nums[i])
+                                    backtrack(i + 1)
+                                    path.pop()  # undo, so the next number can take this place
+                            backtrack(0)
+                            return result
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8,9,10],"return":[11],"call":[16],"record":[17],"choose":[18,20,21],"dup":[19],"undo":[22]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<std::vector<int>> subsetsWithDup(std::vector<int>& nums) {
+                            sorted = nums;
+                            std::sort(sorted.begin(), sorted.end()); // equal numbers side by side
+                            result.clear();
+                            path.clear();
+                            backtrack(0);
+                            return result;
+                        }
+                    private:
+                        std::vector<int> sorted, path;
+                        std::vector<std::vector<int>> result;
+                        void backtrack(size_t start) { // path is a subset; extend it only with numbers after it
+                            result.push_back(path); // every path is an answer, even the empty one
+                            for (size_t i = start; i < sorted.size(); ++i) {
+                                if (i > start && sorted[i] == sorted[i - 1]) continue; // same number in the same place: same subsets again
+                                path.push_back(sorted[i]);
+                                backtrack(i + 1);
+                                path.pop_back(); // undo, so the next number can take this place
+                            }
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[9,10,11,12,13],"return":[14],"call":[16],"record":[17],"choose":[18,20,21],"dup":[19],"undo":[22]}'>
+                    import java.util.ArrayList;
+                    import java.util.Arrays;
+                    import java.util.List;
+                    class Solution {
+                        private int[] sorted;
+                        private List<List<Integer>> result;
+                        private List<Integer> path;
+                        public List<List<Integer>> subsetsWithDup(int[] nums) {
+                            sorted = nums.clone();
+                            Arrays.sort(sorted); // equal numbers side by side
+                            result = new ArrayList<>();
+                            path = new ArrayList<>();
+                            backtrack(0);
+                            return result;
+                        }
+                        private void backtrack(int start) { // path is a subset; extend it only with numbers after it
+                            result.add(new ArrayList<>(path)); // every path is an answer, even the empty one
+                            for (int i = start; i < sorted.length; i++) {
+                                if (i > start && sorted[i] == sorted[i - 1]) continue; // same number in the same place: same subsets again
+                                path.add(sorted[i]);
+                                backtrack(i + 1);
+                                path.remove(path.size() - 1); // undo, so the next number can take this place
+                            }
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>Approach 3: Build Up, Extending Only Last Round's Subsets</h2>
+                <p class="intuition">
+                  Start from <code>[[]]</code> and add the sorted numbers one at a time,
+                  making a copy of every subset so far with the new number on the end.
+                  For a repeat, extend only the subsets made in the
+                  <strong>last round</strong>, which are the ones that already used the
+                  previous copy.
+                </p>
+                <ul>
+                  <li>Remember where the last round's subsets start (<code>added</code>). A new value extends from 0; a repeat from <code>added</code>.</li>
+                  <li>Extending older subsets again would recreate subsets that already exist.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · 2ⁿ)</span>
+                  <span><strong>Space</strong> O(1) besides the answer</span>
+                </div>
+                <p class="note">
+                  No recursion, and the fastest here in Python (0.10 ms for ten
+                  different numbers). Trickier to explain than Approach 2.
+                </p>
+                <div class="code-tabs" data-viz="0090-subsets-ii/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"next":[6],"begin":[8,9],"extend":[10,11],"return":[12]}'>
+                    class Solution(object):
+                        def subsetsWithDup(self, nums):
+                            nums = sorted(nums)  # equal numbers side by side
+                            result = [[]]
+                            added = 0  # where the subsets made in the last round start
+                            for i, x in enumerate(nums):
+                                # A repeat of the last number only extends the subsets that already used it (made last round).
+                                begin = added if i > 0 and x == nums[i - 1] else 0
+                                added = len(result)
+                                for j in range(begin, added):
+                                    result.append(result[j] + [x])
+                            return result
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8,9],"next":[10],"begin":[12,13],"extend":[14,15,16,17],"return":[20]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<std::vector<int>> subsetsWithDup(std::vector<int>& nums) {
+                            std::vector<int> sorted = nums;
+                            std::sort(sorted.begin(), sorted.end()); // equal numbers side by side
+                            std::vector<std::vector<int>> result{{}};
+                            size_t added = 0; // where the subsets made in the last round start
+                            for (size_t i = 0; i < sorted.size(); ++i) {
+                                // A repeat of the last number only extends the subsets that already used it (made last round).
+                                size_t begin = (i > 0 && sorted[i] == sorted[i - 1]) ? added : 0;
+                                added = result.size();
+                                for (size_t j = begin; j < added; ++j) {
+                                    std::vector<int> grown = result[j]; // copy first: push_back below can move result's storage
+                                    grown.push_back(sorted[i]);
+                                    result.push_back(std::move(grown));
+                                }
+                            }
+                            return result;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[6,7,8,9,10],"next":[11],"begin":[13,14],"extend":[15,16,17,18],"return":[21]}'>
+                    import java.util.ArrayList;
+                    import java.util.Arrays;
+                    import java.util.List;
+                    class Solution {
+                        public List<List<Integer>> subsetsWithDup(int[] nums) {
+                            int[] sorted = nums.clone();
+                            Arrays.sort(sorted); // equal numbers side by side
+                            List<List<Integer>> result = new ArrayList<>();
+                            result.add(new ArrayList<>());
+                            int added = 0; // where the subsets made in the last round start
+                            for (int i = 0; i < sorted.length; i++) {
+                                // A repeat of the last number only extends the subsets that already used it (made last round).
+                                int begin = (i > 0 && sorted[i] == sorted[i - 1]) ? added : 0;
+                                added = result.size();
+                                for (int j = begin; j < added; j++) {
+                                    List<Integer> grown = new ArrayList<>(result.get(j));
+                                    grown.add(sorted[i]);
+                                    result.add(grown);
+                                }
+                            }
+                            return result;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  In Python, sort, take <code>itertools.combinations</code> of every
+                  size, and let a set drop the repeats. C++ and Java have nothing built
+                  in.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    from itertools import combinations
+                    class Solution(object):
+                        def subsetsWithDup(self, nums):
+                            nums = sorted(nums)  # so equal subsets become equal tuples
+                            # combinations repeats subsets when nums has repeats; the set keeps one of each
+                            return [list(c) for c in {c for r in range(len(nums) + 1) for c in combinations(nums, r)}]
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · 2ⁿ)</span>
+                  <span><strong>Space</strong> O(n · 2ⁿ)</span>
+                </div>
+                <p class="note">
+                  Short and passes, but like Approach 1 it builds all 2ⁿ before dropping
+                  repeats. Without the sort, <code>(1, 2)</code> and <code>(2, 1)</code>
+                  would both stay.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Remove Repeats</th>
+                        <td>All 2ⁿ subsets into a set</td>
+                        <td>O(n · 2ⁿ)</td>
+                        <td>O(n · 2ⁿ)</td>
+                        <td>Builds the repeats, then drops them</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Skip Equal Neighbours</th>
+                        <td>Sort, start index, skip i &gt; start repeats</td>
+                        <td>O(n · 2ⁿ)</td>
+                        <td>O(n)</td>
+                        <td>Never builds a repeat; the one to know</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Extend Last Round</th>
+                        <td>Iterative; repeats extend only the newest</td>
+                        <td>O(n · 2ⁿ)</td>
+                        <td>O(1)</td>
+                        <td>No recursion</td>
                       </tr>
                     </tbody>
                   </table>
@@ -32296,6 +32756,186 @@
             }
           }
           steps.push({ line: "return", note: `Return ${best}. Every bar was pushed once and popped once: O(n).`, view: view(undefined, { final: true }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0090-subsets-ii/approach1.visual.js -->
+    <script>
+      // Take or skip every number (sorted), and let a set keep one copy of each subset.
+      DSAViz.register("0090-subsets-ii/approach1", {
+        inputs: [{ name: "nums", type: "int[]", value: "[2, 1, 2]", minLength: 1, maxLength: 4, minValue: -10, maxValue: 10 }],
+        trace({ nums: given }) {
+          const nums = [...given].sort((a, b) => a - b);
+          const n = nums.length;
+          const steps = [];
+          const seen = []; // in the order they were first added
+          const path = [];
+          const choice = nums.map(() => "");
+          let made = 0;
+          const fmt = (a) => `[${a.join(", ")}]`;
+          const view = (i, o = {}) => {
+            const marks = {};
+            choice.forEach((c, k) => {
+              if (c === "in") marks[k] = "match";
+              else if (c === "out") marks[k] = "ghost";
+            });
+            if (i !== undefined && i < n) marks[i] = "active";
+            const sm = {};
+            if (o.hit !== undefined) sm[o.hit] = o.repeat ? "cut" : "new";
+            return [
+              { type: "array", label: "nums, sorted (green = taken, faded = left out)", values: nums, marks, pointers: i !== undefined && i < n ? { i } : {} },
+              { type: "array", label: "path", values: path.slice(), marks: o.leaf ? Object.fromEntries(path.map((_, k) => [k, o.repeat ? "cut" : "match"])) : {} },
+              { type: "array", label: `seen: a set (${seen.length} kept of ${made} made)`, values: seen.slice(), wide: true, marks: sm },
+            ];
+          };
+          const sortedNote = given.join() === nums.join() ? "" : ` First sort: ${fmt(nums)}. Then equal subsets always come out in the same order.`;
+          steps.push({ line: "init", note: `Make all ${2 ** n} take-or-skip choices and keep each subset once.${sortedNote}`, view: view() });
+          function backtrack(i) {
+            if (i === n) {
+              made++;
+              const key = fmt(path);
+              const at = seen.indexOf(key);
+              if (at >= 0) {
+                steps.push({ line: ["call", "done"], note: `${key} is already in the set (made by different picks of equal numbers): not added again.`, view: view(i, { leaf: true, repeat: true, hit: at }) });
+              } else {
+                seen.push(key);
+                steps.push({ line: ["call", "done"], note: `All decided: ${key}. New, so the set keeps it.`, view: view(i, { leaf: true, hit: seen.length - 1 }) });
+              }
+              return;
+            }
+            choice[i] = "in";
+            path.push(nums[i]);
+            steps.push({ line: ["call", "take"], note: `Take nums[${i}] = ${nums[i]}: path = ${fmt(path)}.`, view: view(i) });
+            backtrack(i + 1);
+            path.pop();
+            choice[i] = "out";
+            for (let k = i + 1; k < n; k++) choice[k] = "";
+            steps.push({ line: "skip", note: `Leave nums[${i}] = ${nums[i]} out: path = ${fmt(path)}.`, view: view(i) });
+            backtrack(i + 1);
+            choice[i] = "";
+          }
+          backtrack(0);
+          steps.push({
+            line: "return",
+            note: `Return the ${seen.length} in the set. ${made - seen.length ? `${made - seen.length} of the ${made} subsets made were repeats, built and then thrown away.` : "No repeats this time, but all 2ⁿ were still built."}`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0090-subsets-ii/approach2.visual.js -->
+    <script>
+      // Sort, then start-index backtracking; in each loop, a number equal to the one before it is skipped.
+      DSAViz.register("0090-subsets-ii/approach2", {
+        inputs: [{ name: "nums", type: "int[]", value: "[2, 1, 2]", minLength: 1, maxLength: 5, minValue: -10, maxValue: 10 }],
+        trace({ nums: given }) {
+          const nums = [...given].sort((a, b) => a - b);
+          const n = nums.length;
+          const total = Object.values(nums.reduce((c, x) => ((c[x] = (c[x] || 0) + 1), c), {})).reduce((p, k) => p * (k + 1), 1);
+          const steps = [];
+          const result = [];
+          const path = [];
+          const taken = [];
+          const fmt = (a) => `[${a.join(", ")}]`;
+          const view = (start, i, o = {}) => {
+            const marks = {};
+            taken.forEach((k) => (marks[k] = "match"));
+            for (let k = 0; k < start; k++) if (!taken.includes(k)) marks[k] = "ghost"; // can't come next
+            if (i !== undefined) marks[i] = o.skip ? "cut" : "active";
+            const pointers = {};
+            if (start !== undefined && start < n) pointers.start = start;
+            if (i !== undefined) pointers.i = i;
+            return [
+              { type: "array", label: "nums, sorted (green = in path, faded = before start, red = skipped repeat)", values: nums, marks, pointers },
+              { type: "array", label: "path", values: path.slice(), marks: o.recorded ? Object.fromEntries(path.map((_, k) => [k, "match"])) : o.added ? { [path.length - 1]: "new" } : {} },
+              { type: "array", label: `result (${result.length} of ${total})`, values: result.map(fmt), wide: true, marks: o.recorded ? { [result.length - 1]: "new" } : {} },
+            ];
+          };
+          const sortedNote = given.join() === nums.join() ? "" : ` Sorted: ${fmt(nums)}, so equal numbers sit side by side.`;
+          steps.push({ line: "init", note: `Every path is a subset: record it, then extend it with each later number.${sortedNote} ${total} different subsets to find.`, view: view(0) });
+          function backtrack(start) {
+            result.push(path.slice());
+            steps.push({
+              line: ["call", "record"],
+              note: `Record ${fmt(path)}${path.length ? "" : " (the empty subset counts)"}.${start < n ? ` Next place: one of nums[${start}..${n - 1}].` : " Nothing after it to add."}`,
+              view: view(start, undefined, { recorded: true }),
+            });
+            for (let i = start; i < n; i++) {
+              if (i > start && nums[i] === nums[i - 1]) {
+                steps.push({ line: "dup", note: `nums[${i}] = ${nums[i]}, the same as nums[${i - 1}], which already had its turn in this place. It would build the same subsets again: skip it.`, view: view(start, i, { skip: true }) });
+                continue;
+              }
+              path.push(nums[i]);
+              taken.push(i);
+              steps.push({
+                line: "choose",
+                note: `Add ${nums[i]}: path = ${fmt(path)}.${i === start && i > 0 && nums[i] === nums[i - 1] ? ` (Equal to nums[${i - 1}], but it's first in this place, so it gets its turn: that's how ${fmt(path)} is built.)` : ""} Recurse on ${i + 1}.`,
+                view: view(start, i, { added: true }),
+              });
+              backtrack(i + 1);
+              path.pop();
+              taken.pop();
+              steps.push({ line: "undo", note: `Pop ${nums[i]}: path = ${fmt(path)}.`, view: view(start, i) });
+            }
+          }
+          backtrack(0);
+          steps.push({ line: "return", note: `Return all ${result.length}. Each call added one new subset and none were repeats: O(n · 2ⁿ) at most.`, view: view(n) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0090-subsets-ii/approach3.visual.js -->
+    <script>
+      // Build up: each new number extends every subset so far; a repeat extends only the ones made in the last round.
+      DSAViz.register("0090-subsets-ii/approach3", {
+        inputs: [{ name: "nums", type: "int[]", value: "[2, 1, 2]", minLength: 1, maxLength: 5, minValue: -10, maxValue: 10 }],
+        trace({ nums: given }) {
+          const nums = [...given].sort((a, b) => a - b);
+          const n = nums.length;
+          const steps = [];
+          const result = [[]];
+          let added = 0;
+          const fmt = (a) => `[${a.join(", ")}]`;
+          const view = (i, o = {}) => {
+            const marks = {};
+            if (i !== undefined) {
+              for (let k = 0; k < i; k++) marks[k] = "visited";
+              if (i < n) marks[i] = "active";
+            } else if (o.all) nums.forEach((_, k) => (marks[k] = "visited"));
+            const rm = {};
+            if (o.from) for (let k = o.from[0]; k < o.from[1]; k++) rm[k] = "compare";
+            if (o.old) for (let k = 0; k < o.old; k++) rm[k] = rm[k] || "ghost";
+            if (o.fresh) for (let k = result.length - o.fresh; k < result.length; k++) rm[k] = "new";
+            return [
+              { type: "array", label: "nums, sorted", values: nums, marks, pointers: i !== undefined && i < n ? { i } : {} },
+              { type: "array", label: `result (${result.length})${o.from ? ": orange = extended this round, faded = left alone" : ""}`, values: result.map(fmt), wide: true, marks: rm },
+              { type: "vars", items: [{ name: "added", value: `${added} (last round's subsets start here)` }] },
+            ];
+          };
+          const sortedNote = given.join() === nums.join() ? "" : ` Sort first: ${fmt(nums)}.`;
+          steps.push({ line: "init", note: `Start with just the empty subset, and add the numbers one at a time.${sortedNote}`, view: view(0) });
+          nums.forEach((x, i) => {
+            const repeat = i > 0 && x === nums[i - 1];
+            const begin = repeat ? added : 0;
+            const end = result.length;
+            steps.push({
+              line: ["next", "begin"],
+              note: repeat
+                ? `${x} again. Only the subsets from the last round (index ${begin} on) already used the previous ${x}; extending older ones would make subsets that already exist.`
+                : `${x} is new: every subset so far (${end}) gets a copy with ${x} on the end.`,
+              view: view(i, { from: [begin, end], old: begin }),
+            });
+            added = end;
+            for (let j = begin; j < end; j++) result.push(result[j].concat([x]));
+            steps.push({
+              line: "extend",
+              note: `Added ${result.slice(end).map(fmt).join(", ")}. Now ${result.length} subsets.`,
+              view: view(i, { from: [begin, end], old: begin, fresh: end - begin }),
+            });
+          });
+          steps.push({ line: "return", note: `Return all ${result.length}. No repeats were ever built, and no recursion.`, view: view(undefined, { all: true }) });
           return steps;
         },
       });

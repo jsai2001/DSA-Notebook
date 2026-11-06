@@ -1,0 +1,238 @@
+<details class="question" data-group="backtracking" data-tags="array backtracking bit-manipulation recursion subsets duplicates sorting">
+  <summary>
+    <span class="q-title">90. Subsets II</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Backtracking</span>
+      <span class="tag">Sorting</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Subsets (78) with repeated numbers.
+      <strong>Sort first</strong> so equal numbers sit side by side. Then
+      backtrack with a start index, and in each loop skip a number equal to
+      the one before it (<code>i &gt; start and nums[i] == nums[i − 1]</code>):
+      putting the same value in the same place again would build the same
+      subsets again. O(n · 2ⁿ).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/subsets-ii/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given an array <code>nums</code> that may contain duplicates, return
+        all possible subsets. The answer must not contain the same subset
+        twice; any order is fine.
+      </p>
+      <ul>
+        <li><code>1 &lt;= nums.length &lt;= 10</code> and <code>-10 &lt;= nums[i] &lt;= 10</code>.</li>
+        <li>Subsets with the same numbers count as the same, whatever order they're listed in: <code>[1,2]</code> and <code>[2,1]</code> are one subset.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[1,2,2]</code> →
+        <code>[[],[1],[1,2],[1,2,2],[2],[2,2]]</code>; <code>[0]</code> →
+        <code>[[],[0]]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[1,1]</code></td>
+              <td><code>[[],[1],[1,1]]</code></td>
+              <td>The smallest repeat. The plain Subsets code gives 4 lists, with <code>[1]</code> twice.</td>
+            </tr>
+            <tr>
+              <td><code>[2,2,2]</code></td>
+              <td>4 subsets</td>
+              <td>All equal: the only choice is how many 2's to take (0 to 3).</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,2]</code> with <code>i &gt; 0</code></td>
+              <td>6 subsets</td>
+              <td>Skipping on <code>i &gt; 0</code> instead of <code>i &gt; start</code> also skips the second 2 when it comes right after the first, so <code>[1,2,2]</code> and <code>[2,2]</code> go missing (only 4 come out).</td>
+            </tr>
+            <tr>
+              <td><code>[2,1,2]</code> without sorting</td>
+              <td>6 subsets</td>
+              <td>The equal 2's aren't next to each other, so the skip never fires: 8 lists, with <code>[2]</code> twice and <code>[1,2]</code> plus <code>[2,1]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[2,1,2]</code> with a set, unsorted</td>
+              <td>6 subsets</td>
+              <td>A set of tuples still keeps <code>(1,2)</code> and <code>(2,1)</code> as two: 7 lists. Sort before building them.</td>
+            </tr>
+            <tr>
+              <td><code>[4,4,4,1,4]</code></td>
+              <td>10 subsets</td>
+              <td>The repeats aren't all at the start. With k copies of a value, there are k + 1 ways to use it: 5 · 2 = 10.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3]</code></td>
+              <td>8 subsets</td>
+              <td>No repeats at all: it must still give every subset, the same as Subsets.</td>
+            </tr>
+            <tr>
+              <td><code>[5,5,5,5,5,5,5,5,5,5]</code></td>
+              <td>11 subsets</td>
+              <td>2¹⁰ = 1024 ways to pick, but only 11 different subsets. A good solution never builds the other 1013.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: All Subsets, Then Remove Repeats</h2>
+      <p class="intuition">
+        Generate every subset as in Subsets (take or skip each number) and put
+        them in a set, which keeps one copy of each. Sort first, so the same
+        numbers always come out in the same order.
+      </p>
+      <ul>
+        <li>Python: a set of tuples (lists can't go in a set). C++: <code>std::set&lt;std::vector&lt;int&gt;&gt;</code>. Java: <code>Set&lt;List&lt;Integer&gt;&gt;</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · 2ⁿ)</span>
+        <span><strong>Space</strong> O(n · 2ⁿ) for the set</span>
+      </div>
+      <p class="note">
+        Always builds all 2ⁿ, even when most are repeats: with ten 5's it
+        makes 1024 subsets to keep 11 (0.28 ms in Python, against 0.01 ms for
+        Approach 2).
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Backtracking, Skip Equal Neighbours
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Subsets' start-index backtracking, plus one line. In one call, each
+        loop step picks the number that goes in the next place. Two equal
+        numbers in that place lead to exactly the same subsets, so only the
+        first of a run of equal numbers gets a turn.
+      </p>
+      <ul>
+        <li>Skip when <code>i &gt; start and nums[i] == nums[i − 1]</code>. <code>i == start</code> is the first in this place, so it always gets its turn; that's how <code>[2,2]</code> is still built.</li>
+        <li>Sorting is what puts equal numbers next to each other.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · 2ⁿ)</span>
+        <span><strong>Space</strong> O(n) besides the answer</span>
+      </div>
+      <p class="note">
+        Each call adds one new subset and nothing is thrown away. The same
+        skip line handles Combination Sum II (40) and Permutations II.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Build Up, Extending Only Last Round's Subsets</h2>
+      <p class="intuition">
+        Start from <code>[[]]</code> and add the sorted numbers one at a time,
+        making a copy of every subset so far with the new number on the end.
+        For a repeat, extend only the subsets made in the
+        <strong>last round</strong>, which are the ones that already used the
+        previous copy.
+      </p>
+      <ul>
+        <li>Remember where the last round's subsets start (<code>added</code>). A new value extends from 0; a repeat from <code>added</code>.</li>
+        <li>Extending older subsets again would recreate subsets that already exist.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · 2ⁿ)</span>
+        <span><strong>Space</strong> O(1) besides the answer</span>
+      </div>
+      <p class="note">
+        No recursion, and the fastest here in Python (0.10 ms for ten
+        different numbers). Trickier to explain than Approach 2.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        In Python, sort, take <code>itertools.combinations</code> of every
+        size, and let a set drop the repeats. C++ and Java have nothing built
+        in.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · 2ⁿ)</span>
+        <span><strong>Space</strong> O(n · 2ⁿ)</span>
+      </div>
+      <p class="note">
+        Short and passes, but like Approach 1 it builds all 2ⁿ before dropping
+        repeats. Without the sort, <code>(1, 2)</code> and <code>(2, 1)</code>
+        would both stay.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Remove Repeats</th>
+              <td>All 2ⁿ subsets into a set</td>
+              <td>O(n · 2ⁿ)</td>
+              <td>O(n · 2ⁿ)</td>
+              <td>Builds the repeats, then drops them</td>
+            </tr>
+            <tr>
+              <th scope="row">Skip Equal Neighbours</th>
+              <td>Sort, start index, skip i &gt; start repeats</td>
+              <td>O(n · 2ⁿ)</td>
+              <td>O(n)</td>
+              <td>Never builds a repeat; the one to know</td>
+            </tr>
+            <tr>
+              <th scope="row">Extend Last Round</th>
+              <td>Iterative; repeats extend only the newest</td>
+              <td>O(n · 2ⁿ)</td>
+              <td>O(1)</td>
+              <td>No recursion</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
