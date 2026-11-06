@@ -12,7 +12,7 @@ DSAViz.register("1448-count-good-nodes-in-binary-tree/approach1", {
       const m = { ...marks };
       if (current !== undefined) m[current] = opts.mark || "active";
       return [
-        { type: "tree", label: "tree (green = good; caption = largest value above the node)", values, marks: m, captions },
+        { type: "tree", label: "tree (green = good; caption = largest value above the node)", values, marks: m, captions: { ...captions } },
         { type: "array", label: "call stack (bottom → top)", values: stack.slice(), marks: stack.length ? { [stack.length - 1]: "active" } : {}, wide: true },
         { type: "vars", items: [{ name: "good so far", value: total, mark: opts.counted ? "match" : "" }] },
       ];

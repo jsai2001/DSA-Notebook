@@ -9290,7 +9290,7 @@
       <details class="pattern-group" id="g-trees">
         <summary>
           <span class="g-name">Trees</span>
-          <span class="g-count"><span class="g-total">6 problems</span></span>
+          <span class="g-count"><span class="g-total">7 problems</span></span>
           <span class="g-hint">A DFS that returns something to the parent</span>
         </summary>
         <div class="g-body">
@@ -10775,6 +10775,473 @@
                         <td>O(n)</td>
                         <td>O(w)</td>
                         <td>No queue, no counting</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0104-maximum-depth-of-binary-tree ===== -->
+          <details class="question" data-group="trees" data-tags="tree binary-tree dfs bfs recursion depth height">
+            <summary>
+              <span class="q-title">104. Maximum Depth of Binary Tree</span>
+              <span class="q-meta">
+                <span class="badge easy">Easy</span>
+                <span class="tag">Tree</span>
+                <span class="tag">DFS</span>
+                <span class="tag">BFS</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> A tree's depth is <strong>1 (this node) +
+                the deeper of its two subtrees</strong>, and an empty tree has depth 0.
+                That's three lines of recursion, O(n). On a very deep tree, count the
+                levels with BFS instead, so there's no recursion at all.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/maximum-depth-of-binary-tree/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Given the <code>root</code> of a binary tree, return its maximum
+                  depth: the number of <strong>nodes</strong> on the longest path from
+                  the root down to a leaf.
+                </p>
+                <ul>
+                  <li>0 to 10⁴ nodes (the tree can be empty).</li>
+                  <li><code>-100 &lt;= Node.val &lt;= 100</code>.</li>
+                </ul>
+                <p class="note">
+                  Examples: <code>[3,9,20,null,null,15,7]</code> → <code>3</code>;
+                  <code>[1,null,2]</code> → <code>2</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[]</code></td>
+                        <td><code>0</code></td>
+                        <td>No nodes. Reading <code>root.left</code> without checking crashes.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[0]</code></td>
+                        <td><code>1</code></td>
+                        <td>One node is depth 1: the answer counts nodes, not edges.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[3,9,20,null,null,15,7]</code></td>
+                        <td><code>3</code></td>
+                        <td>Counting edges (a leaf as 0) gives 2.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,null,2]</code></td>
+                        <td><code>2</code></td>
+                        <td>The left side is empty. Taking the <code>min</code> of the two sides by mistake gives 1.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2,3,null,null,null,4,null,5]</code></td>
+                        <td><code>4</code></td>
+                        <td>The deepest path isn't on the left: both sides must be checked.</td>
+                      </tr>
+                      <tr>
+                        <td>10⁴ nodes in one line</td>
+                        <td><code>10000</code></td>
+                        <td>10⁴ deep: plain recursion passes Python's default limit of 1000. BFS or a stack has no such limit.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: BFS, Count the Levels</h2>
+                <p class="intuition">
+                  The depth is the number of levels. Walk the tree level by level with a
+                  queue, as in Level Order Traversal (102), and add 1 for each level.
+                </p>
+                <ul>
+                  <li>At the start of each round the queue holds exactly one level: pop that many nodes, adding their children.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(w), the widest level</span>
+                </div>
+                <p class="note">
+                  No recursion, so a 10⁴-deep line is no problem (1.4 ms in Python).
+                </p>
+                <div class="code-tabs" data-viz="0104-maximum-depth-of-binary-tree/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"empty":[10,11],"init":[12,13],"loop":[14],"level":[15,16],"pop":[17],"push":[18,19,20,21],"return":[22]}'>
+                    from collections import deque
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def maxDepth(self, root):
+                            if not root:  # an empty tree has depth 0
+                                return 0
+                            depth = 0
+                            queue = deque([root])
+                            while queue:  # one round per level
+                                depth += 1
+                                for _ in range(len(queue)):  # exactly this level's nodes are in the queue
+                                    node = queue.popleft()
+                                    if node.left:
+                                        queue.append(node.left)
+                                    if node.right:
+                                        queue.append(node.right)
+                            return depth  # the number of levels
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"empty":[16],"init":[17,18,19],"loop":[20],"level":[21,22,23],"pop":[24,25],"push":[26,27],"return":[30]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <queue>
+                    class Solution {
+                    public:
+                        int maxDepth(TreeNode* root) {
+                            if (!root) return 0; // an empty tree has depth 0
+                            int depth = 0;
+                            std::queue<TreeNode*> queue;
+                            queue.push(root);
+                            while (!queue.empty()) { // one round per level
+                                ++depth;
+                                size_t n = queue.size(); // exactly this level's nodes are in the queue
+                                for (size_t k = 0; k < n; ++k) {
+                                    TreeNode* node = queue.front();
+                                    queue.pop();
+                                    if (node->left) queue.push(node->left);
+                                    if (node->right) queue.push(node->right);
+                                }
+                            }
+                            return depth; // the number of levels
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"empty":[20],"init":[21,22,23],"loop":[24],"level":[25,26,27],"pop":[28],"push":[29,30],"return":[33]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    import java.util.ArrayDeque;
+                    import java.util.Deque;
+                    class Solution {
+                        public int maxDepth(TreeNode root) {
+                            if (root == null) return 0; // an empty tree has depth 0
+                            int depth = 0;
+                            Deque<TreeNode> queue = new ArrayDeque<>();
+                            queue.add(root);
+                            while (!queue.isEmpty()) { // one round per level
+                                depth++;
+                                int n = queue.size(); // exactly this level's nodes are in the queue
+                                for (int k = 0; k < n; k++) {
+                                    TreeNode node = queue.poll();
+                                    if (node.left != null) queue.add(node.left);
+                                    if (node.right != null) queue.add(node.right);
+                                }
+                            }
+                            return depth; // the number of levels
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>
+                  Approach 2: Recursion
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Ask each subtree for its depth and add 1 for the current node:
+                  <code>1 + max(depth(left), depth(right))</code>. An empty subtree
+                  answers 0, which makes a leaf come out as 1.
+                </p>
+                <ul>
+                  <li>Every node is visited once, after both its children (post-order).</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(h) call stack</span>
+                </div>
+                <p class="note">
+                  The answer interviewers expect, and the base of many tree problems:
+                  Balanced Binary Tree (110) and Diameter of Binary Tree (543) use the
+                  same height. On a 10⁴-deep line it hit Python's recursion limit
+                  (LeetCode raises the limit, so it passes there).
+                </p>
+                <div class="code-tabs" data-viz="0104-maximum-depth-of-binary-tree/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"empty":[9,10],"left":[11],"right":[12],"return":[13]}'>
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def maxDepth(self, root):
+                            if not root:  # no node: depth 0
+                                return 0
+                            left = self.maxDepth(root.left)
+                            right = self.maxDepth(root.right)
+                            return 1 + max(left, right)  # this node, plus the deeper side
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"empty":[16],"left":[17],"right":[18],"return":[19]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <algorithm>
+                    class Solution {
+                    public:
+                        int maxDepth(TreeNode* root) {
+                            if (!root) return 0; // no node: depth 0
+                            int left = maxDepth(root->left);
+                            int right = maxDepth(root->right);
+                            return 1 + std::max(left, right); // this node, plus the deeper side
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"empty":[18],"left":[19],"right":[20],"return":[21]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    class Solution {
+                        public int maxDepth(TreeNode root) {
+                            if (root == null) return 0; // no node: depth 0
+                            int left = maxDepth(root.left);
+                            int right = maxDepth(root.right);
+                            return 1 + Math.max(left, right); // this node, plus the deeper side
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>Approach 3: DFS with a Stack</h2>
+                <p class="intuition">
+                  The same depth-first walk without recursion: push
+                  <code>(node, depth)</code> pairs on a stack, and keep the biggest
+                  depth seen.
+                </p>
+                <ul>
+                  <li>Push the right child first, so the left one is popped first (the same order as the recursion).</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(h) for the stack</span>
+                </div>
+                <p class="note">
+                  Depth first like Approach 2, but safe on deep trees (1.3 ms for the
+                  10⁴-deep line).
+                </p>
+                <div class="code-tabs" data-viz="0104-maximum-depth-of-binary-tree/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[9,10],"loop":[11],"pop":[12],"best":[13],"push":[14,15,16,17],"return":[18]}'>
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def maxDepth(self, root):
+                            best = 0
+                            stack = [(root, 1)] if root else []  # (node, its depth): a stack instead of the call stack
+                            while stack:
+                                node, depth = stack.pop()
+                                best = max(best, depth)
+                                if node.right:
+                                    stack.append((node.right, depth + 1))
+                                if node.left:
+                                    stack.append((node.left, depth + 1))
+                            return best
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[18,19,20],"loop":[21],"pop":[22,23],"best":[24],"push":[25,26],"return":[28]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <algorithm>
+                    #include <stack>
+                    #include <utility>
+                    class Solution {
+                    public:
+                        int maxDepth(TreeNode* root) {
+                            int best = 0;
+                            std::stack<std::pair<TreeNode*, int>> st; // (node, its depth): a stack instead of the call stack
+                            if (root) st.push({root, 1});
+                            while (!st.empty()) {
+                                auto [node, depth] = st.top();
+                                st.pop();
+                                best = std::max(best, depth);
+                                if (node->right) st.push({node->right, depth + 1});
+                                if (node->left) st.push({node->left, depth + 1});
+                            }
+                            return best;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[20,22,23,24,25,26],"loop":[28],"pop":[29,30],"best":[31],"push":[32,33],"return":[35]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    import java.util.ArrayDeque;
+                    import java.util.Deque;
+                    class Solution {
+                        public int maxDepth(TreeNode root) {
+                            int best = 0;
+                            // Two stacks kept in step: a node and its depth (a stack instead of the call stack).
+                            Deque<TreeNode> nodes = new ArrayDeque<>();
+                            Deque<Integer> depths = new ArrayDeque<>();
+                            if (root != null) {
+                                nodes.push(root);
+                                depths.push(1);
+                            }
+                            while (!nodes.isEmpty()) {
+                                TreeNode node = nodes.pop();
+                                int depth = depths.pop();
+                                best = Math.max(best, depth);
+                                if (node.right != null) { nodes.push(node.right); depths.push(depth + 1); }
+                                if (node.left != null) { nodes.push(node.left); depths.push(depth + 1); }
+                            }
+                            return best;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  LeetCode's <code>TreeNode</code> has no height or depth built in, in
+                  any of the three languages.
+                </p>
+                <p class="note">
+                  Write Approach 2. Return 0 for an empty tree, and use
+                  <code>max</code>, not <code>min</code> (that's 111, Minimum Depth, and
+                  it needs extra care for nodes with one child).
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">BFS Levels</th>
+                        <td>Count rounds of a level-by-level queue</td>
+                        <td>O(n)</td>
+                        <td>O(w)</td>
+                        <td>No recursion</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Recursion</th>
+                        <td>1 + max(left, right)</td>
+                        <td>O(n)</td>
+                        <td>O(h)</td>
+                        <td>The usual answer</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">DFS Stack</th>
+                        <td>(node, depth) pairs, keep the max</td>
+                        <td>O(n)</td>
+                        <td>O(h)</td>
+                        <td>Depth first, no recursion</td>
                       </tr>
                     </tbody>
                   </table>
@@ -36688,7 +37155,7 @@
             const m = { ...marks };
             if (cur !== undefined) m[cur] = o.mark || "active";
             return [
-              { type: "tree", label: "tree (under each node: the range it must be strictly inside; green = fits, red = doesn't)", values, marks: m, captions },
+              { type: "tree", label: "tree (under each node: the range it must be strictly inside; green = fits, red = doesn't)", values, marks: m, captions: { ...captions } },
               { type: "vars", items: o.range ? [{ name: "low", value: lim(o.range[0]) }, { name: "high", value: lim(o.range[1]) }] : [{ name: "low / high", value: "−∞ / ∞ at the root" }] },
             ];
           };
@@ -36906,7 +37373,7 @@
             const m = { ...done };
             if (cur !== undefined) m[cur] = "active";
             return [
-              { type: "tree", label: "tree (under each node: its depth; green = placed)", values, marks: m, captions },
+              { type: "tree", label: "tree (under each node: its depth; green = placed)", values, marks: m, captions: { ...captions } },
               { type: "array", label: "result[depth]", values: result.map(fmt), wide: true, marks: depth !== undefined ? { [depth]: "new" } : {} },
             ];
           };
@@ -37020,6 +37487,127 @@
             steps.push({ line: "swap", note: level.length ? "Move on: next becomes level." : "The level is empty: stop.", view: view() });
           }
           steps.push({ line: "return", note: `Return ${result.length} level${result.length === 1 ? "" : "s"}.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0104-maximum-depth-of-binary-tree/approach1.visual.js -->
+    <script>
+      // BFS: walk the tree one level per round and count the rounds.
+      DSAViz.register("0104-maximum-depth-of-binary-tree/approach1", {
+        inputs: [{ name: "root", type: "tree", value: "[3, 9, 20, null, null, 15, 7]", maxLength: 15 }],
+        trace({ root: values }) {
+          const { root, nodes } = DSAViz.buildTree(values);
+          const steps = [];
+          const done = {};
+          const captions = {};
+          let queue = [root];
+          let depth = 0;
+          const view = (o = {}) => {
+            const m = { ...done };
+            queue.forEach((id) => (m[id] = o.level ? "active" : "new"));
+            return [
+              { type: "tree", label: "tree (dark = this level, green = counted; under each node: its level)", values, marks: m, captions: { ...captions } },
+              { type: "array", label: "queue", values: queue.map((id) => nodes[id].val) },
+              { type: "vars", items: [{ name: "depth", value: depth, mark: o.level ? "new" : "" }] },
+            ];
+          };
+          steps.push({ line: "init", note: "Start with the root in the queue and depth 0.", view: view() });
+          while (queue.length) {
+            depth++;
+            queue.forEach((id) => (captions[id] = `level ${depth}`));
+            steps.push({ line: ["loop", "level"], note: `A new level: depth = ${depth}. It has ${queue.length} node${queue.length === 1 ? "" : "s"}: ${queue.map((id) => nodes[id].val).join(", ")}.`, view: view({ level: true }) });
+            const next = [];
+            for (const id of queue) {
+              done[id] = "match";
+              for (const c of [nodes[id].left, nodes[id].right]) if (c >= 0) next.push(c);
+            }
+            queue = next;
+            steps.push({ line: ["pop", "push"], note: next.length ? `Pop them and add their children: ${next.map((c) => nodes[c].val).join(", ")}.` : "Pop them. None has children: the queue is empty.", view: view() });
+          }
+          steps.push({ line: "return", note: `${depth} level${depth === 1 ? "" : "s"}: return ${depth}.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0104-maximum-depth-of-binary-tree/approach2.visual.js -->
+    <script>
+      // Recursion: a node's depth is 1 + the deeper of its two subtrees; an empty subtree is 0.
+      DSAViz.register("0104-maximum-depth-of-binary-tree/approach2", {
+        inputs: [{ name: "root", type: "tree", value: "[3, 9, 20, null, null, 15, 7]", maxLength: 15 }],
+        trace({ root: values }) {
+          const { root, nodes } = DSAViz.buildTree(values);
+          const steps = [];
+          const marks = {};
+          const captions = {};
+          const view = (cur, mark) => {
+            const m = { ...marks };
+            if (cur !== undefined) m[cur] = mark || "active";
+            return [{ type: "tree", label: "tree (under each node: the depth of its subtree, once known)", values, marks: m, captions: { ...captions } }];
+          };
+          steps.push({ line: "empty", note: "Each node asks its two subtrees for their depth, then adds 1 for itself. An empty subtree answers 0.", view: view() });
+          function depth(id) {
+            const n = nodes[id];
+            steps.push({ line: ["empty", "left"], note: `At ${n.val}: first the depth of its left subtree${n.left < 0 ? " (empty: 0)" : ""}.`, view: view(id) });
+            const l = n.left >= 0 ? depth(n.left) : 0;
+            steps.push({ line: "right", note: `Back at ${n.val}: left gave ${l}. Now the right subtree${n.right < 0 ? " (empty: 0)" : ""}.`, view: view(id) });
+            const r = n.right >= 0 ? depth(n.right) : 0;
+            const d = 1 + Math.max(l, r);
+            captions[id] = `depth ${d}`;
+            marks[id] = "match";
+            steps.push({ line: "return", note: `${n.val}: 1 + max(${l}, ${r}) = ${d}.`, view: view(id, "match") });
+            return d;
+          }
+          const d = depth(root);
+          steps.push({ line: "return", note: `The root's answer is the whole tree's depth: return ${d}. Each node was visited once.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0104-maximum-depth-of-binary-tree/approach3.visual.js -->
+    <script>
+      // DFS with a stack of (node, depth) pairs; keep the biggest depth seen.
+      DSAViz.register("0104-maximum-depth-of-binary-tree/approach3", {
+        inputs: [{ name: "root", type: "tree", value: "[3, 9, 20, null, null, 15, 7]", maxLength: 15 }],
+        trace({ root: values }) {
+          const { root, nodes } = DSAViz.buildTree(values);
+          const steps = [];
+          const done = {};
+          const captions = {};
+          const stack = [[root, 1]];
+          let best = 0;
+          const view = (cur, o = {}) => {
+            const m = { ...done };
+            stack.forEach(([id]) => (m[id] = "new"));
+            if (cur !== undefined) m[cur] = "active";
+            return [
+              { type: "tree", label: "tree (yellow = on the stack, green = visited; under each node: its depth)", values, marks: m, captions: { ...captions } },
+              { type: "array", label: "stack (bottom → top): node (depth)", values: stack.map(([id, d]) => `${nodes[id].val} (${d})`), wide: true, marks: stack.length ? { [stack.length - 1]: "active" } : {} },
+              { type: "vars", items: [{ name: "best", value: best, mark: o.better ? "match" : "" }] },
+            ];
+          };
+          captions[root] = "depth 1";
+          steps.push({ line: "init", note: "Push (root, depth 1).", view: view() });
+          while (stack.length) {
+            const [id, d] = stack.pop();
+            const better = d > best;
+            best = Math.max(best, d);
+            done[id] = "match";
+            const kids = [];
+            for (const c of [nodes[id].right, nodes[id].left]) {
+              if (c >= 0) {
+                stack.push([c, d + 1]);
+                captions[c] = `depth ${d + 1}`;
+                kids.push(nodes[c].val);
+              }
+            }
+            steps.push({
+              line: ["loop", "pop", "best", "push"],
+              note: `Pop ${nodes[id].val} at depth ${d}.${better ? ` New deepest: best = ${best}.` : ""} ${kids.length ? `Push ${kids.join(" then ")} at depth ${d + 1} (right first, so left comes out next).` : "It's a leaf."}`,
+              view: view(id, { better }),
+            });
+          }
+          steps.push({ line: "return", note: `The stack is empty: return best = ${best}.`, view: view() });
           return steps;
         },
       });
@@ -38404,7 +38992,7 @@
             const m = { ...marks };
             if (current !== undefined) m[current] = opts.mark || "active";
             return [
-              { type: "tree", label: "tree (green = good; caption = largest value above the node)", values, marks: m, captions },
+              { type: "tree", label: "tree (green = good; caption = largest value above the node)", values, marks: m, captions: { ...captions } },
               { type: "array", label: "call stack (bottom → top)", values: stack.slice(), marks: stack.length ? { [stack.length - 1]: "active" } : {}, wide: true },
               { type: "vars", items: [{ name: "good so far", value: total, mark: opts.counted ? "match" : "" }] },
             ];
@@ -38489,7 +39077,7 @@
             });
             if (current !== undefined) m[current] = opts.mark || "active";
             return [
-              { type: "tree", label: "tree (green = good, yellow = waiting on the stack)", values, marks: m, captions },
+              { type: "tree", label: "tree (green = good, yellow = waiting on the stack)", values, marks: m, captions: { ...captions } },
               {
                 type: "array", label: "stack (bottom → top): node (max above it)",
                 values: stack.map(([id, b]) => `${nodes[id].val} (${b})`),
@@ -38566,7 +39154,7 @@
             });
             if (current !== undefined) m[current] = opts.mark || "active";
             return [
-              { type: "tree", label: "tree (green = good, yellow = waiting in the queue)", values, marks: m, captions },
+              { type: "tree", label: "tree (green = good, yellow = waiting in the queue)", values, marks: m, captions: { ...captions } },
               {
                 type: "array", label: "queue (front → back): node (max above it)",
                 values: queue.map(([id, b]) => `${nodes[id].val} (${b})`),

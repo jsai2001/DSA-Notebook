@@ -12,7 +12,7 @@ DSAViz.register("0102-binary-tree-level-order-traversal/approach1", {
       const m = { ...done };
       if (cur !== undefined) m[cur] = "active";
       return [
-        { type: "tree", label: "tree (under each node: its depth; green = placed)", values, marks: m, captions },
+        { type: "tree", label: "tree (under each node: its depth; green = placed)", values, marks: m, captions: { ...captions } },
         { type: "array", label: "result[depth]", values: result.map(fmt), wide: true, marks: depth !== undefined ? { [depth]: "new" } : {} },
       ];
     };

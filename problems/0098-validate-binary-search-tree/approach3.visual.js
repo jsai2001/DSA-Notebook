@@ -11,7 +11,7 @@ DSAViz.register("0098-validate-binary-search-tree/approach3", {
       const m = { ...marks };
       if (cur !== undefined) m[cur] = o.mark || "active";
       return [
-        { type: "tree", label: "tree (under each node: the range it must be strictly inside; green = fits, red = doesn't)", values, marks: m, captions },
+        { type: "tree", label: "tree (under each node: the range it must be strictly inside; green = fits, red = doesn't)", values, marks: m, captions: { ...captions } },
         { type: "vars", items: o.range ? [{ name: "low", value: lim(o.range[0]) }, { name: "high", value: lim(o.range[1]) }] : [{ name: "low / high", value: "−∞ / ∞ at the root" }] },
       ];
     };

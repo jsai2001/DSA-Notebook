@@ -16,7 +16,7 @@ DSAViz.register("1448-count-good-nodes-in-binary-tree/approach3", {
       });
       if (current !== undefined) m[current] = opts.mark || "active";
       return [
-        { type: "tree", label: "tree (green = good, yellow = waiting in the queue)", values, marks: m, captions },
+        { type: "tree", label: "tree (green = good, yellow = waiting in the queue)", values, marks: m, captions: { ...captions } },
         {
           type: "array", label: "queue (front → back): node (max above it)",
           values: queue.map(([id, b]) => `${nodes[id].val} (${b})`),
