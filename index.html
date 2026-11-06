@@ -9290,7 +9290,7 @@
       <details class="pattern-group" id="g-trees">
         <summary>
           <span class="g-name">Trees</span>
-          <span class="g-count"><span class="g-total">8 problems</span></span>
+          <span class="g-count"><span class="g-total">9 problems</span></span>
           <span class="g-hint">A DFS that returns something to the parent</span>
         </summary>
         <div class="g-body">
@@ -11757,6 +11757,497 @@
                         <td>O(n)</td>
                         <td>O(h)</td>
                         <td>No recursion, no map</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0110-balanced-binary-tree ===== -->
+          <details class="question" data-group="trees" data-tags="tree binary-tree dfs recursion height balanced">
+            <summary>
+              <span class="q-title">110. Balanced Binary Tree</span>
+              <span class="q-meta">
+                <span class="badge easy">Easy</span>
+                <span class="tag">Tree</span>
+                <span class="tag">DFS</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> A tree is balanced when at <strong>every
+                node</strong> the two subtree heights differ by at most 1. Compute the
+                heights bottom-up in one walk, and return <code>-1</code> as soon as a
+                node fails, so the answer travels up without more work. O(n), instead
+                of recomputing heights for every node.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/balanced-binary-tree/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Given a binary tree, return <code>true</code> if it is
+                  <strong>height-balanced</strong>: for every node, the heights of its
+                  left and right subtrees differ by no more than 1.
+                </p>
+                <ul>
+                  <li>0 to 5000 nodes (the tree can be empty).</li>
+                  <li><code>-10⁴ &lt;= Node.val &lt;= 10⁴</code>.</li>
+                </ul>
+                <p class="note">
+                  Examples: <code>[3,9,20,null,null,15,7]</code> → <code>true</code>;
+                  <code>[1,2,2,3,3,null,null,4,4]</code> → <code>false</code>;
+                  <code>[]</code> → <code>true</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[]</code></td>
+                        <td><code>true</code></td>
+                        <td>An empty tree has nothing out of balance.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2]</code></td>
+                        <td><code>true</code></td>
+                        <td>Heights 1 and 0: a difference of 1 is allowed.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2,null,3]</code></td>
+                        <td><code>false</code></td>
+                        <td>At the root, the sides are 2 and 0. It has only one leaf, so the rule "all leaves within one level of each other" wrongly says true.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2,2,3,null,null,3,4,null,null,4]</code></td>
+                        <td><code>false</code></td>
+                        <td>The root's two sides are both height 3, so checking only the root says true. The 2's below it are unbalanced: every node must pass.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2,2,3,3,null,null,4,4]</code></td>
+                        <td><code>false</code></td>
+                        <td>The left side is height 3, the right 1: the problem is at the root.</td>
+                      </tr>
+                      <tr>
+                        <td>5000 nodes in one line</td>
+                        <td><code>false</code></td>
+                        <td>It fails near the bottom, but the recursion has to go 5000 deep to get there, past Python's default limit of 1000. The stack version is fine.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Check Every Node from the Top</h2>
+                <p class="intuition">
+                  Follow the definition: at the root, compute the height of each side
+                  and compare them. Then check the left and right subtrees the same way.
+                </p>
+                <ul>
+                  <li><code>height(node) = 1 + max(height(left), height(right))</code>, with an empty tree at 0.</li>
+                  <li>The root passing is not enough: recurse into both children too.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · h): each height is recomputed for every node above it</span>
+                  <span><strong>Space</strong> O(h) call stack</span>
+                </div>
+                <p class="note">
+                  Correct, and close to the definition, but it repeats work: 9.6 ms for
+                  a balanced tree of 5000 nodes, 12 times slower than Approach 2.
+                </p>
+                <div class="code-tabs" data-viz="0110-balanced-binary-tree/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"height":[9,10,11,12],"empty":[13,14],"check":[15],"bad":[16],"recurse":[17]}'>
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def isBalanced(self, root):
+                            def height(node):  # the number of nodes on the longest path down
+                                if not node:
+                                    return 0
+                                return 1 + max(height(node.left), height(node.right))
+                            if not root:  # an empty tree is balanced
+                                return True
+                            if abs(height(root.left) - height(root.right)) > 1:  # this node's two sides differ too much
+                                return False
+                            return self.isBalanced(root.left) and self.isBalanced(root.right)  # every node must pass, not just the root
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"empty":[17],"check":[18],"bad":[18],"recurse":[19],"height":[22,23,24]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <algorithm>
+                    #include <cstdlib>
+                    class Solution {
+                    public:
+                        bool isBalanced(TreeNode* root) {
+                            if (!root) return true; // an empty tree is balanced
+                            if (std::abs(height(root->left) - height(root->right)) > 1) return false; // this node's two sides differ too much
+                            return isBalanced(root->left) && isBalanced(root->right); // every node must pass, not just the root
+                        }
+                    private:
+                        int height(TreeNode* node) { // the number of nodes on the longest path down
+                            if (!node) return 0;
+                            return 1 + std::max(height(node->left), height(node->right));
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"empty":[18],"check":[19],"bad":[19],"recurse":[20],"height":[22,23,24]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    class Solution {
+                        public boolean isBalanced(TreeNode root) {
+                            if (root == null) return true; // an empty tree is balanced
+                            if (Math.abs(height(root.left) - height(root.right)) > 1) return false; // this node's two sides differ too much
+                            return isBalanced(root.left) && isBalanced(root.right); // every node must pass, not just the root
+                        }
+                        private int height(TreeNode node) { // the number of nodes on the longest path down
+                            if (node == null) return 0;
+                            return 1 + Math.max(height(node.left), height(node.right));
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>
+                  Approach 2: Bottom-Up with −1 for "Not Balanced"
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Compute each subtree's height once, children first, and check the
+                  node at the same moment. One function can return both answers: the
+                  height if the subtree is balanced, or <code>-1</code> if it isn't.
+                </p>
+                <ul>
+                  <li>If either child returns <code>-1</code>, return <code>-1</code> right away: there's no need to look further.</li>
+                  <li>Otherwise compare the two heights, then return <code>1 + max(left, right)</code>.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(h) call stack</span>
+                </div>
+                <p class="note">
+                  The answer interviewers expect: each node is visited once (0.8 ms for
+                  5000 balanced nodes). It's Maximum Depth (104) with one check added.
+                </p>
+                <div class="code-tabs" data-viz="0110-balanced-binary-tree/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"call":[9],"empty":[10,11],"left":[12,13,14],"right":[15,16,17],"bad":[18,19],"height":[20],"return":[21]}'>
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def isBalanced(self, root):
+                            def check(node):  # the height of this subtree, or -1 if it isn't balanced
+                                if not node:
+                                    return 0
+                                left = check(node.left)
+                                if left == -1:  # a problem below: stop right away
+                                    return -1
+                                right = check(node.right)
+                                if right == -1:
+                                    return -1
+                                if abs(left - right) > 1:
+                                    return -1
+                                return 1 + max(left, right)  # balanced: pass the height up
+                            return check(root) != -1
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"return":[17],"call":[20],"empty":[21],"left":[22,23],"right":[24,25],"bad":[26],"height":[27]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <algorithm>
+                    #include <cstdlib>
+                    class Solution {
+                    public:
+                        bool isBalanced(TreeNode* root) {
+                            return check(root) != -1;
+                        }
+                    private:
+                        int check(TreeNode* node) { // the height of this subtree, or -1 if it isn't balanced
+                            if (!node) return 0;
+                            int left = check(node->left);
+                            if (left == -1) return -1; // a problem below: stop right away
+                            int right = check(node->right);
+                            if (right == -1) return -1;
+                            if (std::abs(left - right) > 1) return -1;
+                            return 1 + std::max(left, right); // balanced: pass the height up
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"return":[18],"call":[20],"empty":[21],"left":[22,23],"right":[24,25],"bad":[26],"height":[27]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    class Solution {
+                        public boolean isBalanced(TreeNode root) {
+                            return check(root) != -1;
+                        }
+                        private int check(TreeNode node) { // the height of this subtree, or -1 if it isn't balanced
+                            if (node == null) return 0;
+                            int left = check(node.left);
+                            if (left == -1) return -1; // a problem below: stop right away
+                            int right = check(node.right);
+                            if (right == -1) return -1;
+                            if (Math.abs(left - right) > 1) return -1;
+                            return 1 + Math.max(left, right); // balanced: pass the height up
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>Approach 3: Post-Order with a Stack</h2>
+                <p class="intuition">
+                  The same bottom-up check without recursion. Each node goes on the
+                  stack twice: the first time, push it back marked "children done", then
+                  its children; the second time, both children's heights are already
+                  stored, so check and store its own.
+                </p>
+                <ul>
+                  <li>Keep the heights in a map from node to height; a missing child counts as 0.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n) for the map</span>
+                </div>
+                <p class="note">
+                  A little slower than Approach 2 (1.4 ms), but safe on a 5000-deep tree
+                  (0.7 ms), where both recursive versions passed Python's limit.
+                </p>
+                <div class="code-tabs" data-viz="0110-balanced-binary-tree/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[9,10],"loop":[11,12],"push":[13,14,15,16,17,18,19],"visit":[20,23],"bad":[21,22],"return":[24]}'>
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def isBalanced(self, root):
+                            height = {None: 0}  # node -> height of its subtree, filled in children first
+                            stack = [(root, False)] if root else []  # (node, are its children done?)
+                            while stack:
+                                node, children_done = stack.pop()
+                                if not children_done:  # first visit: come back after both children
+                                    stack.append((node, True))
+                                    if node.right:
+                                        stack.append((node.right, False))
+                                    if node.left:
+                                        stack.append((node.left, False))
+                                    continue
+                                left, right = height[node.left], height[node.right]  # second visit: both heights are known
+                                if abs(left - right) > 1:
+                                    return False
+                                height[node] = 1 + max(left, right)
+                            return True
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[19,20,21],"loop":[22,23,24],"push":[25,26,27,28,29],"visit":[31,33],"bad":[32],"return":[35]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <cstdlib>
+                    #include <stack>
+                    #include <unordered_map>
+                    #include <utility>
+                    class Solution {
+                    public:
+                        bool isBalanced(TreeNode* root) {
+                            std::unordered_map<TreeNode*, int> height{{nullptr, 0}}; // node -> height of its subtree, filled in children first
+                            std::stack<std::pair<TreeNode*, bool>> st; // (node, are its children done?)
+                            if (root) st.push({root, false});
+                            while (!st.empty()) {
+                                auto [node, childrenDone] = st.top();
+                                st.pop();
+                                if (!childrenDone) { // first visit: come back after both children
+                                    st.push({node, true});
+                                    if (node->right) st.push({node->right, false});
+                                    if (node->left) st.push({node->left, false});
+                                    continue;
+                                }
+                                int left = height[node->left], right = height[node->right]; // second visit: both heights are known
+                                if (std::abs(left - right) > 1) return false;
+                                height[node] = 1 + std::max(left, right);
+                            }
+                            return true;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[22,23,24,25],"loop":[26,27,28],"push":[29,30,31,32,33],"visit":[35,36,38],"bad":[37],"return":[40]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    import java.util.ArrayDeque;
+                    import java.util.Deque;
+                    import java.util.HashMap;
+                    import java.util.Map;
+                    class Solution {
+                        public boolean isBalanced(TreeNode root) {
+                            Map<TreeNode, Integer> height = new HashMap<>(); // node -> height of its subtree, filled in children first
+                            Deque<TreeNode> nodes = new ArrayDeque<>(); // two stacks kept in step: a node and whether its children are done
+                            Deque<Boolean> done = new ArrayDeque<>();
+                            if (root != null) { nodes.push(root); done.push(false); }
+                            while (!nodes.isEmpty()) {
+                                TreeNode node = nodes.pop();
+                                boolean childrenDone = done.pop();
+                                if (!childrenDone) { // first visit: come back after both children
+                                    nodes.push(node); done.push(true);
+                                    if (node.right != null) { nodes.push(node.right); done.push(false); }
+                                    if (node.left != null) { nodes.push(node.left); done.push(false); }
+                                    continue;
+                                }
+                                int left = node.left == null ? 0 : height.get(node.left); // second visit: both heights are known
+                                int right = node.right == null ? 0 : height.get(node.right);
+                                if (Math.abs(left - right) > 1) return false;
+                                height.put(node, 1 + Math.max(left, right));
+                            }
+                            return true;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  Nothing in Python, C++ or Java checks a tree's balance. Self-balancing
+                  trees (like <code>std::map</code> or Java's <code>TreeMap</code>, both
+                  red-black trees) keep themselves balanced, but use a looser rule than
+                  this one.
+                </p>
+                <p class="note">
+                  Write Approach 2. Check every node, not just the root, and allow a
+                  difference of exactly 1.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Top-Down</th>
+                        <td>Compare heights at each node, recompute each time</td>
+                        <td>O(n · h)</td>
+                        <td>O(h)</td>
+                        <td>Follows the definition; repeats work</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Bottom-Up, −1</th>
+                        <td>Height or −1, children first</td>
+                        <td>O(n)</td>
+                        <td>O(h)</td>
+                        <td>The usual answer</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Stack</th>
+                        <td>Post-order, heights in a map</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>No recursion</td>
                       </tr>
                     </tbody>
                   </table>
@@ -38792,6 +39283,150 @@
           walkIn(rootVal);
           if (pre.join() !== preorder.join() || ino.join() !== inorder.join()) throw new DSAViz.InputError(bad);
           steps.push({ line: "return", note: `All of preorder placed: return the root, ${rootVal}. Each node was pushed and popped at most once: O(n).`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0110-balanced-binary-tree/approach1.visual.js -->
+    <script>
+      // Top-down: at each node, work out both sides' heights from scratch and compare; then check the children the same way.
+      DSAViz.register("0110-balanced-binary-tree/approach1", {
+        inputs: [{ name: "root", type: "tree", value: "[1, 2, 2, 3, null, null, 3, 4, null, null, 4]", maxLength: 15 }],
+        trace({ root: values }) {
+          const { root, nodes } = DSAViz.buildTree(values);
+          const steps = [];
+          const marks = {};
+          let visits = 0; // node visits made by height(): the repeated work
+          const height = (id) => (id < 0 ? 0 : (visits++, 1 + Math.max(height(nodes[id].left), height(nodes[id].right))));
+          const sub = (id) => (id < 0 ? [] : [id, ...sub(nodes[id].left), ...sub(nodes[id].right)]);
+          const view = (cur, o = {}) => {
+            const m = { ...marks };
+            (o.left || []).forEach((k) => (m[k] = "compare"));
+            (o.right || []).forEach((k) => (m[k] = "new"));
+            if (cur !== undefined) m[cur] = o.mark || "active";
+            return [
+              { type: "tree", label: "tree (orange = left side, yellow = right side, both measured now; green = passed)", values, marks: m },
+              { type: "vars", items: [{ name: "nodes visited by height() so far", value: visits }] },
+            ];
+          };
+          steps.push({ line: "empty", note: "At every node: measure both sides from scratch and compare. Then check its children the same way.", view: view() });
+          function check(id) {
+            const n = nodes[id];
+            const l = height(n.left);
+            const r = height(n.right);
+            if (Math.abs(l - r) > 1) {
+              marks[id] = "cut";
+              steps.push({ line: ["empty", "height", "check", "bad"], note: `${n.val}: left height ${l}, right height ${r}. They differ by ${Math.abs(l - r)}: not balanced. Return false.`, view: view(id, { left: sub(n.left), right: sub(n.right), mark: "cut" }) });
+              return false;
+            }
+            marks[id] = "match";
+            steps.push({ line: ["empty", "height", "check", "recurse"], note: `${n.val}: left height ${l}, right height ${r}. Fine here, but every node below must pass too.`, view: view(id, { left: sub(n.left), right: sub(n.right), mark: "match" }) });
+            return (n.left < 0 || check(n.left)) && (n.right < 0 || check(n.right));
+          }
+          const r = check(root);
+          const n = Object.keys(nodes).length;
+          steps.push({ line: r ? "recurse" : "bad", note: `${r ? "Every node passed: return true." : "Return false."} height() visited ${visits} nodes for a tree of ${n}${visits > n ? ": some subtrees were measured more than once. On a big balanced tree that adds up to O(n · h)" : ""}.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0110-balanced-binary-tree/approach2.visual.js -->
+    <script>
+      // Bottom-up: each subtree returns its height, or −1 as soon as any node in it is out of balance.
+      DSAViz.register("0110-balanced-binary-tree/approach2", {
+        inputs: [{ name: "root", type: "tree", value: "[1, 2, 2, 3, 3, null, null, 4, 4]", maxLength: 15 }],
+        trace({ root: values }) {
+          const { root, nodes } = DSAViz.buildTree(values);
+          const steps = [];
+          const marks = {};
+          const captions = {};
+          const view = (cur, mark) => {
+            const m = { ...marks };
+            if (cur !== undefined) m[cur] = mark || "active";
+            return [{ type: "tree", label: "tree (under each node: its height, or −1 if out of balance; green = balanced, red = not)", values, marks: m, captions: { ...captions } }];
+          };
+          steps.push({ line: "call", note: "Ask each subtree for its height. A subtree that isn't balanced answers −1, and that −1 is passed straight up.", view: view() });
+          function check(id) {
+            const n = nodes[id];
+            steps.push({ line: ["call", "empty", "left"], note: `At ${n.val}: first its left subtree${n.left < 0 ? " (empty: height 0)" : ""}.`, view: view(id) });
+            const l = n.left >= 0 ? check(n.left) : 0;
+            if (l === -1) {
+              captions[id] = "−1";
+              marks[id] = "cut";
+              steps.push({ line: "left", note: `${n.val}'s left subtree answered −1: answer −1 too, without looking at its right side.`, view: view(id, "cut") });
+              return -1;
+            }
+            steps.push({ line: "right", note: `Back at ${n.val}: left height ${l}. Now its right subtree${n.right < 0 ? " (empty: height 0)" : ""}.`, view: view(id) });
+            const r = n.right >= 0 ? check(n.right) : 0;
+            if (r === -1) {
+              captions[id] = "−1";
+              marks[id] = "cut";
+              steps.push({ line: "right", note: `${n.val}'s right subtree answered −1: answer −1 too.`, view: view(id, "cut") });
+              return -1;
+            }
+            if (Math.abs(l - r) > 1) {
+              captions[id] = "−1";
+              marks[id] = "cut";
+              steps.push({ line: "bad", note: `${n.val}: heights ${l} and ${r} differ by ${Math.abs(l - r)}, more than 1. Not balanced: answer −1.`, view: view(id, "cut") });
+              return -1;
+            }
+            const h = 1 + Math.max(l, r);
+            captions[id] = `h ${h}`;
+            marks[id] = "match";
+            steps.push({ line: ["bad", "height"], note: `${n.val}: heights ${l} and ${r} differ by ${Math.abs(l - r)}, fine. Its height is 1 + max(${l}, ${r}) = ${h}.`, view: view(id, "match") });
+            return h;
+          }
+          const r = check(root);
+          steps.push({ line: "return", note: r === -1 ? "The root's answer is −1: return false." : `The root's answer is a height (${r}), not −1: return true. Each node was visited once.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0110-balanced-binary-tree/approach3.visual.js -->
+    <script>
+      // Post-order with a stack: each node is visited twice; on the second visit both children's heights are known.
+      DSAViz.register("0110-balanced-binary-tree/approach3", {
+        inputs: [{ name: "root", type: "tree", value: "[3, 9, 20, null, null, 15, 7]", maxLength: 15 }],
+        trace({ root: values }) {
+          const { root, nodes } = DSAViz.buildTree(values);
+          const steps = [];
+          const marks = {};
+          const captions = {};
+          const height = {};
+          const stack = [[root, false]];
+          const view = (cur, mark) => {
+            const m = { ...marks };
+            stack.forEach(([id, done]) => (m[id] = m[id] || (done ? "compare" : "new")));
+            if (cur !== undefined) m[cur] = mark || "active";
+            return [
+              { type: "tree", label: "tree (yellow = to visit, orange = waiting for its children, green = height known)", values, marks: m, captions: { ...captions } },
+              { type: "array", label: "stack (bottom → top); ✓ = children done", values: stack.map(([id, d]) => `${nodes[id].val}${d ? " ✓" : ""}`), wide: true, marks: stack.length ? { [stack.length - 1]: "active" } : {} },
+            ];
+          };
+          steps.push({ line: "init", note: `Push the root, ${nodes[root].val}. A node is checked only once both its children have heights.`, view: view() });
+          while (stack.length) {
+            const [id, done] = stack.pop();
+            const n = nodes[id];
+            if (!done) {
+              stack.push([id, true]);
+              const kids = [];
+              for (const c of [n.right, n.left]) if (c >= 0) { stack.push([c, false]); kids.push(nodes[c].val); }
+              steps.push({ line: ["loop", "push"], note: `First visit to ${n.val}: put it back marked ✓, then ${kids.length ? `push its children (${kids.join(" then ")})` : "it has no children"}.`, view: view(id) });
+              continue;
+            }
+            const l = n.left >= 0 ? height[n.left] : 0;
+            const r = n.right >= 0 ? height[n.right] : 0;
+            if (Math.abs(l - r) > 1) {
+              marks[id] = "cut";
+              steps.push({ line: ["loop", "visit", "bad"], note: `Second visit to ${n.val}: heights ${l} and ${r} differ by ${Math.abs(l - r)}. Return false.`, view: view(id, "cut") });
+              return steps;
+            }
+            height[id] = 1 + Math.max(l, r);
+            captions[id] = `h ${height[id]}`;
+            marks[id] = "match";
+            steps.push({ line: ["loop", "visit", "bad"], note: `Second visit to ${n.val}: heights ${l} and ${r}, fine. Store its height, ${height[id]}.`, view: view(id, "match") });
+          }
+          steps.push({ line: "return", note: "Every node passed: return true. No recursion was used.", view: view() });
           return steps;
         },
       });
