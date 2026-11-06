@@ -2777,7 +2777,7 @@
       <details class="pattern-group" id="g-sliding-window">
         <summary>
           <span class="g-name">Sliding Window</span>
-          <span class="g-count"><span class="g-total">3 problems</span></span>
+          <span class="g-count"><span class="g-total">4 problems</span></span>
           <span class="g-hint">A window that grows and shrinks over a string</span>
         </summary>
         <div class="g-body">
@@ -3769,6 +3769,361 @@
                         <td>O(m + n)</td>
                         <td>O(1)</td>
                         <td>O(1) per letter; the follow-up's answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0121-best-time-to-buy-and-sell-stock ===== -->
+          <details class="question" data-group="sliding-window" data-tags="array dynamic-programming sliding-window two-pointers stock profit greedy">
+            <summary>
+              <span class="q-title">121. Best Time to Buy and Sell Stock</span>
+              <span class="q-meta">
+                <span class="badge easy">Easy</span>
+                <span class="tag">Array</span>
+                <span class="tag">Sliding Window</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> For each day, the best sale on that day is
+                its price minus the <strong>cheapest price before it</strong>. So walk
+                once, keeping the lowest price seen so far and the best profit. Start
+                the profit at 0: not trading is allowed. O(n) time, O(1) space.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/best-time-to-buy-and-sell-stock/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  <code>prices[i]</code> is a stock's price on day i. Buy on one day and
+                  sell on a <strong>later</strong> day. Return the most profit you can
+                  make, or <code>0</code> if no trade makes money.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= prices.length &lt;= 10⁵</code> and <code>0 &lt;= prices[i] &lt;= 10⁴</code>.</li>
+                  <li>Only one buy and one sell.</li>
+                </ul>
+                <p class="note">
+                  Examples: <code>[7,1,5,3,6,4]</code> → <code>5</code> (buy at 1, sell
+                  at 6); <code>[7,6,4,3,1]</code> → <code>0</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[5]</code></td>
+                        <td><code>0</code></td>
+                        <td>One day: there's no later day to sell on.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[7,6,4,3,1]</code></td>
+                        <td><code>0</code></td>
+                        <td>Prices only fall. Taking highest minus lowest says 6 (it sells before buying); starting <code>best</code> below 0 says −1.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[2,4,1]</code></td>
+                        <td><code>2</code></td>
+                        <td>The lowest price (1) comes after the highest (4). Highest minus lowest says 3.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[3,8,1,5]</code></td>
+                        <td><code>5</code></td>
+                        <td>A new low (1) shows up later, but the best trade (3 → 8) was before it. Keep the best profit seen, not just the latest.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[3,3,3]</code></td>
+                        <td><code>0</code></td>
+                        <td>Flat prices: a trade makes 0, which is also the answer for not trading.</td>
+                      </tr>
+                      <tr>
+                        <td>10⁵ days</td>
+                        <td>—</td>
+                        <td>Trying every pair is about 5 × 10⁹ pairs: around 5 minutes in Python (0.28 s at 3000 days, and it grows with n²).</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Every Buy Day, Every Sell Day</h2>
+                <p class="intuition">
+                  Try buying on each day i and selling on each later day j, and keep the
+                  biggest <code>prices[j] − prices[i]</code>. Start at 0 for "don't
+                  trade".
+                </p>
+                <ul>
+                  <li><code>j</code> starts at <code>i + 1</code>: the sale must come after the buy.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n²)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  Correct, and a good check for the faster ones, but far too slow at 10⁵
+                  days.
+                </p>
+                <div class="code-tabs" data-viz="0121-best-time-to-buy-and-sell-stock/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"buy":[4],"sell":[5],"profit":[6],"return":[7]}'>
+                    class Solution(object):
+                        def maxProfit(self, prices):
+                            best = 0  # not trading at all makes 0
+                            for i in range(len(prices)):  # buy on day i
+                                for j in range(i + 1, len(prices)):  # sell on a later day j
+                                    best = max(best, prices[j] - prices[i])
+                            return best
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"buy":[7],"sell":[8],"profit":[9],"return":[10]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int maxProfit(std::vector<int>& prices) {
+                            int best = 0; // not trading at all makes 0
+                            for (size_t i = 0; i < prices.size(); ++i) // buy on day i
+                                for (size_t j = i + 1; j < prices.size(); ++j) // sell on a later day j
+                                    best = std::max(best, prices[j] - prices[i]);
+                            return best;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"buy":[4],"sell":[5],"profit":[6],"return":[7]}'>
+                    class Solution {
+                        public int maxProfit(int[] prices) {
+                            int best = 0; // not trading at all makes 0
+                            for (int i = 0; i < prices.length; i++) // buy on day i
+                                for (int j = i + 1; j < prices.length; j++) // sell on a later day j
+                                    best = Math.max(best, prices[j] - prices[i]);
+                            return best;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Two Pointers, Buy and Sell</h2>
+                <p class="intuition">
+                  Keep a buy day and move the sell day right, one day at a time. If the
+                  sell day's price is lower than the buy day's, move the buy day there:
+                  a cheaper buy is better for every sale after it. Otherwise, check the
+                  profit.
+                </p>
+                <ul>
+                  <li>The window <code>buy..sell</code> grows on the right, and jumps on the left to every new low.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  One pass: 7.9 ms for 10⁵ days in Python. The usual way to see it as a
+                  sliding window.
+                </p>
+                <div class="code-tabs" data-viz="0121-best-time-to-buy-and-sell-stock/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"sell":[5],"move":[6,7],"profit":[8,9],"return":[10]}'>
+                    class Solution(object):
+                        def maxProfit(self, prices):
+                            best = 0
+                            buy = 0  # the buy day: the cheapest day seen so far
+                            for sell in range(1, len(prices)):  # the sell day moves right one day at a time
+                                if prices[sell] < prices[buy]:  # a cheaper day: buying here beats any earlier buy
+                                    buy = sell
+                                else:
+                                    best = max(best, prices[sell] - prices[buy])
+                            return best
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7],"sell":[8],"move":[9,10],"profit":[11,12],"return":[15]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int maxProfit(std::vector<int>& prices) {
+                            int best = 0;
+                            size_t buy = 0; // the buy day: the cheapest day seen so far
+                            for (size_t sell = 1; sell < prices.size(); ++sell) { // the sell day moves right one day at a time
+                                if (prices[sell] < prices[buy]) { // a cheaper day: buying here beats any earlier buy
+                                    buy = sell;
+                                } else {
+                                    best = std::max(best, prices[sell] - prices[buy]);
+                                }
+                            }
+                            return best;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4],"sell":[5],"move":[6,7],"profit":[8,9],"return":[12]}'>
+                    class Solution {
+                        public int maxProfit(int[] prices) {
+                            int best = 0;
+                            int buy = 0; // the buy day: the cheapest day seen so far
+                            for (int sell = 1; sell < prices.length; sell++) { // the sell day moves right one day at a time
+                                if (prices[sell] < prices[buy]) { // a cheaper day: buying here beats any earlier buy
+                                    buy = sell;
+                                } else {
+                                    best = Math.max(best, prices[sell] - prices[buy]);
+                                }
+                            }
+                            return best;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Lowest Price So Far
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  The same idea with only values, no days: for each price, first see what
+                  selling today would make (<code>p − lowest</code>), then let today
+                  lower <code>lowest</code> for the days after.
+                </p>
+                <ul>
+                  <li>Profit first, then the low, so every sale uses an earlier buy day. (The other order also works here: it only adds a same-day trade worth 0.)</li>
+                  <li>On day 0, <code>lowest</code> is infinity, so the profit is negative and <code>best</code> stays 0.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  Two lines in the loop (7.3 ms). The same shape is Maximum Subarray
+                  (53) on the daily changes, and the start of the other stock problems
+                  (122, 309, 714).
+                </p>
+                <div class="code-tabs" data-viz="0121-best-time-to-buy-and-sell-stock/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"loop":[5],"profit":[6],"low":[7],"return":[8]}'>
+                    class Solution(object):
+                        def maxProfit(self, prices):
+                            lowest = float("inf")  # the cheapest price before today
+                            best = 0
+                            for p in prices:
+                                best = max(best, p - lowest)  # sell today, having bought at the cheapest day before
+                                lowest = min(lowest, p)  # today may be the cheapest day for later sales
+                            return best
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8],"loop":[9],"profit":[10],"low":[11],"return":[13]}'>
+                    #include <algorithm>
+                    #include <climits>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int maxProfit(std::vector<int>& prices) {
+                            int lowest = INT_MAX; // the cheapest price before today
+                            int best = 0;
+                            for (int p : prices) {
+                                best = std::max(best, p - lowest); // sell today, having bought at the cheapest day before (day 0: p - INT_MAX is negative, no overflow)
+                                lowest = std::min(lowest, p); // today may be the cheapest day for later sales
+                            }
+                            return best;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4],"loop":[5],"profit":[6],"low":[7],"return":[9]}'>
+                    class Solution {
+                        public int maxProfit(int[] prices) {
+                            int lowest = Integer.MAX_VALUE; // the cheapest price before today
+                            int best = 0;
+                            for (int p : prices) {
+                                best = Math.max(best, p - lowest); // sell today, having bought at the cheapest day before (day 0: p - MAX_VALUE is negative, no overflow)
+                                lowest = Math.min(lowest, p); // today may be the cheapest day for later sales
+                            }
+                            return best;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  In Python, <code>itertools.accumulate(prices, min)</code> gives the
+                  lowest price up to each day; subtract it from each price and take the
+                  max. C++ and Java have no direct equivalent worth using here: write
+                  the loop.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    from itertools import accumulate
+                    class Solution(object):
+                        def maxProfit(self, prices):
+                            lows = accumulate(prices, min)  # lows[i] = the cheapest price on days 0..i
+                            return max(p - low for p, low in zip(prices, lows))  # 0 when selling on the buy day is the best
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1) (both are lazy)</span>
+                </div>
+                <p class="note">
+                  Here the low includes today, so a day can pair with itself and give 0;
+                  that's fine because 0 is always allowed. 7.8 ms for 10⁵ days.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Every Pair</th>
+                        <td>All buy and sell days</td>
+                        <td>O(n²)</td>
+                        <td>O(1)</td>
+                        <td>About 5 minutes at 10⁵</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Two Pointers</th>
+                        <td>Buy jumps to each new low</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>The sliding-window view</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Lowest So Far</th>
+                        <td>Profit, then update the low</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>The usual answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -40000,6 +40355,133 @@
             }
           }
           steps.push({ line: "answer", note: `Return dp[${n}] = ${dp[n]}. One row of ${n + 1} numbers was enough.`, view: view(s.length, { final: true }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0121-best-time-to-buy-and-sell-stock/approach1.visual.js -->
+    <script>
+      // Every pair: buy on day i, sell on each later day j, keep the biggest difference.
+      DSAViz.register("0121-best-time-to-buy-and-sell-stock/approach1", {
+        inputs: [{ name: "prices", type: "int[]", value: "[7, 1, 5, 3, 6, 4]", minLength: 1, maxLength: 8, minValue: 0, maxValue: 20 }],
+        trace({ prices }) {
+          const n = prices.length;
+          const steps = [];
+          let best = 0;
+          let bestPair = null;
+          let tried = 0;
+          const view = (i, j, o = {}) => {
+            const marks = {};
+            if (o.final) {
+              if (bestPair) { marks[bestPair[0]] = "match"; marks[bestPair[1]] = "match"; }
+            } else {
+              marks[i] = "compare";
+              if (j !== undefined) marks[j] = "active";
+            }
+            return [
+              { type: "bars", label: "prices (orange = buy day, dark = sell day; green = the best trade)", values: prices, marks, pointers: o.final ? {} : j !== undefined ? { buy: i, sell: j } : { buy: i } },
+              { type: "vars", items: [{ name: "pairs tried", value: tried }, { name: "best", value: bestPair ? `${best} (day ${bestPair[0]} → day ${bestPair[1]})` : best, mark: o.better ? "match" : "" }] },
+            ];
+          };
+          steps.push({ line: "init", note: `best = 0. Try all ${(n * (n - 1)) / 2} pairs of a buy day and a later sell day.`, view: view(0) });
+          for (let i = 0; i < n; i++) {
+            for (let j = i + 1; j < n; j++) {
+              tried++;
+              const p = prices[j] - prices[i];
+              const better = p > best;
+              if (better) { best = p; bestPair = [i, j]; }
+              steps.push({ line: [j === i + 1 ? "buy" : "sell", "sell", "profit"], note: `Buy day ${i} (${prices[i]}), sell day ${j} (${prices[j]}): ${p}.${better ? " New best." : ""}`, view: view(i, j, { better }) });
+            }
+          }
+          steps.push({ line: "return", note: `Return ${best}. ${tried} pairs for ${n} days: O(n²).`, view: view(0, undefined, { final: true }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0121-best-time-to-buy-and-sell-stock/approach2.visual.js -->
+    <script>
+      // Two pointers: the sell day moves right; the buy day jumps to any day cheaper than it.
+      DSAViz.register("0121-best-time-to-buy-and-sell-stock/approach2", {
+        inputs: [{ name: "prices", type: "int[]", value: "[7, 1, 5, 3, 6, 4]", minLength: 1, maxLength: 12, minValue: 0, maxValue: 20 }],
+        trace({ prices }) {
+          const steps = [];
+          let buy = 0;
+          let best = 0;
+          let bestPair = null;
+          const view = (sell, o = {}) => {
+            const marks = {};
+            if (o.final) {
+              if (bestPair) { marks[bestPair[0]] = "match"; marks[bestPair[1]] = "match"; }
+            } else {
+              marks[buy] = "compare";
+              if (sell < prices.length) marks[sell] = o.moved ? "compare" : "active";
+            }
+            const pointers = o.final ? {} : sell < prices.length && sell !== buy ? { buy, sell } : { buy };
+            return [
+              { type: "bars", label: "prices (orange = the buy day, dark = the sell day; green = the best trade)", values: prices, marks, pointers },
+              { type: "vars", items: [{ name: "best", value: bestPair ? `${best} (day ${bestPair[0]} → day ${bestPair[1]})` : best, mark: o.better ? "match" : "" }] },
+            ];
+          };
+          steps.push({ line: "init", note: `Start by buying on day 0 (price ${prices[0]}), best = 0.`, view: view(0) });
+          for (let sell = 1; sell < prices.length; sell++) {
+            if (prices[sell] < prices[buy]) {
+              const old = buy;
+              buy = sell;
+              steps.push({ line: ["sell", "move"], note: `Day ${sell}: ${prices[sell]} is cheaper than the buy day's ${prices[old]}. Buying here is better for every later sale: move buy to day ${sell}.`, view: view(sell, { moved: true }) });
+            } else {
+              const profit = prices[sell] - prices[buy];
+              const better = profit > best;
+              if (better) { best = profit; bestPair = [buy, sell]; }
+              steps.push({ line: ["sell", "profit"], note: `Day ${sell}: sell at ${prices[sell]} after buying at ${prices[buy]}: ${profit}.${better ? " New best." : ` best stays ${best}.`}`, view: view(sell, { better }) });
+            }
+          }
+          steps.push({ line: "return", note: best ? `Return ${best} (day ${bestPair[0]} → day ${bestPair[1]}).` : "No sale beat 0: return 0.", view: view(prices.length, { final: true }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0121-best-time-to-buy-and-sell-stock/approach3.visual.js -->
+    <script>
+      // One pass: sell today against the lowest price before today, then let today lower that price.
+      DSAViz.register("0121-best-time-to-buy-and-sell-stock/approach3", {
+        inputs: [{ name: "prices", type: "int[]", value: "[7, 1, 5, 3, 6, 4]", minLength: 1, maxLength: 12, minValue: 0, maxValue: 20 }],
+        trace({ prices }) {
+          const steps = [];
+          let lowest = Infinity;
+          let lowAt = -1;
+          let best = 0;
+          let bestPair = null;
+          const view = (i, o = {}) => {
+            const marks = {};
+            for (let k = 0; k < i; k++) marks[k] = "visited";
+            if (lowAt >= 0) marks[lowAt] = "compare";
+            if (o.pair) { marks[o.pair[0]] = "match"; marks[o.pair[1]] = "match"; }
+            if (i < prices.length && !o.pair) marks[i] = "active";
+            const pointers = {};
+            if (i < prices.length) pointers.today = i;
+            if (lowAt >= 0 && lowAt !== i) pointers.low = lowAt;
+            return [
+              { type: "bars", label: "prices (orange = lowest so far; green = the best trade)", values: prices, marks, pointers },
+              { type: "vars", items: [{ name: "lowest", value: lowest === Infinity ? "∞" : lowest }, { name: "best", value: bestPair ? `${best} (day ${bestPair[0]} → day ${bestPair[1]})` : best, mark: o.better ? "match" : "" }] },
+            ];
+          };
+          steps.push({ line: "init", note: "lowest = ∞ (no day seen yet), best = 0 (not trading).", view: view(-1) });
+          prices.forEach((p, i) => {
+            const profit = lowest === Infinity ? null : p - lowest;
+            const better = profit !== null && profit > best;
+            if (better) { best = profit; bestPair = [lowAt, i]; }
+            steps.push({
+              line: ["loop", "profit"],
+              note: profit === null ? `Day 0, price ${p}: nothing to sell against yet.` : `Day ${i}, price ${p}: selling now makes ${p} − ${lowest} = ${profit}.${better ? " New best." : ` best stays ${best}.`}`,
+              view: view(i, { better }),
+            });
+            if (p < lowest) {
+              lowest = p;
+              lowAt = i;
+              steps.push({ line: "low", note: `${p} is the lowest so far: later days will sell against it.`, view: view(i) });
+            }
+          });
+          steps.push({ line: "return", note: best ? `Return ${best}: buy on day ${bestPair[0]} at ${prices[bestPair[0]]}, sell on day ${bestPair[1]} at ${prices[bestPair[1]]}.` : "No sale beats 0: return 0.", view: view(prices.length, { pair: bestPair }) });
           return steps;
         },
       });

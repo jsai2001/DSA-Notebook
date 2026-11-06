@@ -1,0 +1,221 @@
+<details class="question" data-group="sliding-window" data-tags="array dynamic-programming sliding-window two-pointers stock profit greedy">
+  <summary>
+    <span class="q-title">121. Best Time to Buy and Sell Stock</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Array</span>
+      <span class="tag">Sliding Window</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> For each day, the best sale on that day is
+      its price minus the <strong>cheapest price before it</strong>. So walk
+      once, keeping the lowest price seen so far and the best profit. Start
+      the profit at 0: not trading is allowed. O(n) time, O(1) space.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/best-time-to-buy-and-sell-stock/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>prices[i]</code> is a stock's price on day i. Buy on one day and
+        sell on a <strong>later</strong> day. Return the most profit you can
+        make, or <code>0</code> if no trade makes money.
+      </p>
+      <ul>
+        <li><code>1 &lt;= prices.length &lt;= 10⁵</code> and <code>0 &lt;= prices[i] &lt;= 10⁴</code>.</li>
+        <li>Only one buy and one sell.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[7,1,5,3,6,4]</code> → <code>5</code> (buy at 1, sell
+        at 6); <code>[7,6,4,3,1]</code> → <code>0</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[5]</code></td>
+              <td><code>0</code></td>
+              <td>One day: there's no later day to sell on.</td>
+            </tr>
+            <tr>
+              <td><code>[7,6,4,3,1]</code></td>
+              <td><code>0</code></td>
+              <td>Prices only fall. Taking highest minus lowest says 6 (it sells before buying); starting <code>best</code> below 0 says −1.</td>
+            </tr>
+            <tr>
+              <td><code>[2,4,1]</code></td>
+              <td><code>2</code></td>
+              <td>The lowest price (1) comes after the highest (4). Highest minus lowest says 3.</td>
+            </tr>
+            <tr>
+              <td><code>[3,8,1,5]</code></td>
+              <td><code>5</code></td>
+              <td>A new low (1) shows up later, but the best trade (3 → 8) was before it. Keep the best profit seen, not just the latest.</td>
+            </tr>
+            <tr>
+              <td><code>[3,3,3]</code></td>
+              <td><code>0</code></td>
+              <td>Flat prices: a trade makes 0, which is also the answer for not trading.</td>
+            </tr>
+            <tr>
+              <td>10⁵ days</td>
+              <td>—</td>
+              <td>Trying every pair is about 5 × 10⁹ pairs: around 5 minutes in Python (0.28 s at 3000 days, and it grows with n²).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Every Buy Day, Every Sell Day</h2>
+      <p class="intuition">
+        Try buying on each day i and selling on each later day j, and keep the
+        biggest <code>prices[j] − prices[i]</code>. Start at 0 for "don't
+        trade".
+      </p>
+      <ul>
+        <li><code>j</code> starts at <code>i + 1</code>: the sale must come after the buy.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Correct, and a good check for the faster ones, but far too slow at 10⁵
+        days.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Two Pointers, Buy and Sell</h2>
+      <p class="intuition">
+        Keep a buy day and move the sell day right, one day at a time. If the
+        sell day's price is lower than the buy day's, move the buy day there:
+        a cheaper buy is better for every sale after it. Otherwise, check the
+        profit.
+      </p>
+      <ul>
+        <li>The window <code>buy..sell</code> grows on the right, and jumps on the left to every new low.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        One pass: 7.9 ms for 10⁵ days in Python. The usual way to see it as a
+        sliding window.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Lowest Price So Far
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        The same idea with only values, no days: for each price, first see what
+        selling today would make (<code>p − lowest</code>), then let today
+        lower <code>lowest</code> for the days after.
+      </p>
+      <ul>
+        <li>Profit first, then the low, so every sale uses an earlier buy day. (The other order also works here: it only adds a same-day trade worth 0.)</li>
+        <li>On day 0, <code>lowest</code> is infinity, so the profit is negative and <code>best</code> stays 0.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Two lines in the loop (7.3 ms). The same shape is Maximum Subarray
+        (53) on the daily changes, and the start of the other stock problems
+        (122, 309, 714).
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        In Python, <code>itertools.accumulate(prices, min)</code> gives the
+        lowest price up to each day; subtract it from each price and take the
+        max. C++ and Java have no direct equivalent worth using here: write
+        the loop.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1) (both are lazy)</span>
+      </div>
+      <p class="note">
+        Here the low includes today, so a day can pair with itself and give 0;
+        that's fine because 0 is always allowed. 7.8 ms for 10⁵ days.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Every Pair</th>
+              <td>All buy and sell days</td>
+              <td>O(n²)</td>
+              <td>O(1)</td>
+              <td>About 5 minutes at 10⁵</td>
+            </tr>
+            <tr>
+              <th scope="row">Two Pointers</th>
+              <td>Buy jumps to each new low</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>The sliding-window view</td>
+            </tr>
+            <tr>
+              <th scope="row">Lowest So Far</th>
+              <td>Profit, then update the low</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>The usual answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
