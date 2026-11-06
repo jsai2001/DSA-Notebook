@@ -22767,7 +22767,7 @@
       <details class="pattern-group" id="g-dynamic-programming">
         <summary>
           <span class="g-name">Dynamic Programming</span>
-          <span class="g-count"><span class="g-total">10 problems</span></span>
+          <span class="g-count"><span class="g-total">11 problems</span></span>
           <span class="g-hint">Reuse the answers to smaller problems</span>
         </summary>
         <div class="g-body">
@@ -27262,6 +27262,417 @@
                         <td>O(n · amount)</td>
                         <td>O(amount)</td>
                         <td>Expected answer; mind overflow in C++</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0647-palindromic-substrings ===== -->
+          <details class="question" data-group="dynamic-programming" data-tags="string dynamic-programming two-pointers palindrome substring count expand around center">
+            <summary>
+              <span class="q-title">647. Palindromic Substrings</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">String</span>
+                <span class="tag">Dynamic Programming</span>
+                <span class="tag">Two Pointers</span>
+              </span>
+            </summary>
+
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Every palindrome has a middle: a letter, or
+                the gap between two letters. Try all 2n − 1 middles and grow outward
+                while the two ends match. Each step outward is one more palindrome.
+                O(n²) time, O(1) memory.
+              </div>
+
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/palindromic-substrings/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Count the substrings of <code>s</code> that are palindromes. A
+                  substring is a run of letters next to each other. Substrings at
+                  different positions count separately, even if they're the same text.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= s.length &lt;= 1000</code></li>
+                  <li><code>s</code> is lowercase English letters</li>
+                </ul>
+                <p class="note">
+                  Example: <code>"abc"</code> → <code>3</code> (a, b, c).
+                  <code>"aaa"</code> → <code>6</code> (a, a, a, aa, aa, aaa).
+                </p>
+              </section>
+
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>"aaa"</code></td>
+                        <td><code>6</code></td>
+                        <td>Same text at different positions counts twice ("a" three times, "aa" twice). Growing only from letters (odd lengths) missed the two "aa": said <code>4</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"abba"</code></td>
+                        <td><code>6</code></td>
+                        <td>The longest palindrome has even length, centered on a gap. Odd centers only said <code>4</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"abba"</code></td>
+                        <td><code>6</code></td>
+                        <td>In the table, <code>pal[i][j]</code> needs <code>pal[i + 1][j - 1]</code> first. Filling <code>i</code> from 0 upward read cells that weren't filled yet: said <code>5</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"a"</code></td>
+                        <td><code>1</code></td>
+                        <td>Every single letter is a palindrome, so the answer is at least <code>n</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"abcdefgh"</code></td>
+                        <td><code>8</code></td>
+                        <td>All different: only the single letters.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"a"</code> × 1000</td>
+                        <td><code>500500</code></td>
+                        <td>Every substring counts: n(n + 1) / 2, the largest answer. It still fits in a 32-bit <code>int</code>. Checking each substring with two pointers took 4.3 s in Python here.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Check Every Substring</h2>
+                <p class="intuition">
+                  For every pair <code>i ≤ j</code>, check <code>s[i..j]</code> with
+                  two pointers moving inward, and count the palindromes.
+                </p>
+                <ul>
+                  <li>
+                    n(n + 1) / 2 substrings; each check is up to n / 2 comparisons.
+                  </li>
+                  <li>
+                    On text with few repeats, most checks stop at the first pair, so
+                    it's much faster than the worst case.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n³)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  On <code>"a"</code> × 1000 (worst case): Python 4.3 s, Java 0.1 s,
+                  C++ 49 ms. On random a–z letters, Python took only 26 ms: the checks
+                  end early.
+                </p>
+                <div class="code-tabs" data-viz="0647-palindromic-substrings/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"pick":[5,6],"check":[7,8,9,10],"count":[11,12],"return":[13]}'>
+                    class Solution(object):
+                        def countSubstrings(self, s):
+                            n = len(s)
+                            count = 0
+                            for i in range(n):
+                                for j in range(i, n):  # every substring s[i..j]
+                                    lo, hi = i, j
+                                    while lo < hi and s[lo] == s[hi]:  # two pointers moving inward
+                                        lo += 1
+                                        hi -= 1
+                                    if lo >= hi:  # the pointers met: it's a palindrome
+                                        count += 1
+                            return count
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,6],"pick":[7,8],"check":[9,10,11,12],"count":[14],"return":[17]}'>
+                    #include <string>
+                    class Solution {
+                    public:
+                        int countSubstrings(std::string s) {
+                            const int n = s.size();
+                            int count = 0; // at most n(n + 1) / 2 = 500,500: fits in int
+                            for (int i = 0; i < n; ++i) {
+                                for (int j = i; j < n; ++j) { // every substring s[i..j]
+                                    int lo = i, hi = j;
+                                    while (lo < hi && s[lo] == s[hi]) { // two pointers moving inward
+                                        ++lo;
+                                        --hi;
+                                    }
+                                    if (lo >= hi) ++count; // the pointers met: it's a palindrome
+                                }
+                            }
+                            return count;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4],"pick":[5,6],"check":[7,8,9,10],"count":[12],"return":[15]}'>
+                    class Solution {
+                        public int countSubstrings(String s) {
+                            int n = s.length();
+                            int count = 0;
+                            for (int i = 0; i < n; i++) {
+                                for (int j = i; j < n; j++) { // every substring s[i..j]
+                                    int lo = i, hi = j;
+                                    while (lo < hi && s.charAt(lo) == s.charAt(hi)) { // two pointers moving inward
+                                        lo++;
+                                        hi--;
+                                    }
+                                    if (lo >= hi) count++; // the pointers met: it's a palindrome
+                                }
+                            }
+                            return count;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Palindrome Table (DP)</h2>
+                <p class="intuition">
+                  <code>pal[i][j]</code> is true when <code>s[i] == s[j]</code> and the
+                  inside <code>s[i+1..j-1]</code> is a palindrome (or has 0–1 letters).
+                  Fill <code>i</code> from the end backwards so the inside is always
+                  ready, and count the true cells.
+                </p>
+                <ul>
+                  <li>
+                    Each cell is O(1), so no substring is checked letter by letter.
+                  </li>
+                  <li>
+                    The same table as Longest Palindromic Substring (5) and Palindrome
+                    Partitioning (131).
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n²)</span>
+                  <span><strong>Space</strong> O(n²)</span>
+                </div>
+                <p class="note">
+                  A million cells at n = 1000. Python 54 ms, Java 7.5 ms, C++ 1.3 ms on
+                  <code>"a"</code> × 1000. Same speed on any text, since every cell is
+                  filled.
+                </p>
+                <div class="code-tabs" data-viz="0647-palindromic-substrings/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"row":[6],"cell":[7,9],"count":[10,11],"return":[12]}'>
+                    class Solution(object):
+                        def countSubstrings(self, s):
+                            n = len(s)
+                            pal = [[False] * n for _ in range(n)]  # pal[i][j]: is s[i..j] a palindrome?
+                            count = 0
+                            for i in range(n - 1, -1, -1):  # i from the end, so pal[i + 1] is ready
+                                for j in range(i, n):
+                                    # Same ends, and the inside s[i+1..j-1] is a palindrome (or has 0-1 letters).
+                                    if s[i] == s[j] and (j - i < 2 or pal[i + 1][j - 1]):
+                                        pal[i][j] = True
+                                        count += 1
+                            return count
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8],"row":[9],"cell":[10,12],"count":[13,14],"return":[18]}'>
+                    #include <string>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int countSubstrings(std::string s) {
+                            const int n = s.size();
+                            std::vector<std::vector<char>> pal(n, std::vector<char>(n, 0)); // pal[i][j]: is s[i..j] a palindrome?
+                            int count = 0;
+                            for (int i = n - 1; i >= 0; --i) { // i from the end, so pal[i + 1] is ready
+                                for (int j = i; j < n; ++j) {
+                                    // Same ends, and the inside s[i+1..j-1] is a palindrome (or has 0-1 letters).
+                                    if (s[i] == s[j] && (j - i < 2 || pal[i + 1][j - 1])) {
+                                        pal[i][j] = 1;
+                                        ++count;
+                                    }
+                                }
+                            }
+                            return count;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5],"row":[6],"cell":[7,9],"count":[10,11],"return":[15]}'>
+                    class Solution {
+                        public int countSubstrings(String s) {
+                            int n = s.length();
+                            boolean[][] pal = new boolean[n][n]; // pal[i][j]: is s[i..j] a palindrome?
+                            int count = 0;
+                            for (int i = n - 1; i >= 0; i--) { // i from the end, so pal[i + 1] is ready
+                                for (int j = i; j < n; j++) {
+                                    // Same ends, and the inside s[i+1..j-1] is a palindrome (or has 0-1 letters).
+                                    if (s.charAt(i) == s.charAt(j) && (j - i < 2 || pal[i + 1][j - 1])) {
+                                        pal[i][j] = true;
+                                        count++;
+                                    }
+                                }
+                            }
+                            return count;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Expand Around Each Center
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Take each of the 2n − 1 centers: the n letters (odd lengths) and the
+                  n − 1 gaps (even lengths). Grow <code>lo</code> left and
+                  <code>hi</code> right while <code>s[lo] == s[hi]</code>, adding one to
+                  the count at each step.
+                </p>
+                <ul>
+                  <li>
+                    <code>lo = center // 2</code>, <code>hi = lo + center % 2</code>
+                    covers both kinds of center in one loop.
+                  </li>
+                  <li>
+                    Stops as soon as the ends differ, so it does work only where
+                    palindromes are.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n²)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  On <code>"a"</code> × 1000: Python 38 ms, Java 8.9 ms, C++ 0.27 ms.
+                  On random text it's under 1 ms even in Python. The expected answer.
+                  Manacher's algorithm does this in O(n), but it's rarely asked for.
+                </p>
+                <div class="code-tabs" data-viz="0647-palindromic-substrings/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"center":[5,6,7],"grow":[8,9,10,11],"return":[12]}'>
+                    class Solution(object):
+                        def countSubstrings(self, s):
+                            n = len(s)
+                            count = 0
+                            for center in range(2 * n - 1):  # n letters + n - 1 gaps between them
+                                lo = center // 2
+                                hi = lo + center % 2  # odd center: lo == hi (one letter); even: hi = lo + 1
+                                while lo >= 0 and hi < n and s[lo] == s[hi]:  # grow while the ends match
+                                    count += 1  # each step outward is one more palindrome
+                                    lo -= 1
+                                    hi += 1
+                            return count
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,6],"center":[7,8,9],"grow":[10,11,12,13],"return":[16]}'>
+                    #include <string>
+                    class Solution {
+                    public:
+                        int countSubstrings(std::string s) {
+                            const int n = s.size();
+                            int count = 0;
+                            for (int center = 0; center < 2 * n - 1; ++center) { // n letters + n - 1 gaps between them
+                                int lo = center / 2;
+                                int hi = lo + center % 2; // odd center: lo == hi (one letter); even: hi = lo + 1
+                                while (lo >= 0 && hi < n && s[lo] == s[hi]) { // grow while the ends match
+                                    ++count; // each step outward is one more palindrome
+                                    --lo;
+                                    ++hi;
+                                }
+                            }
+                            return count;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4],"center":[5,6,7],"grow":[8,9,10,11],"return":[14]}'>
+                    class Solution {
+                        public int countSubstrings(String s) {
+                            int n = s.length();
+                            int count = 0;
+                            for (int center = 0; center < 2 * n - 1; center++) { // n letters + n - 1 gaps between them
+                                int lo = center / 2;
+                                int hi = lo + center % 2; // odd center: lo == hi (one letter); even: hi = lo + 1
+                                while (lo >= 0 && hi < n && s.charAt(lo) == s.charAt(hi)) { // grow while the ends match
+                                    count++; // each step outward is one more palindrome
+                                    lo--;
+                                    hi++;
+                                }
+                            }
+                            return count;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  No standard library function counts palindromes. In Python,
+                  <code>p == p[::-1]</code> checks one substring, but using it for every
+                  substring is Approach 1 with extra copying.
+                </p>
+                <p class="note">
+                  Approach 3 is what you'd write: about eight lines and no extra
+                  memory.
+                </p>
+              </section>
+
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Check Every Substring</th>
+                        <td>Two pointers on each s[i..j]</td>
+                        <td>O(n³)</td>
+                        <td>O(1)</td>
+                        <td>4.3 s in Python on "a" × 1000</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Palindrome Table (DP)</th>
+                        <td><code>pal[i][j]</code> from the inside out</td>
+                        <td>O(n²)</td>
+                        <td>O(n²)</td>
+                        <td>A million cells at n = 1000</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Expand Around Each Center</th>
+                        <td>2n − 1 centers, grow while ends match</td>
+                        <td>O(n²)</td>
+                        <td>O(1)</td>
+                        <td>Expected answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -47772,6 +48183,182 @@
           return steps;
         },
       });
+    </script>
+    <!-- problems/0647-palindromic-substrings/approach1.visual.js -->
+    <script>
+      // Check every substring s[i..j] with two pointers; count the palindromes.
+      (function () {
+      DSAViz.register("0647-palindromic-substrings/approach1", {
+        inputs: [{ name: "s", type: "string", value: "abaa", maxLength: 8 }],
+        trace({ s }) {
+          const w = parseWord(s);
+          const n = w.length;
+          const steps = [];
+          let count = 0;
+          let pairs = 0;
+          const found = [];
+          const view = (o = {}) => {
+            const marks = {};
+            if (o.range) for (let t = o.range[0]; t <= o.range[1]; t++) marks[t] = o.ok ? "match" : "cut";
+            return [
+              { type: "array", label: "s (green = palindrome, red = not)", values: [...w], marks, pointers: o.range ? { i: o.range[0], j: o.range[1] } : {} },
+              { type: "array", label: "palindromes counted", values: [...found], wide: true, marks: o.ok ? { [found.length - 1]: "new" } : {} },
+              { type: "vars", items: [{ name: "count", value: count, mark: o.ok ? "new" : "" }, { name: "letter pairs compared", value: pairs, mark: o.counted ? "new" : "" }] },
+            ];
+          };
+          steps.push({ line: "init", note: `There are ${n} · ${n + 1} / 2 = ${(n * (n + 1)) / 2} substrings. Check each one.`, view: view() });
+          for (let i = 0; i < n; i++) {
+            for (let j = i; j < n; j++) {
+              let lo = i;
+              let hi = j;
+              let here = 0;
+              while (lo < hi) {
+                here++;
+                if (w[lo] !== w[hi]) break;
+                lo++;
+                hi--;
+              }
+              pairs += here;
+              const ok = lo >= hi;
+              const piece = w.slice(i, j + 1);
+              if (ok) {
+                count++;
+                found.push(piece);
+              }
+              steps.push({
+                line: ok ? ["pick", "check", "count"] : ["pick", "check"],
+                note: `s[${i}..${j}] = "${piece}": ${here ? `${here} pair${here === 1 ? "" : "s"} compared, ` : "one letter, "}${ok ? "a palindrome. count = " + count + "." : `"${w[lo]}" ≠ "${w[hi]}", not a palindrome.`}`,
+                view: view({ range: [i, j], ok, counted: true }),
+              });
+            }
+          }
+          steps.push({ line: "return", note: `Return ${count}. That took ${pairs} letter-pair comparisons: O(n²) substrings, each up to O(n) to check.`, view: view() });
+          return steps;
+        },
+      });
+
+      function parseWord(s) {
+        const w = s.trim();
+        if (!/^[a-z]{1,8}$/.test(w)) throw new DSAViz.InputError("s: 1 to 8 lowercase letters, like aaa.");
+        return w;
+      }
+      })();
+    </script>
+    <!-- problems/0647-palindromic-substrings/approach2.visual.js -->
+    <script>
+      // Table pal[i][j]: s[i..j] is a palindrome when its ends match and its inside is one.
+      (function () {
+      DSAViz.register("0647-palindromic-substrings/approach2", {
+        inputs: [{ name: "s", type: "string", value: "abaa", maxLength: 8 }],
+        trace({ s }) {
+          const w = parseWord(s);
+          const n = w.length;
+          const steps = [];
+          const pal = Array.from({ length: n }, () => Array(n).fill(null));
+          let count = 0;
+          const view = (o = {}) => {
+            const cells = pal.map((row, i) => row.map((v, j) => (j < i ? "" : v === null ? " " : v ? "✓" : "·")));
+            const marks = {};
+            pal.forEach((row, i) => row.forEach((v, j) => { if (v) marks[`${i},${j}`] = "match"; }));
+            if (o.inside) marks[`${o.inside[0]},${o.inside[1]}`] = "window";
+            if (o.at) marks[`${o.at[0]},${o.at[1]}`] = o.ok ? "new" : "active";
+            const smarks = {};
+            if (o.at) { smarks[o.at[0]] = "compare"; smarks[o.at[1]] = "compare"; }
+            return [
+              { type: "array", label: "s (yellow = the two ends being compared)", values: [...w], marks: smarks, pointers: o.at ? { i: o.at[0], j: o.at[1] } : {} },
+              { type: "grid", label: "pal[i][j] (✓ = s[i..j] is a palindrome; yellow = just filled; outlined = the inside it used)", rows: [...Array(n).keys()], cols: [...Array(n).keys()], corner: "i \\ j", cells, marks },
+              { type: "vars", items: [{ name: "count", value: count, mark: o.ok ? "new" : "" }] },
+            ];
+          };
+          steps.push({ line: "init", note: "Fill pal[i][j] from the bottom row up (i from the end), so pal[i + 1][j - 1], the inside, is always filled first.", view: view() });
+          for (let i = n - 1; i >= 0; i--) {
+            for (let j = i; j < n; j++) {
+              const short = j - i < 2;
+              const ok = w[i] === w[j] && (short || pal[i + 1][j - 1]);
+              pal[i][j] = ok;
+              if (ok) count++;
+              let why;
+              if (w[i] !== w[j]) why = `"${w[i]}" ≠ "${w[j]}": no.`;
+              else if (short) why = j === i ? "one letter: yes." : `"${w[i]}${w[j]}", two equal letters: yes.`;
+              else why = `ends match, and the inside s[${i + 1}..${j - 1}] ${pal[i + 1][j - 1] ? "is" : "isn't"} a palindrome: ${ok ? "yes" : "no"}.`;
+              steps.push({
+                line: ok ? ["row", "cell", "count"] : ["row", "cell"],
+                note: `pal[${i}][${j}], "${w.slice(i, j + 1)}": ${why}${ok ? ` count = ${count}.` : ""}`,
+                view: view({ at: [i, j], ok, inside: !short && w[i] === w[j] ? [i + 1, j - 1] : null }),
+              });
+            }
+          }
+          steps.push({ line: "return", note: `Return ${count}, the number of ✓ cells. ${(n * (n + 1)) / 2} cells, each O(1): O(n²) time, but also O(n²) memory.`, view: view() });
+          return steps;
+        },
+      });
+
+      function parseWord(s) {
+        const w = s.trim();
+        if (!/^[a-z]{1,8}$/.test(w)) throw new DSAViz.InputError("s: 1 to 8 lowercase letters, like aaa.");
+        return w;
+      }
+      })();
+    </script>
+    <!-- problems/0647-palindromic-substrings/approach3.visual.js -->
+    <script>
+      // Expand around each of the 2n - 1 centers (letters and gaps); each step outward is one more palindrome.
+      (function () {
+      DSAViz.register("0647-palindromic-substrings/approach3", {
+        inputs: [{ name: "s", type: "string", value: "abaa", maxLength: 8 }],
+        trace({ s }) {
+          const w = parseWord(s);
+          const n = w.length;
+          const steps = [];
+          let count = 0;
+          const found = [];
+          const view = (o = {}) => {
+            const marks = {};
+            if (o.range) for (let t = o.range[0]; t <= o.range[1]; t++) marks[t] = "match";
+            if (o.stop) o.stop.forEach((t) => t >= 0 && t < n && (marks[t] = "cut"));
+            return [
+              { type: "array", label: "s (green = largest palindrome around this center, red = where it stopped)", values: [...w], marks, pointers: o.center !== undefined ? (o.center % 2 ? { lo: (o.center - 1) / 2, hi: (o.center + 1) / 2 } : { center: o.center / 2 }) : {} },
+              { type: "array", label: "palindromes counted", values: [...found], wide: true, marks: Object.fromEntries((o.fresh || []).map((k) => [k, "new"])) },
+              { type: "vars", items: [{ name: "center", value: o.center ?? "-" }, { name: "count", value: count, mark: o.fresh && o.fresh.length ? "new" : "" }] },
+            ];
+          };
+          steps.push({ line: "init", note: `Every palindrome has a middle: a letter (odd length) or the gap between two letters (even length). That's ${2 * n - 1} centers. Grow outward from each.`, view: view() });
+          for (let center = 0; center < 2 * n - 1; center++) {
+            let lo = Math.floor(center / 2);
+            let hi = lo + (center % 2);
+            const fresh = [];
+            let last = null;
+            while (lo >= 0 && hi < n && w[lo] === w[hi]) {
+              count++;
+              found.push(w.slice(lo, hi + 1));
+              fresh.push(found.length - 1);
+              last = [lo, hi];
+              lo--;
+              hi++;
+            }
+            const where = center % 2 ? `the gap between ${(center - 1) / 2} and ${(center + 1) / 2}` : `letter ${center / 2}`;
+            let stopWhy;
+            if (lo < 0 || hi >= n) stopWhy = "it reached the end of s";
+            else stopWhy = `"${w[lo]}" ≠ "${w[hi]}"`;
+            steps.push({
+              line: ["center", "grow"],
+              note: fresh.length
+                ? `Center ${center}, ${where}: ${fresh.map((k) => `"${found[k]}"`).join(", ")}. Stops because ${stopWhy}. +${fresh.length}, count = ${count}.`
+                : `Center ${center}, ${where}: "${w[lo]}" ≠ "${w[hi]}", so no palindrome here.`,
+              view: view({ center, range: last, stop: [lo, hi], fresh }),
+            });
+          }
+          steps.push({ line: "return", note: `Return ${count}. Each center grows at most n / 2 steps: O(n²) time, O(1) memory.`, view: view() });
+          return steps;
+        },
+      });
+
+      function parseWord(s) {
+        const w = s.trim();
+        if (!/^[a-z]{1,8}$/.test(w)) throw new DSAViz.InputError("s: 1 to 8 lowercase letters, like aaa.");
+        return w;
+      }
+      })();
     </script>
     <!-- problems/0994-rotting-oranges/approach1.visual.js -->
     <script>
