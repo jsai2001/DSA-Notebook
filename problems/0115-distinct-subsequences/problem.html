@@ -1,0 +1,231 @@
+<details class="question" data-group="dynamic-programming" data-tags="string dynamic-programming 2d-dp subsequence counting recursion memoization overflow">
+  <summary>
+    <span class="q-title">115. Distinct Subsequences</span>
+    <span class="q-meta">
+      <span class="badge hard">Hard</span>
+      <span class="tag">String</span>
+      <span class="tag">Dynamic Programming</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> For each letter of <code>s</code>, you either
+      <strong>skip</strong> it or, if it matches the next letter of
+      <code>t</code>, <strong>use</strong> it. So <code>dp[i][j] = dp[i−1][j]
+      + (dp[i−1][j−1] if s[i−1] == t[j−1])</code>, with
+      <code>dp[i][0] = 1</code>. Keep one row and go right to left: O(m · n)
+      time, O(n) space. In C++ and Java, the counts on the way can pass the
+      int range even when the answer doesn't.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/distinct-subsequences/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given strings <code>s</code> and <code>t</code>, return how many
+        <strong>different ways</strong> there are to pick letters of
+        <code>s</code>, keeping their order, that spell <code>t</code>. Two
+        ways are different when they use different positions of
+        <code>s</code>.
+      </p>
+      <ul>
+        <li><code>1 &lt;= s.length, t.length &lt;= 1000</code>; English letters.</li>
+        <li>The answer fits in a 32-bit signed int (but the numbers on the way may not).</li>
+      </ul>
+      <p class="note">
+        Examples: <code>s = "rabbbit", t = "rabbit"</code> → <code>3</code>
+        (any 2 of the 3 b's); <code>s = "babgbag", t = "bag"</code> →
+        <code>5</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>"ab"</code>, <code>"abc"</code></td>
+              <td><code>0</code></td>
+              <td>t is longer than s: no way at all.</td>
+            </tr>
+            <tr>
+              <td><code>"abc"</code>, <code>"cba"</code></td>
+              <td><code>0</code></td>
+              <td>The same letters, but the order must be kept.</td>
+            </tr>
+            <tr>
+              <td><code>"aa"</code>, <code>"a"</code></td>
+              <td><code>2</code></td>
+              <td>Either a works. Forgetting <code>dp[i][0] = 1</code> (only setting <code>dp[0][0]</code>) says 1; on <code>"babgbag"</code> it says 3, not 5.</td>
+            </tr>
+            <tr>
+              <td><code>"aaa"</code>, <code>"aa"</code> with one row</td>
+              <td><code>3</code></td>
+              <td>Going left to right lets one letter of s be used twice in the same pass: it says 6. Go right to left.</td>
+            </tr>
+            <tr>
+              <td><code>"aaa"</code>, <code>"aaa"</code></td>
+              <td><code>1</code></td>
+              <td>s and t equal: exactly one way, using every letter.</td>
+            </tr>
+            <tr>
+              <td>40 a's + <code>"b"</code>, 39 a's + <code>"b"</code></td>
+              <td><code>40</code></td>
+              <td>The answer is small, but on the way the table holds C(40, 20) ≈ 1.4 × 10¹¹. A plain C++ <code>int</code> overflows (undefined behaviour); <code>long long</code> isn't enough in general either (60 a's / 30 a's reaches 1.2 × 10¹⁷).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Plain Recursion</h2>
+      <p class="intuition">
+        <code>count(i, j)</code> = ways to spell <code>t[j:]</code> from
+        <code>s[i:]</code>. Skipping <code>s[i]</code> gives
+        <code>count(i + 1, j)</code>; if <code>s[i] == t[j]</code>, using it
+        adds <code>count(i + 1, j + 1)</code>.
+      </p>
+      <ul>
+        <li>Done when <code>j == len(t)</code> (one way); give up when fewer letters are left in s than in t.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(2ᵐ) in the worst case</span>
+        <span><strong>Space</strong> O(m) stack</span>
+      </div>
+      <p class="note">
+        The same <code>(i, j)</code> is reached in many ways: 1.0 s in Python
+        for just 24 a's against 13 a's then a b (the answer is 0).
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: 2D DP Table</h2>
+      <p class="intuition">
+        Answer every question once, from the front. <code>dp[i][j]</code> =
+        ways to spell the first j letters of t with the first i of s. The last
+        letter of s, <code>s[i−1]</code>, is either not used
+        (<code>dp[i−1][j]</code>) or, if it equals <code>t[j−1]</code>, used as
+        t's last letter (<code>dp[i−1][j−1]</code>).
+      </p>
+      <ul>
+        <li><code>dp[i][0] = 1</code> for every i: the empty start of t is spelled one way, by using nothing.</li>
+        <li><strong>Overflow:</strong> only additions happen, so in C++ use <code>unsigned</code> (it wraps modulo 2³², which is defined) and in Java plain <code>int</code> (which also wraps). The final answer fits, so it comes out exact.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m · n)</span>
+        <span><strong>Space</strong> O(m · n)</span>
+      </div>
+      <p class="note">
+        123 ms in Python at 1000 × 1000. In Python numbers never overflow, so
+        nothing special is needed there.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: One Row, Right to Left
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Row i only uses row i − 1, so keep one row and update it for each
+        letter of s. For <code>dp[j] += dp[j − 1]</code>,
+        <code>dp[j − 1]</code> must still be the old value, so walk
+        <code>j</code> from <strong>right to left</strong>.
+      </p>
+      <ul>
+        <li>Left to right would add a value already updated with this letter, using the same letter twice.</li>
+        <li>Only positions where <code>t[j−1]</code> equals the letter change at all.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m · n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        The same counts with one row: 62 ms at 1000 × 1000. Same overflow
+        rule as Approach 2. It's the trick from 0/1 Knapsack: go backwards so
+        each item is used at most once.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        In Python, <code>@functools.cache</code> on Approach 1 makes it
+        O(m · n) with no other change, and Python's numbers can't overflow.
+        C++ and Java have nothing like it: write the table.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m · n)</span>
+        <span><strong>Space</strong> O(m · n) for the cache</span>
+      </div>
+      <p class="note">
+        With a 1000-letter s it recurses about 1000 deep, which goes past
+        Python's default limit (a RecursionError here). LeetCode raises the limit, so it
+        passes there; elsewhere, use Approach 3.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Plain Recursion</th>
+              <td>Skip or use each letter of s</td>
+              <td>O(2ᵐ)</td>
+              <td>O(m)</td>
+              <td>Too slow from about 25 letters</td>
+            </tr>
+            <tr>
+              <th scope="row">2D Table</th>
+              <td>dp[i][j] from the row above</td>
+              <td>O(m · n)</td>
+              <td>O(m · n)</td>
+              <td>Easy to check by hand</td>
+            </tr>
+            <tr>
+              <th scope="row">One Row</th>
+              <td>Right to left, dp[j] += dp[j − 1]</td>
+              <td>O(m · n)</td>
+              <td>O(n)</td>
+              <td>The usual answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
