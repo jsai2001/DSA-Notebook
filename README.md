@@ -27,7 +27,7 @@ designs/                System Design cards, same rules as problems/
 template.html           shared page shell for both tabs (header with the tab bar and
                         difficulty/topic filters, theme toggle fixed at the top right,
                         bottom dock with search and Surprise me)
-app.js                  pattern groups ("By pattern" / "By number"),
+app.js                  pattern groups ("Open all groups"),
                         search + filters, code tabs, accordion, theme, Surprise me,
                         each card's jump bar and "Same pattern" links (built from its
                         sections and tags), links in the address bar, keyboard shortcuts
@@ -47,7 +47,7 @@ The generated pages are committed, so the site still works by opening them direc
 
 ## Adding a problem
 
-1. Create a folder in `problems/` named `NNNN-slug`, using the LeetCode number (4 digits) and the slug from the problem URL, e.g. `problems/0005-longest-palindromic-substring/`. Problems are listed in folder-name order inside their group (and in "By number" view).
+1. Create a folder in `problems/` named `NNNN-slug`, using the LeetCode number (4 digits) and the slug from the problem URL, e.g. `problems/0005-longest-palindromic-substring/`. Problems are listed in folder-name order inside their group.
 2. Copy `problem.html` from an existing problem and fill in the pattern group (`data-group`, an `id` from `problems/groups.json`; add a new group there if none fits), title, difficulty (`easy` / `medium` / `hard`), tags, `data-tags` (used by search), key idea, LeetCode link, problem statement, **Edge cases**, approaches, the **In practice** section and the comparison table.
    - **Edge cases** sits right after the problem statement: a table of input, expected output, and why it's tricky (empty input, limits, overflow, duplicates, the answer at the very end, ...). Run every solution against them before adding a row, so the expected answers are known to be right.
    - **In practice** is what you'd write day to day with standard-library built-ins (`builtin.py` / `.cpp` / `.java` behind a `data-src="builtin"` placeholder), with its hidden cost and whether it passes LeetCode. If there's no useful built-in, say so in a line or two and point to the approach you'd actually use. It isn't a numbered approach and isn't in the comparison table.
@@ -109,7 +109,7 @@ Any approach can have a step-by-step visualizer. It shows up as a **Visualize** 
 
 Edit page-wide things (header, buttons, scripts) in `template.html`, `app.js` and `solutions.css`, then rebuild.
 ## Using the page
-- Coding Solutions opens **By pattern**: one closed group per pattern, with its problem count and difficulties. Click a group to open it (one group at a time, like the cards; opening a problem closes the other groups). **By number** shows the plain list. Search, the filter chips, Surprise me and card links open the right group by themselves.
+- Coding Solutions shows one closed group per pattern, with its problem count and difficulties. Click a group to open it (one group at a time, like the cards; opening a problem closes the other groups). **Open all groups** opens every group at once. Search, the filter chips, Surprise me and card links open the right group by themselves.
 - Opening a card puts its link in the address bar (`#q-15-3sum`; jump-bar sections give `#q-15-3sum-approach-3`), so a refresh or bookmark comes back to the same place.
 - **Same pattern** at the end of a card lists other cards with the same pattern tag. It's built from the tags, so a new problem joins automatically; the broad tags Array, String and Math are left out.
 - Keyboard: `/` opens search and `Esc` closes it (from anywhere on the page), `r` Surprise me, `←` / `→` step the visualizer on screen.

@@ -116,7 +116,7 @@ search.addEventListener("keydown", (e) => {
   }
 });
 
-// ---------- Pattern groups: "By pattern" (default) or "By number" ----------
+// ---------- Pattern groups ----------
 // build.py wraps the cards in <details class="pattern-group"> when the page has
 // a groups.json. Pages without groups (System Design) skip all of this.
 const questionList = document.getElementById("question-list");
@@ -140,11 +140,6 @@ function closeOtherGroups(keep) {
 }
 
 if (groupBoxes.length) {
-  const home = new Map(); // card -> its group's body, to put it back after "By number"
-  groupBoxes.forEach((g) => g.querySelectorAll(".question").forEach((q) => home.set(q, g.querySelector(".g-body"))));
-  const numberOf = (q) => parseInt(q.querySelector(".q-title").textContent, 10);
-  const byNumber = [...home.keys()].sort((a, b) => numberOf(a) - numberOf(b));
-
   // A card opening anywhere (click, link, Surprise me, Present mode) opens its
   // group and closes the other groups.
   questions.forEach((q) =>
@@ -155,54 +150,25 @@ if (groupBoxes.length) {
     })
   );
 
-  // --- the switch above the list ---
+  // --- "Open all groups" / "Close all groups" above the list ---
   const bar = document.createElement("div");
   bar.className = "view-bar";
-  bar.innerHTML =
-    '<div class="view-switch" role="group" aria-label="Show the questions">' +
-    '<button type="button" data-view="groups" aria-pressed="true">By pattern</button>' +
-    '<button type="button" data-view="list" aria-pressed="false">By number</button>' +
-    "</div>" +
-    '<button type="button" class="view-all">Open all groups</button>';
+  bar.innerHTML = '<button type="button" class="view-all">Open all groups</button>';
   questionList.before(bar);
   questionList.style.marginTop = "1rem";
   const allBtn = bar.querySelector(".view-all");
-  let view = "groups";
 
   function updateAllButton() {
     const shown = groupBoxes.filter((g) => !g.hidden);
     allBtn.textContent = shown.some((g) => !g.open) ? "Open all groups" : "Close all groups";
-    allBtn.hidden = view !== "groups";
   }
 
-  function setView(next) {
-    if (next === view) return;
-    view = next;
-    bar.querySelectorAll("[data-view]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === view)));
-    const open = [...questions].find((q) => q.open);
-    if (view === "list") {
-      groupBoxes.forEach((g) => g.remove());
-      byNumber.forEach((q) => questionList.append(q));
-    } else {
-      groupBoxes.forEach((g) => questionList.append(g));
-      home.forEach((body, q) => body.append(q));
-      if (open) revealCard(open);
-    }
+  allBtn.addEventListener("click", () => {
+    const anyClosed = groupBoxes.some((g) => !g.hidden && !g.open);
+    groupBoxes.forEach((g) => {
+      if (!g.hidden) g.open = anyClosed;
+    });
     updateAllButton();
-    if (open) requestAnimationFrame(() => open.scrollIntoView({ block: "start" }));
-  }
-
-  bar.addEventListener("click", (e) => {
-    const b = e.target.closest("button");
-    if (!b) return;
-    if (b.dataset.view) setView(b.dataset.view);
-    else {
-      const anyClosed = groupBoxes.some((g) => !g.hidden && !g.open);
-      groupBoxes.forEach((g) => {
-        if (!g.hidden) g.open = anyClosed;
-      });
-      updateAllButton();
-    }
   });
 
   // --- counts follow the filters; matching groups open while filtering ---

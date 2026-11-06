@@ -12,7 +12,6 @@
     ".dock",
     ".theme-toggle",
     ".site-nav",
-    ".view-switch",
     ".q-jump",
     ".deck-arrow",
     ".deck-back",
@@ -21,7 +20,7 @@
     "body.deck-read .deck-readtop",
     ".viz.is-max .viz-maxbar",
   ].join(",");
-  const SHINE = ".dock, .theme-toggle, .site-nav, .view-switch, .deck-arrow, .deck-back, .viz-maxclose, .viz-maxedit";
+  const SHINE = ".dock, .theme-toggle, .site-nav, .deck-arrow, .deck-back, .viz-maxclose, .viz-maxedit";
   const FROST = "blur(10px) saturate(190%) brightness(1.04)";
 
   // ---------- pointer shine (all browsers) ----------
