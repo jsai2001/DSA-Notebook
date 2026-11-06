@@ -1,0 +1,232 @@
+<details class="question" data-group="math" data-tags="array bit-manipulation xor hash-table single number pairs">
+  <summary>
+    <span class="q-title">136. Single Number</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Array</span>
+      <span class="tag">Bit Manipulation</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> XOR all the numbers together.
+      <code>x ^ x = 0</code> and <code>x ^ 0 = x</code>, and the order
+      doesn't matter, so every pair cancels out and only the single number
+      is left. O(n) time, O(1) memory.
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/single-number/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        In <code>nums</code>, every value appears exactly twice except one,
+        which appears once. Return that one. The problem asks for O(n) time
+        and O(1) extra memory.
+      </p>
+      <ul>
+        <li><code>1 &lt;= nums.length &lt;= 3 × 10⁴</code></li>
+        <li><code>-3 × 10⁴ &lt;= nums[i] &lt;= 3 × 10⁴</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[2, 2, 1]</code> → <code>1</code>.
+        <code>[4, 1, 2, 1, 2]</code> → <code>4</code>.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[4, 1, 2, 1, 2]</code></td>
+              <td><code>4</code></td>
+              <td>Starting the XOR at <code>nums[0]</code> and then looping over all of <code>nums</code> uses 4 twice: said <code>0</code>. Start at 0.</td>
+            </tr>
+            <tr>
+              <td><code>[1, 1, 2]</code></td>
+              <td><code>2</code></td>
+              <td>After sorting, the single number is last. Checking pairs all the way to the end read past it: <code>IndexError</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[1]</code></td>
+              <td><code>1</code></td>
+              <td>No pairs at all.</td>
+            </tr>
+            <tr>
+              <td><code>[-1, -1, -2]</code></td>
+              <td><code>-2</code></td>
+              <td>XOR works on negative numbers too: their bits cancel the same way.</td>
+            </tr>
+            <tr>
+              <td><code>[0, 1, 0]</code></td>
+              <td><code>1</code></td>
+              <td>0 can be a pair; it doesn't change the XOR.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Count With a Hash Map</h2>
+      <p class="intuition">
+        Count how many times each value appears, then return the one counted
+        once.
+      </p>
+      <ul>
+        <li>Works for any "find the value that appears k times" variant.</li>
+        <li>Uses O(n) memory, which the problem asks you to avoid.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        At n = 29,999 here: Python 2.3 ms, Java 11.5 ms, C++ 1.3 ms. Fast
+        enough, but it doesn't meet the memory rule.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Sort, Then Check Pairs</h2>
+      <p class="intuition">
+        After sorting, equal values sit side by side. Check the pairs
+        (0, 1), (2, 3), …: the first pair that doesn't match starts with the
+        single number. If every pair matches, it's the last value.
+      </p>
+      <ul>
+        <li>Stop the pair loop one short of the end, then handle the last value.</li>
+        <li>C++ and Java sort the input in place.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(1) extra (O(n) in Python's <code>sorted</code>)</span>
+      </div>
+      <p class="note">
+        At n = 29,999: Python 3.8 ms, Java 11.2 ms, C++ 0.56 ms. Meets the
+        memory rule in C++ and Java, but not the time rule.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: XOR Everything
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Start with <code>result = 0</code> and XOR in every number. XOR is
+        its own undo: the second time a value goes in, it flips back exactly
+        the bits the first time flipped. The pairs cancel; the single number
+        is what's left.
+      </p>
+      <ul>
+        <li>
+          Order doesn't matter: XOR is commutative and associative, so the
+          two copies of a value don't need to be next to each other.
+        </li>
+        <li>
+          Bit by bit: each bit of the result is 1 exactly when an odd number
+          of inputs have a 1 there, and only the single number makes it odd.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        At n = 29,999: Python 0.9 ms, Java 0.6 ms, C++ 0.002 ms, the fastest
+        here in every language. The answer the problem asks for.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Approach 3 as a one-line fold: <code>reduce(xor, nums)</code> in
+        Python, <code>std::accumulate</code> with <code>std::bit_xor</code>
+        in C++, <code>Arrays.stream(nums).reduce(0, (a, b) -&gt; a ^ b)</code>
+        in Java.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Same work as Approach 3: Python 1.0 ms, C++ 0.002 ms; the Java
+        stream has some setup cost (6.2 ms). Another Python one-liner is
+        <code>2 * sum(set(nums)) - sum(nums)</code>, which was right on 2,000
+        test arrays here, but builds a set, so it's O(n) memory.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Count With a Hash Map</th>
+              <td>Count, find the 1</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Breaks the memory rule</td>
+            </tr>
+            <tr>
+              <th scope="row">Sort, Then Check Pairs</th>
+              <td>First pair that doesn't match</td>
+              <td>O(n log n)</td>
+              <td>O(1) extra</td>
+              <td>Breaks the time rule</td>
+            </tr>
+            <tr>
+              <th scope="row">XOR Everything</th>
+              <td>Pairs cancel; x ^ x = 0</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

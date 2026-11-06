@@ -31913,7 +31913,7 @@
       <details class="pattern-group" id="g-math">
         <summary>
           <span class="g-name">Math</span>
-          <span class="g-count"><span class="g-total">4 problems</span></span>
+          <span class="g-count"><span class="g-total">5 problems</span></span>
           <span class="g-hint">Digits, overflow and fast power</span>
         </summary>
         <div class="g-body">
@@ -33649,6 +33649,386 @@
                         <td>O(n)</td>
                         <td>O(n)</td>
                         <td>Input unchanged</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0136-single-number ===== -->
+          <details class="question" data-group="math" data-tags="array bit-manipulation xor hash-table single number pairs">
+            <summary>
+              <span class="q-title">136. Single Number</span>
+              <span class="q-meta">
+                <span class="badge easy">Easy</span>
+                <span class="tag">Array</span>
+                <span class="tag">Bit Manipulation</span>
+              </span>
+            </summary>
+
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> XOR all the numbers together.
+                <code>x ^ x = 0</code> and <code>x ^ 0 = x</code>, and the order
+                doesn't matter, so every pair cancels out and only the single number
+                is left. O(n) time, O(1) memory.
+              </div>
+
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/single-number/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  In <code>nums</code>, every value appears exactly twice except one,
+                  which appears once. Return that one. The problem asks for O(n) time
+                  and O(1) extra memory.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= nums.length &lt;= 3 × 10⁴</code></li>
+                  <li><code>-3 × 10⁴ &lt;= nums[i] &lt;= 3 × 10⁴</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>[2, 2, 1]</code> → <code>1</code>.
+                  <code>[4, 1, 2, 1, 2]</code> → <code>4</code>.
+                </p>
+              </section>
+
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[4, 1, 2, 1, 2]</code></td>
+                        <td><code>4</code></td>
+                        <td>Starting the XOR at <code>nums[0]</code> and then looping over all of <code>nums</code> uses 4 twice: said <code>0</code>. Start at 0.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1, 1, 2]</code></td>
+                        <td><code>2</code></td>
+                        <td>After sorting, the single number is last. Checking pairs all the way to the end read past it: <code>IndexError</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1]</code></td>
+                        <td><code>1</code></td>
+                        <td>No pairs at all.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[-1, -1, -2]</code></td>
+                        <td><code>-2</code></td>
+                        <td>XOR works on negative numbers too: their bits cancel the same way.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[0, 1, 0]</code></td>
+                        <td><code>1</code></td>
+                        <td>0 can be a pair; it doesn't change the XOR.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Count With a Hash Map</h2>
+                <p class="intuition">
+                  Count how many times each value appears, then return the one counted
+                  once.
+                </p>
+                <ul>
+                  <li>Works for any "find the value that appears k times" variant.</li>
+                  <li>Uses O(n) memory, which the problem asks you to avoid.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  At n = 29,999 here: Python 2.3 ms, Java 11.5 ms, C++ 1.3 ms. Fast
+                  enough, but it doesn't meet the memory rule.
+                </p>
+                <div class="code-tabs" data-viz="0136-single-number/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"count":[4,5],"find":[6,7,8]}'>
+                    class Solution(object):
+                        def singleNumber(self, nums):
+                            count = {}
+                            for x in nums:
+                                count[x] = count.get(x, 0) + 1
+                            for x, c in count.items():
+                                if c == 1:  # the one value seen once
+                                    return x
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"count":[7,8],"find":[10,11,13]}'>
+                    #include <unordered_map>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int singleNumber(std::vector<int>& nums) {
+                            std::unordered_map<int, int> count;
+                            for (int x : nums) {
+                                ++count[x];
+                            }
+                            for (auto& [x, c] : count) {
+                                if (c == 1) return x; // the one value seen once
+                            }
+                            return 0; // not reached: the input always has one
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5],"count":[6,7],"find":[9,10,12]}'>
+                    import java.util.*;
+
+                    class Solution {
+                        public int singleNumber(int[] nums) {
+                            Map<Integer, Integer> count = new HashMap<>();
+                            for (int x : nums) {
+                                count.merge(x, 1, Integer::sum);
+                            }
+                            for (Map.Entry<Integer, Integer> e : count.entrySet()) {
+                                if (e.getValue() == 1) return e.getKey(); // the one value seen once
+                            }
+                            return 0; // not reached: the input always has one
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Sort, Then Check Pairs</h2>
+                <p class="intuition">
+                  After sorting, equal values sit side by side. Check the pairs
+                  (0, 1), (2, 3), …: the first pair that doesn't match starts with the
+                  single number. If every pair matches, it's the last value.
+                </p>
+                <ul>
+                  <li>Stop the pair loop one short of the end, then handle the last value.</li>
+                  <li>C++ and Java sort the input in place.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n)</span>
+                  <span><strong>Space</strong> O(1) extra (O(n) in Python's <code>sorted</code>)</span>
+                </div>
+                <p class="note">
+                  At n = 29,999: Python 3.8 ms, Java 11.2 ms, C++ 0.56 ms. Meets the
+                  memory rule in C++ and Java, but not the time rule.
+                </p>
+                <div class="code-tabs" data-viz="0136-single-number/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"sort":[3],"pair":[4],"broken":[5,6],"last":[7]}'>
+                    class Solution(object):
+                        def singleNumber(self, nums):
+                            nums = sorted(nums)  # equal values end up side by side
+                            for i in range(0, len(nums) - 1, 2):  # look at pairs (0, 1), (2, 3), ...
+                                if nums[i] != nums[i + 1]:  # this pair is broken: nums[i] is the single one
+                                    return nums[i]
+                            return nums[-1]  # every pair matched: the single one is last
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"sort":[6],"pair":[7],"broken":[8,9],"last":[12]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int singleNumber(std::vector<int>& nums) {
+                            std::sort(nums.begin(), nums.end()); // equal values end up side by side (sorts the input)
+                            for (size_t i = 0; i + 1 < nums.size(); i += 2) { // look at pairs (0, 1), (2, 3), ...
+                                if (nums[i] != nums[i + 1]) { // this pair is broken: nums[i] is the single one
+                                    return nums[i];
+                                }
+                            }
+                            return nums.back(); // every pair matched: the single one is last
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"sort":[5],"pair":[6],"broken":[7,8],"last":[11]}'>
+                    import java.util.*;
+
+                    class Solution {
+                        public int singleNumber(int[] nums) {
+                            Arrays.sort(nums); // equal values end up side by side (sorts the input)
+                            for (int i = 0; i + 1 < nums.length; i += 2) { // look at pairs (0, 1), (2, 3), ...
+                                if (nums[i] != nums[i + 1]) { // this pair is broken: nums[i] is the single one
+                                    return nums[i];
+                                }
+                            }
+                            return nums[nums.length - 1]; // every pair matched: the single one is last
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: XOR Everything
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Start with <code>result = 0</code> and XOR in every number. XOR is
+                  its own undo: the second time a value goes in, it flips back exactly
+                  the bits the first time flipped. The pairs cancel; the single number
+                  is what's left.
+                </p>
+                <ul>
+                  <li>
+                    Order doesn't matter: XOR is commutative and associative, so the
+                    two copies of a value don't need to be next to each other.
+                  </li>
+                  <li>
+                    Bit by bit: each bit of the result is 1 exactly when an odd number
+                    of inputs have a 1 there, and only the single number makes it odd.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  At n = 29,999: Python 0.9 ms, Java 0.6 ms, C++ 0.002 ms, the fastest
+                  here in every language. The answer the problem asks for.
+                </p>
+                <div class="code-tabs" data-viz="0136-single-number/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"xor":[4,5],"return":[6]}'>
+                    class Solution(object):
+                        def singleNumber(self, nums):
+                            result = 0  # x ^ 0 = x
+                            for x in nums:
+                                result ^= x  # x ^ x = 0, so every pair cancels out
+                            return result  # only the single number is left
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"xor":[6,7],"return":[9]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int singleNumber(std::vector<int>& nums) {
+                            int result = 0; // x ^ 0 = x
+                            for (int x : nums) {
+                                result ^= x; // x ^ x = 0, so every pair cancels out
+                            }
+                            return result; // only the single number is left
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"xor":[4,5],"return":[7]}'>
+                    class Solution {
+                        public int singleNumber(int[] nums) {
+                            int result = 0; // x ^ 0 = x
+                            for (int x : nums) {
+                                result ^= x; // x ^ x = 0, so every pair cancels out
+                            }
+                            return result; // only the single number is left
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  Approach 3 as a one-line fold: <code>reduce(xor, nums)</code> in
+                  Python, <code>std::accumulate</code> with <code>std::bit_xor</code>
+                  in C++, <code>Arrays.stream(nums).reduce(0, (a, b) -&gt; a ^ b)</code>
+                  in Java.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    from functools import reduce
+                    from operator import xor
+                    class Solution(object):
+                        def singleNumber(self, nums):
+                            return reduce(xor, nums)  # the XOR of everything: pairs cancel
+                  </script>
+                  <script type="text/plain" data-lang="C++">
+                    #include <functional>
+                    #include <numeric>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int singleNumber(std::vector<int>& nums) {
+                            return std::accumulate(nums.begin(), nums.end(), 0, std::bit_xor<int>()); // pairs cancel
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java">
+                    import java.util.Arrays;
+
+                    class Solution {
+                        public int singleNumber(int[] nums) {
+                            return Arrays.stream(nums).reduce(0, (a, b) -> a ^ b); // pairs cancel
+                        }
+                    }
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  Same work as Approach 3: Python 1.0 ms, C++ 0.002 ms; the Java
+                  stream has some setup cost (6.2 ms). Another Python one-liner is
+                  <code>2 * sum(set(nums)) - sum(nums)</code>, which was right on 2,000
+                  test arrays here, but builds a set, so it's O(n) memory.
+                </p>
+              </section>
+
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Count With a Hash Map</th>
+                        <td>Count, find the 1</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Breaks the memory rule</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Sort, Then Check Pairs</th>
+                        <td>First pair that doesn't match</td>
+                        <td>O(n log n)</td>
+                        <td>O(1) extra</td>
+                        <td>Breaks the time rule</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">XOR Everything</th>
+                        <td>Pairs cancel; x ^ x = 0</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>Expected answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -46930,6 +47310,131 @@
           return steps;
         },
       });
+    </script>
+    <!-- problems/0136-single-number/approach1.visual.js -->
+    <script>
+      // Count each value in a hash map, then find the one counted once.
+      (function () {
+      DSAViz.register("0136-single-number/approach1", {
+        inputs: [{ name: "nums", type: "int[]", value: "[4, 1, 2, 1, 2]", minLength: 1, maxLength: 9, minValue: -99, maxValue: 99 }],
+        trace({ nums }) {
+          checkNums(nums);
+          const steps = [];
+          const count = new Map();
+          const view = (o = {}) => [
+            { type: "array", label: "nums", values: nums, marks: o.k !== undefined ? { [o.k]: "active" } : {}, pointers: o.k !== undefined ? { x: o.k } : {} },
+            { type: "map", label: "count", columns: ["value", "times seen"], entries: [...count].map(([x, c]) => [String(x), String(c)]), marks: o.key !== undefined ? { [String(o.key)]: o.found ? "match" : "new" } : {} },
+          ];
+          steps.push({ line: "init", note: "Count how many times each value appears.", view: view() });
+          nums.forEach((x, k) => {
+            count.set(x, (count.get(x) || 0) + 1);
+            steps.push({ line: "count", note: `${x}: seen ${count.get(x)} time${count.get(x) === 1 ? "" : "s"} so far.`, view: view({ k, key: x }) });
+          });
+          const [single] = [...count].find(([, c]) => c === 1);
+          steps.push({ line: "find", note: `${single} is the only value counted once. Return ${single}. O(n) time, but the map holds up to n / 2 + 1 values.`, view: view({ key: single, found: true }) });
+          return steps;
+        },
+      });
+
+      // Every value twice except one, as the problem promises.
+      function checkNums(nums) {
+        const c = new Map();
+        nums.forEach((x) => c.set(x, (c.get(x) || 0) + 1));
+        const once = [...c].filter(([, k]) => k === 1);
+        if ([...c.values()].some((k) => k > 2) || once.length !== 1) throw new DSAViz.InputError("Every number must appear exactly twice, except one that appears once, like [4, 1, 2, 1, 2].");
+      }
+      })();
+    </script>
+    <!-- problems/0136-single-number/approach2.visual.js -->
+    <script>
+      // Sort so equal values sit together, then check the pairs (0, 1), (2, 3), ...
+      (function () {
+      DSAViz.register("0136-single-number/approach2", {
+        inputs: [{ name: "nums", type: "int[]", value: "[4, 1, 2, 1, 2]", minLength: 1, maxLength: 9, minValue: -99, maxValue: 99 }],
+        trace({ nums }) {
+          checkNums(nums);
+          const a = [...nums].sort((x, y) => x - y);
+          const steps = [];
+          const view = (o = {}) => {
+            const marks = {};
+            for (let k = 0; k < (o.i ?? 0); k++) marks[k] = "visited";
+            if (o.i !== undefined && o.i + 1 < a.length) { marks[o.i] = o.broken ? "match" : "window"; marks[o.i + 1] = o.broken ? "cut" : "window"; }
+            if (o.last) marks[a.length - 1] = "match";
+            return [{ type: "array", label: "sorted (dashed = pairs that matched; green = the single number)", values: a, marks, pointers: o.i !== undefined && o.i < a.length ? { i: o.i } : {} }];
+          };
+          steps.push({ line: "sort", note: `Sort: ${a.join(", ")}. Each pair of equal values is now side by side.`, view: view() });
+          for (let i = 0; i + 1 < a.length; i += 2) {
+            if (a[i] !== a[i + 1]) {
+              steps.push({ line: ["pair", "broken"], note: `Pair (${i}, ${i + 1}): ${a[i]} ≠ ${a[i + 1]}. Everything before matched in pairs, so ${a[i]} is the one without a partner. Return ${a[i]}.`, view: view({ i, broken: true }) });
+              return steps;
+            }
+            steps.push({ line: "pair", note: `Pair (${i}, ${i + 1}): ${a[i]} = ${a[i + 1]}. Next pair.`, view: view({ i }) });
+          }
+          steps.push({ line: "last", note: `Every pair matched, so the single number is the last one. Return ${a[a.length - 1]}. Sorting costs O(n log n).`, view: view({ i: a.length - 1, last: true }) });
+          return steps;
+        },
+      });
+
+      // Every value twice except one, as the problem promises.
+      function checkNums(nums) {
+        const c = new Map();
+        nums.forEach((x) => c.set(x, (c.get(x) || 0) + 1));
+        const once = [...c].filter(([, k]) => k === 1);
+        if ([...c.values()].some((k) => k > 2) || once.length !== 1) throw new DSAViz.InputError("Every number must appear exactly twice, except one that appears once, like [4, 1, 2, 1, 2].");
+      }
+      })();
+    </script>
+    <!-- problems/0136-single-number/approach3.visual.js -->
+    <script>
+      // XOR everything: x ^ x = 0 and x ^ 0 = x, so the pairs cancel and the single number is left.
+      (function () {
+      DSAViz.register("0136-single-number/approach3", {
+        inputs: [{ name: "nums", type: "int[]", value: "[4, 1, 2, 1, 2]", minLength: 1, maxLength: 9, minValue: -99, maxValue: 99 }],
+        trace({ nums }) {
+          checkNums(nums);
+          const steps = [];
+          const bits = (x) => [...((x & 0xff) >>> 0).toString(2).padStart(8, "0")];
+          let result = 0;
+          const rows = [];
+          const view = (o = {}) => {
+            const cells = [...rows.map((x) => bits(x)), bits(result)];
+            const marks = {};
+            if (o.k !== undefined) for (let b = 0; b < 8; b++) marks[`${rows.length - 1},${b}`] = "window";
+            for (let b = 0; b < 8; b++) if (cells[rows.length][b] === "1") marks[`${rows.length},${b}`] = o.done ? "match" : "new";
+            return [
+              { type: "array", label: "nums", values: nums, marks: o.k !== undefined ? { [o.k]: "active" } : {}, pointers: o.k !== undefined ? { x: o.k } : {} },
+              {
+                type: "grid",
+                label: "bits (8-bit two's complement; outlined = the number just XORed in; last row = result)",
+                rows: [...rows.map(String), "result"],
+                cols: [7, 6, 5, 4, 3, 2, 1, 0],
+                corner: "x \\ bit",
+                cells,
+                marks,
+              },
+              { type: "vars", items: [{ name: "result", value: result, mark: o.done ? "match" : "" }] },
+            ];
+          };
+          steps.push({ line: "init", note: "result = 0. XOR flips the bits of result where x has a 1. Doing it twice with the same x flips them back.", view: view() });
+          nums.forEach((x, k) => {
+            const before = result;
+            result ^= x;
+            rows.push(x);
+            steps.push({ line: "xor", note: `result = ${before} ^ ${x} = ${result}.${nums.indexOf(x) < k ? ` ${x} has now gone in twice, so its bits cancelled out.` : ""}`, view: view({ k }) });
+          });
+          steps.push({ line: "return", note: `Every pair cancelled; only the single number is left. Return ${result}. O(n) time, O(1) memory.`, view: view({ done: true }) });
+          return steps;
+        },
+      });
+
+      // Every value twice except one, as the problem promises.
+      function checkNums(nums) {
+        const c = new Map();
+        nums.forEach((x) => c.set(x, (c.get(x) || 0) + 1));
+        const once = [...c].filter(([, k]) => k === 1);
+        if ([...c.values()].some((k) => k > 2) || once.length !== 1) throw new DSAViz.InputError("Every number must appear exactly twice, except one that appears once, like [4, 1, 2, 1, 2].");
+      }
+      })();
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->
     <script>
