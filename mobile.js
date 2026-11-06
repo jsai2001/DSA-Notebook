@@ -167,6 +167,17 @@
     return card;
   }
 
+  // Play the soft "rise in" animation on a view that just opened (styles in mobile.css).
+  // The class is removed after the longest animation, so it can play again next time.
+  const enterTimers = new WeakMap();
+  function enter(node) {
+    node.classList.remove("is-entering");
+    void node.offsetWidth; // restart the animation if it's already running
+    node.classList.add("is-entering");
+    clearTimeout(enterTimers.get(node));
+    enterTimers.set(node, setTimeout(() => node.classList.remove("is-entering"), 700));
+  }
+
   function show(lv, g, start) {
     level = lv;
     gi = g;
@@ -197,6 +208,7 @@
     track.scrollLeft = start * track.clientWidth;
     markCut();
     indicate();
+    enter(deck);
   }
 
   // Fade the bottom of a card while some of its text is still below.
@@ -339,6 +351,8 @@
     const target = startAt || (location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1))));
     const k = Math.max(0, sections.findIndex((s) => s === target || (target && s.contains(target))));
     requestAnimationFrame(() => goSection(k, false));
+    enter(q);
+    enter(readTop);
   }
 
   function leaveProblem(q) {
