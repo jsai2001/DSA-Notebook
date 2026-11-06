@@ -9290,7 +9290,7 @@
       <details class="pattern-group" id="g-trees">
         <summary>
           <span class="g-name">Trees</span>
-          <span class="g-count"><span class="g-total">7 problems</span></span>
+          <span class="g-count"><span class="g-total">8 problems</span></span>
           <span class="g-hint">A DFS that returns something to the parent</span>
         </summary>
         <div class="g-body">
@@ -11242,6 +11242,521 @@
                         <td>O(n)</td>
                         <td>O(h)</td>
                         <td>Depth first, no recursion</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0105-construct-binary-tree-from-preorder-and-inorder-traversal ===== -->
+          <details class="question" data-group="trees" data-tags="array hash-table divide-and-conquer tree binary-tree recursion preorder inorder construct">
+            <summary>
+              <span class="q-title">105. Construct Binary Tree from Preorder and Inorder Traversal</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Tree</span>
+                <span class="tag">Hash Table</span>
+                <span class="tag">Divide and Conquer</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> <code>preorder[0]</code> is the
+                <strong>root</strong>. Find it in <code>inorder</code>: everything to
+                its left there is the <strong>left subtree</strong>, everything to its
+                right is the right subtree. Repeat on each part. A map from value to
+                inorder index makes each lookup O(1), and taking the roots from
+                preorder one by one (left subtree first) avoids copying: O(n).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Given the <code>preorder</code> (node, left, right) and
+                  <code>inorder</code> (left, node, right) lists of the same binary tree,
+                  build the tree and return its root.
+                </p>
+                <ul>
+                  <li>1 to 3000 nodes; <code>-3000 &lt;= value &lt;= 3000</code>.</li>
+                  <li>All values are <strong>different</strong> (that's what makes the tree unique).</li>
+                  <li>Both lists really come from the same tree.</li>
+                </ul>
+                <p class="note">
+                  Example: <code>preorder = [3,9,20,15,7]</code>,
+                  <code>inorder = [9,3,15,20,7]</code> →
+                  <code>[3,9,20,null,null,15,7]</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input (preorder, inorder)</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[-1]</code>, <code>[-1]</code></td>
+                        <td><code>[-1]</code></td>
+                        <td>One node: both subtrees are empty parts.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2]</code>, <code>[2,1]</code></td>
+                        <td><code>[1,2]</code></td>
+                        <td>The root is last in inorder: the right part is empty.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2]</code>, <code>[1,2]</code></td>
+                        <td><code>[1,null,2]</code></td>
+                        <td>The same preorder, but now the root is first in inorder: 2 goes on the right. Only inorder tells left from right.</td>
+                      </tr>
+                      <tr>
+                        <td>The example, building the right subtree first</td>
+                        <td><code>[3,9,20,null,null,15,7]</code></td>
+                        <td>Preorder lists the whole left subtree before the right. Taking roots from it in the wrong order uses the wrong values, and here it runs off the end of preorder (IndexError).</td>
+                      </tr>
+                      <tr>
+                        <td>The example, slicing preorder as <code>[1:k]</code></td>
+                        <td>same as above</td>
+                        <td>The left subtree has k values, so its part of preorder is <code>[1:k+1]</code>. One short, and a value goes looking for itself in the wrong part of inorder (ValueError).</td>
+                      </tr>
+                      <tr>
+                        <td>3000 nodes in one line</td>
+                        <td>3000 deep</td>
+                        <td>The recursion goes 3000 deep, past Python's default limit of 1000 (LeetCode raises it). Slicing also copies ~n values per level: 63 ms here against 2 ms.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Recursion with Slices</h2>
+                <p class="intuition">
+                  Take the root from <code>preorder[0]</code> and find its index
+                  <code>k</code> in inorder. The left subtree has exactly k values: the
+                  next k in preorder (<code>preorder[1:k+1]</code>) and the first k in
+                  inorder. The rest is the right subtree. Build both the same way.
+                </p>
+                <ul>
+                  <li>An empty list means an empty subtree: return <code>None</code>.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n²) worst (searching and copying at every level)</span>
+                  <span><strong>Space</strong> O(n²) worst for the copies</span>
+                </div>
+                <p class="note">
+                  The clearest way to see the idea. On a balanced tree it's fine (2 ms
+                  for 3000 random nodes), but on a 3000-node line it took 63 ms.
+                </p>
+                <div class="code-tabs" data-viz="0105-construct-binary-tree-from-preorder-and-inorder-traversal/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"empty":[9,10],"root":[11],"find":[12],"left":[14],"right":[15],"return":[16]}'>
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def buildTree(self, preorder, inorder):
+                            if not preorder:  # no values: no tree
+                                return None
+                            root = TreeNode(preorder[0])  # preorder starts with the root
+                            k = inorder.index(root.val)  # in inorder, everything before the root is its left subtree
+                            # The left subtree has k values: the next k of preorder, and the first k of inorder.
+                            root.left = self.buildTree(preorder[1:k + 1], inorder[:k])
+                            root.right = self.buildTree(preorder[k + 1:], inorder[k + 1:])
+                            return root
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"empty":[17],"root":[18],"find":[20],"left":[22,23],"right":[24,25],"return":[26]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        TreeNode* buildTree(std::vector<int>& preorder, std::vector<int>& inorder) {
+                            if (preorder.empty()) return nullptr; // no values: no tree
+                            TreeNode* root = new TreeNode(preorder[0]); // preorder starts with the root
+                            // in inorder, everything before the root is its left subtree
+                            int k = int(std::find(inorder.begin(), inorder.end(), root->val) - inorder.begin());
+                            // The left subtree has k values: the next k of preorder, and the first k of inorder.
+                            std::vector<int> preL(preorder.begin() + 1, preorder.begin() + 1 + k), inL(inorder.begin(), inorder.begin() + k);
+                            root->left = buildTree(preL, inL);
+                            std::vector<int> preR(preorder.begin() + 1 + k, preorder.end()), inR(inorder.begin() + k + 1, inorder.end());
+                            root->right = buildTree(preR, inR);
+                            return root;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"empty":[19],"root":[20],"find":[21,22],"left":[24],"right":[25],"return":[26]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    import java.util.Arrays;
+                    class Solution {
+                        public TreeNode buildTree(int[] preorder, int[] inorder) {
+                            if (preorder.length == 0) return null; // no values: no tree
+                            TreeNode root = new TreeNode(preorder[0]); // preorder starts with the root
+                            int k = 0; // in inorder, everything before the root is its left subtree
+                            while (inorder[k] != root.val) k++;
+                            // The left subtree has k values: the next k of preorder, and the first k of inorder.
+                            root.left = buildTree(Arrays.copyOfRange(preorder, 1, k + 1), Arrays.copyOfRange(inorder, 0, k));
+                            root.right = buildTree(Arrays.copyOfRange(preorder, k + 1, preorder.length), Arrays.copyOfRange(inorder, k + 1, inorder.length));
+                            return root;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>
+                  Approach 2: Index Map and Bounds
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Remove both costs. A map <code>value → inorder index</code> replaces
+                  the search. Instead of slicing, pass the bounds
+                  <code>lo..hi</code> of the inorder part. And the roots don't need
+                  slicing either: preorder gives them in exactly the order the
+                  recursion asks for them, so keep one counter into it.
+                </p>
+                <ul>
+                  <li><code>build(lo, hi)</code>: take the next preorder value as the root, find <code>k</code>, then <code>build(lo, k − 1)</code> and <code>build(k + 1, hi)</code>.</li>
+                  <li>Build the <strong>left</strong> subtree first, or the counter hands out the wrong roots.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n) for the map, O(h) stack</span>
+                </div>
+                <p class="note">
+                  The answer interviewers expect: 1.1 ms for 3000 random nodes and 2.1
+                  ms for the long line. The same idea works for Construct from Inorder
+                  and Postorder (106), where postorder gives the roots from the end.
+                </p>
+                <div class="code-tabs" data-viz="0105-construct-binary-tree-from-preorder-and-inorder-traversal/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[9,10,20],"call":[11],"empty":[12,13],"root":[14,15],"find":[16],"left":[17],"right":[18],"return":[19]}'>
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def buildTree(self, preorder, inorder):
+                            where = {v: i for i, v in enumerate(inorder)}  # value -> its index in inorder: O(1) lookups
+                            self.next = 0  # the next unused value of preorder
+                            def build(lo, hi):  # build the subtree made of inorder[lo..hi]
+                                if lo > hi:  # no values here: no subtree
+                                    return None
+                                root = TreeNode(preorder[self.next])  # preorder gives the roots in the order they're needed
+                                self.next += 1
+                                k = where[root.val]
+                                root.left = build(lo, k - 1)  # left first: preorder lists the whole left subtree before the right
+                                root.right = build(k + 1, hi)
+                                return root
+                            return build(0, len(inorder) - 1)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[17,18,19,20,21],"call":[27],"empty":[28],"root":[29],"find":[30],"left":[31],"right":[32],"return":[33]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <unordered_map>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        TreeNode* buildTree(std::vector<int>& preorder, std::vector<int>& inorder) {
+                            where.clear(); // value -> its index in inorder: O(1) lookups
+                            for (int i = 0; i < (int)inorder.size(); ++i) where[inorder[i]] = i;
+                            pre = &preorder;
+                            next = 0; // the next unused value of preorder
+                            return build(0, (int)inorder.size() - 1);
+                        }
+                    private:
+                        std::unordered_map<int, int> where;
+                        std::vector<int>* pre = nullptr;
+                        int next = 0;
+                        TreeNode* build(int lo, int hi) { // build the subtree made of inorder[lo..hi]
+                            if (lo > hi) return nullptr; // no values here: no subtree
+                            TreeNode* root = new TreeNode((*pre)[next++]); // preorder gives the roots in the order they're needed
+                            int k = where[root->val];
+                            root->left = build(lo, k - 1); // left first: preorder lists the whole left subtree before the right
+                            root->right = build(k + 1, hi);
+                            return root;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[23,24,25,26,27],"call":[29],"empty":[30],"root":[31],"find":[32],"left":[33],"right":[34],"return":[35]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    import java.util.HashMap;
+                    import java.util.Map;
+                    class Solution {
+                        private Map<Integer, Integer> where;
+                        private int[] pre;
+                        private int next;
+                        public TreeNode buildTree(int[] preorder, int[] inorder) {
+                            where = new HashMap<>(); // value -> its index in inorder: O(1) lookups
+                            for (int i = 0; i < inorder.length; i++) where.put(inorder[i], i);
+                            pre = preorder;
+                            next = 0; // the next unused value of preorder
+                            return build(0, inorder.length - 1);
+                        }
+                        private TreeNode build(int lo, int hi) { // build the subtree made of inorder[lo..hi]
+                            if (lo > hi) return null; // no values here: no subtree
+                            TreeNode root = new TreeNode(pre[next++]); // preorder gives the roots in the order they're needed
+                            int k = where.get(root.val);
+                            root.left = build(lo, k - 1); // left first: preorder lists the whole left subtree before the right
+                            root.right = build(k + 1, hi);
+                            return root;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>Approach 3: One Pass with a Stack</h2>
+                <p class="intuition">
+                  Walk preorder once with a stack of nodes that may still get a right
+                  child, and a pointer <code>j</code> into inorder. Each new value is the
+                  <strong>left child</strong> of the top, unless the top's value is
+                  <code>inorder[j]</code>: then the top's left side is finished, so pop
+                  while the top matches inorder (moving <code>j</code>), and the new
+                  value is the <strong>right child</strong> of the last node popped.
+                </p>
+                <ul>
+                  <li>Inorder reaching a node's value means everything to its left is already built.</li>
+                  <li>No recursion and no map.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n): each node is pushed and popped once</span>
+                  <span><strong>Space</strong> O(h) for the stack</span>
+                </div>
+                <p class="note">
+                  The fastest here (0.6–0.9 ms) and safe on deep trees, but harder to
+                  explain than Approach 2.
+                </p>
+                <div class="code-tabs" data-viz="0105-construct-binary-tree-from-preorder-and-inorder-traversal/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[9,10,11],"loop":[12,13],"left":[14,15],"climb":[16,17,18,19,20],"right":[21],"push":[22],"return":[23]}'>
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def buildTree(self, preorder, inorder):
+                            root = TreeNode(preorder[0])
+                            stack = [root]  # the path of nodes still waiting for their right child
+                            j = 0  # the next value of inorder not yet reached
+                            for v in preorder[1:]:
+                                node = TreeNode(v)
+                                if stack[-1].val != inorder[j]:  # the top's left side isn't finished: v is its left child
+                                    stack[-1].left = node
+                                else:  # the top's left side is done: climb up to the last node inorder has reached
+                                    parent = None
+                                    while stack and stack[-1].val == inorder[j]:
+                                        parent = stack.pop()
+                                        j += 1
+                                    parent.right = node  # v is that node's right child
+                                stack.append(node)
+                            return root
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[17,18,19,20],"loop":[21,22],"left":[23,24],"climb":[25,26,27,28,29,30],"right":[32],"push":[34],"return":[36]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <stack>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        TreeNode* buildTree(std::vector<int>& preorder, std::vector<int>& inorder) {
+                            TreeNode* root = new TreeNode(preorder[0]);
+                            std::stack<TreeNode*> st; // the path of nodes still waiting for their right child
+                            st.push(root);
+                            size_t j = 0; // the next value of inorder not yet reached
+                            for (size_t i = 1; i < preorder.size(); ++i) {
+                                TreeNode* node = new TreeNode(preorder[i]);
+                                if (st.top()->val != inorder[j]) { // the top's left side isn't finished: this is its left child
+                                    st.top()->left = node;
+                                } else { // the top's left side is done: climb up to the last node inorder has reached
+                                    TreeNode* parent = nullptr;
+                                    while (!st.empty() && st.top()->val == inorder[j]) {
+                                        parent = st.top();
+                                        st.pop();
+                                        ++j;
+                                    }
+                                    parent->right = node; // this is that node's right child
+                                }
+                                st.push(node);
+                            }
+                            return root;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[20,21,22,23],"loop":[24,25],"left":[26,27],"climb":[28,29,30,31,32],"right":[34],"push":[36],"return":[38]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    import java.util.ArrayDeque;
+                    import java.util.Deque;
+                    class Solution {
+                        public TreeNode buildTree(int[] preorder, int[] inorder) {
+                            TreeNode root = new TreeNode(preorder[0]);
+                            Deque<TreeNode> stack = new ArrayDeque<>(); // the path of nodes still waiting for their right child
+                            stack.push(root);
+                            int j = 0; // the next value of inorder not yet reached
+                            for (int i = 1; i < preorder.length; i++) {
+                                TreeNode node = new TreeNode(preorder[i]);
+                                if (stack.peek().val != inorder[j]) { // the top's left side isn't finished: this is its left child
+                                    stack.peek().left = node;
+                                } else { // the top's left side is done: climb up to the last node inorder has reached
+                                    TreeNode parent = null;
+                                    while (!stack.isEmpty() && stack.peek().val == inorder[j]) {
+                                        parent = stack.pop();
+                                        j++;
+                                    }
+                                    parent.right = node; // this is that node's right child
+                                }
+                                stack.push(node);
+                            }
+                            return root;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  No library builds a tree from its traversals, in Python, C++ or Java.
+                  Use a hash map for the inorder positions: a <code>dict</code>,
+                  <code>unordered_map</code> or <code>HashMap</code>.
+                </p>
+                <p class="note">
+                  Write Approach 2. The two traps: build left before right, and give the
+                  left part exactly k values. It only works because the values are all
+                  different: with repeats, the root's position in inorder is ambiguous.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Slices</th>
+                        <td>Find the root in inorder, slice both lists</td>
+                        <td>O(n²)</td>
+                        <td>O(n²)</td>
+                        <td>Clearest; slow on deep trees</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Map and Bounds</th>
+                        <td>value → index map, preorder counter</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>The usual answer</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Stack</th>
+                        <td>Left child unless inorder says climb</td>
+                        <td>O(n)</td>
+                        <td>O(h)</td>
+                        <td>No recursion, no map</td>
                       </tr>
                     </tbody>
                   </table>
@@ -37608,6 +38123,254 @@
             });
           }
           steps.push({ line: "return", note: `The stack is empty: return best = ${best}.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0105-construct-binary-tree-from-preorder-and-inorder-traversal/approach1.visual.js -->
+    <script>
+      // Recursion with slices: preorder[0] is the root; its index k in inorder splits both lists into a left part of k values and the rest.
+      DSAViz.register("0105-construct-binary-tree-from-preorder-and-inorder-traversal/approach1", {
+        inputs: [
+          { name: "preorder", type: "int[]", value: "[3, 9, 20, 15, 7]", minLength: 1, maxLength: 9 },
+          { name: "inorder", type: "int[]", value: "[9, 3, 15, 20, 7]", minLength: 1, maxLength: 9 },
+        ],
+        trace({ preorder, inorder }) {
+          const bad = "These two lists can't come from the same tree. Try the preorder and inorder of one real tree.";
+          if (preorder.length !== inorder.length) throw new DSAViz.InputError("preorder and inorder need the same number of values.");
+          if (new Set(preorder).size !== preorder.length) throw new DSAViz.InputError("The values must all be different.");
+          const kids = new Map();
+          let rootVal = null;
+          let copied = 0; // values copied into slices so far
+          const level = () => {
+            if (rootVal === null) return { values: [], at: {} };
+            const values = [], at = {}, q = [rootVal];
+            while (q.length) {
+              const v = q.shift();
+              if (v === null) { values.push(null); continue; }
+              at[v] = values.length;
+              values.push(v);
+              q.push(kids.get(v).left, kids.get(v).right);
+            }
+            while (values[values.length - 1] === null) values.pop();
+            return { values, at };
+          };
+          const steps = [];
+          const view = (pre, ino, o = {}) => {
+            const { values, at } = level();
+            const tm = {};
+            if (o.cur !== undefined) tm[at[o.cur]] = "new";
+            const pm = {}, im = {};
+            if (o.k !== undefined) {
+              pm[0] = "match";
+              for (let i = 1; i <= o.k; i++) pm[i] = "compare";
+              for (let i = 0; i < o.k; i++) im[i] = "compare";
+              im[o.k] = "match";
+            }
+            return [
+              values.length ? { type: "tree", label: "tree built so far (yellow = just added)", values, marks: tm } : { type: "array", label: "tree built so far: nothing yet", values: [] },
+              { type: "array", label: "this call's preorder slice (green = root, orange = left part)", values: pre, marks: pm },
+              { type: "array", label: "this call's inorder slice (orange = left part)", values: ino, marks: im, pointers: o.k !== undefined ? { k: o.k } : {} },
+              { type: "vars", items: [{ name: "values copied into slices", value: copied }] },
+            ];
+          };
+          steps.push({ line: "root", note: "preorder[0] is the root. Where it sits in inorder splits the rest into left and right.", view: view(preorder, inorder) });
+          function build(pre, ino, parent, side) {
+            if (!pre.length) return;
+            const v = pre[0];
+            const k = ino.indexOf(v);
+            if (k < 0 || pre.length !== ino.length) throw new DSAViz.InputError(bad);
+            kids.set(v, { left: null, right: null });
+            if (parent === null) rootVal = v;
+            else kids.get(parent)[side] = v;
+            steps.push({
+              line: ["root", "find", "left", "right"],
+              note: `${v} is first in this preorder slice: the root${parent === null ? "" : ` (the ${side} child of ${parent})`}. Searching inorder finds it at index ${k}, so the left subtree has ${k} value${k === 1 ? "" : "s"}: preorder[1..${k}] and inorder[0..${k - 1}].`,
+              view: view(pre, ino, { k, cur: v }),
+            });
+            copied += pre.length - 1 + ino.length - 1;
+            build(pre.slice(1, k + 1), ino.slice(0, k), v, "left");
+            build(pre.slice(k + 1), ino.slice(k + 1), v, "right");
+          }
+          build(preorder, inorder, null, null);
+          const pre = [], ino = [];
+          const walk = (v) => { if (v === null) return; pre.push(v); walk(kids.get(v).left); walk(kids.get(v).right); };
+          const walkIn = (v) => { if (v === null) return; walkIn(kids.get(v).left); ino.push(v); walkIn(kids.get(v).right); };
+          walk(rootVal);
+          walkIn(rootVal);
+          if (pre.join() !== preorder.join() || ino.join() !== inorder.join()) throw new DSAViz.InputError(bad);
+          steps.push({ line: "return", note: `Return the root, ${rootVal}. ${copied} values were copied into new slices along the way, and every root was searched for in inorder: that's the O(n²) cost.`, view: view([], []) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0105-construct-binary-tree-from-preorder-and-inorder-traversal/approach2.visual.js -->
+    <script>
+      // Index map and bounds: the next preorder value is the root of inorder[lo..hi]; its inorder index splits left from right.
+      DSAViz.register("0105-construct-binary-tree-from-preorder-and-inorder-traversal/approach2", {
+        inputs: [
+          { name: "preorder", type: "int[]", value: "[3, 9, 20, 15, 7]", minLength: 1, maxLength: 9 },
+          { name: "inorder", type: "int[]", value: "[9, 3, 15, 20, 7]", minLength: 1, maxLength: 9 },
+        ],
+        trace({ preorder, inorder }) {
+          if (preorder.length !== inorder.length) throw new DSAViz.InputError("preorder and inorder need the same number of values.");
+          if (new Set(preorder).size !== preorder.length) throw new DSAViz.InputError("The values must all be different.");
+          const where = new Map(inorder.map((v, i) => [v, i]));
+          if (!preorder.every((v) => where.has(v))) throw new DSAViz.InputError("preorder and inorder must hold the same values.");
+          // the tree being built: value -> { left, right } (values are unique)
+          const kids = new Map();
+          let rootVal = null;
+          const level = () => {
+            // level order with nulls, so the tree widget can draw it; also value -> index there
+            if (rootVal === null) return { values: [], at: {} };
+            const values = [], at = {}, q = [rootVal];
+            while (q.length) {
+              const v = q.shift();
+              if (v === null) { values.push(null); continue; }
+              at[v] = values.length;
+              values.push(v);
+              const k = kids.get(v);
+              q.push(k.left, k.right);
+            }
+            while (values[values.length - 1] === null) values.pop();
+            return { values, at };
+          };
+          const steps = [];
+          let next = 0;
+          const view = (o = {}) => {
+            const { values, at } = level();
+            const tm = {};
+            if (o.cur !== undefined && at[o.cur] !== undefined) tm[at[o.cur]] = "new";
+            const im = {};
+            if (o.lo !== undefined) for (let i = o.lo; i <= o.hi; i++) im[i] = "window";
+            if (o.k !== undefined) {
+              for (let i = o.lo; i < o.k; i++) im[i] = "compare";
+              im[o.k] = "match";
+            }
+            const pm = {};
+            for (let i = 0; i < next; i++) pm[i] = "visited";
+            if (o.cur !== undefined) pm[next - 1] = "match";
+            return [
+              values.length ? { type: "tree", label: "tree built so far (yellow = just added)", values, marks: tm } : { type: "array", label: "tree built so far: nothing yet", values: [] },
+              { type: "array", label: "preorder (faded = already used as a root)", values: preorder, marks: pm, pointers: next < preorder.length ? { next } : {} },
+              { type: "array", label: "inorder (outlined = this subtree; orange = goes left)", values: inorder, marks: im, pointers: o.k !== undefined ? { k: o.k } : {} },
+            ];
+          };
+          steps.push({ line: "init", note: "Map each value to its index in inorder. The whole inorder list is the whole tree; the first preorder value is its root.", view: view({ lo: 0, hi: inorder.length - 1 }) });
+          function build(lo, hi, parent, side) {
+            if (lo > hi) return null;
+            const v = preorder[next++];
+            kids.set(v, { left: null, right: null });
+            if (parent === null) rootVal = v;
+            else kids.get(parent)[side] = v;
+            const k = where.get(v);
+            if (k < lo || k > hi) throw new DSAViz.InputError("These two lists can't come from the same tree. Try the preorder and inorder of one real tree.");
+            steps.push({
+              line: ["call", "root", "find"],
+              note: `inorder[${lo}..${hi}]: the next preorder value, ${v}, is its root${parent === null ? "" : ` (the ${side} child of ${parent})`}. It's at index ${k} in inorder: ${k - lo} value${k - lo === 1 ? "" : "s"} on its left, ${hi - k} on its right.`,
+              view: view({ lo, hi, k, cur: v }),
+            });
+            build(lo, k - 1, v, "left");
+            build(k + 1, hi, v, "right");
+            return v;
+          }
+          build(0, inorder.length - 1, null, null);
+          steps.push({ line: "return", note: `Every value placed: return the root, ${rootVal}. One map lookup per node: O(n).`, view: view() });
+          // the lists must really come from one tree: walk the result and compare
+          const pre = [], ino = [];
+          const walk = (v) => { if (v === null) return; pre.push(v); walk(kids.get(v).left); walk(kids.get(v).right); };
+          const walkIn = (v) => { if (v === null) return; walkIn(kids.get(v).left); ino.push(v); walkIn(kids.get(v).right); };
+          walk(rootVal);
+          walkIn(rootVal);
+          if (pre.join() !== preorder.join() || ino.join() !== inorder.join()) throw new DSAViz.InputError("These two lists can't come from the same tree. Try the preorder and inorder of one real tree.");
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0105-construct-binary-tree-from-preorder-and-inorder-traversal/approach3.visual.js -->
+    <script>
+      // One pass with a stack: each new preorder value is the top's left child, unless inorder says the top's left side is done.
+      DSAViz.register("0105-construct-binary-tree-from-preorder-and-inorder-traversal/approach3", {
+        inputs: [
+          { name: "preorder", type: "int[]", value: "[3, 9, 20, 15, 7]", minLength: 1, maxLength: 9 },
+          { name: "inorder", type: "int[]", value: "[9, 3, 15, 20, 7]", minLength: 1, maxLength: 9 },
+        ],
+        trace({ preorder, inorder }) {
+          const bad = "These two lists can't come from the same tree. Try the preorder and inorder of one real tree.";
+          if (preorder.length !== inorder.length) throw new DSAViz.InputError("preorder and inorder need the same number of values.");
+          if (new Set(preorder).size !== preorder.length) throw new DSAViz.InputError("The values must all be different.");
+          if ([...preorder].sort((a, b) => a - b).join() !== [...inorder].sort((a, b) => a - b).join()) throw new DSAViz.InputError("preorder and inorder must hold the same values.");
+          const kids = new Map();
+          const rootVal = preorder[0];
+          kids.set(rootVal, { left: null, right: null });
+          const level = () => {
+            const values = [], at = {}, q = [rootVal];
+            while (q.length) {
+              const v = q.shift();
+              if (v === null) { values.push(null); continue; }
+              at[v] = values.length;
+              values.push(v);
+              q.push(kids.get(v).left, kids.get(v).right);
+            }
+            while (values[values.length - 1] === null) values.pop();
+            return { values, at };
+          };
+          const steps = [];
+          const stack = [rootVal];
+          let j = 0;
+          let i = 1;
+          const view = (o = {}) => {
+            const { values, at } = level();
+            const tm = {};
+            stack.forEach((v) => (tm[at[v]] = "compare"));
+            if (o.cur !== undefined) tm[at[o.cur]] = "new";
+            const pm = {};
+            for (let k = 0; k < i; k++) pm[k] = "visited";
+            const im = {};
+            for (let k = 0; k < j; k++) im[k] = "visited";
+            return [
+              { type: "tree", label: "tree built so far (orange = on the stack, still waiting for a right child; yellow = just added)", values, marks: tm },
+              { type: "array", label: "preorder", values: preorder, marks: pm, pointers: i < preorder.length ? { i } : {} },
+              { type: "array", label: "inorder (faded = reached)", values: inorder, marks: im, pointers: j < inorder.length ? { j } : {} },
+              { type: "array", label: "stack (bottom → top)", values: stack.slice(), marks: stack.length ? { [stack.length - 1]: "active" } : {} },
+            ];
+          };
+          steps.push({ line: "init", note: `The root is ${rootVal}. Push it; j points at inorder[0] = ${inorder[0]}.`, view: view() });
+          for (; i < preorder.length; ) {
+            const v = preorder[i];
+            const top = stack[stack.length - 1];
+            kids.set(v, { left: null, right: null });
+            if (top !== inorder[j]) {
+              kids.get(top).left = v;
+              i++;
+              stack.push(v);
+              steps.push({ line: ["loop", "left", "push"], note: `${v}: the top, ${top}, isn't inorder[${j}] = ${inorder[j]} yet, so its left side isn't finished. ${v} is ${top}'s left child. Push it.`, view: view({ cur: v }) });
+            } else {
+              const popped = [];
+              let parent = null;
+              while (stack.length && stack[stack.length - 1] === inorder[j]) {
+                parent = stack.pop();
+                popped.push(parent);
+                j++;
+              }
+              if (parent === null) throw new DSAViz.InputError(bad);
+              kids.get(parent).right = v;
+              i++;
+              stack.push(v);
+              steps.push({
+                line: ["loop", "climb", "right", "push"],
+                note: `${v}: the top matches inorder, so pop while it does: ${popped.join(", ")}. Inorder has reached ${parent}, so everything left of it is built: ${v} is ${parent}'s right child. Push it.`,
+                view: view({ cur: v }),
+              });
+            }
+          }
+          const pre = [], ino = [];
+          const walk = (v) => { if (v === null) return; pre.push(v); walk(kids.get(v).left); walk(kids.get(v).right); };
+          const walkIn = (v) => { if (v === null) return; walkIn(kids.get(v).left); ino.push(v); walkIn(kids.get(v).right); };
+          walk(rootVal);
+          walkIn(rootVal);
+          if (pre.join() !== preorder.join() || ino.join() !== inorder.join()) throw new DSAViz.InputError(bad);
+          steps.push({ line: "return", note: `All of preorder placed: return the root, ${rootVal}. Each node was pushed and popped at most once: O(n).`, view: view() });
           return steps;
         },
       });

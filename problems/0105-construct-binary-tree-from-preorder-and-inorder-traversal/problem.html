@@ -1,0 +1,227 @@
+<details class="question" data-group="trees" data-tags="array hash-table divide-and-conquer tree binary-tree recursion preorder inorder construct">
+  <summary>
+    <span class="q-title">105. Construct Binary Tree from Preorder and Inorder Traversal</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Tree</span>
+      <span class="tag">Hash Table</span>
+      <span class="tag">Divide and Conquer</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> <code>preorder[0]</code> is the
+      <strong>root</strong>. Find it in <code>inorder</code>: everything to
+      its left there is the <strong>left subtree</strong>, everything to its
+      right is the right subtree. Repeat on each part. A map from value to
+      inorder index makes each lookup O(1), and taking the roots from
+      preorder one by one (left subtree first) avoids copying: O(n).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/construct-binary-tree-from-preorder-and-inorder-traversal/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given the <code>preorder</code> (node, left, right) and
+        <code>inorder</code> (left, node, right) lists of the same binary tree,
+        build the tree and return its root.
+      </p>
+      <ul>
+        <li>1 to 3000 nodes; <code>-3000 &lt;= value &lt;= 3000</code>.</li>
+        <li>All values are <strong>different</strong> (that's what makes the tree unique).</li>
+        <li>Both lists really come from the same tree.</li>
+      </ul>
+      <p class="note">
+        Example: <code>preorder = [3,9,20,15,7]</code>,
+        <code>inorder = [9,3,15,20,7]</code> →
+        <code>[3,9,20,null,null,15,7]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input (preorder, inorder)</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[-1]</code>, <code>[-1]</code></td>
+              <td><code>[-1]</code></td>
+              <td>One node: both subtrees are empty parts.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2]</code>, <code>[2,1]</code></td>
+              <td><code>[1,2]</code></td>
+              <td>The root is last in inorder: the right part is empty.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2]</code>, <code>[1,2]</code></td>
+              <td><code>[1,null,2]</code></td>
+              <td>The same preorder, but now the root is first in inorder: 2 goes on the right. Only inorder tells left from right.</td>
+            </tr>
+            <tr>
+              <td>The example, building the right subtree first</td>
+              <td><code>[3,9,20,null,null,15,7]</code></td>
+              <td>Preorder lists the whole left subtree before the right. Taking roots from it in the wrong order uses the wrong values, and here it runs off the end of preorder (IndexError).</td>
+            </tr>
+            <tr>
+              <td>The example, slicing preorder as <code>[1:k]</code></td>
+              <td>same as above</td>
+              <td>The left subtree has k values, so its part of preorder is <code>[1:k+1]</code>. One short, and a value goes looking for itself in the wrong part of inorder (ValueError).</td>
+            </tr>
+            <tr>
+              <td>3000 nodes in one line</td>
+              <td>3000 deep</td>
+              <td>The recursion goes 3000 deep, past Python's default limit of 1000 (LeetCode raises it). Slicing also copies ~n values per level: 63 ms here against 2 ms.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Recursion with Slices</h2>
+      <p class="intuition">
+        Take the root from <code>preorder[0]</code> and find its index
+        <code>k</code> in inorder. The left subtree has exactly k values: the
+        next k in preorder (<code>preorder[1:k+1]</code>) and the first k in
+        inorder. The rest is the right subtree. Build both the same way.
+      </p>
+      <ul>
+        <li>An empty list means an empty subtree: return <code>None</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²) worst (searching and copying at every level)</span>
+        <span><strong>Space</strong> O(n²) worst for the copies</span>
+      </div>
+      <p class="note">
+        The clearest way to see the idea. On a balanced tree it's fine (2 ms
+        for 3000 random nodes), but on a 3000-node line it took 63 ms.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Index Map and Bounds
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Remove both costs. A map <code>value → inorder index</code> replaces
+        the search. Instead of slicing, pass the bounds
+        <code>lo..hi</code> of the inorder part. And the roots don't need
+        slicing either: preorder gives them in exactly the order the
+        recursion asks for them, so keep one counter into it.
+      </p>
+      <ul>
+        <li><code>build(lo, hi)</code>: take the next preorder value as the root, find <code>k</code>, then <code>build(lo, k − 1)</code> and <code>build(k + 1, hi)</code>.</li>
+        <li>Build the <strong>left</strong> subtree first, or the counter hands out the wrong roots.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n) for the map, O(h) stack</span>
+      </div>
+      <p class="note">
+        The answer interviewers expect: 1.1 ms for 3000 random nodes and 2.1
+        ms for the long line. The same idea works for Construct from Inorder
+        and Postorder (106), where postorder gives the roots from the end.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: One Pass with a Stack</h2>
+      <p class="intuition">
+        Walk preorder once with a stack of nodes that may still get a right
+        child, and a pointer <code>j</code> into inorder. Each new value is the
+        <strong>left child</strong> of the top, unless the top's value is
+        <code>inorder[j]</code>: then the top's left side is finished, so pop
+        while the top matches inorder (moving <code>j</code>), and the new
+        value is the <strong>right child</strong> of the last node popped.
+      </p>
+      <ul>
+        <li>Inorder reaching a node's value means everything to its left is already built.</li>
+        <li>No recursion and no map.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n): each node is pushed and popped once</span>
+        <span><strong>Space</strong> O(h) for the stack</span>
+      </div>
+      <p class="note">
+        The fastest here (0.6–0.9 ms) and safe on deep trees, but harder to
+        explain than Approach 2.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No library builds a tree from its traversals, in Python, C++ or Java.
+        Use a hash map for the inorder positions: a <code>dict</code>,
+        <code>unordered_map</code> or <code>HashMap</code>.
+      </p>
+      <p class="note">
+        Write Approach 2. The two traps: build left before right, and give the
+        left part exactly k values. It only works because the values are all
+        different: with repeats, the root's position in inorder is ambiguous.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Slices</th>
+              <td>Find the root in inorder, slice both lists</td>
+              <td>O(n²)</td>
+              <td>O(n²)</td>
+              <td>Clearest; slow on deep trees</td>
+            </tr>
+            <tr>
+              <th scope="row">Map and Bounds</th>
+              <td>value → index map, preorder counter</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>The usual answer</td>
+            </tr>
+            <tr>
+              <th scope="row">Stack</th>
+              <td>Left child unless inorder says climb</td>
+              <td>O(n)</td>
+              <td>O(h)</td>
+              <td>No recursion, no map</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
