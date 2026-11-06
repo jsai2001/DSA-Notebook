@@ -1,0 +1,233 @@
+<details class="question" data-group="arrays-hashing" data-tags="array hash-table design counting geometry">
+  <summary>
+    <span class="q-title">2013. Detect Squares</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Hash Table</span>
+      <span class="tag">Design</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Store a <strong>count per point</strong> (a
+      point can be added more than once). To count squares with corner
+      <code>q = (x, y)</code>, pick a point <code>(x, y2)</code> straight
+      above or below it: that fixes the side <code>d = y2 − y</code>, and the
+      square is to the right or to the left. Multiply the counts of the three
+      stored corners. With points grouped by column this is O(points in q's
+      column) per <code>count</code>.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/detect-squares/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Build a class <code>DetectSquares</code>:
+      </p>
+      <ul>
+        <li><code>add(point)</code> stores a point <code>[x, y]</code>. Repeats are allowed and count separately.</li>
+        <li><code>count(point)</code> returns how many ways to pick three stored points that make, with the query point, a square of <strong>positive area</strong> whose sides are parallel to the axes. The query point is not stored.</li>
+        <li><code>0 &lt;= x, y &lt;= 1000</code>, and at most 3000 calls to <code>add</code> and <code>count</code> in total.</li>
+      </ul>
+      <p class="note">
+        Example: add <code>[3,10]</code>, <code>[11,2]</code>,
+        <code>[3,2]</code>; <code>count([11,10])</code> → <code>1</code>;
+        <code>count([14,8])</code> → <code>0</code>; add <code>[11,2]</code>
+        again; <code>count([11,10])</code> → <code>2</code> (either copy of
+        (11, 2) can be the corner).
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>The example, after adding <code>[11,2]</code> twice</td>
+              <td><code>2</code></td>
+              <td>Repeats are separate points. Storing a set of points (not counts) says 1.</td>
+            </tr>
+            <tr>
+              <td>Add <code>[5,5]</code> twice, <code>count([5,5])</code></td>
+              <td><code>0</code></td>
+              <td>Side 0 is not a square: skip points with the query's own y (or x).</td>
+            </tr>
+            <tr>
+              <td>Corners <code>(0,0) (1,0) (0,2) (1,2)</code>, <code>count([1,0])</code></td>
+              <td><code>0</code></td>
+              <td>A rectangle, not a square: the two sides must have the same length.</td>
+            </tr>
+            <tr>
+              <td>Add <code>(0,0) (0,1) (1,1)</code>, <code>count([1,0])</code></td>
+              <td><code>1</code></td>
+              <td>The square is to the <strong>left</strong> of the query. Checking only <code>x + d</code> (the right side) says 0.</td>
+            </tr>
+            <tr>
+              <td>Add <code>(1000,0) (1000,1000) (0,1000)</code>, <code>count([0,0])</code></td>
+              <td><code>1</code></td>
+              <td>The biggest square. With a 1001 × 1001 table, <code>x ± d</code> can fall outside 0..1000: check before indexing.</td>
+            </tr>
+            <tr>
+              <td><code>count</code> before any <code>add</code></td>
+              <td><code>0</code></td>
+              <td>Nothing stored: the loops must simply find nothing.</td>
+            </tr>
+            <tr>
+              <td>1500 adds on a 10 × 10 corner, then counts</td>
+              <td>up to <code>71525</code></td>
+              <td>Many repeats: a list scanned for each corner took 20 s in Python. Counting each point once is what makes it fast.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Keep Every Point in a List</h2>
+      <p class="intuition">
+        Store the points as they come. For <code>count</code>, try every
+        stored point <code>p</code> as the corner <strong>across</strong> from
+        the query (the diagonal): it must differ in x and y by the same
+        amount. Then the other two corners are fixed, <code>(x, py)</code> and
+        <code>(px, y)</code>; scan the list to see how many of each there
+        are.
+      </p>
+      <ul>
+        <li>Squares for this p = (copies of one corner) × (copies of the other). Repeats of p itself are counted because p's own repeats are separate list entries.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(1) add, O(n²) count (n = points added)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Fine with few points, but with 1500 points on a small board, 1500
+        counts took 20 s in Python. Too slow.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Count Each Point, Try Each as the Diagonal</h2>
+      <p class="intuition">
+        Store <code>cnt[(x, y)]</code>, how many times each point was added.
+        For <code>count</code>, loop over the <strong>distinct</strong> points
+        as the diagonal corner, and look the other two corners up in O(1).
+      </p>
+      <ul>
+        <li>Squares for diagonal p = <code>cnt[p] · cnt[(x, py)] · cnt[(px, y)]</code>. A missing corner has count 0, so the product is 0.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(1) add, O(k) count (k = distinct points)</span>
+        <span><strong>Space</strong> O(k)</span>
+      </div>
+      <p class="note">
+        The usual answer: 0.014 s for the dense test. With 1500 points spread
+        over the whole 1001 × 1001 board it took 0.19 s, because every count
+        still looks at every distinct point.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Group Points by Column
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Every square through the query has a corner straight above or below
+        it, in the <strong>same column</strong>. So also keep, for each x, the
+        y's added in that column. Each one, <code>(x, y2)</code>, gives the
+        side <code>d = y2 − y</code>, and then there are just two squares to
+        check: to the right (<code>x + d</code>) and to the left
+        (<code>x − d</code>).
+      </p>
+      <ul>
+        <li>Squares = <code>cnt[(x, y2)] · cnt[(x2, y)] · cnt[(x2, y2)]</code> for each <code>x2</code> in <code>(x + d, x − d)</code>.</li>
+        <li>Skip <code>y2 == y</code>: side 0.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(1) add, O(points in the query's column) count</span>
+        <span><strong>Space</strong> O(k)</span>
+      </div>
+      <p class="note">
+        A column holds at most 1001 different y's, whatever else is stored:
+        0.002 s for the spread-out test and 0.007 s for the dense one.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No library counts squares, but the hash maps do the work:
+        <code>defaultdict(int)</code> or <code>Counter</code> in Python,
+        <code>unordered_map</code> (or a plain table, since coordinates are
+        small) in C++, <code>HashMap</code> or an <code>int[][]</code> in
+        Java.
+      </p>
+      <p class="note">
+        Remember the three things: counts, not a set; skip side 0; check both
+        the right and the left square.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">count</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">List of Points</th>
+              <td>Every point as the diagonal, scan for the corners</td>
+              <td>O(n²)</td>
+              <td>O(n)</td>
+              <td>Too slow with many repeats</td>
+            </tr>
+            <tr>
+              <th scope="row">Count, Diagonal</th>
+              <td>Distinct points as the diagonal, look up corners</td>
+              <td>O(k)</td>
+              <td>O(k)</td>
+              <td>The usual answer</td>
+            </tr>
+            <tr>
+              <th scope="row">Count, by Column</th>
+              <td>Same-column points fix the side; check left and right</td>
+              <td>O(column)</td>
+              <td>O(k)</td>
+              <td>Fastest; at most 1001 per column</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
