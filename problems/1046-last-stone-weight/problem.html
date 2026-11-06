@@ -1,0 +1,220 @@
+<details class="question" data-group="greedy" data-tags="array heap priority-queue simulation sorting">
+  <summary>
+    <span class="q-title">1046. Last Stone Weight</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Array</span>
+      <span class="tag">Heap (Priority Queue)</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Every round needs the <strong>two heaviest
+      stones</strong>, and then a new stone goes back in. That's exactly what a
+      <strong>max-heap</strong> does: take the biggest in O(log n), add in
+      O(log n). Python's <code>heapq</code> is a min-heap, so store the
+      weights as negatives. O(n log n).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/last-stone-weight/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>stones[i]</code> is the weight of a stone. Each turn, smash the
+        two heaviest together, weights <code>y ≥ x</code>: if they're equal,
+        both break; otherwise the lighter breaks and the heavier becomes
+        <code>y − x</code>. Return the weight of the last stone left, or
+        <code>0</code> if none is left.
+      </p>
+      <ul>
+        <li><code>1 &lt;= stones.length &lt;= 30</code> and <code>1 &lt;= stones[i] &lt;= 1000</code>.</li>
+      </ul>
+      <p class="note">
+        Example: <code>[2,7,4,1,8,1]</code> → <code>1</code>: 8 and 7 leave
+        1, then 4 and 2 leave 2, then 2 and 1 leave 1, then 1 and 1 break,
+        and the last 1 is left.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[1]</code></td>
+              <td><code>1</code></td>
+              <td>One stone: no smash at all, it's the answer.</td>
+            </tr>
+            <tr>
+              <td><code>[2,2]</code></td>
+              <td><code>0</code></td>
+              <td>Both break and nothing is left. Returning <code>heap[0]</code> without checking crashes on the empty heap.</td>
+            </tr>
+            <tr>
+              <td><code>[3,3,3]</code></td>
+              <td><code>3</code></td>
+              <td>Two of them break; the third is never smashed.</td>
+            </tr>
+            <tr>
+              <td><code>[2,7,4,1,8,1]</code> with a plain <code>heapq</code></td>
+              <td><code>1</code></td>
+              <td>Forgetting to negate makes it smash the two <em>lightest</em> each time: it says 3.</td>
+            </tr>
+            <tr>
+              <td><code>[9,3,2,10]</code></td>
+              <td><code>0</code></td>
+              <td>10 and 9 leave 1; 3 and 2 leave 1; the two 1's break. The new stone must go back with the others, not to the end.</td>
+            </tr>
+            <tr>
+              <td>30 stones of <code>1000</code></td>
+              <td><code>0</code></td>
+              <td>An even number of equal stones: they all break in pairs. With 29 of them, one 1000 is left.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Sort Every Round</h2>
+      <p class="intuition">
+        Follow the rules literally: sort, take the last two, put the
+        difference back, repeat until at most one stone is left.
+      </p>
+      <ul>
+        <li>Work on a copy so the caller's list isn't changed.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n² log n) in theory</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        With 30 stones this is the fastest here (0.005 ms). The list is nearly
+        sorted after the first round, and Python's sort is fast on that, but
+        it still grows like n²: 108 ms at 10⁴ stones.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Keep the List Sorted</h2>
+      <p class="intuition">
+        Sort once. Then the two heaviest are always the last two, and the new
+        stone can go straight to its place with a binary search, keeping the
+        list sorted.
+      </p>
+      <ul>
+        <li>Python: <code>bisect.insort</code>. C++: <code>upper_bound</code> then <code>insert</code>. Java: <code>Collections.binarySearch</code>, where a negative result <code>-(at) − 1</code> says where it would go.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²): the search is O(log n), but inserting shifts the list</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        No re-sorting, but each insert moves the elements after it: 16 ms at
+        10⁴ stones, 1.4 s at 10⁵.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Max-Heap
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        A heap gives the biggest item in O(log n) and takes a new one in
+        O(log n), without keeping everything sorted. Each round: pop two, push
+        their difference if it isn't 0.
+      </p>
+      <ul>
+        <li>Python: <code>heapq</code> is a min-heap, so push <code>-w</code> and negate again when popping.</li>
+        <li>C++: <code>priority_queue&lt;int&gt;</code> is already a max-heap. Java: <code>new PriorityQueue&lt;&gt;(Collections.reverseOrder())</code>.</li>
+        <li>At most n − 1 rounds, since each one removes at least one stone.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        The answer interviewers expect. With only 30 stones it's actually the
+        slowest here (0.010 ms, the negation costs a little), but it's the only
+        one that stays fast as the input grows: 5 ms at 10⁴, 69 ms at 10⁵.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Approach 3 already is the library version: <code>heapq</code>,
+        <code>std::priority_queue</code> and <code>PriorityQueue</code> are
+        the built-in heaps. Python 3.14 also adds max-heap functions
+        (<code>heapq.heapify_max</code>, <code>heapq.heappop_max</code>,
+        <code>heapq.heappush_max</code>), so the negatives aren't needed there.
+      </p>
+      <p class="note">
+        Older Pythons (and LeetCode, if it isn't on 3.14 yet) don't have them:
+        use the negatives, which work everywhere.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Sort Every Round</th>
+              <td>sort, take the last two</td>
+              <td>O(n² log n)</td>
+              <td>O(n)</td>
+              <td>Fastest at n = 30; grows fast</td>
+            </tr>
+            <tr>
+              <th scope="row">Keep Sorted</th>
+              <td>Binary search, insert</td>
+              <td>O(n²)</td>
+              <td>O(n)</td>
+              <td>Inserting shifts the list</td>
+            </tr>
+            <tr>
+              <th scope="row">Max-Heap</th>
+              <td>Pop two, push the difference</td>
+              <td>O(n log n)</td>
+              <td>O(n)</td>
+              <td>The usual answer; scales</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

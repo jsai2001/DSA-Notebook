@@ -21253,7 +21253,7 @@
       <details class="pattern-group" id="g-greedy">
         <summary>
           <span class="g-name">Greedy</span>
-          <span class="g-count"><span class="g-total">2 problems</span></span>
+          <span class="g-count"><span class="g-total">3 problems</span></span>
           <span class="g-hint">Take the best step you can see</span>
         </summary>
         <div class="g-body">
@@ -22027,6 +22027,385 @@
                         <td>O(n)</td>
                         <td>O(1)</td>
                         <td>Expected answer; check before updating</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/1046-last-stone-weight ===== -->
+          <details class="question" data-group="greedy" data-tags="array heap priority-queue simulation sorting">
+            <summary>
+              <span class="q-title">1046. Last Stone Weight</span>
+              <span class="q-meta">
+                <span class="badge easy">Easy</span>
+                <span class="tag">Array</span>
+                <span class="tag">Heap (Priority Queue)</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Every round needs the <strong>two heaviest
+                stones</strong>, and then a new stone goes back in. That's exactly what a
+                <strong>max-heap</strong> does: take the biggest in O(log n), add in
+                O(log n). Python's <code>heapq</code> is a min-heap, so store the
+                weights as negatives. O(n log n).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/last-stone-weight/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  <code>stones[i]</code> is the weight of a stone. Each turn, smash the
+                  two heaviest together, weights <code>y ≥ x</code>: if they're equal,
+                  both break; otherwise the lighter breaks and the heavier becomes
+                  <code>y − x</code>. Return the weight of the last stone left, or
+                  <code>0</code> if none is left.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= stones.length &lt;= 30</code> and <code>1 &lt;= stones[i] &lt;= 1000</code>.</li>
+                </ul>
+                <p class="note">
+                  Example: <code>[2,7,4,1,8,1]</code> → <code>1</code>: 8 and 7 leave
+                  1, then 4 and 2 leave 2, then 2 and 1 leave 1, then 1 and 1 break,
+                  and the last 1 is left.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[1]</code></td>
+                        <td><code>1</code></td>
+                        <td>One stone: no smash at all, it's the answer.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[2,2]</code></td>
+                        <td><code>0</code></td>
+                        <td>Both break and nothing is left. Returning <code>heap[0]</code> without checking crashes on the empty heap.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[3,3,3]</code></td>
+                        <td><code>3</code></td>
+                        <td>Two of them break; the third is never smashed.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[2,7,4,1,8,1]</code> with a plain <code>heapq</code></td>
+                        <td><code>1</code></td>
+                        <td>Forgetting to negate makes it smash the two <em>lightest</em> each time: it says 3.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[9,3,2,10]</code></td>
+                        <td><code>0</code></td>
+                        <td>10 and 9 leave 1; 3 and 2 leave 1; the two 1's break. The new stone must go back with the others, not to the end.</td>
+                      </tr>
+                      <tr>
+                        <td>30 stones of <code>1000</code></td>
+                        <td><code>0</code></td>
+                        <td>An even number of equal stones: they all break in pairs. With 29 of them, one 1000 is left.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Sort Every Round</h2>
+                <p class="intuition">
+                  Follow the rules literally: sort, take the last two, put the
+                  difference back, repeat until at most one stone is left.
+                </p>
+                <ul>
+                  <li>Work on a copy so the caller's list isn't changed.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n² log n) in theory</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  With 30 stones this is the fastest here (0.005 ms). The list is nearly
+                  sorted after the first round, and Python's sort is fast on that, but
+                  it still grows like n²: 108 ms at 10⁴ stones.
+                </p>
+                <div class="code-tabs" data-viz="1046-last-stone-weight/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"loop":[4],"sort":[5],"take":[6,7],"smash":[8,9],"return":[10]}'>
+                    class Solution(object):
+                        def lastStoneWeight(self, stones):
+                            stones = stones[:]  # work on a copy
+                            while len(stones) > 1:
+                                stones.sort()  # the two heaviest are now at the end
+                                y = stones.pop()  # heaviest
+                                x = stones.pop()  # second heaviest
+                                if y != x:  # equal stones both break; otherwise y - x is left
+                                    stones.append(y - x)
+                            return stones[0] if stones else 0
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"loop":[7],"sort":[8],"take":[9,10,11,12],"smash":[13],"return":[15]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int lastStoneWeight(std::vector<int>& stones) {
+                            std::vector<int> s = stones; // work on a copy
+                            while (s.size() > 1) {
+                                std::sort(s.begin(), s.end()); // the two heaviest are now at the end
+                                int y = s.back(); // heaviest
+                                s.pop_back();
+                                int x = s.back(); // second heaviest
+                                s.pop_back();
+                                if (y != x) s.push_back(y - x); // equal stones both break; otherwise y - x is left
+                            }
+                            return s.empty() ? 0 : s[0];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[6,7],"loop":[8],"sort":[9],"take":[10,11],"smash":[12],"return":[14]}'>
+                    import java.util.ArrayList;
+                    import java.util.Collections;
+                    import java.util.List;
+                    class Solution {
+                        public int lastStoneWeight(int[] stones) {
+                            List<Integer> s = new ArrayList<>();
+                            for (int w : stones) s.add(w);
+                            while (s.size() > 1) {
+                                Collections.sort(s); // the two heaviest are now at the end
+                                int y = s.remove(s.size() - 1); // heaviest
+                                int x = s.remove(s.size() - 1); // second heaviest
+                                if (y != x) s.add(y - x); // equal stones both break; otherwise y - x is left
+                            }
+                            return s.isEmpty() ? 0 : s.get(0);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Keep the List Sorted</h2>
+                <p class="intuition">
+                  Sort once. Then the two heaviest are always the last two, and the new
+                  stone can go straight to its place with a binary search, keeping the
+                  list sorted.
+                </p>
+                <ul>
+                  <li>Python: <code>bisect.insort</code>. C++: <code>upper_bound</code> then <code>insert</code>. Java: <code>Collections.binarySearch</code>, where a negative result <code>-(at) − 1</code> says where it would go.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n²): the search is O(log n), but inserting shifts the list</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  No re-sorting, but each insert moves the elements after it: 16 ms at
+                  10⁴ stones, 1.4 s at 10⁵.
+                </p>
+                <div class="code-tabs" data-viz="1046-last-stone-weight/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4],"loop":[5],"take":[6,7],"smash":[8],"insert":[9],"return":[10]}'>
+                    import bisect
+                    class Solution(object):
+                        def lastStoneWeight(self, stones):
+                            stones = sorted(stones)  # sort once, then keep it sorted
+                            while len(stones) > 1:
+                                y = stones.pop()  # heaviest
+                                x = stones.pop()  # second heaviest
+                                if y != x:
+                                    bisect.insort(stones, y - x)  # binary search for its place, then insert there
+                            return stones[0] if stones else 0
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7],"loop":[8],"take":[9,10,11,12],"smash":[13],"insert":[14,15],"return":[18]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int lastStoneWeight(std::vector<int>& stones) {
+                            std::vector<int> s = stones;
+                            std::sort(s.begin(), s.end()); // sort once, then keep it sorted
+                            while (s.size() > 1) {
+                                int y = s.back(); // heaviest
+                                s.pop_back();
+                                int x = s.back(); // second heaviest
+                                s.pop_back();
+                                if (y != x) {
+                                    int d = y - x;
+                                    s.insert(std::upper_bound(s.begin(), s.end(), d), d); // binary search for its place, then insert there
+                                }
+                            }
+                            return s.empty() ? 0 : s[0];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[6,7,8],"loop":[9],"take":[10,11],"smash":[12],"insert":[13,14,15],"return":[18]}'>
+                    import java.util.ArrayList;
+                    import java.util.Collections;
+                    import java.util.List;
+                    class Solution {
+                        public int lastStoneWeight(int[] stones) {
+                            List<Integer> s = new ArrayList<>();
+                            for (int w : stones) s.add(w);
+                            Collections.sort(s); // sort once, then keep it sorted
+                            while (s.size() > 1) {
+                                int y = s.remove(s.size() - 1); // heaviest
+                                int x = s.remove(s.size() - 1); // second heaviest
+                                if (y != x) {
+                                    int d = y - x;
+                                    int at = Collections.binarySearch(s, d); // binary search for its place...
+                                    s.add(at >= 0 ? at : -at - 1, d); // ...then insert there (a negative result encodes where it would go)
+                                }
+                            }
+                            return s.isEmpty() ? 0 : s.get(0);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Max-Heap
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  A heap gives the biggest item in O(log n) and takes a new one in
+                  O(log n), without keeping everything sorted. Each round: pop two, push
+                  their difference if it isn't 0.
+                </p>
+                <ul>
+                  <li>Python: <code>heapq</code> is a min-heap, so push <code>-w</code> and negate again when popping.</li>
+                  <li>C++: <code>priority_queue&lt;int&gt;</code> is already a max-heap. Java: <code>new PriorityQueue&lt;&gt;(Collections.reverseOrder())</code>.</li>
+                  <li>At most n − 1 rounds, since each one removes at least one stone.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  The answer interviewers expect. With only 30 stones it's actually the
+                  slowest here (0.010 ms, the negation costs a little), but it's the only
+                  one that stays fast as the input grows: 5 ms at 10⁴, 69 ms at 10⁵.
+                </p>
+                <div class="code-tabs" data-viz="1046-last-stone-weight/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[5,6],"loop":[7],"take":[8,9],"smash":[10,11],"return":[12]}'>
+                    import heapq
+                    class Solution(object):
+                        def lastStoneWeight(self, stones):
+                            # heapq is a min-heap, so store the weights as negatives: the smallest negative is the heaviest stone.
+                            heap = [-s for s in stones]
+                            heapq.heapify(heap)  # O(n)
+                            while len(heap) > 1:
+                                y = -heapq.heappop(heap)  # heaviest
+                                x = -heapq.heappop(heap)  # second heaviest
+                                if y != x:  # equal stones both break; otherwise y - x goes back in
+                                    heapq.heappush(heap, -(y - x))
+                            return -heap[0] if heap else 0
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"loop":[7],"take":[8,9,10,11],"smash":[12],"return":[14]}'>
+                    #include <queue>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int lastStoneWeight(std::vector<int>& stones) {
+                            std::priority_queue<int> heap(stones.begin(), stones.end()); // a max-heap: top() is the heaviest
+                            while (heap.size() > 1) {
+                                int y = heap.top(); // heaviest
+                                heap.pop();
+                                int x = heap.top(); // second heaviest
+                                heap.pop();
+                                if (y != x) heap.push(y - x); // equal stones both break; otherwise y - x goes back in
+                            }
+                            return heap.empty() ? 0 : heap.top();
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[6,7],"loop":[8],"take":[9,10],"smash":[11],"return":[13]}'>
+                    import java.util.Collections;
+                    import java.util.PriorityQueue;
+                    class Solution {
+                        public int lastStoneWeight(int[] stones) {
+                            // Java's PriorityQueue is a min-heap; reverseOrder() turns it into a max-heap.
+                            PriorityQueue<Integer> heap = new PriorityQueue<>(Collections.reverseOrder());
+                            for (int w : stones) heap.add(w);
+                            while (heap.size() > 1) {
+                                int y = heap.poll(); // heaviest
+                                int x = heap.poll(); // second heaviest
+                                if (y != x) heap.add(y - x); // equal stones both break; otherwise y - x goes back in
+                            }
+                            return heap.isEmpty() ? 0 : heap.peek();
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  Approach 3 already is the library version: <code>heapq</code>,
+                  <code>std::priority_queue</code> and <code>PriorityQueue</code> are
+                  the built-in heaps. Python 3.14 also adds max-heap functions
+                  (<code>heapq.heapify_max</code>, <code>heapq.heappop_max</code>,
+                  <code>heapq.heappush_max</code>), so the negatives aren't needed there.
+                </p>
+                <p class="note">
+                  Older Pythons (and LeetCode, if it isn't on 3.14 yet) don't have them:
+                  use the negatives, which work everywhere.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Sort Every Round</th>
+                        <td>sort, take the last two</td>
+                        <td>O(n² log n)</td>
+                        <td>O(n)</td>
+                        <td>Fastest at n = 30; grows fast</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Keep Sorted</th>
+                        <td>Binary search, insert</td>
+                        <td>O(n²)</td>
+                        <td>O(n)</td>
+                        <td>Inserting shifts the list</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Max-Heap</th>
+                        <td>Pop two, push the difference</td>
+                        <td>O(n log n)</td>
+                        <td>O(n)</td>
+                        <td>The usual answer; scales</td>
                       </tr>
                     </tbody>
                   </table>
@@ -37858,6 +38237,152 @@
               ? `The queue is empty but ${fresh} orange${fresh === 1 ? " is" : "s are"} still fresh: ${stuck.map(([r, c]) => `(${r}, ${c})`).join(", ")}. Return -1.`
               : `No fresh oranges left. Return ${minutes}. Each cell was queued at most once: O(m · n).`,
             view: view({ stuck }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/1046-last-stone-weight/approach1.visual.js -->
+    <script>
+      // Sort every round, take the last two, put the difference back at the end.
+      DSAViz.register("1046-last-stone-weight/approach1", {
+        inputs: [{ name: "stones", type: "int[]", value: "[2, 7, 4, 1, 8, 1]", minLength: 1, maxLength: 12, minValue: 1, maxValue: 99 }],
+        trace({ stones }) {
+          const s = stones.slice();
+          const steps = [];
+          let sorts = 0;
+          const view = (o = {}) => {
+            const marks = {};
+            (o.marks || []).forEach(([k, m]) => (marks[k] = m));
+            return [
+              s.length ? { type: "bars", label: "stones", values: s.slice(), marks } : { type: "array", label: "stones: none left", values: [] },
+              { type: "vars", items: [...(o.y !== undefined ? [{ name: "y", value: o.y }, { name: "x", value: o.x }] : []), { name: "sorts so far", value: sorts }] },
+            ];
+          };
+          steps.push({ line: "init", note: "Each round: sort, smash the two heaviest (now the last two), repeat.", view: view() });
+          while (s.length > 1) {
+            s.sort((a, b) => a - b);
+            sorts++;
+            steps.push({ line: ["loop", "sort"], note: `Sort: [${s.join(", ")}]. The two heaviest are at the end.`, view: view({ marks: [[s.length - 1, "compare"], [s.length - 2, "compare"]] }) });
+            const y = s.pop();
+            const x = s.pop();
+            if (y !== x) {
+              s.push(y - x);
+              steps.push({ line: ["take", "smash"], note: `Smash ${y} and ${x}: ${y - x} is left, added at the end (the next sort puts it in place).`, view: view({ y, x, marks: [[s.length - 1, "new"]] }) });
+            } else steps.push({ line: ["take", "smash"], note: `Smash ${y} and ${x}: equal, both break.`, view: view({ y, x }) });
+          }
+          steps.push({ line: "return", note: `${s.length ? `Return ${s[0]}.` : "Nothing is left: return 0."} ${sorts} full sort${sorts === 1 ? "" : "s"}, one per round.`, view: view({ marks: s.length ? [[0, "match"]] : [] }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/1046-last-stone-weight/approach2.visual.js -->
+    <script>
+      // Sort once; the two heaviest are always the last two, and the new stone is inserted at its sorted place.
+      DSAViz.register("1046-last-stone-weight/approach2", {
+        inputs: [{ name: "stones", type: "int[]", value: "[2, 7, 4, 1, 8, 1]", minLength: 1, maxLength: 12, minValue: 1, maxValue: 99 }],
+        trace({ stones }) {
+          const s = stones.slice().sort((a, b) => a - b);
+          const steps = [];
+          const view = (o = {}) => {
+            const marks = {};
+            (o.marks || []).forEach(([k, m]) => (marks[k] = m));
+            return [
+              s.length ? { type: "bars", label: "stones, always sorted", values: s.slice(), marks } : { type: "array", label: "stones: none left", values: [] },
+              { type: "vars", items: o.y !== undefined ? [{ name: "y", value: o.y }, { name: "x", value: o.x }] : [{ name: "stones", value: s.length }] },
+            ];
+          };
+          steps.push({ line: "init", note: `Sort once: [${s.join(", ")}]. From now on the list stays sorted.`, view: view() });
+          while (s.length > 1) {
+            steps.push({ line: "loop", note: `The two heaviest are the last two: ${s[s.length - 1]} and ${s[s.length - 2]}.`, view: view({ marks: [[s.length - 1, "compare"], [s.length - 2, "compare"]] }) });
+            const y = s.pop();
+            const x = s.pop();
+            if (y === x) {
+              steps.push({ line: ["take", "smash"], note: `Smash ${y} and ${x}: equal, both break.`, view: view({ y, x }) });
+              continue;
+            }
+            const d = y - x;
+            let at = s.length;
+            while (at > 0 && s[at - 1] > d) at--; // the same place bisect.insort finds
+            s.splice(at, 0, d);
+            steps.push({
+              line: ["take", "smash", "insert"],
+              note: `Smash ${y} and ${x}: ${d} is left. Binary search says it goes at index ${at}${at < s.length - 1 ? `, so the ${s.length - 1 - at} stone${s.length - 1 - at === 1 ? "" : "s"} after it shift right` : ", at the end"}.`,
+              view: view({ y, x, marks: [[at, "new"]] }),
+            });
+          }
+          steps.push({ line: "return", note: s.length ? `Return ${s[0]}.` : "Nothing is left: return 0.", view: view({ marks: s.length ? [[0, "match"]] : [] }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/1046-last-stone-weight/approach3.visual.js -->
+    <script>
+      // Max-heap: the heaviest stone is always at the top. Pop two, push their difference back in.
+      DSAViz.register("1046-last-stone-weight/approach3", {
+        inputs: [{ name: "stones", type: "int[]", value: "[2, 7, 4, 1, 8, 1]", minLength: 1, maxLength: 12, minValue: 1, maxValue: 99 }],
+        trace({ stones }) {
+          const heap = [];
+          const steps = [];
+          // A max-heap kept by hand, so the tree drawn is the real heap layout (children of i are 2i+1 and 2i+2).
+          const up = (i) => {
+            while (i > 0 && heap[(i - 1) >> 1] < heap[i]) {
+              [heap[i], heap[(i - 1) >> 1]] = [heap[(i - 1) >> 1], heap[i]];
+              i = (i - 1) >> 1;
+            }
+            return i; // where it ended up
+          };
+          const down = (i) => {
+            for (;;) {
+              let big = i;
+              for (const c of [2 * i + 1, 2 * i + 2]) if (c < heap.length && heap[c] > heap[big]) big = c;
+              if (big === i) return;
+              [heap[i], heap[big]] = [heap[big], heap[i]];
+              i = big;
+            }
+          };
+          const push = (w) => {
+            heap.push(w);
+            const start = heap.length - 1;
+            return { start, end: up(start) };
+          };
+          const pop = () => {
+            const top = heap[0];
+            const last = heap.pop();
+            if (heap.length) {
+              heap[0] = last;
+              down(0);
+            }
+            return top;
+          };
+          const view = (o = {}) => {
+            const m = {};
+            if (heap.length) m[0] = o.topMark || "active";
+            if (o.at !== undefined) m[o.at] = "new";
+            return [
+              heap.length
+                ? { type: "tree", label: "max-heap (each stone is at least as heavy as the ones under it; the top is the heaviest)", values: heap.slice(), marks: m }
+                : { type: "array", label: "max-heap: empty", values: [] },
+              { type: "array", label: "the same heap as a list", values: heap.slice(), marks: heap.length ? { 0: "active" } : {} },
+              { type: "vars", items: [...(o.y !== undefined ? [{ name: "y (heaviest)", value: o.y }, { name: "x (second)", value: o.x }] : []), { name: "stones left", value: heap.length }] },
+            ];
+          };
+          stones.forEach(push);
+          steps.push({ line: "init", note: `Put all ${stones.length} stones in a max-heap. The heaviest, ${heap[0]}, sits at the top.`, view: view() });
+          while (heap.length > 1) {
+            const y = pop();
+            const x = pop();
+            steps.push({ line: ["loop", "take"], note: `Pop the top twice: y = ${y}, then x = ${x} (the heap moved the next heaviest up each time).`, view: view({ y, x, topMark: "compare" }) });
+            if (y !== x) {
+              const { start, end } = push(y - x);
+              const moved = start - end ? (end === 0 ? "It's the heaviest now, so it moves up to the top." : "It moves up past the lighter stones above it.") : "Nothing above it is lighter, so it stays at the bottom.";
+              steps.push({ line: "smash", note: `${y} − ${x} = ${y - x}: push it back. ${moved}`, view: view({ y, x, at: end }) });
+            } else steps.push({ line: "smash", note: `${y} and ${x} are equal: both break, nothing goes back.`, view: view({ y, x }) });
+          }
+          steps.push({
+            line: "return",
+            note: heap.length ? `One stone is left: return ${heap[0]}. Each pop and push is O(log n).` : "No stone is left: return 0.",
+            view: view({ topMark: "match" }),
           });
           return steps;
         },
