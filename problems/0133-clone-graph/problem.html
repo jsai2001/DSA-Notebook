@@ -1,0 +1,253 @@
+<details class="question" data-group="graphs" data-tags="graph hash-table dfs bfs depth-first search breadth-first search clone deep copy">
+  <summary>
+    <span class="q-title">133. Clone Graph</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Hash Table</span>
+      <span class="tag">DFS</span>
+      <span class="tag">BFS</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Walk the graph (DFS or BFS) with a map
+      from each original node to its copy. Put a node's copy in the map
+      <strong>as soon as you make it</strong>, before visiting its
+      neighbors. Then a cycle that comes back to it finds the copy instead
+      of making another one. O(V + E).
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/clone-graph/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given one node of a connected, undirected graph, return a
+        <strong>deep copy</strong>: new nodes with the same values and the
+        same edges, and no link back to any original node. Each node has a
+        <code>val</code> and a list of <code>neighbors</code>.
+      </p>
+      <ul>
+        <li>0 to 100 nodes; values are unique, from 1 to 100</li>
+        <li>No repeated edges and no self-loops; the graph is connected</li>
+        <li>The input is written as an adjacency list: list <code>i</code> holds the neighbors of node <code>i + 1</code>, and you're given node 1</li>
+      </ul>
+      <p class="note">
+        Example: <code>[[2,4],[1,3],[2,4],[1,3]]</code> (a square: 1–2–3–4–1)
+        → a copy of the same square. <code>[[]]</code> → one node with no
+        neighbors. <code>[]</code> → <code>null</code>.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[]</code></td>
+              <td><code>null</code></td>
+              <td>No graph at all: the given node is null.</td>
+            </tr>
+            <tr>
+              <td><code>[[]]</code></td>
+              <td><code>[[]]</code></td>
+              <td>One node and no edges: still a new node, not the original.</td>
+            </tr>
+            <tr>
+              <td><code>[[2],[1]]</code></td>
+              <td><code>[[2],[1]]</code></td>
+              <td>The smallest cycle. Putting the copy in the map only after its neighbors are done loops forever: Python raised <code>RecursionError</code> here.</td>
+            </tr>
+            <tr>
+              <td><code>[[2,4],[1,3],[2,4],[1,3]]</code></td>
+              <td>same square</td>
+              <td>Copying a node but reusing its old <code>neighbors</code> list looks right, but the copy points at original nodes: not a deep copy.</td>
+            </tr>
+            <tr>
+              <td>100 nodes in a line</td>
+              <td>same line</td>
+              <td>A recursive DFS goes 100 calls deep: fine here, since the limit is only 100 nodes.</td>
+            </tr>
+            <tr>
+              <td>100 nodes, every pair joined</td>
+              <td>same graph</td>
+              <td>4,950 edges, the most possible. Each edge is linked twice (once from each end).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: DFS With a Map</h2>
+      <p class="intuition">
+        <code>clone(old)</code> returns the copy of <code>old</code>. If it's
+        in the map, return it. Otherwise make the copy, record it in the map,
+        and set its neighbors to <code>clone(nb)</code> for each neighbor.
+      </p>
+      <ul>
+        <li>
+          The map does two jobs: it stops the cycles, and it makes every edge
+          point to the <strong>one</strong> copy of each node.
+        </li>
+        <li>
+          Order matters: record the copy before the loop over neighbors.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(V + E)</span>
+        <span><strong>Space</strong> O(V) for the map and the call stack</span>
+      </div>
+      <p class="note">
+        Shortest to write. The call stack can be V deep, which is fine for
+        100 nodes. On a 100-node graph with every pair joined: Python 1.1 ms,
+        Java 2.3 ms, C++ 0.15 ms.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: BFS With a Map
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Copy node 1 and queue it. Each time a node is taken from the queue,
+        go through its neighbors: if a neighbor has no copy yet, make one and
+        queue it. Either way, link the popped node's copy to the neighbor's
+        copy.
+      </p>
+      <ul>
+        <li>
+          Copy a node when it's <strong>first seen</strong> and link its edges
+          when it's popped: every edge is linked exactly once from each end.
+        </li>
+        <li>
+          No recursion, so no depth limit, even on a long chain.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(V + E)</span>
+        <span><strong>Space</strong> O(V)</span>
+      </div>
+      <p class="note">
+        On the 100-node complete graph: Python 0.5 ms, Java 3.9 ms, C++
+        0.21 ms. The same speed as DFS in practice. Give either one in an
+        interview; BFS is the safe choice when graphs can be deep.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Two Passes With Arrays</h2>
+      <p class="intuition">
+        The values are unique and between 1 and 100, so they can be array
+        indexes instead of hash map keys. First pass: find every node and
+        store it at <code>old[val]</code>. Make one copy per node. Second
+        pass: give each copy the copies of its neighbors, looked up by value.
+      </p>
+      <ul>
+        <li>
+          Separating "make" from "link" removes the order question
+          completely: every copy exists before any edge is linked.
+        </li>
+        <li>
+          Only works because of the value rules. With repeated or very large
+          values, go back to a map keyed by node.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(V + E)</span>
+        <span><strong>Space</strong> O(V), two arrays of 101</span>
+      </div>
+      <p class="note">
+        Fastest here, since there's no hashing: Python 0.45 ms, Java 2.0 ms,
+        C++ 0.08 ms on the 100-node complete graph. A nice extra to mention;
+        the map versions are what interviewers expect.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Python's <code>copy.deepcopy(node)</code> copies a graph of objects,
+        cycles included: it keeps its own memo map from old object to copy,
+        the same idea as Approach 1. C++ and Java have no deep copy for
+        object graphs.
+      </p>
+      <p class="note">
+        Handy in everyday Python code, but it's the whole problem in one
+        call, so an interviewer will ask you to write the map version. It's
+        also recursive: it copied all 303 test graphs correctly here, and a
+        100-node chain is fine, but a 300-node chain raised
+        <code>RecursionError</code>.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">DFS With a Map</th>
+              <td>Recursive <code>clone</code>; record the copy first</td>
+              <td>O(V + E)</td>
+              <td>O(V)</td>
+              <td>Shortest; recursion depth up to V</td>
+            </tr>
+            <tr>
+              <th scope="row">BFS With a Map</th>
+              <td>Copy when first seen, link when popped</td>
+              <td>O(V + E)</td>
+              <td>O(V)</td>
+              <td>No recursion</td>
+            </tr>
+            <tr>
+              <th scope="row">Two Passes With Arrays</th>
+              <td>Index by value: find, copy, then link</td>
+              <td>O(V + E)</td>
+              <td>O(V)</td>
+              <td>Needs unique small values</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
