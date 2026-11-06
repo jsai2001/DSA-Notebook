@@ -1280,7 +1280,7 @@
       <details class="pattern-group" id="g-two-pointers">
         <summary>
           <span class="g-name">Two Pointers</span>
-          <span class="g-count"><span class="g-total">3 problems</span></span>
+          <span class="g-count"><span class="g-total">4 problems</span></span>
           <span class="g-hint">Two indexes moving toward each other</span>
         </summary>
         <div class="g-body">
@@ -2763,6 +2763,454 @@
                         <td>O(n)</td>
                         <td>O(1)</td>
                         <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0125-valid-palindrome ===== -->
+          <details class="question" data-group="two-pointers" data-tags="string two-pointers palindrome alphanumeric reverse">
+            <summary>
+              <span class="q-title">125. Valid Palindrome</span>
+              <span class="q-meta">
+                <span class="badge easy">Easy</span>
+                <span class="tag">String</span>
+                <span class="tag">Two Pointers</span>
+              </span>
+            </summary>
+
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Put one pointer at each end and walk them
+                inward. Skip anything that isn't a letter or digit, compare the rest
+                lowercased, and stop at the first mismatch. One pass, O(n) time, O(1)
+                extra space.
+              </div>
+
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/valid-palindrome/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Lowercase every letter and remove everything that isn't a letter or a
+                  digit. Return <code>true</code> if what's left reads the same forwards
+                  and backwards.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= s.length &lt;= 2 × 10⁵</code></li>
+                  <li><code>s</code> is printable ASCII.</li>
+                </ul>
+                <p class="note">
+                  Example: <code>"A man, a plan, a canal: Panama"</code> →
+                  <code>true</code> ("amanaplanacanalpanama").
+                  <code>"race a car"</code> → <code>false</code> ("raceacar").
+                </p>
+              </section>
+
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>" "</code></td>
+                        <td><code>true</code></td>
+                        <td>Nothing is left after cleaning, and an empty string is a palindrome.</td>
+                      </tr>
+                      <tr>
+                        <td><code>".,"</code></td>
+                        <td><code>true</code></td>
+                        <td>All punctuation. Skipping without the <code>i &lt; j</code> check runs off the end: Python raised <code>IndexError</code> here.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"0P"</code></td>
+                        <td><code>false</code></td>
+                        <td>Digits count. Keeping only letters (<code>isalpha</code>) leaves "p" and says <code>true</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"A man, a plan, a canal: Panama"</code></td>
+                        <td><code>true</code></td>
+                        <td>Case doesn't matter. Comparing without lowercasing says <code>false</code> ('A' ≠ 'a').</td>
+                      </tr>
+                      <tr>
+                        <td><code>"race a car"</code></td>
+                        <td><code>false</code></td>
+                        <td>Looks close, but "raceacar" breaks at 'e' vs 'a'.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"ab_a"</code></td>
+                        <td><code>true</code></td>
+                        <td><code>_</code> is not a letter or digit. A regex like <code>\W</code> keeps it (it counts <code>_</code> as a word character) and says <code>false</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"a."</code></td>
+                        <td><code>true</code></td>
+                        <td>One real character: the pointers meet on it, and it equals itself.</td>
+                      </tr>
+                      <tr>
+                        <td>2 × 10⁵ characters, broken only in the middle</td>
+                        <td><code>false</code></td>
+                        <td>Worst case for the two-pointer exit: it has to walk all the way in.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Clean, Then Reverse and Compare</h2>
+                <p class="intuition">
+                  Do exactly what the problem says: build a copy with only the letters
+                  and digits, lowercased, then check that it equals its reverse.
+                </p>
+                <ul>
+                  <li>
+                    One pass to build the copy, one to reverse it, one to compare.
+                  </li>
+                  <li>
+                    In C++, pass <code>unsigned char</code> to <code>isalnum</code> and
+                    <code>tolower</code>: a negative <code>char</code> is undefined
+                    behavior there. The input is ASCII, so it's a habit, not a bug fix.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n) for the copy and its reverse</span>
+                </div>
+                <p class="note">
+                  Easy to get right and fast enough: about 11 ms in Python, 1.3 ms in
+                  C++ and 9 ms in Java for 2 × 10⁵ characters here. The interviewer will
+                  usually ask next: can you do it without the copy?
+                </p>
+                <div class="code-tabs" data-viz="0125-valid-palindrome/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"loop":[4],"check":[5],"keep":[6],"join":[7],"compare":[8]}'>
+                    class Solution(object):
+                        def isPalindrome(self, s):
+                            cleaned = []
+                            for c in s:
+                                if c.isalnum():  # letters and digits only
+                                    cleaned.append(c.lower())
+                            cleaned = "".join(cleaned)
+                            return cleaned == cleaned[::-1]  # reads the same backwards?
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8],"loop":[9],"check":[10],"keep":[11],"join":[14],"compare":[15]}'>
+                    #include <algorithm>
+                    #include <cctype>
+                    #include <string>
+                    class Solution {
+                    public:
+                        bool isPalindrome(std::string s) {
+                            std::string cleaned;
+                            cleaned.reserve(s.size());
+                            for (unsigned char c : s) { // unsigned: isalnum needs 0..255
+                                if (std::isalnum(c)) { // letters and digits only
+                                    cleaned += static_cast<char>(std::tolower(c));
+                                }
+                            }
+                            std::string reversed(cleaned.rbegin(), cleaned.rend());
+                            return cleaned == reversed; // reads the same backwards?
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"loop":[4],"check":[5],"keep":[6],"join":[9],"compare":[10]}'>
+                    class Solution {
+                        public boolean isPalindrome(String s) {
+                            StringBuilder cleaned = new StringBuilder(s.length());
+                            for (char c : s.toCharArray()) {
+                                if (Character.isLetterOrDigit(c)) { // letters and digits only
+                                    cleaned.append(Character.toLowerCase(c));
+                                }
+                            }
+                            String forward = cleaned.toString();
+                            return forward.equals(cleaned.reverse().toString()); // reads the same backwards?
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Clean, Then Two Pointers</h2>
+                <p class="intuition">
+                  Build the same clean copy, but skip the reverse. Compare the first
+                  and last characters, then move both inward, and stop at the first
+                  mismatch.
+                </p>
+                <ul>
+                  <li>
+                    No reversed copy, and a mismatch ends the check early.
+                  </li>
+                  <li>
+                    The copy itself is still O(n).
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n) for the copy</span>
+                </div>
+                <p class="note">
+                  A step between the two ideas: same speed as Approach 1 here (about
+                  13 ms in Python, 1.3 ms in C++ for 2 × 10⁵ characters). The cleaning
+                  pass always reads the whole string, even when the first pair already
+                  differs.
+                </p>
+                <div class="code-tabs" data-viz="0125-valid-palindrome/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"clean":[3],"init":[4],"loop":[5],"compare":[6],"false":[7],"move":[8,9],"true":[10]}'>
+                    class Solution(object):
+                        def isPalindrome(self, s):
+                            cleaned = [c.lower() for c in s if c.isalnum()]
+                            i, j = 0, len(cleaned) - 1
+                            while i < j:
+                                if cleaned[i] != cleaned[j]:
+                                    return False
+                                i += 1
+                                j -= 1
+                            return True
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"clean":[6,7,8],"init":[9],"loop":[10],"compare":[11],"false":[12],"move":[14,15],"true":[17]}'>
+                    #include <cctype>
+                    #include <string>
+                    class Solution {
+                    public:
+                        bool isPalindrome(std::string s) {
+                            std::string cleaned;
+                            for (unsigned char c : s)
+                                if (std::isalnum(c)) cleaned += static_cast<char>(std::tolower(c));
+                            int i = 0, j = static_cast<int>(cleaned.size()) - 1;
+                            while (i < j) {
+                                if (cleaned[i] != cleaned[j]) {
+                                    return false;
+                                }
+                                ++i;
+                                --j;
+                            }
+                            return true;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"clean":[3,4,5],"init":[6],"loop":[7],"compare":[8],"false":[9],"move":[11,12],"true":[14]}'>
+                    class Solution {
+                        public boolean isPalindrome(String s) {
+                            StringBuilder cleaned = new StringBuilder();
+                            for (char c : s.toCharArray())
+                                if (Character.isLetterOrDigit(c)) cleaned.append(Character.toLowerCase(c));
+                            int i = 0, j = cleaned.length() - 1;
+                            while (i < j) {
+                                if (cleaned.charAt(i) != cleaned.charAt(j)) {
+                                    return false;
+                                }
+                                i++;
+                                j--;
+                            }
+                            return true;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Two Pointers in Place
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Work on <code>s</code> directly. Move <code>i</code> forward past
+                  anything that isn't a letter or digit, move <code>j</code> back the
+                  same way, then compare the two characters lowercased.
+                </p>
+                <ul>
+                  <li>
+                    Keep <code>i &lt; j</code> in the skip loops. Without it, a string
+                    of only punctuation runs past the end.
+                  </li>
+                  <li>
+                    If the pointers meet on one character, it equals itself, so the
+                    answer is still right.
+                  </li>
+                  <li>
+                    Returns at the first mismatch, without reading the rest.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  The answer interviewers expect. Fastest in C++ here (0.8 ms vs 1.3 ms
+                  for 2 × 10⁵ characters). In Python it's about the same as the others
+                  (14 ms), because every step runs as Python code; it wins on memory,
+                  not speed.
+                </p>
+                <div class="code-tabs" data-viz="0125-valid-palindrome/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"loop":[4],"skipleft":[5,6],"skipright":[7,8],"compare":[9],"false":[10],"move":[11,12],"true":[13]}'>
+                    class Solution(object):
+                        def isPalindrome(self, s):
+                            i, j = 0, len(s) - 1
+                            while i < j:
+                                while i < j and not s[i].isalnum():  # skip from the left
+                                    i += 1
+                                while i < j and not s[j].isalnum():  # skip from the right
+                                    j -= 1
+                                if s[i].lower() != s[j].lower():
+                                    return False
+                                i += 1
+                                j -= 1
+                            return True
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"loop":[9],"skipleft":[10],"skipright":[11],"compare":[12],"false":[13],"move":[15,16],"true":[18]}'>
+                    #include <cctype>
+                    #include <string>
+                    class Solution {
+                    public:
+                        bool isPalindrome(std::string s) {
+                            int i = 0, j = static_cast<int>(s.size()) - 1;
+                            // unsigned char: isalnum / tolower need 0..255
+                            auto at = [&](int k) { return static_cast<unsigned char>(s[k]); };
+                            while (i < j) {
+                                while (i < j && !std::isalnum(at(i))) ++i; // skip from the left
+                                while (i < j && !std::isalnum(at(j))) --j; // skip from the right
+                                if (std::tolower(at(i)) != std::tolower(at(j))) {
+                                    return false;
+                                }
+                                ++i;
+                                --j;
+                            }
+                            return true;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"loop":[4],"skipleft":[5],"skipright":[6],"compare":[7],"false":[8],"move":[10,11],"true":[13]}'>
+                    class Solution {
+                        public boolean isPalindrome(String s) {
+                            int i = 0, j = s.length() - 1;
+                            while (i < j) {
+                                while (i < j && !Character.isLetterOrDigit(s.charAt(i))) i++; // skip from the left
+                                while (i < j && !Character.isLetterOrDigit(s.charAt(j))) j--; // skip from the right
+                                if (Character.toLowerCase(s.charAt(i)) != Character.toLowerCase(s.charAt(j))) {
+                                    return false;
+                                }
+                                i++;
+                                j--;
+                            }
+                            return true;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  Clean and compare in two lines:
+                  <code>"".join(filter(str.isalnum, s)).lower()</code> and
+                  <code>[::-1]</code> in Python, <code>remove_if</code> +
+                  <code>std::equal</code> with a reverse iterator in C++,
+                  <code>replaceAll("[^A-Za-z0-9]", "")</code> in Java.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    class Solution(object):
+                        def isPalindrome(self, s):
+                            cleaned = "".join(filter(str.isalnum, s)).lower()
+                            return cleaned == cleaned[::-1]
+                  </script>
+                  <script type="text/plain" data-lang="C++">
+                    #include <algorithm>
+                    #include <cctype>
+                    #include <string>
+                    class Solution {
+                    public:
+                        bool isPalindrome(std::string s) {
+                            // Drop non-alphanumerics, lowercase the rest, then compare with its reverse.
+                            s.erase(std::remove_if(s.begin(), s.end(), [](unsigned char c) { return !std::isalnum(c); }), s.end());
+                            std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
+                            return std::equal(s.begin(), s.begin() + s.size() / 2, s.rbegin());
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java">
+                    class Solution {
+                        public boolean isPalindrome(String s) {
+                            String cleaned = s.replaceAll("[^A-Za-z0-9]", "").toLowerCase();
+                            return new StringBuilder(cleaned).reverse().toString().equals(cleaned);
+                        }
+                    }
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  The Python one is the fastest Python version here (4.4 ms for
+                  2 × 10⁵ characters), since the loops run inside C. Java's regex is the
+                  slowest Java one (20 ms). Fine for everyday code; in an interview,
+                  expect to be asked for Approach 3.
+                </p>
+              </section>
+
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Clean, Then Reverse and Compare</th>
+                        <td>Copy letters/digits, compare with reverse</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Simplest; two extra strings</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Clean, Then Two Pointers</th>
+                        <td>Copy, then compare ends inward</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>No reverse; still a copy</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Two Pointers in Place</th>
+                        <td>Skip non-alphanumerics from both ends</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>Expected answer; mind <code>i &lt; j</code> while skipping</td>
                       </tr>
                     </tbody>
                   </table>
@@ -41157,6 +41605,184 @@
             steps.push({ line: ["loop", "visit", "bend", "up"], note: `Second visit to ${n.val}: sides ${l} and ${r}. Bend here: ${here}.${better ? " New best." : ""} Its gain: ${gain[id]}.`, view: view(id, { better, mark: "match" }) });
           }
           steps.push({ line: "return", note: `The stack is empty: return ${best}.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0125-valid-palindrome/approach1.visual.js -->
+    <script>
+      // Copy only the letters and digits (lowercased), then compare the copy with its reverse.
+      DSAViz.register("0125-valid-palindrome/approach1", {
+        inputs: [{ name: "s", type: "string", value: "Was it a cat I saw?", maxLength: 30, ascii: true }],
+        trace({ s }) {
+          const show = (c) => (c === " " ? "␣" : c);
+          const chars = Array.from(s, show);
+          const isAlnum = (c) => /[A-Za-z0-9]/.test(c);
+          const steps = [];
+          const sMarks = {};
+          const cleaned = [];
+          const view = (o = {}) => {
+            const widgets = [
+              { type: "array", label: "s (green = kept, grey = skipped)", values: chars, compact: true, marks: { ...sMarks, ...(o.at !== undefined ? { [o.at]: o.atMark || "active" } : {}) }, pointers: o.at !== undefined ? { c: o.at } : {} },
+              { type: "array", label: "cleaned", values: [...cleaned], compact: true, marks: o.cMarks || (o.newAt !== undefined ? { [o.newAt]: "new" } : {}) },
+            ];
+            if (o.reversed) widgets.push({ type: "array", label: "cleaned reversed", values: o.reversed, compact: true, marks: o.cMarks });
+            return widgets;
+          };
+          steps.push({ line: "init", note: "Start an empty copy. Only letters and digits go in, lowercased.", view: view() });
+          for (let k = 0; k < s.length; k++) {
+            const c = s[k];
+            if (isAlnum(c)) {
+              cleaned.push(c.toLowerCase());
+              sMarks[k] = "match";
+              steps.push({
+                line: ["loop", "check", "keep"],
+                note: `'${show(c)}' is a ${/[0-9]/.test(c) ? "digit" : "letter"}: add '${c.toLowerCase()}'.`,
+                view: view({ at: k, newAt: cleaned.length - 1 }),
+              });
+            } else {
+              sMarks[k] = "ghost";
+              steps.push({ line: ["loop", "check"], note: `'${show(c)}' is not a letter or digit: skip it.`, view: view({ at: k, atMark: "ghost" }) });
+            }
+          }
+          const word = cleaned.join("");
+          steps.push({ line: "join", note: `The copy is "${word}" (${cleaned.length} characters). Now reverse it.`, view: view() });
+          const reversed = [...cleaned].reverse();
+          let diff = -1;
+          for (let k = 0; k < cleaned.length; k++) if (cleaned[k] !== reversed[k]) { diff = k; break; }
+          const cMarks = {};
+          if (diff < 0) cleaned.forEach((_, k) => (cMarks[k] = "match"));
+          else cMarks[diff] = "cut";
+          steps.push({
+            line: "compare",
+            note:
+              cleaned.length === 0
+                ? "Return true: the copy is empty, and an empty string reads the same both ways."
+                : diff < 0
+                  ? `Return true: "${word}" is the same backwards.`
+                  : `Return false: position ${diff} is '${cleaned[diff]}' forwards but '${reversed[diff]}' backwards.`,
+            view: view({ reversed, cMarks }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0125-valid-palindrome/approach2.visual.js -->
+    <script>
+      // Copy only the letters and digits (lowercased), then walk two pointers in from both ends.
+      DSAViz.register("0125-valid-palindrome/approach2", {
+        inputs: [{ name: "s", type: "string", value: "race a car", maxLength: 30, ascii: true }],
+        trace({ s }) {
+          const show = (c) => (c === " " ? "␣" : c);
+          const chars = Array.from(s, show);
+          const isAlnum = (c) => /[A-Za-z0-9]/.test(c);
+          const cleaned = Array.from(s).filter(isAlnum).map((c) => c.toLowerCase());
+          const sMarks = {};
+          Array.from(s).forEach((c, k) => {
+            if (!isAlnum(c)) sMarks[k] = "ghost";
+          });
+          const steps = [];
+          const marks = {};
+          let i = 0;
+          let j = cleaned.length - 1;
+          const view = (o = {}) => {
+            const m = { ...marks, ...(o.marks || {}) };
+            const pointers = o.noPtr ? {} : { i, j };
+            return [
+              { type: "array", label: "s (grey = dropped)", values: chars, compact: true, marks: sMarks },
+              { type: "array", label: "cleaned", values: cleaned, compact: true, marks: m, pointers: cleaned.length ? pointers : {} },
+            ];
+          };
+          steps.push({
+            line: "clean",
+            note: `Keep the letters and digits, lowercased: "${cleaned.join("")}"${cleaned.length ? "" : " (empty)"}.`,
+            view: view({ noPtr: true }),
+          });
+          steps.push({ line: "init", note: `i starts at the front (0), j at the back (${j}).`, view: view() });
+          while (i < j) {
+            const same = cleaned[i] === cleaned[j];
+            steps.push({
+              line: ["loop", "compare"],
+              note: same ? `cleaned[${i}] = '${cleaned[i]}' and cleaned[${j}] = '${cleaned[j]}' match.` : `cleaned[${i}] = '${cleaned[i]}' but cleaned[${j}] = '${cleaned[j]}'.`,
+              view: view({ marks: { [i]: same ? "match" : "cut", [j]: same ? "match" : "cut" } }),
+            });
+            if (!same) {
+              steps.push({ line: "false", note: `Return false: '${cleaned[i]}' ≠ '${cleaned[j]}', so it doesn't read the same backwards.`, view: view({ marks: { [i]: "cut", [j]: "cut" } }) });
+              return steps;
+            }
+            marks[i] = "match";
+            marks[j] = "match";
+            i++;
+            j--;
+            steps.push({ line: "move", note: `Move both inward: i = ${i}, j = ${j}.`, view: view() });
+          }
+          if (i === j) marks[i] = "match";
+          steps.push({
+            line: "true",
+            note: cleaned.length === 0 ? "Return true: nothing to compare, and an empty string is a palindrome." : `Return true: every pair matched${i === j ? ` (the middle '${cleaned[i]}' pairs with itself)` : ""}.`,
+            view: view({ noPtr: true }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0125-valid-palindrome/approach3.visual.js -->
+    <script>
+      // Two pointers on s itself: skip anything that isn't a letter or digit, compare lowercased.
+      DSAViz.register("0125-valid-palindrome/approach3", {
+        inputs: [{ name: "s", type: "string", value: "A man, a plan, a canal: Panama", maxLength: 30, ascii: true }],
+        trace({ s }) {
+          const show = (c) => (c === " " ? "␣" : c);
+          const chars = Array.from(s, show);
+          const isAlnum = (c) => /[A-Za-z0-9]/.test(c);
+          const steps = [];
+          const marks = {};
+          let i = 0;
+          let j = s.length - 1;
+          let compared = 0;
+          const view = (o = {}) => [
+            { type: "array", label: "s (grey = skipped, green = matched)", values: chars, compact: true, marks: { ...marks, ...(o.marks || {}) }, pointers: o.noPtr || !s.length ? {} : { i, j } },
+            { type: "vars", items: [{ name: "pairs compared", value: compared }, { name: "extra memory", value: "none" }] },
+          ];
+          steps.push({ line: "init", note: `i starts at the front (0), j at the back (${j}). No copy of the string.`, view: view() });
+          const list = (from, to) => Array.from(s.slice(from, to), (c) => `'${show(c)}'`).join(", ");
+          while (i < j) {
+            const i0 = i;
+            while (i < j && !isAlnum(s[i])) marks[i++] = "ghost";
+            if (i > i0) steps.push({ line: "skipleft", note: `Skip ${list(i0, i)} from the left: i = ${i}.`, view: view() });
+            const j0 = j;
+            while (i < j && !isAlnum(s[j])) marks[j--] = "ghost";
+            if (j < j0) steps.push({ line: "skipright", note: `Skip ${list(j + 1, j0 + 1)} from the right: j = ${j}.`, view: view() });
+            const a = s[i].toLowerCase();
+            const b = s[j].toLowerCase();
+            compared++;
+            const same = a === b;
+            const caseNote = s[i] !== s[j] && same ? " (case doesn't matter)" : "";
+            steps.push({
+              line: "compare",
+              note:
+                i === j
+                  ? `i and j met at s[${i}] = '${show(s[i])}': it equals itself.`
+                  : same
+                    ? `s[${i}] = '${show(s[i])}' and s[${j}] = '${show(s[j])}' match${caseNote}.`
+                    : `s[${i}] = '${show(s[i])}' lowercases to '${a}', s[${j}] = '${show(s[j])}' to '${b}'.`,
+              view: view({ marks: { [i]: same ? "match" : "cut", [j]: same ? "match" : "cut" } }),
+            });
+            if (!same) {
+              steps.push({ line: "false", note: `Return false: '${a}' ≠ '${b}'. Compared ${compared} pair${compared === 1 ? "" : "s"}.`, view: view({ marks: { [i]: "cut", [j]: "cut" } }) });
+              return steps;
+            }
+            marks[i] = isAlnum(s[i]) ? "match" : "ghost";
+            marks[j] = isAlnum(s[j]) ? "match" : "ghost";
+            i++;
+            j--;
+            steps.push({ line: "move", note: `Move both inward: i = ${i}, j = ${j}.`, view: view() });
+          }
+          steps.push({
+            line: "true",
+            note: `Return true: i and j crossed with every pair matching (${compared} compared), and no extra memory used.`,
+            view: view({ noPtr: true }),
+          });
           return steps;
         },
       });

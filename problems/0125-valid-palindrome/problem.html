@@ -1,0 +1,266 @@
+<details class="question" data-group="two-pointers" data-tags="string two-pointers palindrome alphanumeric reverse">
+  <summary>
+    <span class="q-title">125. Valid Palindrome</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">String</span>
+      <span class="tag">Two Pointers</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Put one pointer at each end and walk them
+      inward. Skip anything that isn't a letter or digit, compare the rest
+      lowercased, and stop at the first mismatch. One pass, O(n) time, O(1)
+      extra space.
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/valid-palindrome/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Lowercase every letter and remove everything that isn't a letter or a
+        digit. Return <code>true</code> if what's left reads the same forwards
+        and backwards.
+      </p>
+      <ul>
+        <li><code>1 &lt;= s.length &lt;= 2 × 10⁵</code></li>
+        <li><code>s</code> is printable ASCII.</li>
+      </ul>
+      <p class="note">
+        Example: <code>"A man, a plan, a canal: Panama"</code> →
+        <code>true</code> ("amanaplanacanalpanama").
+        <code>"race a car"</code> → <code>false</code> ("raceacar").
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>" "</code></td>
+              <td><code>true</code></td>
+              <td>Nothing is left after cleaning, and an empty string is a palindrome.</td>
+            </tr>
+            <tr>
+              <td><code>".,"</code></td>
+              <td><code>true</code></td>
+              <td>All punctuation. Skipping without the <code>i &lt; j</code> check runs off the end: Python raised <code>IndexError</code> here.</td>
+            </tr>
+            <tr>
+              <td><code>"0P"</code></td>
+              <td><code>false</code></td>
+              <td>Digits count. Keeping only letters (<code>isalpha</code>) leaves "p" and says <code>true</code>.</td>
+            </tr>
+            <tr>
+              <td><code>"A man, a plan, a canal: Panama"</code></td>
+              <td><code>true</code></td>
+              <td>Case doesn't matter. Comparing without lowercasing says <code>false</code> ('A' ≠ 'a').</td>
+            </tr>
+            <tr>
+              <td><code>"race a car"</code></td>
+              <td><code>false</code></td>
+              <td>Looks close, but "raceacar" breaks at 'e' vs 'a'.</td>
+            </tr>
+            <tr>
+              <td><code>"ab_a"</code></td>
+              <td><code>true</code></td>
+              <td><code>_</code> is not a letter or digit. A regex like <code>\W</code> keeps it (it counts <code>_</code> as a word character) and says <code>false</code>.</td>
+            </tr>
+            <tr>
+              <td><code>"a."</code></td>
+              <td><code>true</code></td>
+              <td>One real character: the pointers meet on it, and it equals itself.</td>
+            </tr>
+            <tr>
+              <td>2 × 10⁵ characters, broken only in the middle</td>
+              <td><code>false</code></td>
+              <td>Worst case for the two-pointer exit: it has to walk all the way in.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Clean, Then Reverse and Compare</h2>
+      <p class="intuition">
+        Do exactly what the problem says: build a copy with only the letters
+        and digits, lowercased, then check that it equals its reverse.
+      </p>
+      <ul>
+        <li>
+          One pass to build the copy, one to reverse it, one to compare.
+        </li>
+        <li>
+          In C++, pass <code>unsigned char</code> to <code>isalnum</code> and
+          <code>tolower</code>: a negative <code>char</code> is undefined
+          behavior there. The input is ASCII, so it's a habit, not a bug fix.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n) for the copy and its reverse</span>
+      </div>
+      <p class="note">
+        Easy to get right and fast enough: about 11 ms in Python, 1.3 ms in
+        C++ and 9 ms in Java for 2 × 10⁵ characters here. The interviewer will
+        usually ask next: can you do it without the copy?
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Clean, Then Two Pointers</h2>
+      <p class="intuition">
+        Build the same clean copy, but skip the reverse. Compare the first
+        and last characters, then move both inward, and stop at the first
+        mismatch.
+      </p>
+      <ul>
+        <li>
+          No reversed copy, and a mismatch ends the check early.
+        </li>
+        <li>
+          The copy itself is still O(n).
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n) for the copy</span>
+      </div>
+      <p class="note">
+        A step between the two ideas: same speed as Approach 1 here (about
+        13 ms in Python, 1.3 ms in C++ for 2 × 10⁵ characters). The cleaning
+        pass always reads the whole string, even when the first pair already
+        differs.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Two Pointers in Place
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Work on <code>s</code> directly. Move <code>i</code> forward past
+        anything that isn't a letter or digit, move <code>j</code> back the
+        same way, then compare the two characters lowercased.
+      </p>
+      <ul>
+        <li>
+          Keep <code>i &lt; j</code> in the skip loops. Without it, a string
+          of only punctuation runs past the end.
+        </li>
+        <li>
+          If the pointers meet on one character, it equals itself, so the
+          answer is still right.
+        </li>
+        <li>
+          Returns at the first mismatch, without reading the rest.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        The answer interviewers expect. Fastest in C++ here (0.8 ms vs 1.3 ms
+        for 2 × 10⁵ characters). In Python it's about the same as the others
+        (14 ms), because every step runs as Python code; it wins on memory,
+        not speed.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Clean and compare in two lines:
+        <code>"".join(filter(str.isalnum, s)).lower()</code> and
+        <code>[::-1]</code> in Python, <code>remove_if</code> +
+        <code>std::equal</code> with a reverse iterator in C++,
+        <code>replaceAll("[^A-Za-z0-9]", "")</code> in Java.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        The Python one is the fastest Python version here (4.4 ms for
+        2 × 10⁵ characters), since the loops run inside C. Java's regex is the
+        slowest Java one (20 ms). Fine for everyday code; in an interview,
+        expect to be asked for Approach 3.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Clean, Then Reverse and Compare</th>
+              <td>Copy letters/digits, compare with reverse</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Simplest; two extra strings</td>
+            </tr>
+            <tr>
+              <th scope="row">Clean, Then Two Pointers</th>
+              <td>Copy, then compare ends inward</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>No reverse; still a copy</td>
+            </tr>
+            <tr>
+              <th scope="row">Two Pointers in Place</th>
+              <td>Skip non-alphanumerics from both ends</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Expected answer; mind <code>i &lt; j</code> while skipping</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
