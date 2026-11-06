@@ -1,0 +1,256 @@
+<details class="question" data-group="greedy" data-tags="array greedy prefix sum circular gas station tank">
+  <summary>
+    <span class="q-title">134. Gas Station</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Greedy</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Drive once around from station 0, keeping
+      a tank. If the tank goes negative at station <code>i</code>, no
+      station from the current start up to <code>i</code> can be the
+      answer, so restart at <code>i + 1</code> with an empty tank. At the
+      end, if total gas ≥ total cost, the last start is the answer;
+      otherwise there is none. O(n), O(1).
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/gas-station/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>n</code> stations sit on a circle. At station <code>i</code>
+        you can fill up <code>gas[i]</code>, and driving on to station
+        <code>i + 1</code> costs <code>cost[i]</code>. Starting with an empty
+        tank, return the station where you can start and drive once all the
+        way around, or <code>-1</code> if no station works. If an answer
+        exists, it's unique.
+      </p>
+      <ul>
+        <li><code>1 &lt;= n &lt;= 10⁵</code></li>
+        <li><code>0 &lt;= gas[i], cost[i] &lt;= 10⁴</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>gas = [1,2,3,4,5]</code>,
+        <code>cost = [3,4,5,1,2]</code> → <code>3</code>.
+        <code>gas = [2,3,4]</code>, <code>cost = [3,4,3]</code> →
+        <code>-1</code>.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>gas = [2,3,4]</code>, <code>cost = [3,4,3]</code></td>
+              <td><code>-1</code></td>
+              <td>Not enough gas overall (9 vs 10). Skipping the total check returned <code>2</code>.</td>
+            </tr>
+            <tr>
+              <td><code>gas = [1,2,3,4,5]</code>, <code>cost = [3,4,5,1,2]</code></td>
+              <td><code>3</code></td>
+              <td>Restart at <code>i + 1</code>, not <code>i</code>: station <code>i</code> is where it failed. Restarting at <code>i</code> returned <code>2</code>.</td>
+            </tr>
+            <tr>
+              <td><code>gas = [0]</code>, <code>cost = [0]</code></td>
+              <td><code>0</code></td>
+              <td>A tank of exactly 0 is fine. Resetting on <code>tank &lt;= 0</code> returned <code>1</code>, which isn't even a station.</td>
+            </tr>
+            <tr>
+              <td><code>gas = [5]</code>, <code>cost = [4]</code></td>
+              <td><code>0</code></td>
+              <td>One station: the trip is one leg back to itself.</td>
+            </tr>
+            <tr>
+              <td><code>gas = [3,1,1]</code>, <code>cost = [1,2,2]</code></td>
+              <td><code>0</code></td>
+              <td>The answer is the very first station.</td>
+            </tr>
+            <tr>
+              <td>10⁵ stations: gas all 1, cost all 1 except the last, 2</td>
+              <td><code>-1</code></td>
+              <td>Every start fails only at the last station. Trying every start drives about 5 × 10⁹ legs: 3.3 s in C++ here.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Try Every Start</h2>
+      <p class="intuition">
+        For each start, drive around the circle, adding
+        <code>gas[i] - cost[i]</code> at each station. Stop as soon as the
+        tank goes negative and try the next start. The first start that
+        finishes all <code>n</code> legs is the answer.
+      </p>
+      <ul>
+        <li>Use <code>(start + k) % n</code> to wrap around the circle.</li>
+        <li>Clearly right, and easy to explain first.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        On the worst case (every start fails at the last station), the time
+        quadruples each time n doubles. Python: 0.13 s at 2,000, 0.53 s at
+        4,000, 2.2 s at 8,000. At n = 10⁵: C++ 3.3 s, Java 4.7 s. Too slow.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: One Pass, Restart After Each Failure
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Drive from station 0. When the tank goes negative at
+        <code>i</code>, set <code>start = i + 1</code> and empty the tank.
+        Also keep <code>total</code>, the sum over every station. If
+        <code>total &gt;= 0</code>, return <code>start</code>; else
+        <code>-1</code>.
+      </p>
+      <ul>
+        <li>
+          Why skip everything up to <code>i</code>: we reached every station
+          between <code>start</code> and <code>i</code> with a tank ≥ 0.
+          Starting at one of them means arriving at <code>i</code> with that
+          gas missing, so it fails at <code>i</code> too.
+        </li>
+        <li>
+          Why <code>total &gt;= 0</code> is enough: the gas lost before the
+          final <code>start</code> is made up by the stretch after it, so
+          the trip around from <code>start</code> never runs dry.
+        </li>
+        <li>
+          Sums stay within ±10⁹ (10⁵ stations × 10⁴), which fits in a 32-bit
+          <code>int</code>.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        At n = 10⁵ here: Python 5–8 ms, Java 2–2.5 ms, C++ 0.1 ms. The
+        expected answer; be ready to explain both "why" points above.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Start After the Lowest Point</h2>
+      <p class="intuition">
+        Track <code>run</code>, the gas left after each station if we started
+        at 0 with an unlimited tank. The best start is right after the
+        station where <code>run</code> is lowest: from there, every later
+        point of the trip is at least as high, so the tank never drops below
+        what it started with.
+      </p>
+      <ul>
+        <li>
+          The same answer as Approach 2, seen as a graph of
+          <code>run</code>: Approach 2's restarts happen exactly at new
+          lowest points.
+        </li>
+        <li>
+          Start with <code>low = 0</code> at position −1, so "never below 0"
+          gives start 0.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Same speed as Approach 2: Python 4–5 ms, Java ~2 ms, C++ under 0.1 ms
+        at n = 10⁵. A good way to explain why the greedy works.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No standard library function finds the start. Python's
+        <code>itertools.accumulate</code> can build the <code>run</code> list
+        from Approach 3, but it stores all n values where a loop needs one
+        variable.
+      </p>
+      <p class="note">
+        Approach 2 is what you'd write: one loop, three variables.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Try Every Start</th>
+              <td>Simulate from each station</td>
+              <td>O(n²)</td>
+              <td>O(1)</td>
+              <td>3.3 s in C++ at n = 10⁵</td>
+            </tr>
+            <tr>
+              <th scope="row">One Pass, Restart After Each Failure</th>
+              <td>Reset start at i + 1; check total</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+            <tr>
+              <th scope="row">Start After the Lowest Point</th>
+              <td>Running sum, find its minimum</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Same result; explains why it works</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
