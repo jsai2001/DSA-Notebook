@@ -1,0 +1,255 @@
+<details class="question" data-group="backtracking" data-tags="string backtracking dynamic-programming palindrome partition split">
+  <summary>
+    <span class="q-title">131. Palindrome Partitioning</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">String</span>
+      <span class="tag">Backtracking</span>
+      <span class="tag">Dynamic Programming</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Backtracking. Choose the next piece
+      <code>s[start..end]</code> only if it's a palindrome, split the rest
+      the same way, then undo and try a longer piece. Build a table
+      <code>pal[i][j]</code> first, so each "is this a palindrome?" is one
+      lookup instead of a scan.
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/palindrome-partitioning/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Split <code>s</code> into pieces so that every piece is a palindrome
+        (reads the same backwards). Return every possible split, in any
+        order.
+      </p>
+      <ul>
+        <li><code>1 &lt;= s.length &lt;= 16</code></li>
+        <li><code>s</code> is lowercase English letters</li>
+      </ul>
+      <p class="note">
+        Example: <code>"aab"</code> → <code>[["a","a","b"], ["aa","b"]]</code>.
+        <code>"a"</code> → <code>[["a"]]</code>.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>"aab"</code></td>
+              <td><code>[["a","a","b"], ["aa","b"]]</code></td>
+              <td>Saving <code>path</code> itself instead of a copy said <code>[[], []]</code>: both entries are the same list, emptied by the undos.</td>
+            </tr>
+            <tr>
+              <td><code>"aab"</code></td>
+              <td>(same)</td>
+              <td>Forgetting the undo (<code>path.pop()</code>) said <code>[["a","a","b"], ["a","a","b","aa","b"]]</code>: old pieces stay in the path.</td>
+            </tr>
+            <tr>
+              <td><code>"a"</code></td>
+              <td><code>[["a"]]</code></td>
+              <td>One letter is always a palindrome.</td>
+            </tr>
+            <tr>
+              <td><code>"abcdefghijklmnop"</code></td>
+              <td>1 split</td>
+              <td>All different: only single letters work.</td>
+            </tr>
+            <tr>
+              <td><code>"abba"</code></td>
+              <td>3 splits</td>
+              <td>a|b|b|a, a|bb|a and abba: a whole-word piece counts too.</td>
+            </tr>
+            <tr>
+              <td><code>"a"</code> × 16</td>
+              <td>32,768 splits</td>
+              <td>Every one of the 2¹⁵ ways to cut works. The answer itself is the cost: all three approaches took 3–21 ms here, mostly building the output.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Backtracking, Checking Each Piece</h2>
+      <p class="intuition">
+        From position <code>start</code>, try every end. If
+        <code>s[start..end]</code> is a palindrome (two pointers moving
+        inward), add it to <code>path</code>, split the rest from
+        <code>end + 1</code>, then remove it and try the next end. When
+        <code>start</code> reaches the end of <code>s</code>, save a copy of
+        <code>path</code>.
+      </p>
+      <ul>
+        <li>
+          Choose, explore, undo: the same pattern as Subsets and
+          Permutations.
+        </li>
+        <li>
+          The same piece is checked again every time the search reaches it:
+          on <code>"a"</code> × 16, the checks compared 43,682 letter pairs.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n² · 2ⁿ)</span>
+        <span><strong>Space</strong> O(n) besides the output</span>
+      </div>
+      <p class="note">
+        Up to 2ⁿ calls, each trying up to n ends, each check O(n). On
+        <code>"a"</code> × 16 here: Python 21 ms, Java 10 ms, C++ 3.4 ms. At
+        n ≤ 16 the extra checking barely shows; the output dominates.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: Backtracking With a Palindrome Table
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Fill <code>pal[i][j]</code> before searching:
+        <code>s[i..j]</code> is a palindrome when <code>s[i] == s[j]</code>
+        and the inside <code>s[i+1..j-1]</code> is one too (or is 0–1
+        letters long). Fill <code>i</code> from the end backwards, so the
+        inside is always ready. Then backtrack as before with O(1) checks.
+      </p>
+      <ul>
+        <li>
+          The table has n(n + 1) / 2 useful entries: 136 for n = 16, filled
+          once.
+        </li>
+        <li>
+          Same idea as Longest Palindromic Substring (5), reused here.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · 2ⁿ)</span>
+        <span><strong>Space</strong> O(n²) for the table</span>
+      </div>
+      <p class="note">
+        The work left is building the output: up to 2ⁿ⁻¹ splits, each copied
+        in O(n), so no approach can do better. On <code>"a"</code> × 16:
+        Python 18 ms, Java 8 ms, C++ 3.9 ms. The answer to give in an
+        interview.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Build Splits of Every Suffix (DP)</h2>
+      <p class="intuition">
+        Let <code>parts[i]</code> be every split of the suffix
+        <code>s[i:]</code>. The empty suffix has one split, with no pieces.
+        Going from the end backwards, each split of <code>s[i:]</code> is a
+        palindrome <code>s[i..end]</code> followed by a split from
+        <code>parts[end + 1]</code>. No recursion and no undo.
+      </p>
+      <ul>
+        <li>
+          Each suffix's splits are built once and reused.
+        </li>
+        <li>
+          The cost is memory: it keeps the splits of every suffix, not just
+          the answer. On <code>"a"</code> × 16 it stored 65,536 lists to
+          return 32,768.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · 2ⁿ)</span>
+        <span><strong>Space</strong> O(n · 2ⁿ)</span>
+      </div>
+      <p class="note">
+        On <code>"a"</code> × 16: Python 12 ms (fastest in Python here, since
+        there are no recursive calls), Java 13 ms, C++ 8 ms (slowest in C++:
+        more lists to build). A good way to show the DP view of the same
+        problem.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No standard library function splits a string into palindromes. The
+        built-in that helps is the check itself: in Python,
+        <code>piece == piece[::-1]</code> is shorter than a two-pointer loop
+        and runs in C.
+      </p>
+      <p class="note">
+        Approach 2 is what you'd write. With n ≤ 16, Approach 1 is also fine
+        in practice, since the output size, not the checks, sets the time.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Backtracking, Checking Each Piece</th>
+              <td>Two-pointer check on every try</td>
+              <td>O(n² · 2ⁿ)</td>
+              <td>O(n)</td>
+              <td>Re-checks the same pieces</td>
+            </tr>
+            <tr>
+              <th scope="row">Backtracking With a Palindrome Table</th>
+              <td>Fill <code>pal[i][j]</code>, then O(1) checks</td>
+              <td>O(n · 2ⁿ)</td>
+              <td>O(n²)</td>
+              <td>Expected answer</td>
+            </tr>
+            <tr>
+              <th scope="row">Build Splits of Every Suffix (DP)</th>
+              <td><code>parts[i]</code> from <code>parts[end + 1]</code></td>
+              <td>O(n · 2ⁿ)</td>
+              <td>O(n · 2ⁿ)</td>
+              <td>No recursion; keeps every suffix's splits</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

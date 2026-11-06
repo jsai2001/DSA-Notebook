@@ -17467,7 +17467,7 @@
       <details class="pattern-group" id="g-backtracking">
         <summary>
           <span class="g-name">Backtracking</span>
-          <span class="g-count"><span class="g-total">9 problems</span></span>
+          <span class="g-count"><span class="g-total">10 problems</span></span>
           <span class="g-hint">Choose, explore, undo</span>
         </summary>
         <div class="g-body">
@@ -21650,6 +21650,552 @@
                         <td>O(n · 2ⁿ)</td>
                         <td>O(1)</td>
                         <td>No recursion</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0131-palindrome-partitioning ===== -->
+          <details class="question" data-group="backtracking" data-tags="string backtracking dynamic-programming palindrome partition split">
+            <summary>
+              <span class="q-title">131. Palindrome Partitioning</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">String</span>
+                <span class="tag">Backtracking</span>
+                <span class="tag">Dynamic Programming</span>
+              </span>
+            </summary>
+
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Backtracking. Choose the next piece
+                <code>s[start..end]</code> only if it's a palindrome, split the rest
+                the same way, then undo and try a longer piece. Build a table
+                <code>pal[i][j]</code> first, so each "is this a palindrome?" is one
+                lookup instead of a scan.
+              </div>
+
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/palindrome-partitioning/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Split <code>s</code> into pieces so that every piece is a palindrome
+                  (reads the same backwards). Return every possible split, in any
+                  order.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= s.length &lt;= 16</code></li>
+                  <li><code>s</code> is lowercase English letters</li>
+                </ul>
+                <p class="note">
+                  Example: <code>"aab"</code> → <code>[["a","a","b"], ["aa","b"]]</code>.
+                  <code>"a"</code> → <code>[["a"]]</code>.
+                </p>
+              </section>
+
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>"aab"</code></td>
+                        <td><code>[["a","a","b"], ["aa","b"]]</code></td>
+                        <td>Saving <code>path</code> itself instead of a copy said <code>[[], []]</code>: both entries are the same list, emptied by the undos.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"aab"</code></td>
+                        <td>(same)</td>
+                        <td>Forgetting the undo (<code>path.pop()</code>) said <code>[["a","a","b"], ["a","a","b","aa","b"]]</code>: old pieces stay in the path.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"a"</code></td>
+                        <td><code>[["a"]]</code></td>
+                        <td>One letter is always a palindrome.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"abcdefghijklmnop"</code></td>
+                        <td>1 split</td>
+                        <td>All different: only single letters work.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"abba"</code></td>
+                        <td>3 splits</td>
+                        <td>a|b|b|a, a|bb|a and abba: a whole-word piece counts too.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"a"</code> × 16</td>
+                        <td>32,768 splits</td>
+                        <td>Every one of the 2¹⁵ ways to cut works. The answer itself is the cost: all three approaches took 3–21 ms here, mostly building the output.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Backtracking, Checking Each Piece</h2>
+                <p class="intuition">
+                  From position <code>start</code>, try every end. If
+                  <code>s[start..end]</code> is a palindrome (two pointers moving
+                  inward), add it to <code>path</code>, split the rest from
+                  <code>end + 1</code>, then remove it and try the next end. When
+                  <code>start</code> reaches the end of <code>s</code>, save a copy of
+                  <code>path</code>.
+                </p>
+                <ul>
+                  <li>
+                    Choose, explore, undo: the same pattern as Subsets and
+                    Permutations.
+                  </li>
+                  <li>
+                    The same piece is checked again every time the search reaches it:
+                    on <code>"a"</code> × 16, the checks compared 43,682 letter pairs.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n² · 2ⁿ)</span>
+                  <span><strong>Space</strong> O(n) besides the output</span>
+                </div>
+                <p class="note">
+                  Up to 2ⁿ calls, each trying up to n ends, each check O(n). On
+                  <code>"a"</code> × 16 here: Python 21 ms, Java 10 ms, C++ 3.4 ms. At
+                  n ≤ 16 the extra checking barely shows; the output dominates.
+                </p>
+                <div class="code-tabs" data-viz="0131-palindrome-partitioning/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,23],"check":[5,6,7,8,9,10,11],"done":[14,15,16],"try":[17,18],"choose":[19,20],"undo":[21],"return":[24]}'>
+                    class Solution(object):
+                        def partition(self, s):
+                            result, path = [], []
+
+                            def is_pal(lo, hi):  # two pointers, every time it's asked
+                                while lo < hi:
+                                    if s[lo] != s[hi]:
+                                        return False
+                                    lo += 1
+                                    hi -= 1
+                                return True
+
+                            def backtrack(start):
+                                if start == len(s):  # every letter is in some piece
+                                    result.append(path[:])  # a copy: path keeps changing
+                                    return
+                                for end in range(start, len(s)):  # next piece = s[start..end]
+                                    if is_pal(start, end):
+                                        path.append(s[start:end + 1])  # choose
+                                        backtrack(end + 1)  # explore the rest
+                                        path.pop()  # undo
+
+                            backtrack(0)
+                            return result
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7],"return":[8],"check":[16,17,18,20],"done":[24,25,26],"try":[28,29],"choose":[30,31],"undo":[32]}'>
+                    #include <string>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<std::vector<std::string>> partition(std::string s) {
+                            this->s = s;
+                            backtrack(0);
+                            return result;
+                        }
+
+                    private:
+                        std::string s;
+                        std::vector<std::vector<std::string>> result;
+                        std::vector<std::string> path;
+
+                        bool isPal(int lo, int hi) const { // two pointers, every time it's asked
+                            while (lo < hi) {
+                                if (s[lo++] != s[hi--]) return false;
+                            }
+                            return true;
+                        }
+
+                        void backtrack(int start) {
+                            if (start == static_cast<int>(s.size())) { // every letter is in some piece
+                                result.push_back(path); // a copy: path keeps changing
+                                return;
+                            }
+                            for (int end = start; end < static_cast<int>(s.size()); ++end) { // next piece = s[start..end]
+                                if (isPal(start, end)) {
+                                    path.push_back(s.substr(start, end - start + 1)); // choose
+                                    backtrack(end + 1); // explore the rest
+                                    path.pop_back(); // undo
+                                }
+                            }
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[9,10],"return":[11],"check":[14,15,16,18],"done":[22,23,24],"try":[26,27],"choose":[28,29],"undo":[30]}'>
+                    import java.util.*;
+
+                    class Solution {
+                        private String s;
+                        private final List<List<String>> result = new ArrayList<>();
+                        private final List<String> path = new ArrayList<>();
+
+                        public List<List<String>> partition(String s) {
+                            this.s = s;
+                            backtrack(0);
+                            return result;
+                        }
+
+                        private boolean isPal(int lo, int hi) { // two pointers, every time it's asked
+                            while (lo < hi) {
+                                if (s.charAt(lo++) != s.charAt(hi--)) return false;
+                            }
+                            return true;
+                        }
+
+                        private void backtrack(int start) {
+                            if (start == s.length()) { // every letter is in some piece
+                                result.add(new ArrayList<>(path)); // a copy: path keeps changing
+                                return;
+                            }
+                            for (int end = start; end < s.length(); end++) { // next piece = s[start..end]
+                                if (isPal(start, end)) {
+                                    path.add(s.substring(start, end + 1)); // choose
+                                    backtrack(end + 1); // explore the rest
+                                    path.remove(path.size() - 1); // undo
+                                }
+                            }
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>
+                  Approach 2: Backtracking With a Palindrome Table
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Fill <code>pal[i][j]</code> before searching:
+                  <code>s[i..j]</code> is a palindrome when <code>s[i] == s[j]</code>
+                  and the inside <code>s[i+1..j-1]</code> is one too (or is 0–1
+                  letters long). Fill <code>i</code> from the end backwards, so the
+                  inside is always ready. Then backtrack as before with O(1) checks.
+                </p>
+                <ul>
+                  <li>
+                    The table has n(n + 1) / 2 useful entries: 136 for n = 16, filled
+                    once.
+                  </li>
+                  <li>
+                    Same idea as Longest Palindromic Substring (5), reused here.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · 2ⁿ)</span>
+                  <span><strong>Space</strong> O(n²) for the table</span>
+                </div>
+                <p class="note">
+                  The work left is building the output: up to 2ⁿ⁻¹ splits, each copied
+                  in O(n), so no approach can do better. On <code>"a"</code> × 16:
+                  Python 18 ms, Java 8 ms, C++ 3.9 ms. The answer to give in an
+                  interview.
+                </p>
+                <div class="code-tabs" data-viz="0131-palindrome-partitioning/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"table":[3,5,6,7,8],"init":[9,21],"done":[12,13,14],"try":[15,16],"choose":[17,18],"undo":[19],"return":[22]}'>
+                    class Solution(object):
+                        def partition(self, s):
+                            n = len(s)
+                            # pal[i][j]: is s[i..j] a palindrome? Built from short pieces to long ones.
+                            pal = [[False] * n for _ in range(n)]
+                            for i in range(n - 1, -1, -1):
+                                for j in range(i, n):
+                                    pal[i][j] = s[i] == s[j] and (j - i < 2 or pal[i + 1][j - 1])
+                            result, path = [], []
+
+                            def backtrack(start):
+                                if start == n:
+                                    result.append(path[:])  # a copy: path keeps changing
+                                    return
+                                for end in range(start, n):
+                                    if pal[start][end]:  # O(1): look it up
+                                        path.append(s[start:end + 1])  # choose
+                                        backtrack(end + 1)  # explore the rest
+                                        path.pop()  # undo
+
+                            backtrack(0)
+                            return result
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"table":[6,7,9,10,11,12],"init":[15],"return":[16],"done":[27,28,29],"try":[31,32],"choose":[33,34],"undo":[35]}'>
+                    #include <string>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<std::vector<std::string>> partition(std::string s) {
+                            this->s = s;
+                            const int n = s.size();
+                            // pal[i][j]: is s[i..j] a palindrome? Built from short pieces to long ones.
+                            pal.assign(n, std::vector<char>(n, 0));
+                            for (int i = n - 1; i >= 0; --i) {
+                                for (int j = i; j < n; ++j) {
+                                    pal[i][j] = s[i] == s[j] && (j - i < 2 || pal[i + 1][j - 1]);
+                                }
+                            }
+                            backtrack(0);
+                            return result;
+                        }
+
+                    private:
+                        std::string s;
+                        std::vector<std::vector<char>> pal;
+                        std::vector<std::vector<std::string>> result;
+                        std::vector<std::string> path;
+
+                        void backtrack(int start) {
+                            const int n = s.size();
+                            if (start == n) {
+                                result.push_back(path); // a copy: path keeps changing
+                                return;
+                            }
+                            for (int end = start; end < n; ++end) {
+                                if (pal[start][end]) { // O(1): look it up
+                                    path.push_back(s.substr(start, end - start + 1)); // choose
+                                    backtrack(end + 1); // explore the rest
+                                    path.pop_back(); // undo
+                                }
+                            }
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"table":[10,11,13,14,15,16],"init":[19],"return":[20],"done":[25,26,27],"try":[29,30],"choose":[31,32],"undo":[33]}'>
+                    import java.util.*;
+
+                    class Solution {
+                        private String s;
+                        private boolean[][] pal;
+                        private final List<List<String>> result = new ArrayList<>();
+                        private final List<String> path = new ArrayList<>();
+
+                        public List<List<String>> partition(String s) {
+                            this.s = s;
+                            int n = s.length();
+                            // pal[i][j]: is s[i..j] a palindrome? Built from short pieces to long ones.
+                            pal = new boolean[n][n];
+                            for (int i = n - 1; i >= 0; i--) {
+                                for (int j = i; j < n; j++) {
+                                    pal[i][j] = s.charAt(i) == s.charAt(j) && (j - i < 2 || pal[i + 1][j - 1]);
+                                }
+                            }
+                            backtrack(0);
+                            return result;
+                        }
+
+                        private void backtrack(int start) {
+                            int n = s.length();
+                            if (start == n) {
+                                result.add(new ArrayList<>(path)); // a copy: path keeps changing
+                                return;
+                            }
+                            for (int end = start; end < n; end++) {
+                                if (pal[start][end]) { // O(1): look it up
+                                    path.add(s.substring(start, end + 1)); // choose
+                                    backtrack(end + 1); // explore the rest
+                                    path.remove(path.size() - 1); // undo
+                                }
+                            }
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>Approach 3: Build Splits of Every Suffix (DP)</h2>
+                <p class="intuition">
+                  Let <code>parts[i]</code> be every split of the suffix
+                  <code>s[i:]</code>. The empty suffix has one split, with no pieces.
+                  Going from the end backwards, each split of <code>s[i:]</code> is a
+                  palindrome <code>s[i..end]</code> followed by a split from
+                  <code>parts[end + 1]</code>. No recursion and no undo.
+                </p>
+                <ul>
+                  <li>
+                    Each suffix's splits are built once and reused.
+                  </li>
+                  <li>
+                    The cost is memory: it keeps the splits of every suffix, not just
+                    the answer. On <code>"a"</code> × 16 it stored 65,536 lists to
+                    return 32,768.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · 2ⁿ)</span>
+                  <span><strong>Space</strong> O(n · 2ⁿ)</span>
+                </div>
+                <p class="note">
+                  On <code>"a"</code> × 16: Python 12 ms (fastest in Python here, since
+                  there are no recursive calls), Java 13 ms, C++ 8 ms (slowest in C++:
+                  more lists to build). A good way to show the DP view of the same
+                  problem.
+                </p>
+                <div class="code-tabs" data-viz="0131-palindrome-partitioning/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"table":[3,4,5,6,7],"init":[9,10],"suffix":[11],"try":[12,13],"join":[14,15,16],"return":[17]}'>
+                    class Solution(object):
+                        def partition(self, s):
+                            n = len(s)
+                            pal = [[False] * n for _ in range(n)]
+                            for i in range(n - 1, -1, -1):
+                                for j in range(i, n):
+                                    pal[i][j] = s[i] == s[j] and (j - i < 2 or pal[i + 1][j - 1])
+                            # parts[i] = every way to split the suffix s[i:]. parts[n] has one way: no pieces.
+                            parts = [[] for _ in range(n + 1)]
+                            parts[n] = [[]]
+                            for i in range(n - 1, -1, -1):  # shortest suffix first
+                                for end in range(i, n):  # first piece = s[i..end]
+                                    if pal[i][end]:
+                                        piece = s[i:end + 1]
+                                        for rest in parts[end + 1]:  # every way to split what's left
+                                            parts[i].append([piece] + rest)
+                            return parts[0]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"table":[6,7,8,9,10],"init":[14,15],"suffix":[16],"try":[17,18],"join":[19,20,21,22,23],"return":[27]}'>
+                    #include <string>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<std::vector<std::string>> partition(std::string s) {
+                            const int n = s.size();
+                            std::vector<std::vector<char>> pal(n, std::vector<char>(n, 0));
+                            for (int i = n - 1; i >= 0; --i) {
+                                for (int j = i; j < n; ++j) {
+                                    pal[i][j] = s[i] == s[j] && (j - i < 2 || pal[i + 1][j - 1]);
+                                }
+                            }
+                            // parts[i] = every way to split the suffix s[i:]. parts[n] has one way: no pieces.
+                            std::vector<std::vector<std::vector<std::string>>> parts(n + 1);
+                            parts[n] = {{}};
+                            for (int i = n - 1; i >= 0; --i) { // shortest suffix first
+                                for (int end = i; end < n; ++end) { // first piece = s[i..end]
+                                    if (!pal[i][end]) continue;
+                                    const std::string piece = s.substr(i, end - i + 1);
+                                    for (const auto& rest : parts[end + 1]) { // every way to split what's left
+                                        std::vector<std::string> split{piece};
+                                        split.insert(split.end(), rest.begin(), rest.end());
+                                        parts[i].push_back(std::move(split));
+                                    }
+                                }
+                            }
+                            return parts[0];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"table":[5,6,7,8,9],"init":[13,14,15],"suffix":[16],"try":[17,18],"join":[19,20,21,22,23,24],"return":[28]}'>
+                    import java.util.*;
+
+                    class Solution {
+                        public List<List<String>> partition(String s) {
+                            int n = s.length();
+                            boolean[][] pal = new boolean[n][n];
+                            for (int i = n - 1; i >= 0; i--) {
+                                for (int j = i; j < n; j++) {
+                                    pal[i][j] = s.charAt(i) == s.charAt(j) && (j - i < 2 || pal[i + 1][j - 1]);
+                                }
+                            }
+                            // parts.get(i) = every way to split the suffix s[i:]. parts.get(n) has one way: no pieces.
+                            List<List<List<String>>> parts = new ArrayList<>();
+                            for (int i = 0; i <= n; i++) parts.add(new ArrayList<>());
+                            parts.get(n).add(new ArrayList<>());
+                            for (int i = n - 1; i >= 0; i--) { // shortest suffix first
+                                for (int end = i; end < n; end++) { // first piece = s[i..end]
+                                    if (!pal[i][end]) continue;
+                                    String piece = s.substring(i, end + 1);
+                                    for (List<String> rest : parts.get(end + 1)) { // every way to split what's left
+                                        List<String> split = new ArrayList<>(rest.size() + 1);
+                                        split.add(piece);
+                                        split.addAll(rest);
+                                        parts.get(i).add(split);
+                                    }
+                                }
+                            }
+                            return parts.get(0);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  No standard library function splits a string into palindromes. The
+                  built-in that helps is the check itself: in Python,
+                  <code>piece == piece[::-1]</code> is shorter than a two-pointer loop
+                  and runs in C.
+                </p>
+                <p class="note">
+                  Approach 2 is what you'd write. With n ≤ 16, Approach 1 is also fine
+                  in practice, since the output size, not the checks, sets the time.
+                </p>
+              </section>
+
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Backtracking, Checking Each Piece</th>
+                        <td>Two-pointer check on every try</td>
+                        <td>O(n² · 2ⁿ)</td>
+                        <td>O(n)</td>
+                        <td>Re-checks the same pieces</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Backtracking With a Palindrome Table</th>
+                        <td>Fill <code>pal[i][j]</code>, then O(1) checks</td>
+                        <td>O(n · 2ⁿ)</td>
+                        <td>O(n²)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Build Splits of Every Suffix (DP)</th>
+                        <td><code>parts[i]</code> from <code>parts[end + 1]</code></td>
+                        <td>O(n · 2ⁿ)</td>
+                        <td>O(n · 2ⁿ)</td>
+                        <td>No recursion; keeps every suffix's splits</td>
                       </tr>
                     </tbody>
                   </table>
@@ -44359,6 +44905,224 @@
         if (rows.some((r) => r.length !== rows[0].length)) throw new DSAViz.InputError("Every row needs the same number of letters.");
         if (rows[0].length > 6) throw new DSAViz.InputError("Up to 6 columns here.");
         return rows.map((r) => [...r]);
+      }
+      })();
+    </script>
+    <!-- problems/0131-palindrome-partitioning/approach1.visual.js -->
+    <script>
+      // Backtracking: pick a palindrome for the next piece, split the rest, then undo and try a longer piece.
+      (function () {
+      DSAViz.register("0131-palindrome-partitioning/approach1", {
+        inputs: [{ name: "s", type: "string", value: "aab", maxLength: 6 }],
+        trace({ s }) {
+          const w = parseWord(s);
+          const steps = [];
+          const result = [];
+          const path = [];
+          const COUNTER = "letter pairs compared";
+          let counter = 0;
+
+          const view = (o = {}) => {
+            const marks = {};
+            let k = 0;
+            path.forEach((p) => {
+              for (let t = 0; t < p.length; t++) marks[k + t] = "visited";
+              k += p.length;
+            });
+            if (o.range) for (let t = o.range[0]; t <= o.range[1]; t++) marks[t] = o.ok ? "match" : "cut";
+            return [
+              { type: "array", label: "s (dashed = already in path; piece being checked: green = palindrome, red = not)", values: [...w], marks, pointers: o.range ? { start: o.range[0], end: o.range[1] } : {} },
+              { type: "array", label: "path (pieces chosen so far)", values: [...path], wide: true },
+              { type: "array", label: "result", values: result.map((p) => p.join(" | ")), wide: true, marks: o.added ? { [result.length - 1]: "new" } : {} },
+              { type: "vars", items: [{ name: COUNTER, value: counter, mark: o.counted ? "new" : "" }] },
+            ];
+          };
+
+          let undo = null;
+          const run = (start) => {
+            if (start === w.length) {
+              result.push([...path]);
+              steps.push({ line: "done", note: `start = ${w.length}: every letter is in a piece. Add a copy of path: ${path.join(" | ")}.`, view: view({ added: true }) });
+              return;
+            }
+            for (let end = start; end < w.length; end++) {
+              const piece = w.slice(start, end + 1);
+              const ok = piece === [...piece].reverse().join("");
+              let pairs = 0; for (let lo = start, hi = end; lo < hi; lo++, hi--) { pairs++; if (w[lo] !== w[hi]) break; } counter += pairs;
+              const back = undo ? `Back from "${undo}": undo (remove it). ` : "";
+              const line = undo ? ["undo", "try"] : ["try"];
+              undo = null;
+              if (!ok) {
+                steps.push({ line, note: `${back}"${piece}" = s[${start}..${end}]: not a palindrome, skip it.${pairs ? ` (two pointers: ${pairs} pair${pairs === 1 ? "" : "s"} compared)` : ""}`, view: view({ range: [start, end], ok, counted: true }) });
+                continue;
+              }
+              steps.push({ line: [...line, "choose"], note: `${back}"${piece}" = s[${start}..${end}] is a palindrome: add it to path and split the rest, s[${end + 1}..].${pairs ? ` (two pointers: ${pairs} pair${pairs === 1 ? "" : "s"} compared)` : ""}`, view: view({ range: [start, end], ok, counted: true }) });
+              path.push(piece);
+              run(end + 1);
+              path.pop();
+              undo = piece;
+            }
+          };
+
+          steps.push({ line: "init", note: `Build the split one piece at a time, left to right. Each piece must be a palindrome.`, view: view() });
+          run(0);
+          steps.push({
+            line: "return",
+            note: `Return ${result.length} way${result.length === 1 ? "" : "s"}. The palindrome checks compared ${counter} letter pair${counter === 1 ? "" : "s"}, and the same piece is checked again every time it comes up.`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+
+      function parseWord(s) {
+        const w = s.trim();
+        if (!/^[a-z]{1,6}$/.test(w)) throw new DSAViz.InputError("s: 1 to 6 lowercase letters, like aab (longer words have too many splits to step through).");
+        return w;
+      }
+      })();
+    </script>
+    <!-- problems/0131-palindrome-partitioning/approach2.visual.js -->
+    <script>
+      // Build a table pal[i][j] once, then backtrack with O(1) palindrome lookups.
+      (function () {
+      DSAViz.register("0131-palindrome-partitioning/approach2", {
+        inputs: [{ name: "s", type: "string", value: "aab", maxLength: 6 }],
+        trace({ s }) {
+          const w = parseWord(s);
+          const n = w.length;
+          const steps = [];
+          const result = [];
+          const path = [];
+          const COUNTER = "table lookups";
+          let counter = 0;
+          const pal = Array.from({ length: n }, () => Array(n).fill(false));
+          for (let i = n - 1; i >= 0; i--) for (let j = i; j < n; j++) pal[i][j] = w[i] === w[j] && (j - i < 2 || pal[i + 1][j - 1]);
+
+          const view = (o = {}) => {
+            const marks = {};
+            let k = 0;
+            path.forEach((p) => {
+              for (let t = 0; t < p.length; t++) marks[k + t] = "visited";
+              k += p.length;
+            });
+            if (o.range) for (let t = o.range[0]; t <= o.range[1]; t++) marks[t] = o.ok ? "match" : "cut";
+            return [
+              { type: "array", label: "s (dashed = already in path; piece being checked: green = palindrome, red = not)", values: [...w], marks, pointers: o.range ? { start: o.range[0], end: o.range[1] } : {} },
+              { type: "array", label: "path (pieces chosen so far)", values: [...path], wide: true },
+              { type: "array", label: "result", values: result.map((p) => p.join(" | ")), wide: true, marks: o.added ? { [result.length - 1]: "new" } : {} },
+              { type: "vars", items: [{ name: COUNTER, value: counter, mark: o.counted ? "new" : "" }] },
+            ];
+          };
+
+          let undo = null;
+          const run = (start) => {
+            if (start === w.length) {
+              result.push([...path]);
+              steps.push({ line: "done", note: `start = ${w.length}: every letter is in a piece. Add a copy of path: ${path.join(" | ")}.`, view: view({ added: true }) });
+              return;
+            }
+            for (let end = start; end < w.length; end++) {
+              const piece = w.slice(start, end + 1);
+              const ok = piece === [...piece].reverse().join("");
+              counter++;
+              const back = undo ? `Back from "${undo}": undo (remove it). ` : "";
+              const line = undo ? ["undo", "try"] : ["try"];
+              undo = null;
+              if (!ok) {
+                steps.push({ line, note: `${back}"${piece}" = s[${start}..${end}]: not a palindrome, skip it. (one table lookup)`, view: view({ range: [start, end], ok, counted: true }) });
+                continue;
+              }
+              steps.push({ line: [...line, "choose"], note: `${back}"${piece}" = s[${start}..${end}] is a palindrome: add it to path and split the rest, s[${end + 1}..]. (one table lookup)`, view: view({ range: [start, end], ok, counted: true }) });
+              path.push(piece);
+              run(end + 1);
+              path.pop();
+              undo = piece;
+            }
+          };
+
+          const cells = pal.map((row, i) => row.map((v, j) => (j < i ? "" : v ? "✓" : "·")));
+          const tmarks = {};
+          pal.forEach((row, i) => row.forEach((v, j) => j >= i && (tmarks[`${i},${j}`] = v ? "match" : "ghost")));
+          steps.push({
+            line: "table",
+            note: `First fill pal[i][j] = "is s[i..j] a palindrome?", from the end of s backwards: s[i] == s[j] and the inside s[i+1..j-1] is one too. ${n * (n + 1) / 2} entries, each O(1).`,
+            view: [
+              { type: "array", label: "s", values: [...w] },
+              { type: "grid", label: "pal[i][j] (✓ = palindrome)", rows: [...Array(n).keys()], cols: [...Array(n).keys()], corner: "i \\ j", cells, marks: tmarks },
+            ],
+          });
+          steps.push({ line: "init", note: "Now the same backtracking as Approach 1, but every palindrome check is one table lookup.", view: view() });
+          run(0);
+          steps.push({ line: "return", note: `Return ${result.length} way${result.length === 1 ? "" : "s"}, after ${counter} O(1) lookup${counter === 1 ? "" : "s"}.`, view: view() });
+          return steps;
+        },
+      });
+
+      function parseWord(s) {
+        const w = s.trim();
+        if (!/^[a-z]{1,6}$/.test(w)) throw new DSAViz.InputError("s: 1 to 6 lowercase letters, like aab (longer words have too many splits to step through).");
+        return w;
+      }
+      })();
+    </script>
+    <!-- problems/0131-palindrome-partitioning/approach3.visual.js -->
+    <script>
+      // Bottom-up: parts[i] = every split of the suffix s[i:], built from shorter suffixes.
+      (function () {
+      DSAViz.register("0131-palindrome-partitioning/approach3", {
+        inputs: [{ name: "s", type: "string", value: "aab", maxLength: 6 }],
+        trace({ s }) {
+          const w = parseWord(s);
+          const n = w.length;
+          const steps = [];
+          const pal = Array.from({ length: n }, () => Array(n).fill(false));
+          for (let i = n - 1; i >= 0; i--) for (let j = i; j < n; j++) pal[i][j] = w[i] === w[j] && (j - i < 2 || pal[i + 1][j - 1]);
+          const parts = Array.from({ length: n + 1 }, () => []);
+          parts[n] = [[]];
+          let stored = 1;
+          const show = (p) => (p.length ? p.join(" | ") : "(nothing left)");
+          const view = (o = {}) => {
+            const marks = {};
+            if (o.i !== undefined) for (let t = o.i; t < n; t++) marks[t] = "window";
+            if (o.range) for (let t = o.range[0]; t <= o.range[1]; t++) marks[t] = "match";
+            const entries = [];
+            for (let i = n; i >= (o.upto ?? n); i--) entries.push([`parts[${i}] = splits of "${w.slice(i)}"`, parts[i].map(show).join("  ·  ") || "—"]);
+            return [
+              { type: "array", label: "s (outlined = the suffix s[i:]; green = its first piece)", values: [...w], marks, pointers: o.i !== undefined ? { i: o.i } : {} },
+              { type: "map", label: "parts", columns: ["suffix", "every way to split it"], entries, marks: o.i !== undefined ? { [`parts[${o.i}] = splits of "${w.slice(o.i)}"`]: "new" } : {} },
+              { type: "vars", items: [{ name: "splits stored in all", value: stored }] },
+            ];
+          };
+          steps.push({ line: ["table", "init"], note: `Fill the palindrome table pal[i][j] first (as in Approach 2). parts[${n}] is the empty suffix: one way to split it, with no pieces.`, view: view() });
+          for (let i = n - 1; i >= 0; i--) {
+            steps.push({ line: "suffix", note: `Suffix s[${i}:] = "${w.slice(i)}". Its first piece is s[${i}..end] for some end; every split of what's left is already in parts[end + 1].`, view: view({ i, upto: i + 1 }) });
+            for (let end = i; end < n; end++) {
+              if (!pal[i][end]) continue;
+              const piece = w.slice(i, end + 1);
+              const before = parts[i].length;
+              for (const rest of parts[end + 1]) parts[i].push([piece, ...rest]);
+              stored += parts[i].length - before;
+              steps.push({
+                line: ["try", "join"],
+                note: `"${piece}" is a palindrome. Put it in front of each of the ${parts[end + 1].length} split${parts[end + 1].length === 1 ? "" : "s"} in parts[${end + 1}].`,
+                view: view({ i, upto: i, range: [i, end] }),
+              });
+            }
+          }
+          steps.push({
+            line: "return",
+            note: `Return parts[0]: ${parts[0].length} way${parts[0].length === 1 ? "" : "s"}. Splits of every suffix were kept along the way (${stored} in all), so this uses more memory than backtracking.`,
+            view: view({ upto: 0 }),
+          });
+          return steps;
+        },
+      });
+
+      function parseWord(s) {
+        const w = s.trim();
+        if (!/^[a-z]{1,6}$/.test(w)) throw new DSAViz.InputError("s: 1 to 6 lowercase letters, like aab (longer words have too many splits to step through).");
+        return w;
       }
       })();
     </script>
