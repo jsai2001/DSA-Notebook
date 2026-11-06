@@ -1,0 +1,230 @@
+<details class="question" data-group="greedy" data-tags="array hash-table greedy sorting heap priority-queue counting math scheduling">
+  <summary>
+    <span class="q-title">621. Task Scheduler</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Greedy</span>
+      <span class="tag">Heap (Priority Queue)</span>
+      <span class="tag">Counting</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Only the <strong>most frequent</strong> task
+      decides the length. If it appears <code>most</code> times, it needs
+      <code>most − 1</code> blocks of <code>n + 1</code> units, plus a last
+      block holding every task <strong>tied</strong> for most. Other tasks
+      fill the gaps. If they overflow them, there's no idle at all. So the
+      answer is <code>max((most − 1)(n + 1) + tied, len(tasks))</code>, O(N).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/task-scheduler/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>tasks</code> is a list of letters, each one unit of work. A CPU
+        runs one task (or sits idle) per time unit, in any order, but two runs
+        of the <strong>same letter</strong> must be at least <code>n</code>
+        units apart. Return the fewest time units needed to run them all.
+      </p>
+      <ul>
+        <li><code>1 &lt;= tasks.length &lt;= 10⁴</code>; tasks are uppercase letters <code>A</code>–<code>Z</code>.</li>
+        <li><code>0 &lt;= n &lt;= 100</code>.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>["A","A","A","B","B","B"]</code>, <code>n = 2</code> →
+        <code>8</code> (A B idle A B idle A B); <code>n = 3</code> →
+        <code>10</code>; <code>["A","C","A","B","D","B"]</code>,
+        <code>n = 1</code> → <code>6</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>"AAA"</code>, <code>n = 0</code></td>
+              <td><code>3</code></td>
+              <td>No waiting: the answer is just the number of tasks.</td>
+            </tr>
+            <tr>
+              <td><code>"A"</code>, <code>n = 5</code></td>
+              <td><code>1</code></td>
+              <td>Nothing comes after the last run, so no wait is needed there. Counting a full block for it gives 6.</td>
+            </tr>
+            <tr>
+              <td><code>"AAABBB"</code>, <code>n = 2</code></td>
+              <td><code>8</code></td>
+              <td>A and B are tied for most: the last block has both. Forgetting the tie (adding 1) says 7.</td>
+            </tr>
+            <tr>
+              <td><code>"AABBCCDD"</code>, <code>n = 1</code></td>
+              <td><code>8</code></td>
+              <td>More kinds than slots: no idle is needed. The formula alone gives 6, less than the 8 tasks; take the max with <code>len(tasks)</code>.</td>
+            </tr>
+            <tr>
+              <td><code>"AAAAAABCDEFG"</code>, <code>n = 2</code></td>
+              <td><code>16</code></td>
+              <td>Six A's need 5 blocks of 3 plus one A. The 6 other tasks fill 6 of the 10 gaps; 4 stay idle.</td>
+            </tr>
+            <tr>
+              <td><code>"BBBBA"</code>, <code>n = 3</code>, simulating</td>
+              <td><code>13</code></td>
+              <td>Running any allowed task (here A first, alphabetically) wastes the time B needs most: 14. Always run the one with the <strong>most left</strong>.</td>
+            </tr>
+            <tr>
+              <td>10⁴ × <code>"A"</code>, <code>n = 100</code></td>
+              <td><code>1009900</code></td>
+              <td>Almost all idle. A simulation goes through about 10⁶ time units (552 ms in Python); the formula doesn't care.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Simulate, Pick the Most Left</h2>
+      <p class="intuition">
+        Run the clock one unit at a time. Each unit, among the letters allowed
+        to run (their wait is over), run the one with the <strong>most
+        copies left</strong>, and mark it as waiting until
+        <code>time + n + 1</code>. If none is allowed, the unit is idle.
+      </p>
+      <ul>
+        <li>Most-left first matters: the most frequent task is the one most likely to cause idle later, so start it early.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(T · 26), T = the answer</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        A direct picture of the rules, but it walks every idle unit too: 552 ms
+        for 10⁴ A's with <code>n = 100</code>.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Max-Heap and a Waiting Queue</h2>
+      <p class="intuition">
+        The same greedy, organised: a max-heap holds the counts of tasks ready
+        to run, and a queue holds tasks that just ran, with the time they may
+        run again. Each unit: run the top of the heap (if any); when the front
+        of the queue is ready, move it back into the heap.
+      </p>
+      <ul>
+        <li>Tasks leave the queue in the order they entered, since they all wait the same n.</li>
+        <li>Python: store counts as negatives (min-heap). C++/Java: a max-heap directly.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(T · log 26) ≈ O(T)</span>
+        <span><strong>Space</strong> O(26)</span>
+      </div>
+      <p class="note">
+        The answer most people give: 75 ms for the all-A case, and it still
+        visits every idle unit.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Count the Blocks
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Picture the most frequent task as a frame: <code>most − 1</code>
+        blocks of <code>n + 1</code> units, each starting with it, then a last
+        block with every task tied for most. Every other task fits in the gaps,
+        since it has fewer copies than there are blocks.
+      </p>
+      <ul>
+        <li><code>frame = (most − 1) · (n + 1) + tied</code>.</li>
+        <li>If there are more tasks than the frame holds, spread them out with no idle at all: the answer is <code>len(tasks)</code>. So return <code>max(frame, len(tasks))</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(N) to count</span>
+        <span><strong>Space</strong> O(26)</span>
+      </div>
+      <p class="note">
+        No clock at all: 0.3 ms at the limit, whatever <code>n</code> is. Easy
+        to get subtly wrong, so remember the two parts: <code>tied</code> and
+        the <code>max</code>.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        Nothing schedules this for you, but counting is built in:
+        <code>collections.Counter</code> in Python, or an array of 26 in C++
+        and Java. The heaps are <code>heapq</code>,
+        <code>std::priority_queue</code> and <code>PriorityQueue</code>.
+      </p>
+      <p class="note">
+        Write Approach 3 and explain it with the frame picture; mention
+        Approach 2 when the real order of tasks is needed, not just the length.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Simulate</th>
+              <td>Each unit, run the allowed task with most left</td>
+              <td>O(T · 26)</td>
+              <td>O(1)</td>
+              <td>Walks every idle unit</td>
+            </tr>
+            <tr>
+              <th scope="row">Heap and Queue</th>
+              <td>Ready tasks in a heap, waiting ones in a queue</td>
+              <td>O(T log 26)</td>
+              <td>O(26)</td>
+              <td>Gives the actual order too</td>
+            </tr>
+            <tr>
+              <th scope="row">Count the Blocks</th>
+              <td>max((most − 1)(n + 1) + tied, len)</td>
+              <td>O(N)</td>
+              <td>O(26)</td>
+              <td>Fastest; no clock</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

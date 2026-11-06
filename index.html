@@ -22235,7 +22235,7 @@
       <details class="pattern-group" id="g-greedy">
         <summary>
           <span class="g-name">Greedy</span>
-          <span class="g-count"><span class="g-total">3 problems</span></span>
+          <span class="g-count"><span class="g-total">4 problems</span></span>
           <span class="g-hint">Take the best step you can see</span>
         </summary>
         <div class="g-body">
@@ -23009,6 +23009,427 @@
                         <td>O(n)</td>
                         <td>O(1)</td>
                         <td>Expected answer; check before updating</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0621-task-scheduler ===== -->
+          <details class="question" data-group="greedy" data-tags="array hash-table greedy sorting heap priority-queue counting math scheduling">
+            <summary>
+              <span class="q-title">621. Task Scheduler</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Greedy</span>
+                <span class="tag">Heap (Priority Queue)</span>
+                <span class="tag">Counting</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Only the <strong>most frequent</strong> task
+                decides the length. If it appears <code>most</code> times, it needs
+                <code>most − 1</code> blocks of <code>n + 1</code> units, plus a last
+                block holding every task <strong>tied</strong> for most. Other tasks
+                fill the gaps. If they overflow them, there's no idle at all. So the
+                answer is <code>max((most − 1)(n + 1) + tied, len(tasks))</code>, O(N).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/task-scheduler/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  <code>tasks</code> is a list of letters, each one unit of work. A CPU
+                  runs one task (or sits idle) per time unit, in any order, but two runs
+                  of the <strong>same letter</strong> must be at least <code>n</code>
+                  units apart. Return the fewest time units needed to run them all.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= tasks.length &lt;= 10⁴</code>; tasks are uppercase letters <code>A</code>–<code>Z</code>.</li>
+                  <li><code>0 &lt;= n &lt;= 100</code>.</li>
+                </ul>
+                <p class="note">
+                  Examples: <code>["A","A","A","B","B","B"]</code>, <code>n = 2</code> →
+                  <code>8</code> (A B idle A B idle A B); <code>n = 3</code> →
+                  <code>10</code>; <code>["A","C","A","B","D","B"]</code>,
+                  <code>n = 1</code> → <code>6</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>"AAA"</code>, <code>n = 0</code></td>
+                        <td><code>3</code></td>
+                        <td>No waiting: the answer is just the number of tasks.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"A"</code>, <code>n = 5</code></td>
+                        <td><code>1</code></td>
+                        <td>Nothing comes after the last run, so no wait is needed there. Counting a full block for it gives 6.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"AAABBB"</code>, <code>n = 2</code></td>
+                        <td><code>8</code></td>
+                        <td>A and B are tied for most: the last block has both. Forgetting the tie (adding 1) says 7.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"AABBCCDD"</code>, <code>n = 1</code></td>
+                        <td><code>8</code></td>
+                        <td>More kinds than slots: no idle is needed. The formula alone gives 6, less than the 8 tasks; take the max with <code>len(tasks)</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"AAAAAABCDEFG"</code>, <code>n = 2</code></td>
+                        <td><code>16</code></td>
+                        <td>Six A's need 5 blocks of 3 plus one A. The 6 other tasks fill 6 of the 10 gaps; 4 stay idle.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"BBBBA"</code>, <code>n = 3</code>, simulating</td>
+                        <td><code>13</code></td>
+                        <td>Running any allowed task (here A first, alphabetically) wastes the time B needs most: 14. Always run the one with the <strong>most left</strong>.</td>
+                      </tr>
+                      <tr>
+                        <td>10⁴ × <code>"A"</code>, <code>n = 100</code></td>
+                        <td><code>1009900</code></td>
+                        <td>Almost all idle. A simulation goes through about 10⁶ time units (552 ms in Python); the formula doesn't care.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Simulate, Pick the Most Left</h2>
+                <p class="intuition">
+                  Run the clock one unit at a time. Each unit, among the letters allowed
+                  to run (their wait is over), run the one with the <strong>most
+                  copies left</strong>, and mark it as waiting until
+                  <code>time + n + 1</code>. If none is allowed, the unit is idle.
+                </p>
+                <ul>
+                  <li>Most-left first matters: the most frequent task is the one most likely to cause idle later, so start it early.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(T · 26), T = the answer</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  A direct picture of the rules, but it walks every idle unit too: 552 ms
+                  for 10⁴ A's with <code>n = 100</code>.
+                </p>
+                <div class="code-tabs" data-viz="0621-task-scheduler/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5,6,7,8],"tick":[9],"pick":[10,11,12,13],"run":[14,15,16,17],"idle":[18],"return":[19]}'>
+                    class Solution(object):
+                        def leastInterval(self, tasks, n):
+                            left = [0] * 26  # how many of each letter are still to run
+                            for t in tasks:
+                                left[ord(t) - 65] += 1
+                            ready = [0] * 26  # the first time each letter may run again
+                            time = 0
+                            remaining = len(tasks)
+                            while remaining:  # one loop per time unit
+                                pick = -1
+                                for c in range(26):  # of the letters allowed now, the one with the most left
+                                    if left[c] and ready[c] <= time and (pick < 0 or left[c] > left[pick]):
+                                        pick = c
+                                if pick >= 0:  # run it, then it must wait n units
+                                    left[pick] -= 1
+                                    ready[pick] = time + n + 1
+                                    remaining -= 1
+                                time += 1  # nothing allowed: this unit is idle
+                            return time
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8,9],"tick":[10],"pick":[11,12,13],"run":[14,15,16,17],"idle":[19],"return":[21]}'>
+                    #include <array>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int leastInterval(std::vector<char>& tasks, int n) {
+                            std::array<int, 26> left{}; // how many of each letter are still to run
+                            for (char t : tasks) ++left[t - 'A'];
+                            std::array<int, 26> ready{}; // the first time each letter may run again
+                            int time = 0, remaining = (int)tasks.size();
+                            while (remaining) { // one loop per time unit
+                                int pick = -1;
+                                for (int c = 0; c < 26; ++c) // of the letters allowed now, the one with the most left
+                                    if (left[c] && ready[c] <= time && (pick < 0 || left[c] > left[pick])) pick = c;
+                                if (pick >= 0) { // run it, then it must wait n units
+                                    --left[pick];
+                                    ready[pick] = time + n + 1;
+                                    --remaining;
+                                }
+                                ++time; // nothing allowed: this unit is idle
+                            }
+                            return time;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5,6],"tick":[7],"pick":[8,9,10],"run":[11,12,13,14],"idle":[16],"return":[18]}'>
+                    class Solution {
+                        public int leastInterval(char[] tasks, int n) {
+                            int[] left = new int[26]; // how many of each letter are still to run
+                            for (char t : tasks) left[t - 'A']++;
+                            int[] ready = new int[26]; // the first time each letter may run again
+                            int time = 0, remaining = tasks.length;
+                            while (remaining > 0) { // one loop per time unit
+                                int pick = -1;
+                                for (int c = 0; c < 26; c++) // of the letters allowed now, the one with the most left
+                                    if (left[c] > 0 && ready[c] <= time && (pick < 0 || left[c] > left[pick])) pick = c;
+                                if (pick >= 0) { // run it, then it must wait n units
+                                    left[pick]--;
+                                    ready[pick] = time + n + 1;
+                                    remaining--;
+                                }
+                                time++; // nothing allowed: this unit is idle
+                            }
+                            return time;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Max-Heap and a Waiting Queue</h2>
+                <p class="intuition">
+                  The same greedy, organised: a max-heap holds the counts of tasks ready
+                  to run, and a queue holds tasks that just ran, with the time they may
+                  run again. Each unit: run the top of the heap (if any); when the front
+                  of the queue is ready, move it back into the heap.
+                </p>
+                <ul>
+                  <li>Tasks leave the queue in the order they entered, since they all wait the same n.</li>
+                  <li>Python: store counts as negatives (min-heap). C++/Java: a max-heap directly.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(T · log 26) ≈ O(T)</span>
+                  <span><strong>Space</strong> O(26)</span>
+                </div>
+                <p class="note">
+                  The answer most people give: 75 ms for the all-A case, and it still
+                  visits every idle unit.
+                </p>
+                <div class="code-tabs" data-viz="0621-task-scheduler/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[5,6,7,8],"tick":[9,10],"run":[11,12,13,14],"back":[15,16],"return":[17]}'>
+                    import heapq
+                    from collections import Counter, deque
+                    class Solution(object):
+                        def leastInterval(self, tasks, n):
+                            heap = [-c for c in Counter(tasks).values()]  # counts as negatives: a max-heap
+                            heapq.heapify(heap)
+                            waiting = deque()  # (count left, time it may run again), in the order they ran
+                            time = 0
+                            while heap or waiting:
+                                time += 1
+                                if heap:  # run the task with the most left
+                                    c = heapq.heappop(heap) + 1  # one fewer (counts are negative)
+                                    if c:  # some left: it waits n units
+                                        waiting.append((c, time + n))
+                                if waiting and waiting[0][1] == time:  # its wait is over: back in the heap
+                                    heapq.heappush(heap, waiting.popleft()[0])
+                            return time
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[8,9,10,11,12,13],"tick":[14,15],"run":[16,17,18,19],"back":[21,22,23],"return":[26]}'>
+                    #include <array>
+                    #include <queue>
+                    #include <utility>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int leastInterval(std::vector<char>& tasks, int n) {
+                            std::array<int, 26> counts{};
+                            for (char t : tasks) ++counts[t - 'A'];
+                            std::priority_queue<int> heap; // a max-heap of counts
+                            for (int c : counts) if (c) heap.push(c);
+                            std::queue<std::pair<int, int>> waiting; // (count left, time it may run again), in the order they ran
+                            int time = 0;
+                            while (!heap.empty() || !waiting.empty()) {
+                                ++time;
+                                if (!heap.empty()) { // run the task with the most left
+                                    int c = heap.top() - 1;
+                                    heap.pop();
+                                    if (c) waiting.push({c, time + n}); // some left: it waits n units
+                                }
+                                if (!waiting.empty() && waiting.front().second == time) { // its wait is over: back in the heap
+                                    heap.push(waiting.front().first);
+                                    waiting.pop();
+                                }
+                            }
+                            return time;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[7,8,9,10,11,12],"tick":[13,14],"run":[15,16,17],"back":[19,20],"return":[22]}'>
+                    import java.util.ArrayDeque;
+                    import java.util.Collections;
+                    import java.util.Deque;
+                    import java.util.PriorityQueue;
+                    class Solution {
+                        public int leastInterval(char[] tasks, int n) {
+                            int[] counts = new int[26];
+                            for (char t : tasks) counts[t - 'A']++;
+                            PriorityQueue<Integer> heap = new PriorityQueue<>(Collections.reverseOrder()); // a max-heap of counts
+                            for (int c : counts) if (c > 0) heap.add(c);
+                            Deque<int[]> waiting = new ArrayDeque<>(); // {count left, time it may run again}, in the order they ran
+                            int time = 0;
+                            while (!heap.isEmpty() || !waiting.isEmpty()) {
+                                time++;
+                                if (!heap.isEmpty()) { // run the task with the most left
+                                    int c = heap.poll() - 1;
+                                    if (c > 0) waiting.add(new int[] {c, time + n}); // some left: it waits n units
+                                }
+                                if (!waiting.isEmpty() && waiting.peek()[1] == time) // its wait is over: back in the heap
+                                    heap.add(waiting.poll()[0]);
+                            }
+                            return time;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Count the Blocks
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Picture the most frequent task as a frame: <code>most − 1</code>
+                  blocks of <code>n + 1</code> units, each starting with it, then a last
+                  block with every task tied for most. Every other task fits in the gaps,
+                  since it has fewer copies than there are blocks.
+                </p>
+                <ul>
+                  <li><code>frame = (most − 1) · (n + 1) + tied</code>.</li>
+                  <li>If there are more tasks than the frame holds, spread them out with no idle at all: the answer is <code>len(tasks)</code>. So return <code>max(frame, len(tasks))</code>.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(N) to count</span>
+                  <span><strong>Space</strong> O(26)</span>
+                </div>
+                <p class="note">
+                  No clock at all: 0.3 ms at the limit, whatever <code>n</code> is. Easy
+                  to get subtly wrong, so remember the two parts: <code>tied</code> and
+                  the <code>max</code>.
+                </p>
+                <div class="code-tabs" data-viz="0621-task-scheduler/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"count":[4,5,6],"frame":[8],"return":[9]}'>
+                    from collections import Counter
+                    class Solution(object):
+                        def leastInterval(self, tasks, n):
+                            counts = Counter(tasks).values()
+                            most = max(counts)  # the most frequent task runs this many times
+                            tied = sum(1 for c in counts if c == most)  # how many tasks share that count
+                            # The most frequent tasks need most - 1 full blocks of n + 1 units, then one last block of size tied.
+                            frame = (most - 1) * (n + 1) + tied
+                            return max(frame, len(tasks))  # with many kinds of task the gaps all fill, and no idle is needed
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"count":[7,8,9,10],"frame":[12],"return":[13]}'>
+                    #include <algorithm>
+                    #include <array>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int leastInterval(std::vector<char>& tasks, int n) {
+                            std::array<int, 26> counts{};
+                            for (char t : tasks) ++counts[t - 'A'];
+                            int most = *std::max_element(counts.begin(), counts.end()); // the most frequent task runs this many times
+                            int tied = (int)std::count(counts.begin(), counts.end(), most); // how many tasks share that count
+                            // The most frequent tasks need most - 1 full blocks of n + 1 units, then one last block of size tied.
+                            int frame = (most - 1) * (n + 1) + tied;
+                            return std::max(frame, (int)tasks.size()); // with many kinds of task the gaps all fill, and no idle is needed
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"count":[3,4,5,6,7,8],"frame":[10],"return":[11]}'>
+                    class Solution {
+                        public int leastInterval(char[] tasks, int n) {
+                            int[] counts = new int[26];
+                            for (char t : tasks) counts[t - 'A']++;
+                            int most = 0; // the most frequent task runs this many times
+                            for (int c : counts) most = Math.max(most, c);
+                            int tied = 0; // how many tasks share that count
+                            for (int c : counts) if (c == most) tied++;
+                            // The most frequent tasks need most - 1 full blocks of n + 1 units, then one last block of size tied.
+                            int frame = (most - 1) * (n + 1) + tied;
+                            return Math.max(frame, tasks.length); // with many kinds of task the gaps all fill, and no idle is needed
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  Nothing schedules this for you, but counting is built in:
+                  <code>collections.Counter</code> in Python, or an array of 26 in C++
+                  and Java. The heaps are <code>heapq</code>,
+                  <code>std::priority_queue</code> and <code>PriorityQueue</code>.
+                </p>
+                <p class="note">
+                  Write Approach 3 and explain it with the frame picture; mention
+                  Approach 2 when the real order of tasks is needed, not just the length.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Simulate</th>
+                        <td>Each unit, run the allowed task with most left</td>
+                        <td>O(T · 26)</td>
+                        <td>O(1)</td>
+                        <td>Walks every idle unit</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Heap and Queue</th>
+                        <td>Ready tasks in a heap, waiting ones in a queue</td>
+                        <td>O(T log 26)</td>
+                        <td>O(26)</td>
+                        <td>Gives the actual order too</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Count the Blocks</th>
+                        <td>max((most − 1)(n + 1) + tied, len)</td>
+                        <td>O(N)</td>
+                        <td>O(26)</td>
+                        <td>Fastest; no clock</td>
                       </tr>
                     </tbody>
                   </table>
@@ -39418,6 +39839,211 @@
               ? `${hits.length === 1 ? "One node" : `${hits.length} nodes`} of root got #${target} (${hits.map((id) => A.nodes[id].val).join(", ")}): a copy of subRoot. Return true.`
               : `No node of root got #${target}. Return false. Each node was numbered once, with a hash map lookup: O(m + n).`,
             view: view("A", undefined, { hits }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0621-task-scheduler/approach1.visual.js -->
+    <script>
+      // Simulate the clock: each unit, run the allowed task with the most copies left (or sit idle).
+      DSAViz.register("0621-task-scheduler/approach1", {
+        inputs: [
+          { name: "tasks", type: "string", value: "AAABBC", maxLength: 12 },
+          { name: "n", type: "int", value: "2", min: 0, max: 4 },
+        ],
+        trace({ tasks, n }) {
+          if (!/^[A-Z]+$/.test(tasks)) throw new DSAViz.InputError("tasks: 1 or more capital letters, like AAABBC.");
+          const left = {};
+          for (const t of tasks) left[t] = (left[t] || 0) + 1;
+          const kinds = Object.keys(left).sort();
+          const ready = Object.fromEntries(kinds.map((k) => [k, 0]));
+          const timeline = [];
+          const steps = [];
+          let remaining = tasks.length;
+          let time = 0;
+          const view = (o = {}) => {
+            const gm = {};
+            kinds.forEach((k, j) => {
+              if (left[k] === 0) gm[`0,${j}`] = "visited";
+              else if (ready[k] > time) gm[`0,${j}`] = "ghost";
+              if (o.pick === k) gm[`0,${j}`] = "new";
+            });
+            const tm = {};
+            timeline.forEach((t, i) => (tm[i] = t === "idle" ? "ghost" : "visited"));
+            if (timeline.length) tm[timeline.length - 1] = o.pick ? "new" : "ghost";
+            return [
+              { type: "array", label: "timeline (one cell per time unit)", values: timeline.slice(), marks: tm, wide: true },
+              { type: "grid", label: `at time ${time}: copies left (faded = still waiting, yellow = picked)`, rows: ["left", "ready at"], cols: kinds, cells: [kinds.map((k) => left[k]), kinds.map((k) => (left[k] ? ready[k] : "–"))], marks: gm, corner: "" },
+            ];
+          };
+          steps.push({ line: "init", note: `Count the tasks: ${kinds.map((k) => `${k} ×${left[k]}`).join(", ")}. Every task may run at time 0.`, view: view() });
+          while (remaining) {
+            const allowed = kinds.filter((k) => left[k] && ready[k] <= time);
+            let pick = null;
+            for (const k of allowed) if (pick === null || left[k] > left[pick]) pick = k;
+            if (pick !== null) {
+              left[pick]--;
+              ready[pick] = time + n + 1;
+              remaining--;
+              timeline.push(pick);
+              steps.push({
+                line: ["tick", "pick", "run"],
+                note: `Time ${time}: allowed ${allowed.join(", ")}. Run ${pick}${allowed.length > 1 ? ", it has the most left" : ""}. It may run again at ${time + n + 1}.`,
+                view: view({ pick }),
+              });
+            } else {
+              timeline.push("idle");
+              steps.push({ line: ["tick", "pick", "idle"], note: `Time ${time}: every task left is still waiting. Idle.`, view: view() });
+            }
+            time++;
+          }
+          const idle = timeline.filter((t) => t === "idle").length;
+          steps.push({ line: "return", note: `All done at time ${time}: return ${time} (${idle} idle unit${idle === 1 ? "" : "s"}). The loop went through every unit, idle ones too.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0621-task-scheduler/approach2.visual.js -->
+    <script>
+      // Max-heap of ready counts plus a queue of tasks waiting out their n units.
+      DSAViz.register("0621-task-scheduler/approach2", {
+        inputs: [
+          { name: "tasks", type: "string", value: "AAABBC", maxLength: 12 },
+          { name: "n", type: "int", value: "2", min: 0, max: 4 },
+        ],
+        trace({ tasks, n }) {
+          if (!/^[A-Z]+$/.test(tasks)) throw new DSAViz.InputError("tasks: 1 or more capital letters, like AAABBC.");
+          const counts = {};
+          for (const t of tasks) counts[t] = (counts[t] || 0) + 1;
+          // heap entries: [count, letter]; kept sorted biggest first (ties by letter) so the picture is easy to read
+          let heap = Object.entries(counts).map(([k, c]) => [c, k]);
+          const sortHeap = () => heap.sort((a, b) => b[0] - a[0] || (a[1] < b[1] ? -1 : 1));
+          sortHeap();
+          const waiting = []; // [count, letter, time it goes back]
+          const timeline = [];
+          const steps = [];
+          let time = 0;
+          const view = (o = {}) => {
+            const tm = {};
+            timeline.forEach((t, i) => (tm[i] = t === "idle" ? "ghost" : "visited"));
+            if (timeline.length && o.ran !== undefined) tm[timeline.length - 1] = o.ran ? "new" : "ghost";
+            return [
+              { type: "array", label: "timeline", values: timeline.slice(), marks: tm, wide: true },
+              { type: "array", label: "heap: ready tasks, most left first", values: heap.map(([c, k]) => `${k} ×${c}`), wide: true, marks: o.back ? { [heap.findIndex(([, k]) => k === o.back)]: "new" } : heap.length ? { 0: "active" } : {} },
+              { type: "array", label: "waiting queue: count, back at time", values: waiting.map(([c, k, t]) => `${k} ×${c} @${t}`), wide: true, marks: waiting.length ? { 0: "compare" } : {} },
+              { type: "vars", items: [{ name: "time", value: time }] },
+            ];
+          };
+          steps.push({ line: "init", note: "Put each task's count in a max-heap. The waiting queue starts empty.", view: view() });
+          while (heap.length || waiting.length) {
+            time++;
+            let ran = false;
+            let note;
+            if (heap.length) {
+              const [c, k] = heap.shift();
+              timeline.push(k);
+              ran = true;
+              note = `Time ${time}: run ${k}, the top of the heap.`;
+              if (c - 1) {
+                waiting.push([c - 1, k, time + n]);
+                note += ` ${c - 1} left: it waits until the end of time ${time + n}.`;
+              } else note += " That was its last copy.";
+            } else {
+              timeline.push("idle");
+              note = `Time ${time}: the heap is empty, everything is waiting. Idle.`;
+            }
+            let back = null;
+            if (waiting.length && waiting[0][2] === time) {
+              const [c, k] = waiting.shift();
+              heap.push([c, k]);
+              sortHeap();
+              back = k;
+              note += ` ${k}'s wait is over: back into the heap.`;
+            }
+            steps.push({ line: ran ? ["tick", "run", "back"] : ["tick", "back"], note, view: view({ ran, back }) });
+          }
+          steps.push({ line: "return", note: `Heap and queue are both empty: return ${time}.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0621-task-scheduler/approach3.visual.js -->
+    <script>
+      // Count the blocks: the most frequent task makes a frame of (most − 1) blocks of n + 1, plus a last block of the tied tasks.
+      DSAViz.register("0621-task-scheduler/approach3", {
+        inputs: [
+          { name: "tasks", type: "string", value: "AAABBC", maxLength: 12 },
+          { name: "n", type: "int", value: "2", min: 0, max: 4 },
+        ],
+        trace({ tasks, n }) {
+          if (!/^[A-Z]+$/.test(tasks)) throw new DSAViz.InputError("tasks: 1 or more capital letters, like AAABBC.");
+          const counts = {};
+          for (const t of tasks) counts[t] = (counts[t] || 0) + 1;
+          const kinds = Object.keys(counts).sort((a, b) => counts[b] - counts[a] || (a < b ? -1 : 1));
+          const most = counts[kinds[0]];
+          const tiedKinds = kinds.filter((k) => counts[k] === most);
+          const tied = tiedKinds.length;
+          const frame = (most - 1) * (n + 1) + tied;
+          const answer = Math.max(frame, tasks.length);
+          const steps = [];
+          // The frame as a grid: one row per block. The tied tasks take the first columns of every row;
+          // the others fill the rest column by column, top to bottom, skipping the last row (it ends after the tied ones).
+          const rest = kinds.filter((k) => counts[k] < most).flatMap((k) => Array(counts[k]).fill(k));
+          const extra = Math.max(0, rest.length - (most - 1) * (n + 1 - tied));
+          const width = Math.max(n + 1, tied + Math.ceil((rest.length) / Math.max(1, most - 1)));
+          const grid = Array.from({ length: most }, () => Array(width).fill(""));
+          for (let r = 0; r < most; r++) tiedKinds.forEach((k, c) => (grid[r][c] = k));
+          let placed = 0;
+          const order = [];
+          for (let c = tied; c < width && placed < rest.length; c++) for (let r = 0; r < most - 1 && placed < rest.length; r++) order.push([r, c, rest[placed++]]);
+          const view = (shown, o = {}) => {
+            const cells = grid.map((row, r) =>
+              row.map((v, c) => {
+                if (c < tied) return o.frame ? v : "";
+                const hit = order.slice(0, shown).find(([rr, cc]) => rr === r && cc === c);
+                if (hit) return hit[2];
+                if (!o.frame) return "";
+                if (r === most - 1) return ""; // after the last block: not part of the schedule
+                return c < n + 1 ? "idle" : "";
+              })
+            );
+            const marks = {};
+            grid.forEach((row, r) => row.forEach((_, c) => {
+              if (c < tied && o.frame) marks[`${r},${c}`] = "match";
+              else if (cells[r][c] === "idle") marks[`${r},${c}`] = "ghost";
+              else if (r === most - 1 && c >= tied) marks[`${r},${c}`] = "visited";
+            }));
+            if (o.last !== undefined) marks[`${order[o.last][0]},${order[o.last][1]}`] = "new";
+            return [
+              { type: "grid", label: `the frame: ${most} block${most === 1 ? "" : "s"} (rows), read left to right, top to bottom (dashed = idle, grey = after the end)`, rows: grid.map((_, r) => `block ${r + 1}`), cols: Array.from({ length: width }, (_, c) => String(c)), cells, marks, corner: "" },
+              { type: "vars", items: [{ name: "most", value: most }, { name: "tied", value: `${tied} (${tiedKinds.join(", ")})` }, ...(o.result ? [{ name: "frame", value: frame }, { name: "len(tasks)", value: tasks.length }, { name: "answer", value: answer, mark: "match" }] : [])] },
+            ];
+          };
+          steps.push({
+            line: "count",
+            note: `Count: ${kinds.map((k) => `${k} ×${counts[k]}`).join(", ")}. The most is ${most}${tied > 1 ? `, shared by ${tied} tasks (${tiedKinds.join(", ")})` : ` (${kinds[0]})`}.`,
+            view: view(0),
+          });
+          steps.push({
+            line: "frame",
+            note: `${tiedKinds.join(" ")} must be ${n + 1} units apart, so they need ${most - 1} full block${most - 1 === 1 ? "" : "s"} of ${n + 1}, then one last block of just ${tiedKinds.join(" ")}. frame = (${most} − 1) × (${n} + 1) + ${tied} = ${frame}.`,
+            view: view(0, { frame: true }),
+          });
+          for (let i = 0; i < order.length; i++) {
+            steps.push({
+              line: "frame",
+              note: `Put ${order[i][2]} in block ${order[i][0] + 1}${order[i][1] >= n + 1 ? " (the gaps are full: the block grows, which costs no idle)" : ", in a gap that would otherwise be idle"}.`,
+              view: view(i + 1, { frame: true, last: i }),
+            });
+          }
+          const idle = Math.max(0, frame - tasks.length);
+          steps.push({
+            line: "return",
+            note: extra > 0 || tasks.length >= frame
+              ? `The other tasks overflowed the gaps, so no unit is idle: return max(${frame}, ${tasks.length}) = ${answer}.`
+              : `${idle} gap${idle === 1 ? " stays" : "s stay"} idle. Return max(${frame}, ${tasks.length}) = ${answer}.`,
+            view: view(order.length, { frame: true, result: true }),
           });
           return steps;
         },
