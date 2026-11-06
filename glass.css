@@ -1,32 +1,66 @@
-/* Liquid Glass, the way Apple uses it (iOS 26 / macOS 26):
-   content stays solid; only the controls that float over it are glass.
+/* Liquid Glass (iOS 26 / macOS 26 style) for the whole page.
 
-   - Content: Apple's grouped colors (light grey page, white cards; black page, dark cards).
-   - Glass (.lg-float below): clear, lightly frosted, with a bright rim that catches light
-     at the top-left and bottom-right, a soft inner glow, and a shine that follows the
-     pointer. glass.js adds the lens: the edges bend what's behind (Chrome / Edge only;
-     other browsers get the same glass without the bend).
+   - A colorful backdrop sits behind everything, like a desktop wallpaper: glass needs
+     something to show through.
+   - Every surface is glass: cards, cards inside cards, tiles, chips and buttons. Each has
+     a bright rim (light catches the top edge), a soft inner glow, a sheen from the
+     top-left and a shadow underneath. Deeper layers are clearer, so the layers read.
+   - Floating controls (dock, top menu, jump bar, ...) also blur what scrolls under them;
+     glass.js adds the lens that bends it at their edges (Chrome / Edge only) and turns
+     them dark over dark content.
+   - Code stays dark glass so it's easy to read. Highlight colors keep their meaning.
    - Press: controls swell a little with a spring, like a drop of liquid.
-   - prefers-reduced-transparency: solid controls. prefers-reduced-motion: no spring.
+   - prefers-reduced-transparency: solid surfaces. prefers-reduced-motion: no spring.
    Loaded last; layout and behavior stay in the other files. */
 
 :root {
-  /* Apple system colors (light) */
-  --bg: rgb(242, 242, 247);
-  --card-bg: rgb(255, 255, 255);
-  --surface: rgb(255, 255, 255);
-  --surface-hover: rgb(248, 248, 251);
-  --surface-alt: rgb(242, 242, 247);
-  --chip-bg: rgb(238, 238, 243);
-  --border: rgba(60, 60, 67, 0.3);
-  --border-soft: rgba(60, 60, 67, 0.12);
-  --border-card: rgba(60, 60, 67, 0.12);
-  --text-muted: rgb(90, 90, 96);
-  --code-bg: rgb(28, 28, 32);
-  --inline-code-bg: rgba(120, 120, 128, 0.14);
+  /* The backdrop */
+  --lg-base: rgb(205, 218, 245);
+  --lg-wall:
+    radial-gradient(55rem 40rem at 5% -5%, rgba(40, 110, 255, 0.55), transparent 65%),
+    radial-gradient(50rem 38rem at 100% 5%, rgba(150, 90, 255, 0.45), transparent 65%),
+    radial-gradient(55rem 40rem at -5% 75%, rgba(0, 190, 220, 0.4), transparent 65%),
+    radial-gradient(50rem 40rem at 105% 95%, rgba(255, 100, 170, 0.38), transparent 65%),
+    radial-gradient(40rem 30rem at 55% 50%, rgba(255, 255, 255, 0.35), transparent 70%),
+    var(--lg-base);
+
+  /* The base theme's colors, now see-through */
+  --bg: rgb(232, 238, 250); /* solid fallback; the page itself shows the backdrop */
+  --card-bg: rgba(255, 255, 255, 0.42);
+  --surface: rgba(255, 255, 255, 0.5);
+  --surface-hover: rgba(255, 255, 255, 0.72);
+  --surface-alt: rgba(255, 255, 255, 0.35);
+  --chip-bg: rgba(255, 255, 255, 0.55);
+  --border: rgba(60, 70, 110, 0.28);
+  --border-soft: rgba(60, 70, 110, 0.14);
+  --border-card: rgba(255, 255, 255, 0.65);
+  --text-strong: rgb(24, 26, 36);
+  --text-muted: rgb(64, 68, 84);
+  --code-bg: rgba(18, 20, 34, 0.88);
+  --inline-code-bg: rgba(255, 255, 255, 0.55);
+  --easy-bg: rgba(52, 199, 89, 0.22);
+  --medium-bg: rgba(255, 170, 0, 0.24);
+  --hard-bg: rgba(255, 59, 48, 0.2);
   --lg-tint: rgb(0, 113, 227); /* Apple blue; white text on it passes AA */
 
-  /* Glass material */
+  /* Glass for cards (two depths) and pills */
+  --lg-card:
+    radial-gradient(130% 70% at 0% 0%, rgba(255, 255, 255, 0.5), transparent 55%),
+    linear-gradient(150deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.4));
+  --lg-card-2:
+    radial-gradient(130% 70% at 0% 0%, rgba(255, 255, 255, 0.3), transparent 55%),
+    linear-gradient(150deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.08));
+  --lg-card-border: rgba(255, 255, 255, 0.62);
+  --lg-card-rim: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 1px 0 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.25), inset 0 0 1.5rem rgba(255, 255, 255, 0.28);
+  --lg-card-shadow: 0 1rem 2.5rem -1.2rem rgba(20, 30, 90, 0.4), 0 0.1rem 0.3rem rgba(20, 30, 90, 0.08);
+  --lg-pill: linear-gradient(150deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.48));
+  --lg-pill-hover: linear-gradient(150deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.68));
+  --lg-pill-border: rgba(255, 255, 255, 0.75);
+  --lg-pill-rim: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 0 rgba(255, 255, 255, 0.3);
+  --lg-pill-shadow: 0 0.2rem 0.6rem -0.2rem rgba(20, 30, 90, 0.25);
+
+  /* Glass for the floating controls */
   --lg-fill: rgba(255, 255, 255, 0.42);
   --lg-blur: blur(10px) saturate(190%) brightness(1.04);
   --lg-rim: linear-gradient(
@@ -37,29 +71,57 @@
     rgba(255, 255, 255, 0.7) 100%
   );
   --lg-glow: inset 0 0 0.9rem rgba(255, 255, 255, 0.45);
-  --lg-edge: 0 0 0 0.5px rgba(0, 0, 0, 0.08);
-  --lg-shadow: 0 0.5rem 1.6rem -0.4rem rgba(0, 0, 0, 0.18), 0 0.1rem 0.25rem rgba(0, 0, 0, 0.06);
+  --lg-edge: 0 0 0 0.5px rgba(255, 255, 255, 0.5);
+  --lg-shadow: 0 0.5rem 1.6rem -0.4rem rgba(20, 30, 90, 0.28), 0 0.1rem 0.25rem rgba(20, 30, 90, 0.08);
   --lg-shine: rgba(255, 255, 255, 0.55);
-  --lg-thumb: rgb(255, 255, 255); /* selected part of a segmented control */
-  --lg-thumb-shadow: 0 0.1rem 0.4rem rgba(0, 0, 0, 0.14), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
-  --lg-track: rgba(120, 120, 128, 0.12);
+  --lg-thumb: rgba(255, 255, 255, 0.95); /* selected part of a segmented control */
+  --lg-thumb-shadow: 0 0.1rem 0.4rem rgba(20, 30, 90, 0.18), inset 0 1px 0 rgb(255, 255, 255);
+  --lg-track: rgba(255, 255, 255, 0.3);
 }
 
 :root[data-theme="dark"] {
-  --bg: rgb(0, 0, 0);
-  --card-bg: rgb(28, 28, 30);
-  --surface: rgb(28, 28, 30);
-  --surface-hover: rgb(38, 38, 41);
-  --surface-alt: rgb(44, 44, 46);
-  --chip-bg: rgb(44, 44, 46);
-  --border: rgba(235, 235, 245, 0.28);
-  --border-soft: rgba(235, 235, 245, 0.1);
-  --border-card: rgba(235, 235, 245, 0.1);
-  --text-muted: rgb(174, 174, 180);
-  --code-bg: rgb(16, 16, 19);
-  --inline-code-bg: rgba(120, 120, 128, 0.3);
+  --lg-base: rgb(8, 10, 24);
+  --lg-wall:
+    radial-gradient(55rem 40rem at 5% -5%, rgba(30, 80, 255, 0.45), transparent 65%),
+    radial-gradient(50rem 38rem at 100% 5%, rgba(130, 50, 230, 0.38), transparent 65%),
+    radial-gradient(55rem 40rem at -5% 75%, rgba(0, 150, 190, 0.3), transparent 65%),
+    radial-gradient(50rem 40rem at 105% 95%, rgba(220, 50, 130, 0.28), transparent 65%),
+    var(--lg-base);
 
-  --lg-fill: rgba(40, 40, 44, 0.42);
+  --bg: rgb(12, 14, 28);
+  --card-bg: rgba(255, 255, 255, 0.05);
+  --surface: rgba(255, 255, 255, 0.06);
+  --surface-hover: rgba(255, 255, 255, 0.11);
+  --surface-alt: rgba(255, 255, 255, 0.04);
+  --chip-bg: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.22);
+  --border-soft: rgba(255, 255, 255, 0.1);
+  --border-card: rgba(255, 255, 255, 0.14);
+  --text-strong: rgb(240, 241, 247);
+  --text-muted: rgb(185, 190, 205);
+  --code-bg: rgba(5, 6, 14, 0.72);
+  --inline-code-bg: rgba(255, 255, 255, 0.12);
+  --easy-bg: rgba(48, 209, 88, 0.22);
+  --medium-bg: rgba(255, 179, 64, 0.22);
+  --hard-bg: rgba(255, 69, 58, 0.22);
+
+  --lg-card:
+    radial-gradient(130% 70% at 0% 0%, rgba(255, 255, 255, 0.08), transparent 55%),
+    linear-gradient(150deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+  --lg-card-2:
+    radial-gradient(130% 70% at 0% 0%, rgba(255, 255, 255, 0.06), transparent 55%),
+    linear-gradient(150deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
+  --lg-card-border: rgba(255, 255, 255, 0.12);
+  --lg-card-rim: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 1px 0 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 1.5rem rgba(255, 255, 255, 0.03);
+  --lg-card-shadow: 0 1rem 2.5rem -1.2rem rgba(0, 0, 0, 0.75);
+  --lg-pill: linear-gradient(150deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.06));
+  --lg-pill-hover: linear-gradient(150deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.12));
+  --lg-pill-border: rgba(255, 255, 255, 0.16);
+  --lg-pill-rim: inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+  --lg-pill-shadow: 0 0.2rem 0.6rem -0.2rem rgba(0, 0, 0, 0.6);
+
+  --lg-fill: rgba(40, 40, 50, 0.42);
   --lg-rim: linear-gradient(
     135deg,
     rgba(255, 255, 255, 0.55) 0%,
@@ -68,42 +130,156 @@
     rgba(255, 255, 255, 0.35) 100%
   );
   --lg-glow: inset 0 0 0.9rem rgba(255, 255, 255, 0.07);
-  --lg-edge: 0 0 0 0.5px rgba(255, 255, 255, 0.06);
+  --lg-edge: 0 0 0 0.5px rgba(255, 255, 255, 0.08);
   --lg-shadow: 0 0.5rem 1.6rem -0.4rem rgba(0, 0, 0, 0.7), 0 0.1rem 0.25rem rgba(0, 0, 0, 0.4);
   --lg-shine: rgba(255, 255, 255, 0.16);
-  --lg-thumb: rgb(99, 99, 102);
-  --lg-thumb-shadow: 0 0.1rem 0.4rem rgba(0, 0, 0, 0.4);
-  --lg-track: rgba(120, 120, 128, 0.24);
+  --lg-thumb: rgba(255, 255, 255, 0.2);
+  --lg-thumb-shadow: 0 0.1rem 0.4rem rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  --lg-track: rgba(255, 255, 255, 0.08);
 }
 
-/* ---------- content: solid, Apple-style cards ---------- */
+/* ---------- the backdrop ---------- */
+html {
+  background: var(--lg-base);
+}
+body {
+  background: transparent; /* a body fill would paint over the backdrop below */
+}
+body::after {
+  /* fixed layer behind everything (background-attachment: fixed doesn't work on iPhone) */
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--lg-wall);
+  pointer-events: none;
+}
+
+/* ---------- cards: glass, two depths ---------- */
 .pattern-group,
 .question,
-.approach,
 .deck-card,
 body.deck-read .question.deck-current > .q-body > :not(.q-jump) {
-  border-color: var(--border-card);
-  box-shadow: 0 0.05rem 0.2rem rgba(0, 0, 0, 0.04);
+  border-color: var(--lg-card-border);
+  background: var(--lg-card);
+  box-shadow: var(--lg-card-rim), var(--lg-card-shadow);
 }
-:root[data-theme="dark"] .pattern-group,
-:root[data-theme="dark"] .question,
+.pattern-group .question,
+.approach,
+.viz,
+.in-practice,
+.key-idea,
+.viz-note {
+  background: var(--lg-card-2);
+  box-shadow: var(--lg-card-rim), 0 0.5rem 1.4rem -1rem rgba(20, 30, 90, 0.35);
+}
+.pattern-group .question,
+.approach,
+.viz {
+  border-color: var(--lg-card-border);
+}
+.in-practice {
+  border-color: var(--border);
+}
+:root[data-theme="dark"] .pattern-group .question,
 :root[data-theme="dark"] .approach,
-:root[data-theme="dark"] .deck-card {
-  box-shadow: none;
+:root[data-theme="dark"] .viz,
+:root[data-theme="dark"] .in-practice,
+:root[data-theme="dark"] .key-idea,
+:root[data-theme="dark"] .viz-note {
+  box-shadow: var(--lg-card-rim), 0 0.5rem 1.4rem -1rem rgba(0, 0, 0, 0.6);
 }
-/* Cards inside cards: a light grey step, like grouped lists */
-.pattern-group .question {
-  background: var(--surface-alt);
+.question summary:hover,
+.pattern-group > summary:hover {
+  background: rgba(255, 255, 255, 0.18);
 }
-.question .approach,
-.pattern-group .question .approach {
-  background: var(--card-bg);
-}
-:root[data-theme="dark"] .pattern-group .question {
-  background: rgb(22, 22, 24);
+:root[data-theme="dark"] .question summary:hover,
+:root[data-theme="dark"] .pattern-group > summary:hover {
+  background: rgba(255, 255, 255, 0.04);
 }
 
-/* ---------- the glass material ---------- */
+/* Full-screen layers that must hide what's under them: the backdrop, solid */
+.deck,
+.present,
+body.deck-read::before,
+body.deck-read .question.deck-current,
+.viz.is-max {
+  background: var(--lg-wall);
+}
+body.deck-read .question.deck-current {
+  border-color: transparent;
+  box-shadow: none;
+}
+.viz.is-max {
+  box-shadow: none;
+}
+
+/* ---------- tiles: glass cells, solid enough in tree diagrams ---------- */
+.viz-value,
+.viz-var,
+.viz-grid td,
+.complexity span {
+  box-shadow: var(--lg-pill-rim), 0 0.1rem 0.3rem -0.1rem rgba(20, 30, 90, 0.2);
+}
+.viz-value,
+.viz-grid td {
+  border-color: var(--lg-pill-border);
+}
+.viz-cell.is-ghost .viz-value,
+.viz-cell.is-null .viz-value,
+.viz-grid td.is-ghost {
+  box-shadow: none;
+}
+/* Edge lines run under the node circles: keep the circles' colors solid */
+.viz-tree {
+  --card-bg: rgb(248, 250, 255);
+  --surface-alt: rgb(228, 233, 245);
+  --chip-bg: rgb(236, 240, 250);
+  --easy-bg: rgb(214, 244, 222);
+  --medium-bg: rgb(255, 236, 200);
+  --hard-bg: rgb(255, 221, 218);
+}
+:root[data-theme="dark"] .viz-tree {
+  --card-bg: rgb(34, 37, 54);
+  --surface-alt: rgb(44, 47, 64);
+  --chip-bg: rgb(48, 51, 70);
+  --easy-bg: rgb(28, 70, 44);
+  --medium-bg: rgb(80, 60, 20);
+  --hard-bg: rgb(86, 32, 34);
+}
+.viz-map {
+  border-color: var(--lg-card-border);
+  background: var(--card-bg);
+}
+
+/* Tables: a glass header row, clear rows */
+thead th {
+  background: rgba(255, 255, 255, 0.35);
+}
+:root[data-theme="dark"] thead th {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Code: dark glass */
+pre {
+  border: 0.1rem solid rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0.8rem 2rem -1rem rgba(10, 15, 40, 0.55);
+}
+
+/* Text boxes: a glass well */
+.viz-input,
+#search {
+  border-color: var(--lg-pill-border);
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 0.1rem 0.25rem rgba(20, 30, 90, 0.12);
+}
+:root[data-theme="dark"] .viz-input,
+:root[data-theme="dark"] #search {
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 0.1rem 0.25rem rgba(0, 0, 0, 0.4);
+}
+
+/* ---------- floating controls: glass that blurs what scrolls under it ---------- */
 .dock,
 .theme-toggle,
 .site-nav,
@@ -296,68 +472,139 @@ body.deck-read .deck-readtop,
   transition: background-color 0.25s, box-shadow 0.25s, color 0.25s;
 }
 
-/* ---------- chips and buttons in the content ---------- */
+/* ---------- chips, pills and buttons: small glass ---------- */
 .filter-chip,
 .q-jump a,
 .view-all,
 .viz-btn,
 .deck-chip,
-.viz-lang {
-  border-color: transparent;
-  background: var(--chip-bg);
-}
-.q-jump a {
-  background: rgba(120, 120, 128, 0.14);
+.viz-lang,
+.tab,
+.tag,
+.label,
+.related-list a,
+.problem-link,
+.present-btn,
+.present-step {
+  border-color: var(--lg-pill-border);
+  background: var(--lg-pill);
+  box-shadow: var(--lg-pill-rim), var(--lg-pill-shadow);
 }
 .filter-chip:hover,
 .q-jump a:hover,
 .view-all:hover,
 .viz-btn:hover:not(:disabled),
 .deck-chip:hover,
-.viz-lang:hover {
-  border-color: transparent;
-  background: rgba(120, 120, 128, 0.24);
+.viz-lang:hover,
+.tab:hover,
+.related-list a:hover,
+.present-btn:hover,
+.present-step:hover:not(:disabled) {
+  border-color: var(--lg-pill-border);
+  background: var(--lg-pill-hover);
   color: var(--text-strong);
+  box-shadow: var(--lg-pill-rim), 0 0.35rem 0.9rem -0.3rem rgba(20, 30, 90, 0.35);
+}
+.viz-btn-quiet {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
 }
 /* Keep the green outline that marks the optimal approach */
 .q-jump a.is-optimal,
-.deck-chip.is-optimal {
+.deck-chip.is-optimal,
+.label.optimal {
   border-color: var(--easy-text);
 }
+.label.optimal {
+  background: var(--easy-bg);
+}
+/* Difficulty badges and dots: tinted glass */
+.badge,
+.g-dot,
+.deck-pill {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+:root[data-theme="dark"] .badge,
+:root[data-theme="dark"] .g-dot,
+:root[data-theme="dark"] .deck-pill {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
 
-/* Picked chips and the main button: Apple blue */
+/* Picked chips and the main buttons: Apple blue */
 .filter-chip[aria-pressed="true"],
 .q-jump a[aria-current="true"],
 .deck-chip[aria-current="true"],
 .viz-lang[aria-pressed="true"],
 .viz-btn-primary,
-.viz-btn-primary:hover:not(:disabled) {
+.viz-btn-primary:hover:not(:disabled),
+.problem-link:hover,
+.present-btn:hover,
+.present-step:hover:not(:disabled),
+.present-launch,
+.viz-maxedit[aria-expanded="true"] {
   background: var(--lg-tint);
   border-color: var(--lg-tint);
   color: rgb(255, 255, 255);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0.3rem 0.9rem -0.3rem rgba(0, 80, 200, 0.55);
 }
 .filter-chip[aria-pressed="true"] *,
-.viz-btn-primary * {
+.viz-btn-primary *,
+.problem-link:hover * {
   color: inherit;
 }
 
-/* Code tabs stay attached to the dark code block */
-.tab {
-  border-color: transparent;
-  background: var(--chip-bg);
-}
-.tab[aria-selected="true"] {
+/* Code tabs: glass pills; the picked one joins the dark code block */
+.tab[aria-selected="true"],
+:root[data-theme="dark"] .tab[aria-selected="true"] {
   background: var(--code-bg);
-  border-color: var(--code-bg);
+  border-color: transparent;
+  color: rgb(255, 255, 255);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 /* ---------- less transparency, when the system asks ---------- */
 @media (prefers-reduced-transparency: reduce) {
+  /* Same layout and rims, but every surface solid and the backdrop a plain color */
   :root {
+    --lg-wall: rgb(236, 239, 247);
+    --lg-base: rgb(236, 239, 247);
     --lg-fill: rgb(250, 250, 252);
+    --lg-card: rgb(255, 255, 255);
+    --lg-card-2: rgb(246, 247, 251);
+    --lg-pill: rgb(240, 242, 248);
+    --lg-pill-hover: rgb(228, 232, 242);
+    --lg-card-border: rgba(60, 70, 110, 0.14);
+    --lg-pill-border: rgba(60, 70, 110, 0.16);
+    --card-bg: rgb(255, 255, 255);
+    --surface: rgb(255, 255, 255);
+    --surface-hover: rgb(244, 246, 250);
+    --surface-alt: rgb(240, 242, 248);
+    --chip-bg: rgb(236, 239, 247);
+    --code-bg: rgb(22, 24, 36);
+    --easy-bg: rgb(214, 244, 222);
+    --medium-bg: rgb(255, 236, 200);
+    --hard-bg: rgb(255, 221, 218);
   }
   :root[data-theme="dark"] {
-    --lg-fill: rgb(36, 36, 40);
+    --lg-wall: rgb(10, 11, 20);
+    --lg-base: rgb(10, 11, 20);
+    --lg-fill: rgb(36, 36, 44);
+    --lg-card: rgb(26, 27, 38);
+    --lg-card-2: rgb(32, 33, 46);
+    --lg-pill: rgb(44, 46, 60);
+    --lg-pill-hover: rgb(56, 58, 74);
+    --lg-card-border: rgba(255, 255, 255, 0.1);
+    --lg-pill-border: rgba(255, 255, 255, 0.12);
+    --card-bg: rgb(26, 27, 38);
+    --surface: rgb(26, 27, 38);
+    --surface-hover: rgb(38, 40, 54);
+    --surface-alt: rgb(32, 33, 46);
+    --chip-bg: rgb(44, 46, 60);
+    --code-bg: rgb(14, 15, 24);
+    --easy-bg: rgb(28, 70, 44);
+    --medium-bg: rgb(80, 60, 20);
+    --hard-bg: rgb(86, 32, 34);
   }
   .dock,
   .theme-toggle,
