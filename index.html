@@ -23295,7 +23295,7 @@
       <details class="pattern-group" id="g-dynamic-programming">
         <summary>
           <span class="g-name">Dynamic Programming</span>
-          <span class="g-count"><span class="g-total">11 problems</span></span>
+          <span class="g-count"><span class="g-total">12 problems</span></span>
           <span class="g-hint">Reuse the answers to smaller problems</span>
         </summary>
         <div class="g-body">
@@ -27341,6 +27341,472 @@
                         <td>O(m · n)</td>
                         <td>O(n)</td>
                         <td>The usual answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0139-word-break ===== -->
+          <details class="question" data-group="dynamic-programming" data-tags="string dynamic-programming memoization hash-table trie word break segmentation dictionary">
+            <summary>
+              <span class="q-title">139. Word Break</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">String</span>
+                <span class="tag">Dynamic Programming</span>
+                <span class="tag">Memoization</span>
+              </span>
+            </summary>
+
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> <code>dp[i]</code> = "can the first
+                <code>i</code> letters be split into words?" with
+                <code>dp[0] = true</code>. <code>dp[i]</code> is true if some word ends
+                exactly at <code>i</code> and the part before it,
+                <code>dp[i - len]</code>, is true. Only the word lengths that exist in
+                the dictionary need trying (at most 20).
+              </div>
+
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/word-break/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Return <code>true</code> if <code>s</code> can be split into one or
+                  more words from <code>wordDict</code>, with nothing left over. A word
+                  can be used any number of times.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= s.length &lt;= 300</code></li>
+                  <li><code>1 &lt;= wordDict.length &lt;= 1000</code>, each word 1 to 20 letters, all different</li>
+                  <li>Lowercase English letters only</li>
+                </ul>
+                <p class="note">
+                  Example: <code>"leetcode"</code>, <code>["leet","code"]</code> →
+                  <code>true</code>. <code>"catsandog"</code>,
+                  <code>["cats","dog","sand","and","cat"]</code> → <code>false</code>.
+                </p>
+              </section>
+
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>"leetcode"</code>, <code>["leet","code"]</code></td>
+                        <td><code>true</code></td>
+                        <td>Leaving out <code>dp[0] = true</code> makes every <code>dp[i]</code> false: said <code>false</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"catsandog"</code>, <code>["cats","dog","sand","and","cat"]</code></td>
+                        <td><code>false</code></td>
+                        <td>"cats" + "and" and "cat" + "sand" both reach "og", and neither can finish.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"applepenapple"</code>, <code>["apple","pen"]</code></td>
+                        <td><code>true</code></td>
+                        <td>A word can be used more than once.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"cars"</code>, <code>["car","ca","rs"]</code></td>
+                        <td><code>true</code></td>
+                        <td>Taking the longest word first ("car") leaves "s". Greedy fails; you have to try "ca" too.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"a"</code> × 24 + <code>"b"</code>, <code>["a","aa",…,"a"×10]</code></td>
+                        <td><code>false</code></td>
+                        <td>Many ways to split the a's, none can use the b. Plain recursion took 7.2 s in Python here. A memo that saves only the <code>true</code> answers is just as slow (7.9 s).</td>
+                      </tr>
+                      <tr>
+                        <td>300 letters, 1000 words</td>
+                        <td>either</td>
+                        <td>The largest input. Both DP versions finish in a few milliseconds.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Plain Recursion</h2>
+                <p class="intuition">
+                  <code>can(start)</code>: if <code>start</code> is the end of
+                  <code>s</code>, the split worked. Otherwise try every word that
+                  matches at <code>start</code> and ask <code>can(start + len(word))</code>.
+                </p>
+                <ul>
+                  <li>Clearly right, and the starting point for the memo version.</li>
+                  <li>
+                    The same <code>start</code> is reached by many different splits of
+                    the letters before it, and each time it's worked out from scratch.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(2ⁿ) worst case</span>
+                  <span><strong>Space</strong> O(n) call stack</span>
+                </div>
+                <p class="note">
+                  On <code>"a"</code> × k + <code>"b"</code>, the time grows about 4×
+                  every 2 letters. Python: 0.44 s at k = 20, 1.8 s at 22, 7.2 s at 24.
+                  C++: 3.6 s at 26, 14 s at 28. At 300 letters it would never finish.
+                </p>
+                <div class="code-tabs" data-viz="0139-word-break/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"done":[4,5],"try":[6,7],"found":[8],"fail":[9],"init":[11]}'>
+                    class Solution(object):
+                        def wordBreak(self, s, wordDict):
+                            def can(start):  # can s[start:] be split into words?
+                                if start == len(s):  # nothing left: the split worked
+                                    return True
+                                for w in wordDict:
+                                    if s.startswith(w, start) and can(start + len(w)):  # w fits here, and the rest splits
+                                        return True
+                                return False  # no word works from here
+
+                            return can(0)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8],"done":[16],"try":[17,18],"found":[19],"fail":[22]}'>
+                    #include <string>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool wordBreak(std::string s, std::vector<std::string>& wordDict) {
+                            this->s = s;
+                            dict = &wordDict;
+                            return can(0);
+                        }
+
+                    private:
+                        std::string s;
+                        const std::vector<std::string>* dict = nullptr;
+
+                        bool can(size_t start) { // can s[start:] be split into words?
+                            if (start == s.size()) return true; // nothing left: the split worked
+                            for (const std::string& w : *dict) {
+                                if (s.compare(start, w.size(), w) == 0 && can(start + w.size())) { // w fits here, and the rest splits
+                                    return true;
+                                }
+                            }
+                            return false; // no word works from here
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[8,9,10],"done":[14],"try":[15,16],"found":[17],"fail":[20]}'>
+                    import java.util.*;
+
+                    class Solution {
+                        private String s;
+                        private List<String> dict;
+
+                        public boolean wordBreak(String s, List<String> wordDict) {
+                            this.s = s;
+                            this.dict = wordDict;
+                            return can(0);
+                        }
+
+                        private boolean can(int start) { // can s[start:] be split into words?
+                            if (start == s.length()) return true; // nothing left: the split worked
+                            for (String w : dict) {
+                                if (s.startsWith(w, start) && can(start + w.length())) { // w fits here, and the rest splits
+                                    return true;
+                                }
+                            }
+                            return false; // no word works from here
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Recursion With a Memo</h2>
+                <p class="intuition">
+                  The answer for <code>can(start)</code> depends only on
+                  <code>start</code>. Save it the first time, and return the saved
+                  answer every time after.
+                </p>
+                <ul>
+                  <li>
+                    Save <code>false</code> answers too. They're the ones that repeat:
+                    a <code>true</code> ends the search right away.
+                  </li>
+                  <li>
+                    At most n + 1 different starts, each trying every word once.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · m · L)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  m = number of words, L = longest word. At full size here (300
+                  letters, up to 1000 words): Python 1.1–2.3 ms, Java 2.5–5.8 ms, C++
+                  under 0.4 ms. The recursion is at most 300 deep, which is fine for
+                  Python.
+                </p>
+                <div class="code-tabs" data-viz="0139-word-break/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,18],"done":[6,7],"memo":[8,9],"try":[10,11,12],"found":[13,14],"save":[15,16]}'>
+                    class Solution(object):
+                        def wordBreak(self, s, wordDict):
+                            memo = {}  # start -> can s[start:] be split?
+
+                            def can(start):
+                                if start == len(s):
+                                    return True
+                                if start in memo:  # already worked out: don't redo it
+                                    return memo[start]
+                                ok = False
+                                for w in wordDict:
+                                    if s.startswith(w, start) and can(start + len(w)):
+                                        ok = True
+                                        break
+                                memo[start] = ok
+                                return ok
+
+                            return can(0)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8,9],"done":[18],"memo":[19],"try":[20,21,22],"found":[23,24],"save":[27,28]}'>
+                    #include <string>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool wordBreak(std::string s, std::vector<std::string>& wordDict) {
+                            this->s = s;
+                            dict = &wordDict;
+                            memo.assign(s.size(), -1); // start -> -1 unknown, 0 no, 1 yes
+                            return can(0);
+                        }
+
+                    private:
+                        std::string s;
+                        const std::vector<std::string>* dict = nullptr;
+                        std::vector<int> memo;
+
+                        bool can(size_t start) {
+                            if (start == s.size()) return true;
+                            if (memo[start] != -1) return memo[start]; // already worked out: don't redo it
+                            bool ok = false;
+                            for (const std::string& w : *dict) {
+                                if (s.compare(start, w.size(), w) == 0 && can(start + w.size())) {
+                                    ok = true;
+                                    break;
+                                }
+                            }
+                            memo[start] = ok;
+                            return ok;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[9,10,11,12],"done":[16],"memo":[17],"try":[18,19,20],"found":[21,22],"save":[25,26]}'>
+                    import java.util.*;
+
+                    class Solution {
+                        private String s;
+                        private List<String> dict;
+                        private Boolean[] memo; // start -> null unknown, else the answer
+
+                        public boolean wordBreak(String s, List<String> wordDict) {
+                            this.s = s;
+                            this.dict = wordDict;
+                            memo = new Boolean[s.length()];
+                            return can(0);
+                        }
+
+                        private boolean can(int start) {
+                            if (start == s.length()) return true;
+                            if (memo[start] != null) return memo[start]; // already worked out: don't redo it
+                            boolean ok = false;
+                            for (String w : dict) {
+                                if (s.startsWith(w, start) && can(start + w.length())) {
+                                    ok = true;
+                                    break;
+                                }
+                            }
+                            memo[start] = ok;
+                            return ok;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Bottom-Up DP Over Word Lengths
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Fill <code>dp[i]</code> from 1 to n. For each word length
+                  <code>L</code> in the dictionary, if <code>dp[i - L]</code> is true
+                  and <code>s[i-L:i]</code> is in the word set, then
+                  <code>dp[i]</code> is true. Return <code>dp[n]</code>.
+                </p>
+                <ul>
+                  <li>
+                    Try lengths, not words: there are at most 20 different lengths but
+                    up to 1000 words.
+                  </li>
+                  <li>
+                    No recursion, and each <code>dp[i]</code> is filled once.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · k · L)</span>
+                  <span><strong>Space</strong> O(n + m · L)</span>
+                </div>
+                <p class="note">
+                  k = number of different word lengths (≤ 20). At full size: Python
+                  0.3 ms, Java 1–3 ms, C++ 0.16 ms, the fastest here. The expected
+                  answer; a trie of the words is another way to speed up the inner
+                  loop.
+                </p>
+                <div class="code-tabs" data-viz="0139-word-break/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5,6,7],"end":[8],"try":[9,10,11],"hit":[12,13,14],"return":[15]}'>
+                    class Solution(object):
+                        def wordBreak(self, s, wordDict):
+                            n = len(s)
+                            words = set(wordDict)
+                            lengths = sorted({len(w) for w in wordDict})  # at most 20 different lengths
+                            dp = [False] * (n + 1)  # dp[i]: can the first i letters be split?
+                            dp[0] = True  # the empty prefix: zero words
+                            for i in range(1, n + 1):
+                                for L in lengths:  # the last word is s[i-L:i]
+                                    if L > i:
+                                        break
+                                    if dp[i - L] and s[i - L:i] in words:
+                                        dp[i] = True
+                                        break
+                            return dp[n]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[8,9,10,11,12,13],"end":[14],"try":[15,16],"hit":[17,18,19],"return":[23]}'>
+                    #include <set>
+                    #include <string>
+                    #include <unordered_set>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool wordBreak(std::string s, std::vector<std::string>& wordDict) {
+                            const int n = s.size();
+                            std::unordered_set<std::string> words(wordDict.begin(), wordDict.end());
+                            std::set<int> lengths; // at most 20 different lengths, in order
+                            for (const auto& w : wordDict) lengths.insert(w.size());
+                            std::vector<char> dp(n + 1, 0); // dp[i]: can the first i letters be split?
+                            dp[0] = 1; // the empty prefix: zero words
+                            for (int i = 1; i <= n; ++i) {
+                                for (int L : lengths) { // the last word is s[i-L:i]
+                                    if (L > i) break;
+                                    if (dp[i - L] && words.count(s.substr(i - L, L))) {
+                                        dp[i] = 1;
+                                        break;
+                                    }
+                                }
+                            }
+                            return dp[n];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6,7,8,9,10],"end":[11],"try":[12,13],"hit":[14,15,16],"return":[20]}'>
+                    import java.util.*;
+
+                    class Solution {
+                        public boolean wordBreak(String s, List<String> wordDict) {
+                            int n = s.length();
+                            Set<String> words = new HashSet<>(wordDict);
+                            TreeSet<Integer> lengths = new TreeSet<>(); // at most 20 different lengths, in order
+                            for (String w : wordDict) lengths.add(w.length());
+                            boolean[] dp = new boolean[n + 1]; // dp[i]: can the first i letters be split?
+                            dp[0] = true; // the empty prefix: zero words
+                            for (int i = 1; i <= n; i++) {
+                                for (int L : lengths) { // the last word is s[i-L:i]
+                                    if (L > i) break;
+                                    if (dp[i - L] && words.contains(s.substring(i - L, i))) {
+                                        dp[i] = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            return dp[n];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  A regex looks like one: <code>re.fullmatch("(?:leet|code)*", s)</code>
+                  gives the right answer here. But the regex engine backtracks just
+                  like Approach 1: on <code>"a"</code> × k + <code>"b"</code> it grew
+                  about 4× every 2 letters (0.17 s at k = 22).
+                </p>
+                <p class="note">
+                  Use Approach 3. In Python, <code>functools.cache</code> on Approach
+                  1's <code>can</code> turns it into Approach 2 in one line.
+                </p>
+              </section>
+
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Plain Recursion</th>
+                        <td>Try every word at every start</td>
+                        <td>O(2ⁿ)</td>
+                        <td>O(n)</td>
+                        <td>7.2 s in Python at 25 letters</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Recursion With a Memo</th>
+                        <td>Save each start's answer, true or false</td>
+                        <td>O(n · m · L)</td>
+                        <td>O(n)</td>
+                        <td>Top-down DP</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Bottom-Up DP Over Word Lengths</th>
+                        <td><code>dp[i]</code> from <code>dp[i - L]</code></td>
+                        <td>O(n · k · L)</td>
+                        <td>O(n + m · L)</td>
+                        <td>Expected answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -48174,6 +48640,223 @@
         if (a.some(([v]) => v < -99 || v > 99)) throw new DSAViz.InputError("Values must be between -99 and 99 here.");
         if (a.some(([, r]) => r !== null && (r < 0 || r >= a.length))) throw new DSAViz.InputError(`A random index must be null or between 0 and ${a.length - 1}.`);
         return a.map(([val, random]) => ({ val, random }));
+      }
+      })();
+    </script>
+    <!-- problems/0139-word-break/approach1.visual.js -->
+    <script>
+      // Plain recursion: from each start, try every word that fits and recurse on the rest.
+      (function () {
+      DSAViz.register("0139-word-break/approach1", {
+        inputs: [
+          { name: "s", type: "string", value: "catsandog", maxLength: 12 },
+          { name: "wordDict", label: "wordDict (comma-separated)", type: "string", value: "cats, dog, sand, and, cat", maxLength: 60, raw: true },
+        ],
+        trace({ s, wordDict }) {
+          const { w, dict } = parseInput(s, wordDict);
+          const n = w.length;
+          const steps = [];
+          const LIMIT = 150;
+          let calls = 0;
+          const visits = {};
+
+          const sArray = (o = {}) => {
+            const marks = {};
+            for (let t = 0; t < (o.start ?? 0); t++) marks[t] = "visited";
+            if (o.word) for (let t = o.start; t < o.start + o.word.length; t++) marks[t] = o.fits === false ? "cut" : "match";
+            return { type: "array", label: o.label || "s (dashed = already split off; green = the word tried here)", values: [...w], marks, pointers: o.start !== undefined && o.start < w.length ? { start: o.start } : {} };
+          };
+
+          const view = (o = {}) => [
+            sArray(o),
+            { type: "set", label: "wordDict", items: dict, marks: o.word ? { [o.word]: o.fits === false ? "cut" : "match" } : {} },
+            { type: "vars", items: [{ name: "calls so far", value: calls, mark: o.counted ? "new" : "" }, ...(o.start !== undefined && o.start < n ? [{ name: `times can(${o.start}) was called`, value: visits[o.start], mark: visits[o.start] > 1 ? "cut" : "" }] : [])] },
+          ];
+          let wanted = 0;
+          const push = (step) => {
+            wanted++;
+            if (steps.length < LIMIT) steps.push(step);
+          };
+          push({ line: "init", note: "can(start) asks: can s[start:] be split into words? Start with can(0).", view: view() });
+          const can = (start) => {
+            calls++;
+            visits[start] = (visits[start] || 0) + 1;
+            if (start === n) {
+              push({ line: "done", note: `can(${n}): nothing left, so the split worked. Return true.`, view: view({ start, counted: true }) });
+              return true;
+            }
+            const again = visits[start] > 1 ? ` (call number ${visits[start]} for this start: the same work again)` : "";
+            for (const word of dict) {
+              if (!w.startsWith(word, start)) continue;
+              push({ line: "try", note: `can(${start})${again}: "${word}" fits at ${start}. Try splitting the rest, s[${start + word.length}:].`, view: view({ start, word, counted: true }) });
+              if (can(start + word.length)) {
+                push({ line: "found", note: `can(${start}): "${word}" + the rest worked. Return true.`, view: view({ start, word }) });
+                return true;
+              }
+            }
+            push({ line: ["try", "fail"], note: `can(${start})${again}: no word fits here and splits the rest. Return false.`, view: view({ start, counted: true }) });
+            return false;
+          };
+          const ok = can(0);
+          const repeats = Object.values(visits).reduce((a, b) => a + b, 0) - Object.keys(visits).length;
+          steps.push({
+            line: "init",
+            note: `Return ${ok}. ${calls} call${calls === 1 ? "" : "s"} in all${repeats ? `, ${repeats} of them repeating a start already worked out` : ""}${wanted > LIMIT ? ` (only the first ${LIMIT} of ${wanted} steps are shown)` : ""}. On inputs like "aaaa…ab" this grows exponentially.`,
+            view: view(),
+          });
+          return steps;
+        },
+      });
+
+      function parseInput(s, wordDict) {
+        const w = s.trim();
+        const dict = wordDict.split(",").map((x) => x.trim()).filter(Boolean);
+        if (!/^[a-z]{1,12}$/.test(w)) throw new DSAViz.InputError("s: 1 to 12 lowercase letters, like leetcode.");
+        if (!dict.length) throw new DSAViz.InputError("Type the words separated by commas, like leet, code.");
+        if (dict.length > 6) throw new DSAViz.InputError("Up to 6 words here, so the steps stay readable.");
+        if (dict.some((x) => !/^[a-z]{1,6}$/.test(x))) throw new DSAViz.InputError("Each word: 1 to 6 lowercase letters.");
+        if (new Set(dict).size !== dict.length) throw new DSAViz.InputError("Each word can appear only once.");
+        return { w, dict };
+      }
+      })();
+    </script>
+    <!-- problems/0139-word-break/approach2.visual.js -->
+    <script>
+      // The same recursion, but each start's answer is saved, so it's worked out at most once.
+      (function () {
+      DSAViz.register("0139-word-break/approach2", {
+        inputs: [
+          { name: "s", type: "string", value: "catsandog", maxLength: 12 },
+          { name: "wordDict", label: "wordDict (comma-separated)", type: "string", value: "cats, dog, sand, and, cat", maxLength: 60, raw: true },
+        ],
+        trace({ s, wordDict }) {
+          const { w, dict } = parseInput(s, wordDict);
+          const n = w.length;
+          const steps = [];
+          const memo = new Map();
+          let calls = 0;
+
+          const sArray = (o = {}) => {
+            const marks = {};
+            for (let t = 0; t < (o.start ?? 0); t++) marks[t] = "visited";
+            if (o.word) for (let t = o.start; t < o.start + o.word.length; t++) marks[t] = o.fits === false ? "cut" : "match";
+            return { type: "array", label: o.label || "s (dashed = already split off; green = the word tried here)", values: [...w], marks, pointers: o.start !== undefined && o.start < w.length ? { start: o.start } : {} };
+          };
+
+          const view = (o = {}) => [
+            sArray(o),
+            { type: "set", label: "wordDict", items: dict, marks: o.word ? { [o.word]: "match" } : {} },
+            { type: "map", label: "memo (start → can s[start:] be split?)", columns: ["start", "answer"], entries: [...memo].sort((a, b) => a[0] - b[0]).map(([k, v]) => [String(k), String(v)]), marks: o.key !== undefined ? { [String(o.key)]: o.hit ? "match" : "new" } : {} },
+            { type: "vars", items: [{ name: "calls", value: calls }] },
+          ];
+          steps.push({ line: "init", note: "Same recursion as Approach 1, plus memo: once can(start) is worked out, save the answer.", view: view() });
+          const can = (start) => {
+            calls++;
+            if (start === n) {
+              steps.push({ line: "done", note: `can(${n}): nothing left. Return true.`, view: view({ start }) });
+              return true;
+            }
+            if (memo.has(start)) {
+              steps.push({ line: "memo", note: `can(${start}) is already in memo: ${memo.get(start)}. No work repeated.`, view: view({ start, key: start, hit: true }) });
+              return memo.get(start);
+            }
+            let ok = false;
+            for (const word of dict) {
+              if (!w.startsWith(word, start)) continue;
+              steps.push({ line: "try", note: `can(${start}): "${word}" fits at ${start}. Try the rest, s[${start + word.length}:].`, view: view({ start, word }) });
+              if (can(start + word.length)) {
+                ok = true;
+                break;
+              }
+            }
+            memo.set(start, ok);
+            steps.push({ line: ok ? ["found", "save"] : "save", note: `Save memo[${start}] = ${ok}.`, view: view({ start, key: start }) });
+            return ok;
+          };
+          const ok = can(0);
+          steps.push({ line: "init", note: `Return ${ok}. ${calls} call${calls === 1 ? "" : "s"}: each start is worked out at most once, so at most n + 1 = ${n + 1} starts, each trying every word.`, view: view() });
+          return steps;
+        },
+      });
+
+      function parseInput(s, wordDict) {
+        const w = s.trim();
+        const dict = wordDict.split(",").map((x) => x.trim()).filter(Boolean);
+        if (!/^[a-z]{1,12}$/.test(w)) throw new DSAViz.InputError("s: 1 to 12 lowercase letters, like leetcode.");
+        if (!dict.length) throw new DSAViz.InputError("Type the words separated by commas, like leet, code.");
+        if (dict.length > 6) throw new DSAViz.InputError("Up to 6 words here, so the steps stay readable.");
+        if (dict.some((x) => !/^[a-z]{1,6}$/.test(x))) throw new DSAViz.InputError("Each word: 1 to 6 lowercase letters.");
+        if (new Set(dict).size !== dict.length) throw new DSAViz.InputError("Each word can appear only once.");
+        return { w, dict };
+      }
+      })();
+    </script>
+    <!-- problems/0139-word-break/approach3.visual.js -->
+    <script>
+      // Bottom-up: dp[i] = can the first i letters be split? dp[i] is true if some word ends at i after a true dp.
+      (function () {
+      DSAViz.register("0139-word-break/approach3", {
+        inputs: [
+          { name: "s", type: "string", value: "catsandog", maxLength: 12 },
+          { name: "wordDict", label: "wordDict (comma-separated)", type: "string", value: "cats, dog, sand, and, cat", maxLength: 60, raw: true },
+        ],
+        trace({ s, wordDict }) {
+          const { w, dict } = parseInput(s, wordDict);
+          const n = w.length;
+          const steps = [];
+          const words = new Set(dict);
+          const lengths = [...new Set(dict.map((x) => x.length))].sort((a, b) => a - b);
+          const dp = Array(n + 1).fill(false);
+          dp[0] = true;
+          const view = (o = {}) => {
+            const smarks = {};
+            if (o.word) for (let t = o.i - o.word.length; t < o.i; t++) smarks[t] = o.hit ? "match" : "cut";
+            const dmarks = {};
+            for (let k = 0; k <= n; k++) if (k <= (o.i ?? n) && dp[k]) dmarks[k] = "match";
+            if (o.i !== undefined) dmarks[o.i] = o.hit ? "new" : "active";
+            if (o.from !== undefined) dmarks[o.from] = "window";
+            return [
+              { type: "array", label: "s (green = the last word that fits, red = not a word)", values: [...w], marks: smarks },
+              { type: "array", label: "dp[i] (first i letters splittable? outlined = the dp[i - L] it used)", values: dp.map((v, k) => (k > (o.i ?? n) ? "" : v ? "T" : "F")), marks: dmarks, pointers: o.i !== undefined ? { i: o.i } : {} },
+              { type: "vars", items: [{ name: "word lengths to try", value: lengths.join(", ") }] },
+            ];
+          };
+          steps.push({ line: "init", note: `dp[0] = true: the empty prefix is split into zero words. Only the word lengths in the dictionary (${lengths.join(", ")}) need trying for the last word.`, view: view({ i: 0 }) });
+          for (let i = 1; i <= n; i++) {
+            let used = null;
+            let tried = [];
+            for (const L of lengths) {
+              if (L > i) break;
+              const piece = w.slice(i - L, i);
+              if (dp[i - L] && words.has(piece)) {
+                dp[i] = true;
+                used = { L, piece };
+                break;
+              }
+              tried.push(`"${piece}"${dp[i - L] ? " isn't a word" : ` (dp[${i - L}] is false)`}`);
+            }
+            steps.push({
+              line: used ? ["end", "try", "hit"] : ["end", "try"],
+              note: used
+                ? `dp[${i}]: dp[${i - used.L}] is true and "${used.piece}" is a word, so the first ${i} letters split. dp[${i}] = true.`
+                : `dp[${i}]: ${tried.length ? `no luck: ${tried.join(", ")}` : "no word is that short"}. dp[${i}] = false.`,
+              view: view({ i, hit: !!used, word: used ? used.piece : null, from: used ? i - used.L : undefined }),
+            });
+          }
+          steps.push({ line: "return", note: `Return dp[${n}] = ${dp[n]}. n positions × at most ${lengths.length} length${lengths.length === 1 ? "" : "s"}: no recursion, no repeated work.`, view: view() });
+          return steps;
+        },
+      });
+
+      function parseInput(s, wordDict) {
+        const w = s.trim();
+        const dict = wordDict.split(",").map((x) => x.trim()).filter(Boolean);
+        if (!/^[a-z]{1,12}$/.test(w)) throw new DSAViz.InputError("s: 1 to 12 lowercase letters, like leetcode.");
+        if (!dict.length) throw new DSAViz.InputError("Type the words separated by commas, like leet, code.");
+        if (dict.length > 6) throw new DSAViz.InputError("Up to 6 words here, so the steps stay readable.");
+        if (dict.some((x) => !/^[a-z]{1,6}$/.test(x))) throw new DSAViz.InputError("Each word: 1 to 6 lowercase letters.");
+        if (new Set(dict).size !== dict.length) throw new DSAViz.InputError("Each word can appear only once.");
+        return { w, dict };
       }
       })();
     </script>

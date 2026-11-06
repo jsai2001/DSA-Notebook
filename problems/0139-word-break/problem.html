@@ -1,0 +1,248 @@
+<details class="question" data-group="dynamic-programming" data-tags="string dynamic-programming memoization hash-table trie word break segmentation dictionary">
+  <summary>
+    <span class="q-title">139. Word Break</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">String</span>
+      <span class="tag">Dynamic Programming</span>
+      <span class="tag">Memoization</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> <code>dp[i]</code> = "can the first
+      <code>i</code> letters be split into words?" with
+      <code>dp[0] = true</code>. <code>dp[i]</code> is true if some word ends
+      exactly at <code>i</code> and the part before it,
+      <code>dp[i - len]</code>, is true. Only the word lengths that exist in
+      the dictionary need trying (at most 20).
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/word-break/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Return <code>true</code> if <code>s</code> can be split into one or
+        more words from <code>wordDict</code>, with nothing left over. A word
+        can be used any number of times.
+      </p>
+      <ul>
+        <li><code>1 &lt;= s.length &lt;= 300</code></li>
+        <li><code>1 &lt;= wordDict.length &lt;= 1000</code>, each word 1 to 20 letters, all different</li>
+        <li>Lowercase English letters only</li>
+      </ul>
+      <p class="note">
+        Example: <code>"leetcode"</code>, <code>["leet","code"]</code> →
+        <code>true</code>. <code>"catsandog"</code>,
+        <code>["cats","dog","sand","and","cat"]</code> → <code>false</code>.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>"leetcode"</code>, <code>["leet","code"]</code></td>
+              <td><code>true</code></td>
+              <td>Leaving out <code>dp[0] = true</code> makes every <code>dp[i]</code> false: said <code>false</code>.</td>
+            </tr>
+            <tr>
+              <td><code>"catsandog"</code>, <code>["cats","dog","sand","and","cat"]</code></td>
+              <td><code>false</code></td>
+              <td>"cats" + "and" and "cat" + "sand" both reach "og", and neither can finish.</td>
+            </tr>
+            <tr>
+              <td><code>"applepenapple"</code>, <code>["apple","pen"]</code></td>
+              <td><code>true</code></td>
+              <td>A word can be used more than once.</td>
+            </tr>
+            <tr>
+              <td><code>"cars"</code>, <code>["car","ca","rs"]</code></td>
+              <td><code>true</code></td>
+              <td>Taking the longest word first ("car") leaves "s". Greedy fails; you have to try "ca" too.</td>
+            </tr>
+            <tr>
+              <td><code>"a"</code> × 24 + <code>"b"</code>, <code>["a","aa",…,"a"×10]</code></td>
+              <td><code>false</code></td>
+              <td>Many ways to split the a's, none can use the b. Plain recursion took 7.2 s in Python here. A memo that saves only the <code>true</code> answers is just as slow (7.9 s).</td>
+            </tr>
+            <tr>
+              <td>300 letters, 1000 words</td>
+              <td>either</td>
+              <td>The largest input. Both DP versions finish in a few milliseconds.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Plain Recursion</h2>
+      <p class="intuition">
+        <code>can(start)</code>: if <code>start</code> is the end of
+        <code>s</code>, the split worked. Otherwise try every word that
+        matches at <code>start</code> and ask <code>can(start + len(word))</code>.
+      </p>
+      <ul>
+        <li>Clearly right, and the starting point for the memo version.</li>
+        <li>
+          The same <code>start</code> is reached by many different splits of
+          the letters before it, and each time it's worked out from scratch.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(2ⁿ) worst case</span>
+        <span><strong>Space</strong> O(n) call stack</span>
+      </div>
+      <p class="note">
+        On <code>"a"</code> × k + <code>"b"</code>, the time grows about 4×
+        every 2 letters. Python: 0.44 s at k = 20, 1.8 s at 22, 7.2 s at 24.
+        C++: 3.6 s at 26, 14 s at 28. At 300 letters it would never finish.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Recursion With a Memo</h2>
+      <p class="intuition">
+        The answer for <code>can(start)</code> depends only on
+        <code>start</code>. Save it the first time, and return the saved
+        answer every time after.
+      </p>
+      <ul>
+        <li>
+          Save <code>false</code> answers too. They're the ones that repeat:
+          a <code>true</code> ends the search right away.
+        </li>
+        <li>
+          At most n + 1 different starts, each trying every word once.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · m · L)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        m = number of words, L = longest word. At full size here (300
+        letters, up to 1000 words): Python 1.1–2.3 ms, Java 2.5–5.8 ms, C++
+        under 0.4 ms. The recursion is at most 300 deep, which is fine for
+        Python.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Bottom-Up DP Over Word Lengths
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Fill <code>dp[i]</code> from 1 to n. For each word length
+        <code>L</code> in the dictionary, if <code>dp[i - L]</code> is true
+        and <code>s[i-L:i]</code> is in the word set, then
+        <code>dp[i]</code> is true. Return <code>dp[n]</code>.
+      </p>
+      <ul>
+        <li>
+          Try lengths, not words: there are at most 20 different lengths but
+          up to 1000 words.
+        </li>
+        <li>
+          No recursion, and each <code>dp[i]</code> is filled once.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · k · L)</span>
+        <span><strong>Space</strong> O(n + m · L)</span>
+      </div>
+      <p class="note">
+        k = number of different word lengths (≤ 20). At full size: Python
+        0.3 ms, Java 1–3 ms, C++ 0.16 ms, the fastest here. The expected
+        answer; a trie of the words is another way to speed up the inner
+        loop.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        A regex looks like one: <code>re.fullmatch("(?:leet|code)*", s)</code>
+        gives the right answer here. But the regex engine backtracks just
+        like Approach 1: on <code>"a"</code> × k + <code>"b"</code> it grew
+        about 4× every 2 letters (0.17 s at k = 22).
+      </p>
+      <p class="note">
+        Use Approach 3. In Python, <code>functools.cache</code> on Approach
+        1's <code>can</code> turns it into Approach 2 in one line.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Plain Recursion</th>
+              <td>Try every word at every start</td>
+              <td>O(2ⁿ)</td>
+              <td>O(n)</td>
+              <td>7.2 s in Python at 25 letters</td>
+            </tr>
+            <tr>
+              <th scope="row">Recursion With a Memo</th>
+              <td>Save each start's answer, true or false</td>
+              <td>O(n · m · L)</td>
+              <td>O(n)</td>
+              <td>Top-down DP</td>
+            </tr>
+            <tr>
+              <th scope="row">Bottom-Up DP Over Word Lengths</th>
+              <td><code>dp[i]</code> from <code>dp[i - L]</code></td>
+              <td>O(n · k · L)</td>
+              <td>O(n + m · L)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
