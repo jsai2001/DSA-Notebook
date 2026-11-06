@@ -1,0 +1,219 @@
+<details class="question" data-group="trees" data-tags="tree binary-tree bfs dfs queue level-order">
+  <summary>
+    <span class="q-title">102. Binary Tree Level Order Traversal</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Tree</span>
+      <span class="tag">BFS</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> BFS with a queue, one level at a time. At
+      the start of each round the queue holds <strong>exactly one
+      level</strong>, so read its size first and pop that many nodes, adding
+      their children to the back. Those children are the next level. O(n).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/binary-tree-level-order-traversal/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given the <code>root</code> of a binary tree, return its values level
+        by level: a list for the root, then a list for its children, and so
+        on, each list from left to right.
+      </p>
+      <ul>
+        <li>0 to 2000 nodes (the tree can be empty).</li>
+        <li><code>-1000 &lt;= Node.val &lt;= 1000</code>.</li>
+      </ul>
+      <p class="note">
+        Examples: <code>[3,9,20,null,null,15,7]</code> →
+        <code>[[3],[9,20],[15,7]]</code>; <code>[1]</code> →
+        <code>[[1]]</code>; <code>[]</code> → <code>[]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[]</code></td>
+              <td><code>[]</code></td>
+              <td>No levels at all. Putting a null root in the queue without checking gives <code>[[]]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[3,9,20,null,null,15,7]</code></td>
+              <td><code>[[3],[9,20],[15,7]]</code></td>
+              <td>Without reading the queue's size per level, BFS gives one flat list, <code>[3,9,20,15,7]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3,4,null,null,5]</code></td>
+              <td><code>[[1],[2,3],[4,5]]</code></td>
+              <td>4 and 5 have different parents but the same depth: one level holds nodes from different subtrees.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,null,3,null,4]</code></td>
+              <td><code>[[1],[2],[3],[4]]</code></td>
+              <td>A tree that's one line: every level has one node.</td>
+            </tr>
+            <tr>
+              <td>DFS that visits right before left</td>
+              <td>left to right</td>
+              <td>Each level comes out reversed: <code>[[3],[20,9],[7,15]]</code>.</td>
+            </tr>
+            <tr>
+              <td>2000 nodes in one line</td>
+              <td>2000 levels</td>
+              <td>2000 deep: recursive DFS passes Python's default limit of 1000. BFS has no depth limit.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: DFS with the Depth</h2>
+      <p class="intuition">
+        Walk the tree in pre-order (node, left, right), passing the depth.
+        Put each value into <code>result[depth]</code>. Because left is always
+        visited before right, every level fills up from left to right.
+      </p>
+      <ul>
+        <li>When <code>depth == len(result)</code>, this is the first node at that depth: add a new empty list.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(h) call stack</span>
+      </div>
+      <p class="note">
+        Short, and correct even though it never visits a level all at once.
+        On a 2000-deep line it hit Python's recursion limit (LeetCode raises
+        it, so it passes there).
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>
+        Approach 2: BFS with a Queue
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        A queue serves nodes in the order they arrive, so it visits the tree
+        level by level. To know where one level ends, count: at the start of
+        each round, <code>len(queue)</code> is exactly the number of nodes on
+        this level.
+      </p>
+      <ul>
+        <li>Pop that many nodes, saving their values, and add their children to the back.</li>
+        <li>After the round, only the next level is left in the queue.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(w), the widest level</span>
+      </div>
+      <p class="note">
+        The standard answer: 0.18 ms for 2000 nodes in Python, and no
+        recursion. The same loop solves Right Side View (199), Zigzag (103)
+        and Average of Levels (637).
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>Approach 3: Two Lists, This Level and the Next</h2>
+      <p class="intuition">
+        Skip the counting: keep the current level as a plain list. Its values
+        are one answer list; its children, in order, make the next level.
+        Repeat until a level is empty.
+      </p>
+      <ul>
+        <li>No queue needed, and no level size to remember.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(w)</span>
+      </div>
+      <p class="note">
+        The same speed as Approach 2 (0.15 ms) and maybe easier to read: each
+        loop is exactly one level.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No library walks a tree by levels, but each has a good queue:
+        <code>collections.deque</code> in Python (<code>list.pop(0)</code> is
+        O(n)), <code>std::queue</code> in C++, <code>ArrayDeque</code> in
+        Java.
+      </p>
+      <p class="note">
+        Write Approach 2. Return <code>[]</code> for an empty tree, and read
+        the queue's size before the inner loop, not inside it (it changes as
+        children are added).
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">DFS with Depth</th>
+              <td>Pre-order, result[depth].append</td>
+              <td>O(n)</td>
+              <td>O(h)</td>
+              <td>Short; recursion depth limit</td>
+            </tr>
+            <tr>
+              <th scope="row">BFS Queue</th>
+              <td>Pop len(queue) nodes per round</td>
+              <td>O(n)</td>
+              <td>O(w)</td>
+              <td>The usual answer</td>
+            </tr>
+            <tr>
+              <th scope="row">Two Lists</th>
+              <td>This level → its children</td>
+              <td>O(n)</td>
+              <td>O(w)</td>
+              <td>No queue, no counting</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

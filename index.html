@@ -9290,7 +9290,7 @@
       <details class="pattern-group" id="g-trees">
         <summary>
           <span class="g-name">Trees</span>
-          <span class="g-count"><span class="g-total">5 problems</span></span>
+          <span class="g-count"><span class="g-total">6 problems</span></span>
           <span class="g-hint">A DFS that returns something to the parent</span>
         </summary>
         <div class="g-body">
@@ -10267,6 +10267,514 @@
                         <td>O(min(n, m))</td>
                         <td>O(width)</td>
                         <td>No recursion</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0102-binary-tree-level-order-traversal ===== -->
+          <details class="question" data-group="trees" data-tags="tree binary-tree bfs dfs queue level-order">
+            <summary>
+              <span class="q-title">102. Binary Tree Level Order Traversal</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Tree</span>
+                <span class="tag">BFS</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> BFS with a queue, one level at a time. At
+                the start of each round the queue holds <strong>exactly one
+                level</strong>, so read its size first and pop that many nodes, adding
+                their children to the back. Those children are the next level. O(n).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/binary-tree-level-order-traversal/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Given the <code>root</code> of a binary tree, return its values level
+                  by level: a list for the root, then a list for its children, and so
+                  on, each list from left to right.
+                </p>
+                <ul>
+                  <li>0 to 2000 nodes (the tree can be empty).</li>
+                  <li><code>-1000 &lt;= Node.val &lt;= 1000</code>.</li>
+                </ul>
+                <p class="note">
+                  Examples: <code>[3,9,20,null,null,15,7]</code> →
+                  <code>[[3],[9,20],[15,7]]</code>; <code>[1]</code> →
+                  <code>[[1]]</code>; <code>[]</code> → <code>[]</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[]</code></td>
+                        <td><code>[]</code></td>
+                        <td>No levels at all. Putting a null root in the queue without checking gives <code>[[]]</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[3,9,20,null,null,15,7]</code></td>
+                        <td><code>[[3],[9,20],[15,7]]</code></td>
+                        <td>Without reading the queue's size per level, BFS gives one flat list, <code>[3,9,20,15,7]</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2,3,4,null,null,5]</code></td>
+                        <td><code>[[1],[2,3],[4,5]]</code></td>
+                        <td>4 and 5 have different parents but the same depth: one level holds nodes from different subtrees.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2,null,3,null,4]</code></td>
+                        <td><code>[[1],[2],[3],[4]]</code></td>
+                        <td>A tree that's one line: every level has one node.</td>
+                      </tr>
+                      <tr>
+                        <td>DFS that visits right before left</td>
+                        <td>left to right</td>
+                        <td>Each level comes out reversed: <code>[[3],[20,9],[7,15]]</code>.</td>
+                      </tr>
+                      <tr>
+                        <td>2000 nodes in one line</td>
+                        <td>2000 levels</td>
+                        <td>2000 deep: recursive DFS passes Python's default limit of 1000. BFS has no depth limit.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: DFS with the Depth</h2>
+                <p class="intuition">
+                  Walk the tree in pre-order (node, left, right), passing the depth.
+                  Put each value into <code>result[depth]</code>. Because left is always
+                  visited before right, every level fills up from left to right.
+                </p>
+                <ul>
+                  <li>When <code>depth == len(result)</code>, this is the first node at that depth: add a new empty list.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(h) call stack</span>
+                </div>
+                <p class="note">
+                  Short, and correct even though it never visits a level all at once.
+                  On a 2000-deep line it hit Python's recursion limit (LeetCode raises
+                  it, so it passes there).
+                </p>
+                <div class="code-tabs" data-viz="0102-binary-tree-level-order-traversal/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[9,18],"call":[10,11,12],"new":[13,14],"add":[15],"recurse":[16,17],"return":[19]}'>
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def levelOrder(self, root):
+                            result = []  # result[d] = the values at depth d, left to right
+                            def dfs(node, depth):
+                                if not node:
+                                    return
+                                if depth == len(result):  # the first node seen at this depth
+                                    result.append([])
+                                result[depth].append(node.val)  # left is visited before right, so each level fills left to right
+                                dfs(node.left, depth + 1)
+                                dfs(node.right, depth + 1)
+                            dfs(root, 0)
+                            return result
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[16,17],"return":[18],"call":[22,23],"new":[24],"add":[25],"recurse":[26,27]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<std::vector<int>> levelOrder(TreeNode* root) {
+                            result.clear(); // result[d] = the values at depth d, left to right
+                            dfs(root, 0);
+                            return result;
+                        }
+                    private:
+                        std::vector<std::vector<int>> result;
+                        void dfs(TreeNode* node, size_t depth) {
+                            if (!node) return;
+                            if (depth == result.size()) result.push_back({}); // the first node seen at this depth
+                            result[depth].push_back(node->val); // left is visited before right, so each level fills left to right
+                            dfs(node->left, depth + 1);
+                            dfs(node->right, depth + 1);
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[21,22],"return":[23],"call":[25,26],"new":[27],"add":[28],"recurse":[29,30]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    import java.util.ArrayList;
+                    import java.util.List;
+                    class Solution {
+                        private List<List<Integer>> result;
+                        public List<List<Integer>> levelOrder(TreeNode root) {
+                            result = new ArrayList<>(); // result.get(d) = the values at depth d, left to right
+                            dfs(root, 0);
+                            return result;
+                        }
+                        private void dfs(TreeNode node, int depth) {
+                            if (node == null) return;
+                            if (depth == result.size()) result.add(new ArrayList<>()); // the first node seen at this depth
+                            result.get(depth).add(node.val); // left is visited before right, so each level fills left to right
+                            dfs(node.left, depth + 1);
+                            dfs(node.right, depth + 1);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>
+                  Approach 2: BFS with a Queue
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  A queue serves nodes in the order they arrive, so it visits the tree
+                  level by level. To know where one level ends, count: at the start of
+                  each round, <code>len(queue)</code> is exactly the number of nodes on
+                  this level.
+                </p>
+                <ul>
+                  <li>Pop that many nodes, saving their values, and add their children to the back.</li>
+                  <li>After the round, only the next level is left in the queue.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(w), the widest level</span>
+                </div>
+                <p class="note">
+                  The standard answer: 0.18 ms for 2000 nodes in Python, and no
+                  recursion. The same loop solves Right Side View (199), Zigzag (103)
+                  and Average of Levels (637).
+                </p>
+                <div class="code-tabs" data-viz="0102-binary-tree-level-order-traversal/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"empty":[10,11],"init":[12,13],"loop":[14,15],"size":[16],"pop":[17,18],"push":[19,20,21,22],"done":[23],"return":[24]}'>
+                    from collections import deque
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def levelOrder(self, root):
+                            if not root:  # an empty tree has no levels: [], not [[]]
+                                return []
+                            result = []
+                            queue = deque([root])
+                            while queue:
+                                level = []
+                                for _ in range(len(queue)):  # exactly the nodes of this level are in the queue now
+                                    node = queue.popleft()
+                                    level.append(node.val)
+                                    if node.left:  # their children go to the back: the next level
+                                        queue.append(node.left)
+                                    if node.right:
+                                        queue.append(node.right)
+                                result.append(level)
+                            return result
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"empty":[17],"init":[18,19,20],"loop":[21,22],"size":[23,24],"pop":[25,26,27],"push":[28,29],"done":[31],"return":[33]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <queue>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<std::vector<int>> levelOrder(TreeNode* root) {
+                            if (!root) return {}; // an empty tree has no levels: [], not [[]]
+                            std::vector<std::vector<int>> result;
+                            std::queue<TreeNode*> queue;
+                            queue.push(root);
+                            while (!queue.empty()) {
+                                std::vector<int> level;
+                                size_t n = queue.size(); // exactly the nodes of this level are in the queue now
+                                for (size_t k = 0; k < n; ++k) {
+                                    TreeNode* node = queue.front();
+                                    queue.pop();
+                                    level.push_back(node->val);
+                                    if (node->left) queue.push(node->left); // their children go to the back: the next level
+                                    if (node->right) queue.push(node->right);
+                                }
+                                result.push_back(level);
+                            }
+                            return result;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[22,24,25],"empty":[23],"loop":[26,27],"size":[28,29],"pop":[30,31],"push":[32,33],"done":[35],"return":[37]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    import java.util.ArrayDeque;
+                    import java.util.ArrayList;
+                    import java.util.Deque;
+                    import java.util.List;
+                    class Solution {
+                        public List<List<Integer>> levelOrder(TreeNode root) {
+                            List<List<Integer>> result = new ArrayList<>();
+                            if (root == null) return result; // an empty tree has no levels: [], not [[]]
+                            Deque<TreeNode> queue = new ArrayDeque<>();
+                            queue.add(root);
+                            while (!queue.isEmpty()) {
+                                List<Integer> level = new ArrayList<>();
+                                int n = queue.size(); // exactly the nodes of this level are in the queue now
+                                for (int k = 0; k < n; k++) {
+                                    TreeNode node = queue.poll();
+                                    level.add(node.val);
+                                    if (node.left != null) queue.add(node.left); // their children go to the back: the next level
+                                    if (node.right != null) queue.add(node.right);
+                                }
+                                result.add(level);
+                            }
+                            return result;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>Approach 3: Two Lists, This Level and the Next</h2>
+                <p class="intuition">
+                  Skip the counting: keep the current level as a plain list. Its values
+                  are one answer list; its children, in order, make the next level.
+                  Repeat until a level is empty.
+                </p>
+                <ul>
+                  <li>No queue needed, and no level size to remember.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(w)</span>
+                </div>
+                <p class="note">
+                  The same speed as Approach 2 (0.15 ms) and maybe easier to read: each
+                  loop is exactly one level.
+                </p>
+                <div class="code-tabs" data-viz="0102-binary-tree-level-order-traversal/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[9,10],"loop":[11],"done":[12],"next":[13,14,15,16,17,18],"swap":[19],"return":[20]}'>
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def levelOrder(self, root):
+                            result = []
+                            level = [root] if root else []  # the nodes of the current level, left to right
+                            while level:
+                                result.append([node.val for node in level])
+                                nxt = []
+                                for node in level:  # their children, in order, are the next level
+                                    if node.left:
+                                        nxt.append(node.left)
+                                    if node.right:
+                                        nxt.append(node.right)
+                                level = nxt
+                            return result
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[16,17,18],"loop":[19],"done":[20,21,22],"next":[23,24,25,26],"swap":[28],"return":[30]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<std::vector<int>> levelOrder(TreeNode* root) {
+                            std::vector<std::vector<int>> result;
+                            std::vector<TreeNode*> level; // the nodes of the current level, left to right
+                            if (root) level.push_back(root);
+                            while (!level.empty()) {
+                                std::vector<int> vals;
+                                for (TreeNode* node : level) vals.push_back(node->val);
+                                result.push_back(vals);
+                                std::vector<TreeNode*> next;
+                                for (TreeNode* node : level) { // their children, in order, are the next level
+                                    if (node->left) next.push_back(node->left);
+                                    if (node->right) next.push_back(node->right);
+                                }
+                                level.swap(next);
+                            }
+                            return result;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[20,21,22],"loop":[23],"done":[24,25,26],"next":[27,28,29,30],"swap":[32],"return":[34]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    import java.util.ArrayList;
+                    import java.util.List;
+                    class Solution {
+                        public List<List<Integer>> levelOrder(TreeNode root) {
+                            List<List<Integer>> result = new ArrayList<>();
+                            List<TreeNode> level = new ArrayList<>(); // the nodes of the current level, left to right
+                            if (root != null) level.add(root);
+                            while (!level.isEmpty()) {
+                                List<Integer> vals = new ArrayList<>();
+                                for (TreeNode node : level) vals.add(node.val);
+                                result.add(vals);
+                                List<TreeNode> next = new ArrayList<>();
+                                for (TreeNode node : level) { // their children, in order, are the next level
+                                    if (node.left != null) next.add(node.left);
+                                    if (node.right != null) next.add(node.right);
+                                }
+                                level = next;
+                            }
+                            return result;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  No library walks a tree by levels, but each has a good queue:
+                  <code>collections.deque</code> in Python (<code>list.pop(0)</code> is
+                  O(n)), <code>std::queue</code> in C++, <code>ArrayDeque</code> in
+                  Java.
+                </p>
+                <p class="note">
+                  Write Approach 2. Return <code>[]</code> for an empty tree, and read
+                  the queue's size before the inner loop, not inside it (it changes as
+                  children are added).
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">DFS with Depth</th>
+                        <td>Pre-order, result[depth].append</td>
+                        <td>O(n)</td>
+                        <td>O(h)</td>
+                        <td>Short; recursion depth limit</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">BFS Queue</th>
+                        <td>Pop len(queue) nodes per round</td>
+                        <td>O(n)</td>
+                        <td>O(w)</td>
+                        <td>The usual answer</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Two Lists</th>
+                        <td>This level → its children</td>
+                        <td>O(n)</td>
+                        <td>O(w)</td>
+                        <td>No queue, no counting</td>
                       </tr>
                     </tbody>
                   </table>
@@ -35999,6 +36507,140 @@
             steps.push({ line: ["loop", "both", "diff", "push"], note: `Take (${P.nodes[a].val}, ${Q.nodes[b].val}): they match. Add the pair of left children and the pair of right children.`, view: view(a, b, "match") });
           }
           steps.push({ line: "return", note: "The queue is empty and every pair matched: return true.", view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0102-binary-tree-level-order-traversal/approach1.visual.js -->
+    <script>
+      // DFS with the depth: pre-order (node, left, right), each value goes into result[depth].
+      DSAViz.register("0102-binary-tree-level-order-traversal/approach1", {
+        inputs: [{ name: "root", type: "tree", value: "[3, 9, 20, null, null, 15, 7]", maxLength: 15 }],
+        trace({ root: values }) {
+          const { root, nodes } = DSAViz.buildTree(values);
+          const steps = [];
+          const done = {};
+          const captions = {};
+          const result = [];
+          const fmt = (a) => `[${a.join(", ")}]`;
+          const view = (cur, depth) => {
+            const m = { ...done };
+            if (cur !== undefined) m[cur] = "active";
+            return [
+              { type: "tree", label: "tree (under each node: its depth; green = placed)", values, marks: m, captions },
+              { type: "array", label: "result[depth]", values: result.map(fmt), wide: true, marks: depth !== undefined ? { [depth]: "new" } : {} },
+            ];
+          };
+          steps.push({ line: "init", note: "Visit the nodes depth first, left before right, and drop each value into the list for its depth.", view: view() });
+          function dfs(id, depth) {
+            const node = nodes[id];
+            captions[id] = `depth ${depth}`;
+            const fresh = depth === result.length;
+            if (fresh) result.push([]);
+            result[depth].push(node.val);
+            done[id] = "match";
+            steps.push({
+              line: fresh ? ["call", "new", "add"] : ["call", "add"],
+              note: `${node.val} is at depth ${depth}.${fresh ? ` It's the first node seen at that depth: start result[${depth}].` : ""} result[${depth}] = ${fmt(result[depth])}.`,
+              view: view(id, depth),
+            });
+            if (node.left >= 0) dfs(node.left, depth + 1);
+            if (node.right >= 0) dfs(node.right, depth + 1);
+          }
+          dfs(root, 0);
+          steps.push({ line: "return", note: "Return result. Left was always visited before right, so each level is in left-to-right order.", view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0102-binary-tree-level-order-traversal/approach2.visual.js -->
+    <script>
+      // BFS: at the start of each round the queue holds exactly one level; pop that many, add their children to the back.
+      DSAViz.register("0102-binary-tree-level-order-traversal/approach2", {
+        inputs: [{ name: "root", type: "tree", value: "[3, 9, 20, null, null, 15, 7]", maxLength: 15 }],
+        trace({ root: values }) {
+          const { root, nodes } = DSAViz.buildTree(values);
+          const steps = [];
+          const done = {};
+          const result = [];
+          let queue = [root];
+          let level = [];
+          const fmt = (a) => `[${a.join(", ")}]`;
+          const view = (cur, o = {}) => {
+            const m = { ...done };
+            queue.forEach((id) => (m[id] = "new"));
+            (o.lvl || []).forEach((id) => (m[id] = "active"));
+            if (cur !== undefined) m[cur] = "active";
+            return [
+              { type: "tree", label: "tree (yellow = in the queue, green = done)", values, marks: m },
+              { type: "array", label: "queue (front first)", values: queue.map((id) => nodes[id].val), marks: o.size ? Object.fromEntries(queue.slice(0, o.size).map((_, k) => [k, "compare"])) : {} },
+              { type: "array", label: "this level so far", values: level.slice() },
+              { type: "array", label: "result", values: result.map(fmt), wide: true, marks: o.added ? { [result.length - 1]: "new" } : {} },
+            ];
+          };
+          steps.push({ line: "init", note: `Put the root, ${nodes[root].val}, in the queue.`, view: view() });
+          while (queue.length) {
+            const n = queue.length;
+            level = [];
+            steps.push({ line: ["loop", "size"], note: `The queue holds ${n} node${n === 1 ? "" : "s"}: all of level ${result.length}, and nothing else. Pop exactly ${n}.`, view: view(undefined, { size: n }) });
+            for (let k = 0; k < n; k++) {
+              const id = queue.shift();
+              level.push(nodes[id].val);
+              const kids = [nodes[id].left, nodes[id].right].filter((c) => c >= 0);
+              queue.push(...kids);
+              done[id] = "match";
+              steps.push({
+                line: ["pop", "push"],
+                note: `Pop ${nodes[id].val}. ${kids.length ? `Add its child${kids.length > 1 ? "ren" : ""} ${kids.map((c) => nodes[c].val).join(" and ")} to the back (next level).` : "No children."}`,
+                view: view(id),
+              });
+            }
+            result.push(level.slice());
+            steps.push({ line: "done", note: `Level ${result.length - 1} is ${fmt(level)}.${queue.length ? " The queue now holds only the next level." : " The queue is empty."}`, view: view(undefined, { added: true }) });
+          }
+          level = [];
+          steps.push({ line: "return", note: `Return ${result.length} level${result.length === 1 ? "" : "s"}. Each node went in and out of the queue once: O(n).`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0102-binary-tree-level-order-traversal/approach3.visual.js -->
+    <script>
+      // Two lists: the current level's values are one answer; its children, in order, are the next level.
+      DSAViz.register("0102-binary-tree-level-order-traversal/approach3", {
+        inputs: [{ name: "root", type: "tree", value: "[3, 9, 20, null, null, 15, 7]", maxLength: 15 }],
+        trace({ root: values }) {
+          const { root, nodes } = DSAViz.buildTree(values);
+          const steps = [];
+          const done = {};
+          const result = [];
+          let level = [root];
+          let next = [];
+          const fmt = (a) => `[${a.join(", ")}]`;
+          const view = (o = {}) => {
+            const m = { ...done };
+            level.forEach((id) => (m[id] = "active"));
+            next.forEach((id) => (m[id] = "new"));
+            return [
+              { type: "tree", label: "tree (dark = this level, yellow = next level, green = done)", values, marks: m },
+              { type: "array", label: "level", values: level.map((id) => nodes[id].val) },
+              { type: "array", label: "next", values: next.map((id) => nodes[id].val) },
+              { type: "array", label: "result", values: result.map(fmt), wide: true, marks: o.added ? { [result.length - 1]: "new" } : {} },
+            ];
+          };
+          steps.push({ line: "init", note: `The first level is just the root, ${nodes[root].val}.`, view: view() });
+          while (level.length) {
+            result.push(level.map((id) => nodes[id].val));
+            steps.push({ line: ["loop", "done"], note: `Save this level's values: ${fmt(result[result.length - 1])}.`, view: view({ added: true }) });
+            next = [];
+            for (const id of level) for (const c of [nodes[id].left, nodes[id].right]) if (c >= 0) next.push(c);
+            steps.push({ line: "next", note: next.length ? `Their children, left to right: ${next.map((c) => nodes[c].val).join(", ")}. That's the next level.` : "No children: there is no next level.", view: view() });
+            level.forEach((id) => (done[id] = "match"));
+            level = next;
+            next = [];
+            steps.push({ line: "swap", note: level.length ? "Move on: next becomes level." : "The level is empty: stop.", view: view() });
+          }
+          steps.push({ line: "return", note: `Return ${result.length} level${result.length === 1 ? "" : "s"}.`, view: view() });
           return steps;
         },
       });
