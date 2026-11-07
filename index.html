@@ -14518,7 +14518,7 @@
       <details class="pattern-group" id="g-trees">
         <summary>
           <span class="g-name">Trees</span>
-          <span class="g-count"><span class="g-total">10 problems</span></span>
+          <span class="g-count"><span class="g-total">11 problems</span></span>
           <span class="g-hint">A DFS that returns something to the parent</span>
         </summary>
         <div class="g-body">
@@ -17994,6 +17994,482 @@
                         <td>O(n)</td>
                         <td>O(n)</td>
                         <td>No recursion</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0199-binary-tree-right-side-view ===== -->
+          <details class="question" data-group="trees" data-tags="tree binary tree bfs dfs level order right side view rightmost">
+            <summary>
+              <span class="q-title">199. Binary Tree Right Side View</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Tree</span>
+                <span class="tag">Breadth-First Search</span>
+                <span class="tag">Depth-First Search</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> From the right you see the
+                <strong>last node of each level</strong>, and it isn't always a right
+                child: a left child shows when nothing is to its right. Either take the
+                last node of each BFS level, or DFS right child first and keep the first
+                node reached at each new depth.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/binary-tree-right-side-view/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Standing on the right side of a binary tree, return the values you can
+                  see from top to bottom.
+                </p>
+                <ul>
+                  <li>The number of nodes is in <code>[0, 100]</code></li>
+                  <li><code>-100 &lt;= Node.val &lt;= 100</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>[1,2,3,null,5,null,4]</code> → <code>[1,3,4]</code>.
+                  <code>[1,2,3,4,null,null,null,5]</code> → <code>[1,3,4,5]</code>.
+                  <code>[]</code> → <code>[]</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[1,2,3,4]</code></td>
+                        <td><code>[1,3,4]</code></td>
+                        <td>4 is a left child but nothing is to its right. Walking only <code>.right</code> from the root said <code>[1,3]</code>; it was wrong on 2496 of 3307 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[82,70,92]</code></td>
+                        <td><code>[82,92]</code></td>
+                        <td>The DFS visiting left before right gives the <em>left</em> side view: it said <code>[82,70]</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[]</code></td>
+                        <td><code>[]</code></td>
+                        <td>An empty tree: don't put <code>None</code> in the queue.</td>
+                      </tr>
+                      <tr>
+                        <td>100 nodes, all left children</td>
+                        <td>all 100 values</td>
+                        <td>Every node is the only one on its level, so all of them show.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Store Every Level</h2>
+                <p class="intuition">
+                  Build the levels one after another: the next level is the children of
+                  this one, left to right. Keep all the values, then take the last one
+                  from each level.
+                </p>
+                <ul>
+                  <li>Simple and correct, but it stores every value just to use one per level.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  Average over 3307 trees (up to 100 nodes): Python 3.0 µs, C++ 2.1 µs,
+                  Java 1.0 µs. The slowest in each language: it builds a new list per
+                  level.
+                </p>
+                <div class="code-tabs" data-viz="0199-binary-tree-right-side-view/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[9,10],"level":[11,12],"next":[13],"return":[14]}'>
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def rightSideView(self, root):
+                            levels = []  # every level, left to right
+                            level = [root] if root else []
+                            while level:
+                                levels.append([node.val for node in level])
+                                level = [child for node in level for child in (node.left, node.right) if child]  # the next level, left to right
+                            return [vals[-1] for vals in levels]  # the rightmost value of each level
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[16,17,18],"level":[19,20,22,23,27],"next":[21,24,25,28],"return":[30,31,32]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> rightSideView(TreeNode* root) {
+                            std::vector<std::vector<int>> levels; // every level, left to right
+                            std::vector<TreeNode*> level;
+                            if (root) level.push_back(root);
+                            while (!level.empty()) {
+                                std::vector<int> vals;
+                                std::vector<TreeNode*> next;
+                                for (TreeNode* node : level) {
+                                    vals.push_back(node->val);
+                                    if (node->left) next.push_back(node->left); // the next level, left to right
+                                    if (node->right) next.push_back(node->right);
+                                }
+                                levels.push_back(vals);
+                                level = next;
+                            }
+                            std::vector<int> res;
+                            for (auto& vals : levels) res.push_back(vals.back()); // the rightmost value of each level
+                            return res;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[19,20,21],"level":[22,23,25,26,30],"next":[24,27,28,31],"return":[33,34,35]}'>
+                    import java.util.*;
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    class Solution {
+                        public List<Integer> rightSideView(TreeNode root) {
+                            List<List<Integer>> levels = new ArrayList<>(); // every level, left to right
+                            List<TreeNode> level = new ArrayList<>();
+                            if (root != null) level.add(root);
+                            while (!level.isEmpty()) {
+                                List<Integer> vals = new ArrayList<>();
+                                List<TreeNode> next = new ArrayList<>();
+                                for (TreeNode node : level) {
+                                    vals.add(node.val);
+                                    if (node.left != null) next.add(node.left); // the next level, left to right
+                                    if (node.right != null) next.add(node.right);
+                                }
+                                levels.add(vals);
+                                level = next;
+                            }
+                            List<Integer> res = new ArrayList<>();
+                            for (List<Integer> vals : levels) res.add(vals.get(vals.size() - 1)); // the rightmost value of each level
+                            return res;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: BFS, Last of Each Level</h2>
+                <p class="intuition">
+                  Use a queue. At the start of each round it holds exactly one level, so
+                  note its <code>size</code> and pop that many nodes, pushing their
+                  children. The node popped at <code>k == size − 1</code> is the
+                  rightmost.
+                </p>
+                <ul>
+                  <li>Saving <code>size</code> first matters: the queue grows while you pop.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(width)</span>
+                </div>
+                <p class="note">
+                  Average: Python 2.0 µs, C++ 0.47 µs, Java 0.63 µs.
+                </p>
+                <div class="code-tabs" data-viz="0199-binary-tree-right-side-view/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"empty":[10,11],"init":[12,13],"level":[14,15],"pop":[16,17],"last":[18,19],"push":[20,21,22,23],"return":[24]}'>
+                    from collections import deque
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def rightSideView(self, root):
+                            if not root:
+                                return []
+                            res = []
+                            queue = deque([root])
+                            while queue:
+                                size = len(queue)  # exactly one level is in the queue
+                                for k in range(size):
+                                    node = queue.popleft()
+                                    if k == size - 1:  # the last node of the level is the one seen from the right
+                                        res.append(node.val)
+                                    if node.left:
+                                        queue.append(node.left)
+                                    if node.right:
+                                        queue.append(node.right)
+                            return res
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"empty":[17],"init":[18,19,20],"level":[21,22],"pop":[23,24,25],"last":[26],"push":[27,28],"return":[31]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <queue>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> rightSideView(TreeNode* root) {
+                            if (!root) return {};
+                            std::vector<int> res;
+                            std::queue<TreeNode*> queue;
+                            queue.push(root);
+                            while (!queue.empty()) {
+                                const int size = queue.size(); // exactly one level is in the queue
+                                for (int k = 0; k < size; ++k) {
+                                    TreeNode* node = queue.front();
+                                    queue.pop();
+                                    if (k == size - 1) res.push_back(node->val); // the last node of the level is the one seen from the right
+                                    if (node->left) queue.push(node->left);
+                                    if (node->right) queue.push(node->right);
+                                }
+                            }
+                            return res;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[19,21,22],"empty":[20],"level":[23,24],"pop":[25,26],"last":[27],"push":[28,29],"return":[32]}'>
+                    import java.util.*;
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    class Solution {
+                        public List<Integer> rightSideView(TreeNode root) {
+                            List<Integer> res = new ArrayList<>();
+                            if (root == null) return res;
+                            ArrayDeque<TreeNode> queue = new ArrayDeque<>();
+                            queue.add(root);
+                            while (!queue.isEmpty()) {
+                                int size = queue.size(); // exactly one level is in the queue
+                                for (int k = 0; k < size; k++) {
+                                    TreeNode node = queue.poll();
+                                    if (k == size - 1) res.add(node.val); // the last node of the level is the one seen from the right
+                                    if (node.left != null) queue.add(node.left);
+                                    if (node.right != null) queue.add(node.right);
+                                }
+                            }
+                            return res;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: DFS, Right Child First
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Walk the tree depth first, visiting the right child before the left,
+                  and carry the depth. The first node reached at a new depth
+                  (<code>depth == len(res)</code>) is the rightmost one there, because
+                  everything to its right was visited earlier.
+                </p>
+                <ul>
+                  <li><code>len(res)</code> is the number of depths seen so far, so no set is needed.</li>
+                  <li>The calls go as deep as the tree: 100 at most here.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(height)</span>
+                </div>
+                <p class="note">
+                  Average: Python 2.6 µs, C++ 0.30 µs, Java 0.32 µs, the fastest in C++
+                  and Java. In Python, function calls make it a bit slower than
+                  Approach 2.
+                </p>
+                <div class="code-tabs" data-viz="0199-binary-tree-right-side-view/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[9,17],"call":[10,11,12],"first":[13,14],"right":[15],"left":[16],"return":[18]}'>
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def rightSideView(self, root):
+                            res = []  # res[d] = the first value seen at depth d
+                            def dfs(node, depth):
+                                if not node:
+                                    return
+                                if depth == len(res):  # first visit to this depth: right first, so it's the rightmost
+                                    res.append(node.val)
+                                dfs(node.right, depth + 1)  # right before left
+                                dfs(node.left, depth + 1)
+                            dfs(root, 0)
+                            return res
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[16,17],"return":[18],"call":[21,22],"first":[23],"right":[24],"left":[25]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> rightSideView(TreeNode* root) {
+                            std::vector<int> res; // res[d] = the first value seen at depth d
+                            dfs(root, 0, res);
+                            return res;
+                        }
+                    private:
+                        void dfs(TreeNode* node, int depth, std::vector<int>& res) {
+                            if (!node) return;
+                            if (depth == (int)res.size()) res.push_back(node->val); // first visit to this depth: right first, so it's the rightmost
+                            dfs(node->right, depth + 1, res); // right before left
+                            dfs(node->left, depth + 1, res);
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[19,20],"return":[21],"call":[23,24],"first":[25],"right":[26],"left":[27]}'>
+                    import java.util.*;
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    class Solution {
+                        public List<Integer> rightSideView(TreeNode root) {
+                            List<Integer> res = new ArrayList<>(); // res[d] = the first value seen at depth d
+                            dfs(root, 0, res);
+                            return res;
+                        }
+                        private void dfs(TreeNode node, int depth, List<Integer> res) {
+                            if (node == null) return;
+                            if (depth == res.size()) res.add(node.val); // first visit to this depth: right first, so it's the rightmost
+                            dfs(node.right, depth + 1, res); // right before left
+                            dfs(node.left, depth + 1, res);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  There's no built-in tree type to ask. Approach 2 or 3 is what you'd
+                  write; both are about ten lines.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Store Every Level</th>
+                        <td>All levels, then the last of each</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Stores more than it needs</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">BFS, Last of Each Level</th>
+                        <td>Pop <code>size</code> nodes, keep the last</td>
+                        <td>O(n)</td>
+                        <td>O(width)</td>
+                        <td>Fastest in Python</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">DFS, Right Child First</th>
+                        <td>First node at each new depth</td>
+                        <td>O(n)</td>
+                        <td>O(height)</td>
+                        <td>Shortest code</td>
                       </tr>
                     </tbody>
                   </table>
@@ -57207,6 +57683,133 @@
             steps.push({ line: ["loop", "choose"], note: `House ${k} (${x}): skip → ${old}, rob → prev + ${x} = ${take}. cur = ${cur}, and prev becomes the old cur, ${prev}.`, view: view({ k, rob }) });
           });
           steps.push({ line: "return", note: `Return ${cur}. O(n) time, O(1) space: two numbers instead of a table.`, view: view({ done: true }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0199-binary-tree-right-side-view/approach1.visual.js -->
+    <script>
+      // Build every level, left to right, then take the last value of each one.
+      DSAViz.register("0199-binary-tree-right-side-view/approach1", {
+        inputs: [{ name: "root", type: "tree", value: "[1, 2, 3, 4, null, null, null, 5]", maxLength: 15 }],
+        trace({ root: values }) {
+          const { root, nodes } = DSAViz.buildTree(values);
+          const steps = [];
+          const levels = [];
+          const picked = {};
+          const view = (o = {}) => {
+            const m = { ...picked };
+            (o.level || []).forEach((id) => (m[id] = m[id] || "new"));
+            return [
+              { type: "tree", label: "tree (yellow = this level, green = rightmost of its level)", values, marks: m },
+              { type: "array", label: "levels (each level's values, left to right)", values: levels.map((l) => `[${l.join(", ")}]`), wide: true, marks: o.level ? { [levels.length - 1]: "new" } : {} },
+            ];
+          };
+          if (root < 0) {
+            steps.push({ line: ["init", "level", "return"], note: "Return []. The tree is empty: no levels.", view: view() });
+            return steps;
+          }
+          let level = [root];
+          steps.push({ line: "init", note: "Start with the root as level 0.", view: view() });
+          while (level.length) {
+            levels.push(level.map((id) => nodes[id].val));
+            steps.push({ line: "level", note: `Level ${levels.length - 1}: [${levels[levels.length - 1].join(", ")}]. Store all of it.`, view: view({ level }) });
+            level = level.flatMap((id) => [nodes[id].left, nodes[id].right].filter((c) => c >= 0));
+            steps.push({ line: "next", note: level.length ? `Their children, left to right, make the next level: ${level.map((id) => nodes[id].val).join(", ")}.` : "No children: that was the last level.", view: view({ level }) });
+          }
+          const res = levels.map((l) => l[l.length - 1]);
+          let cur = [root];
+          while (cur.length) { picked[cur[cur.length - 1]] = "match"; cur = cur.flatMap((id) => [nodes[id].left, nodes[id].right].filter((c) => c >= 0)); }
+          steps.push({ line: "return", note: `Return [${res.join(", ")}]. That's the last value of each level. O(n) time, but every value is stored: O(n) space.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0199-binary-tree-right-side-view/approach2.visual.js -->
+    <script>
+      // BFS one level at a time: the last node popped from each level is the one seen from the right.
+      DSAViz.register("0199-binary-tree-right-side-view/approach2", {
+        inputs: [{ name: "root", type: "tree", value: "[1, 2, 3, 4, null, null, null, 5]", maxLength: 15 }],
+        trace({ root: values }) {
+          const { root, nodes } = DSAViz.buildTree(values);
+          const steps = [];
+          const res = [];
+          const marks = {};
+          let queue = [];
+          const view = (o = {}) => {
+            const m = { ...marks };
+            if (o.at !== undefined) m[o.at] = o.last ? "match" : "active";
+            return [
+              { type: "tree", label: "tree (dark = popped now, green = rightmost of its level, dashed = done)", values, marks: m },
+              { type: "array", label: "queue (front on the left)", values: queue.map((id) => nodes[id].val), compact: true },
+              { type: "array", label: "res", values: res.slice(), compact: true, marks: o.last ? { [res.length - 1]: "new" } : {} },
+              { type: "vars", items: [{ name: "k", value: o.k === undefined ? "-" : o.k }, { name: "size", value: o.size === undefined ? "-" : o.size }] },
+            ];
+          };
+          if (root < 0) {
+            steps.push({ line: "empty", note: "Return []. The tree is empty.", view: view() });
+            return steps;
+          }
+          queue = [root];
+          steps.push({ line: "init", note: "Put the root in the queue.", view: view() });
+          while (queue.length) {
+            const size = queue.length;
+            steps.push({ line: "level", note: `The queue holds exactly one level: ${size} node${size > 1 ? "s" : ""}. Pop that many.`, view: view({ size }) });
+            for (let k = 0; k < size; k++) {
+              const id = queue.shift();
+              const last = k === size - 1;
+              if (last) res.push(nodes[id].val);
+              const kids = [nodes[id].left, nodes[id].right].filter((c) => c >= 0);
+              queue.push(...kids);
+              steps.push({
+                line: last ? ["pop", "last", "push"] : ["pop", "push"],
+                note: `Pop ${nodes[id].val} (k = ${k} of ${size}).${last ? ` It's the last of its level: add ${nodes[id].val} to res.` : ""}${kids.length ? ` Push its children: ${kids.map((c) => nodes[c].val).join(", ")}.` : ""}`,
+                view: view({ at: id, last, k, size }),
+              });
+              marks[id] = last ? "match" : "visited";
+            }
+          }
+          steps.push({ line: "return", note: `Return [${res.join(", ")}]. Each node is popped once: O(n) time, O(width) for the queue.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0199-binary-tree-right-side-view/approach3.visual.js -->
+    <script>
+      // DFS right child first, carrying the depth: the first node reached at each depth is the rightmost.
+      DSAViz.register("0199-binary-tree-right-side-view/approach3", {
+        inputs: [{ name: "root", type: "tree", value: "[1, 2, 3, 4, null, null, null, 5]", maxLength: 15 }],
+        trace({ root: values }) {
+          const { root, nodes } = DSAViz.buildTree(values);
+          const steps = [];
+          const res = [];
+          const marks = {};
+          const captions = {};
+          const view = (o = {}) => {
+            const m = { ...marks };
+            if (o.at !== undefined) m[o.at] = o.first ? "match" : "active";
+            return [
+              { type: "tree", label: "tree (under each node: its depth; dark = this call, green = first at its depth, dashed = visited)", values, marks: m, captions: { ...captions } },
+              { type: "array", label: "res[d] = first value seen at depth d", values: res.slice(), compact: true, marks: o.first ? { [res.length - 1]: "new" } : {} },
+            ];
+          };
+          steps.push({ line: "init", note: "dfs(root, 0). Visit the right child before the left one.", view: view() });
+          const dfs = (id, depth) => {
+            if (id < 0) return;
+            captions[id] = `depth ${depth}`;
+            const first = depth === res.length;
+            if (first) res.push(nodes[id].val);
+            steps.push({
+              line: first ? ["call", "first"] : ["call"],
+              note: first ? `${nodes[id].val} is the first node reached at depth ${depth}. Since right goes first, nothing at this depth is further right: res[${depth}] = ${nodes[id].val}.` : `${nodes[id].val} at depth ${depth}: res already has a value for this depth (${res[depth]}), which is further right. Skip.`,
+              view: view({ at: id, first }),
+            });
+            marks[id] = first ? "match" : "visited";
+            dfs(nodes[id].right, depth + 1);
+            dfs(nodes[id].left, depth + 1);
+          };
+          dfs(root, 0);
+          steps.push({ line: "return", note: `Return [${res.join(", ")}]. Each node is visited once: O(n) time, O(height) for the calls.`, view: view() });
           return steps;
         },
       });

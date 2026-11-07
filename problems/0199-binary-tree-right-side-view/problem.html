@@ -1,0 +1,203 @@
+<details class="question" data-group="trees" data-tags="tree binary tree bfs dfs level order right side view rightmost">
+  <summary>
+    <span class="q-title">199. Binary Tree Right Side View</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Tree</span>
+      <span class="tag">Breadth-First Search</span>
+      <span class="tag">Depth-First Search</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> From the right you see the
+      <strong>last node of each level</strong>, and it isn't always a right
+      child: a left child shows when nothing is to its right. Either take the
+      last node of each BFS level, or DFS right child first and keep the first
+      node reached at each new depth.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/binary-tree-right-side-view/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Standing on the right side of a binary tree, return the values you can
+        see from top to bottom.
+      </p>
+      <ul>
+        <li>The number of nodes is in <code>[0, 100]</code></li>
+        <li><code>-100 &lt;= Node.val &lt;= 100</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[1,2,3,null,5,null,4]</code> → <code>[1,3,4]</code>.
+        <code>[1,2,3,4,null,null,null,5]</code> → <code>[1,3,4,5]</code>.
+        <code>[]</code> → <code>[]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[1,2,3,4]</code></td>
+              <td><code>[1,3,4]</code></td>
+              <td>4 is a left child but nothing is to its right. Walking only <code>.right</code> from the root said <code>[1,3]</code>; it was wrong on 2496 of 3307 tests.</td>
+            </tr>
+            <tr>
+              <td><code>[82,70,92]</code></td>
+              <td><code>[82,92]</code></td>
+              <td>The DFS visiting left before right gives the <em>left</em> side view: it said <code>[82,70]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[]</code></td>
+              <td><code>[]</code></td>
+              <td>An empty tree: don't put <code>None</code> in the queue.</td>
+            </tr>
+            <tr>
+              <td>100 nodes, all left children</td>
+              <td>all 100 values</td>
+              <td>Every node is the only one on its level, so all of them show.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Store Every Level</h2>
+      <p class="intuition">
+        Build the levels one after another: the next level is the children of
+        this one, left to right. Keep all the values, then take the last one
+        from each level.
+      </p>
+      <ul>
+        <li>Simple and correct, but it stores every value just to use one per level.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Average over 3307 trees (up to 100 nodes): Python 3.0 µs, C++ 2.1 µs,
+        Java 1.0 µs. The slowest in each language: it builds a new list per
+        level.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: BFS, Last of Each Level</h2>
+      <p class="intuition">
+        Use a queue. At the start of each round it holds exactly one level, so
+        note its <code>size</code> and pop that many nodes, pushing their
+        children. The node popped at <code>k == size − 1</code> is the
+        rightmost.
+      </p>
+      <ul>
+        <li>Saving <code>size</code> first matters: the queue grows while you pop.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(width)</span>
+      </div>
+      <p class="note">
+        Average: Python 2.0 µs, C++ 0.47 µs, Java 0.63 µs.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: DFS, Right Child First
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Walk the tree depth first, visiting the right child before the left,
+        and carry the depth. The first node reached at a new depth
+        (<code>depth == len(res)</code>) is the rightmost one there, because
+        everything to its right was visited earlier.
+      </p>
+      <ul>
+        <li><code>len(res)</code> is the number of depths seen so far, so no set is needed.</li>
+        <li>The calls go as deep as the tree: 100 at most here.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(height)</span>
+      </div>
+      <p class="note">
+        Average: Python 2.6 µs, C++ 0.30 µs, Java 0.32 µs, the fastest in C++
+        and Java. In Python, function calls make it a bit slower than
+        Approach 2.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        There's no built-in tree type to ask. Approach 2 or 3 is what you'd
+        write; both are about ten lines.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Store Every Level</th>
+              <td>All levels, then the last of each</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Stores more than it needs</td>
+            </tr>
+            <tr>
+              <th scope="row">BFS, Last of Each Level</th>
+              <td>Pop <code>size</code> nodes, keep the last</td>
+              <td>O(n)</td>
+              <td>O(width)</td>
+              <td>Fastest in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">DFS, Right Child First</th>
+              <td>First node at each new depth</td>
+              <td>O(n)</td>
+              <td>O(height)</td>
+              <td>Shortest code</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
