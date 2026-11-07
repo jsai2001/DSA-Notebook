@@ -1,0 +1,204 @@
+<details class="question" data-group="arrays-hashing" data-tags="array prefix product suffix product no division running product">
+  <summary>
+    <span class="q-title">238. Product of Array Except Self</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Prefix Sum</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Everything except <code>nums[i]</code> is
+      (the product of everything <strong>before</strong> i) × (the product of
+      everything <strong>after</strong> i). One pass from the left fills the
+      "before" products into the answer; one pass from the right multiplies
+      in the "after" products with a single running number. No division, so
+      zeros are no problem.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/product-of-array-except-self/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Return <code>answer</code> where <code>answer[i]</code> is the product
+        of every value in <code>nums</code> except <code>nums[i]</code>. Don't
+        use division, and run in O(n).
+      </p>
+      <ul>
+        <li><code>2 &lt;= nums.length &lt;= 10⁵</code>, <code>-30 &lt;= nums[i] &lt;= 30</code></li>
+        <li>Every product fits in a 32-bit integer</li>
+      </ul>
+      <p class="note">
+        Example: <code>[1,2,3,4]</code> → <code>[24,12,8,6]</code>.
+        <code>[-1,1,0,-3,3]</code> → <code>[0,0,9,0,0]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[-1,0]</code></td>
+              <td><code>[0,-1]</code></td>
+              <td>"Multiply everything, then divide by nums[i]" can't divide by the 0: it said <code>[0,0]</code>. Wrong on 950 of 3005 tests (and division isn't allowed anyway).</td>
+            </tr>
+            <tr>
+              <td><code>[0,0]</code></td>
+              <td><code>[0,0]</code></td>
+              <td>Two zeros: every product includes a zero.</td>
+            </tr>
+            <tr>
+              <td><code>[2,3]</code></td>
+              <td><code>[3,2]</code></td>
+              <td>The shortest input: each answer is just the other value.</td>
+            </tr>
+            <tr>
+              <td>10⁴ values</td>
+              <td>-</td>
+              <td>Multiplying the others for each i is 10⁸ steps: 3.3 s in Python.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Multiply the Others for Each i</h2>
+      <p class="intuition">
+        For each position, multiply every value except the one at that
+        position.
+      </p>
+      <ul>
+        <li>Correct with zeros, but O(n²) work.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(1) besides the answer</span>
+      </div>
+      <p class="note">
+        10⁴ values: Python 3.3 s, Java 94 ms, C++ 101 ms. At 10⁵ it's 100
+        times more: too slow.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Prefix and Suffix Arrays</h2>
+      <p class="intuition">
+        Build <code>left[i]</code> (product of everything before
+        <code>i</code>) from the left and <code>right[i]</code> (product of
+        everything after <code>i</code>) from the right. Then
+        <code>answer[i] = left[i] × right[i]</code>.
+      </p>
+      <ul>
+        <li><code>left[0]</code> and <code>right[n − 1]</code> are 1: nothing is before the first or after the last.</li>
+        <li>Two extra arrays of size n.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        10⁵ values: Python 13 ms, Java 0.37 ms, C++ 0.22 ms.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Answer Array + One Running Product
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Fill the left products straight into the answer. Then walk from the
+        back with <code>right = 1</code>: multiply <code>answer[i]</code> by
+        <code>right</code>, then multiply <code>right</code> by
+        <code>nums[i]</code> for the next position.
+      </p>
+      <ul>
+        <li>Update <code>answer[i]</code> before <code>right</code>. The other order includes nums[i]: <code>[1,2,3,4]</code> gave <code>[24,24,24,24]</code>.</li>
+        <li>The answer array doesn't count as extra space, so this is O(1) extra.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1) besides the answer</span>
+      </div>
+      <p class="note">
+        10⁵ values: Python 11 ms, Java 0.25 ms, C++ 0.20 ms, the fastest in
+        every language.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        <code>itertools.accumulate(nums, operator.mul)</code> builds the
+        prefix products in Python, but you still need the suffix side. C++'s
+        <code>std::partial_sum</code> with <code>std::multiplies</code> is the
+        same idea.
+      </p>
+      <p class="note">Approach 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Multiply the Others</th>
+              <td>Two loops</td>
+              <td>O(n²)</td>
+              <td>O(1)</td>
+              <td>3.3 s in Python at 10⁴</td>
+            </tr>
+            <tr>
+              <th scope="row">Prefix and Suffix Arrays</th>
+              <td>left[i] × right[i]</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Easy to follow</td>
+            </tr>
+            <tr>
+              <th scope="row">Answer + Running Product</th>
+              <td>Left pass, then right pass</td>
+              <td>O(n)</td>
+              <td>O(1) extra</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
