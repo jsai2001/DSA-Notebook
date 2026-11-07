@@ -1,0 +1,194 @@
+<details class="question" data-group="dynamic-programming" data-tags="dynamic programming dp 0/1 knapsack subset sum counting backtracking">
+  <summary>
+    <span class="q-title">494. Target Sum</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Dynamic Programming</span>
+      <span class="tag">Knapsack</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Split the numbers into a plus part
+      <code>P</code> and a minus part <code>N</code>. <code>P − N = target</code>
+      and <code>P + N = sum</code>, so <code>P = (sum + target) / 2</code>. The
+      answer is the number of subsets that add up to <code>P</code>: a
+      counting 0/1 knapsack, <code>dp[s] += dp[s − x]</code> going down.
+      O(n · sum).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/target-sum/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Put <code>+</code> or <code>-</code> before every number in
+        <code>nums</code>. How many ways give a total of
+        <code>target</code>?
+      </p>
+      <ul>
+        <li><code>1 &lt;= nums.length &lt;= 20</code>, <code>0 &lt;= nums[i] &lt;= 1000</code>, <code>sum(nums) &lt;= 1000</code>, <code>-1000 &lt;= target &lt;= 1000</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>nums = [1,1,1,1,1], target = 3</code> → <code>5</code>.
+        <code>nums = [1], target = 1</code> → <code>1</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>nums = [100], target = -200</code></td>
+              <td><code>0</code></td>
+              <td><code>P = -50</code>. Without the <code>|target| &gt; sum</code> check, Python's <code>dp[-50]</code> raised an IndexError, and other negative <code>P</code>s silently read from the end of the list. Wrong or crashed on 44 of 3,009 tests.</td>
+            </tr>
+            <tr>
+              <td><code>nums = [0,0,0], target = 0</code></td>
+              <td><code>8</code></td>
+              <td><code>+0</code> and <code>-0</code> count as different choices. The downward loop includes <code>s = x = 0</code>, which doubles every count.</td>
+            </tr>
+            <tr>
+              <td><code>nums = [1,2], target = -1</code></td>
+              <td><code>1</code></td>
+              <td>A negative target is fine: <code>P = 1</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Try Every Sign</h2>
+      <p class="intuition">
+        Recurse: give the next number a <code>+</code>, then a
+        <code>-</code>, and count the totals that hit <code>target</code>.
+      </p>
+      <ul>
+        <li>n ≤ 20, so 2²⁰ ≈ 10⁶ choices: slow but it passes.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(2ⁿ)</span>
+        <span><strong>Space</strong> O(n) call stack</span>
+      </div>
+      <p class="note">
+        20 numbers: Python 0.19 to 0.23 s, Java 2.2 to 2.8 ms, C++ 2.6 ms,
+        whatever the values.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Count Ways per Running Total</h2>
+      <p class="intuition">
+        Keep how many sign choices reach each running total. Each number
+        sends every total <code>t</code> to <code>t + x</code> and
+        <code>t − x</code>, carrying its count.
+      </p>
+      <ul>
+        <li>Totals stay between −sum and sum, so there are at most 2·sum + 1 of them.</li>
+        <li>C++ and Java use an array shifted by 1000 instead of a hash map.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · sum)</span>
+        <span><strong>Space</strong> O(sum)</span>
+      </div>
+      <p class="note">
+        20 random numbers up to 100: Python 1.4 ms, Java 0.033 ms, C++ 0.027
+        ms. With twenty 50s there are only 21 different totals at the end:
+        Python 0.047 ms, faster than Approach 3's 0.37 ms.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Subset-Count Knapsack
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        If <code>|target| &gt; sum</code> or <code>sum + target</code> is odd,
+        return 0. Otherwise count subsets adding up to
+        <code>P = (sum + target) / 2</code>: <code>dp[0] = 1</code>, and for
+        each <code>x</code>, <code>dp[s] += dp[s − x]</code> for
+        <code>s</code> from <code>P</code> down to <code>x</code>.
+      </p>
+      <ul>
+        <li>The same loop as 416. Partition Equal Subset Sum, counting instead of yes/no.</li>
+        <li>The table has <code>P + 1 &lt;= sum + 1</code> slots, about half of Approach 2's.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · sum)</span>
+        <span><strong>Space</strong> O(sum)</span>
+      </div>
+      <p class="note">
+        20 random numbers up to 100: Python 0.35 ms, Java 0.038 ms, C++ 0.0035
+        ms. Fastest in Python and C++ on random input.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>Nothing built in. Approach 3 is what you'd write; Approach 2 if you don't spot the <code>P</code> trick.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Try Every Sign</th>
+              <td>Recursion over ±</td>
+              <td>O(2ⁿ)</td>
+              <td>O(n)</td>
+              <td>0.2 s at n = 20 in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">Ways per Total</th>
+              <td>Count map, total ± x</td>
+              <td>O(n · sum)</td>
+              <td>O(sum)</td>
+              <td>No algebra needed</td>
+            </tr>
+            <tr>
+              <th scope="row">Subset-Count Knapsack</th>
+              <td>Count subsets adding to P</td>
+              <td>O(n · sum)</td>
+              <td>O(sum)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

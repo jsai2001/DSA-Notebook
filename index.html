@@ -41222,7 +41222,7 @@
       <details class="pattern-group" id="g-dynamic-programming">
         <summary>
           <span class="g-name">Dynamic Programming</span>
-          <span class="g-count"><span class="g-total">23 problems</span></span>
+          <span class="g-count"><span class="g-total">24 problems</span></span>
           <span class="g-hint">Reuse the answers to smaller problems</span>
         </summary>
         <div class="g-body">
@@ -49114,6 +49114,336 @@
                       <tr>
                         <th scope="row">1-D Knapsack</th>
                         <td><code>dp[s] |= dp[s − x]</code>, downwards</td>
+                        <td>O(n · sum)</td>
+                        <td>O(sum)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0494-target-sum ===== -->
+          <details class="question" data-group="dynamic-programming" data-tags="dynamic programming dp 0/1 knapsack subset sum counting backtracking">
+            <summary>
+              <span class="q-title">494. Target Sum</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Dynamic Programming</span>
+                <span class="tag">Knapsack</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Split the numbers into a plus part
+                <code>P</code> and a minus part <code>N</code>. <code>P − N = target</code>
+                and <code>P + N = sum</code>, so <code>P = (sum + target) / 2</code>. The
+                answer is the number of subsets that add up to <code>P</code>: a
+                counting 0/1 knapsack, <code>dp[s] += dp[s − x]</code> going down.
+                O(n · sum).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/target-sum/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Put <code>+</code> or <code>-</code> before every number in
+                  <code>nums</code>. How many ways give a total of
+                  <code>target</code>?
+                </p>
+                <ul>
+                  <li><code>1 &lt;= nums.length &lt;= 20</code>, <code>0 &lt;= nums[i] &lt;= 1000</code>, <code>sum(nums) &lt;= 1000</code>, <code>-1000 &lt;= target &lt;= 1000</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>nums = [1,1,1,1,1], target = 3</code> → <code>5</code>.
+                  <code>nums = [1], target = 1</code> → <code>1</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>nums = [100], target = -200</code></td>
+                        <td><code>0</code></td>
+                        <td><code>P = -50</code>. Without the <code>|target| &gt; sum</code> check, Python's <code>dp[-50]</code> raised an IndexError, and other negative <code>P</code>s silently read from the end of the list. Wrong or crashed on 44 of 3,009 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>nums = [0,0,0], target = 0</code></td>
+                        <td><code>8</code></td>
+                        <td><code>+0</code> and <code>-0</code> count as different choices. The downward loop includes <code>s = x = 0</code>, which doubles every count.</td>
+                      </tr>
+                      <tr>
+                        <td><code>nums = [1,2], target = -1</code></td>
+                        <td><code>1</code></td>
+                        <td>A negative target is fine: <code>P = 1</code>.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Try Every Sign</h2>
+                <p class="intuition">
+                  Recurse: give the next number a <code>+</code>, then a
+                  <code>-</code>, and count the totals that hit <code>target</code>.
+                </p>
+                <ul>
+                  <li>n ≤ 20, so 2²⁰ ≈ 10⁶ choices: slow but it passes.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(2ⁿ)</span>
+                  <span><strong>Space</strong> O(n) call stack</span>
+                </div>
+                <p class="note">
+                  20 numbers: Python 0.19 to 0.23 s, Java 2.2 to 2.8 ms, C++ 2.6 ms,
+                  whatever the values.
+                </p>
+                <div class="code-tabs" data-viz="0494-target-sum/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"call":[3,6],"leaf":[4,5],"return":[7]}'>
+                    class Solution(object):
+                        def findTargetSumWays(self, nums, target):
+                            def ways(i, total):  # sign choices for nums[i:] that bring total to target
+                                if i == len(nums):  # every number has a sign
+                                    return 1 if total == target else 0
+                                return ways(i + 1, total + nums[i]) + ways(i + 1, total - nums[i])  # + or -
+                            return ways(0, 0)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"call":[3,5],"leaf":[4],"return":[9]}'>
+                    #include <vector>
+                    class Solution {
+                        int ways(const std::vector<int>& nums, int target, size_t i, int total) { // sign choices for nums[i:] that bring total to target
+                            if (i == nums.size()) return total == target; // every number has a sign
+                            return ways(nums, target, i + 1, total + nums[i]) + ways(nums, target, i + 1, total - nums[i]); // + or -
+                        }
+                    public:
+                        int findTargetSumWays(std::vector<int>& nums, int target) {
+                            return ways(nums, target, 0, 0);
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"call":[2,4],"leaf":[3],"return":[7]}'>
+                    class Solution {
+                        private int ways(int[] nums, int target, int i, int total) { // sign choices for nums[i:] that bring total to target
+                            if (i == nums.length) return total == target ? 1 : 0; // every number has a sign
+                            return ways(nums, target, i + 1, total + nums[i]) + ways(nums, target, i + 1, total - nums[i]); // + or -
+                        }
+                        public int findTargetSumWays(int[] nums, int target) {
+                            return ways(nums, target, 0, 0);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Count Ways per Running Total</h2>
+                <p class="intuition">
+                  Keep how many sign choices reach each running total. Each number
+                  sends every total <code>t</code> to <code>t + x</code> and
+                  <code>t − x</code>, carrying its count.
+                </p>
+                <ul>
+                  <li>Totals stay between −sum and sum, so there are at most 2·sum + 1 of them.</li>
+                  <li>C++ and Java use an array shifted by 1000 instead of a hash map.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · sum)</span>
+                  <span><strong>Space</strong> O(sum)</span>
+                </div>
+                <p class="note">
+                  20 random numbers up to 100: Python 1.4 ms, Java 0.033 ms, C++ 0.027
+                  ms. With twenty 50s there are only 21 different totals at the end:
+                  Python 0.047 ms, faster than Approach 3's 0.37 ms.
+                </p>
+                <div class="code-tabs" data-viz="0494-target-sum/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"step":[4,5,6,7,8,9],"return":[10]}'>
+                    class Solution(object):
+                        def findTargetSumWays(self, nums, target):
+                            count = {0: 1}  # running total -> number of sign choices that reach it
+                            for x in nums:
+                                nxt = {}
+                                for total, c in count.items():  # each total splits into total + x and total - x
+                                    nxt[total + x] = nxt.get(total + x, 0) + c
+                                    nxt[total - x] = nxt.get(total - x, 0) + c
+                                count = nxt
+                            return count.get(target, 0)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,6,7],"step":[8,9,10,11,12,13,15],"return":[17]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int findTargetSumWays(std::vector<int>& nums, int target) {
+                            const int OFF = 1000; // totals run from -1000 to 1000: shift them to 0..2000
+                            std::vector<int> count(2 * OFF + 1, 0); // count[total + OFF]: sign choices that reach total
+                            count[OFF] = 1;
+                            for (int x : nums) {
+                                std::vector<int> nxt(2 * OFF + 1, 0);
+                                for (int t = 0; t <= 2 * OFF; ++t) {
+                                    if (!count[t]) continue;
+                                    if (t + x <= 2 * OFF) nxt[t + x] += count[t]; // total + x
+                                    if (t - x >= 0) nxt[t - x] += count[t]; // total - x
+                                }
+                                count.swap(nxt);
+                            }
+                            return target + OFF >= 0 && target + OFF <= 2 * OFF ? count[target + OFF] : 0;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5],"step":[6,7,8,9,10,11,13],"return":[15]}'>
+                    class Solution {
+                        public int findTargetSumWays(int[] nums, int target) {
+                            final int OFF = 1000; // totals run from -1000 to 1000: shift them to 0..2000
+                            int[] count = new int[2 * OFF + 1]; // count[total + OFF]: sign choices that reach total
+                            count[OFF] = 1;
+                            for (int x : nums) {
+                                int[] nxt = new int[2 * OFF + 1];
+                                for (int t = 0; t <= 2 * OFF; t++) {
+                                    if (count[t] == 0) continue;
+                                    if (t + x <= 2 * OFF) nxt[t + x] += count[t]; // total + x
+                                    if (t - x >= 0) nxt[t - x] += count[t]; // total - x
+                                }
+                                count = nxt;
+                            }
+                            return target + OFF >= 0 && target + OFF <= 2 * OFF ? count[target + OFF] : 0;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Subset-Count Knapsack
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  If <code>|target| &gt; sum</code> or <code>sum + target</code> is odd,
+                  return 0. Otherwise count subsets adding up to
+                  <code>P = (sum + target) / 2</code>: <code>dp[0] = 1</code>, and for
+                  each <code>x</code>, <code>dp[s] += dp[s − x]</code> for
+                  <code>s</code> from <code>P</code> down to <code>x</code>.
+                </p>
+                <ul>
+                  <li>The same loop as 416. Partition Equal Subset Sum, counting instead of yes/no.</li>
+                  <li>The table has <code>P + 1 &lt;= sum + 1</code> slots, about half of Approach 2's.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · sum)</span>
+                  <span><strong>Space</strong> O(sum)</span>
+                </div>
+                <p class="note">
+                  20 random numbers up to 100: Python 0.35 ms, Java 0.038 ms, C++ 0.0035
+                  ms. Fastest in Python and C++ on random input.
+                </p>
+                <div class="code-tabs" data-viz="0494-target-sum/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5,6,7],"num":[8],"fill":[9,10],"return":[11]}'>
+                    class Solution(object):
+                        def findTargetSumWays(self, nums, target):
+                            total = sum(nums)  # plus part P minus minus part N = target, and P + N = total, so P = (total + target) / 2
+                            if abs(target) > total or (total + target) % 2:
+                                return 0
+                            p = (total + target) // 2
+                            dp = [1] + [0] * p  # dp[s]: ways to pick some numbers so far that add up to s
+                            for x in nums:
+                                for s in range(p, x - 1, -1):  # downwards, so x is used at most once
+                                    dp[s] += dp[s - x]
+                            return dp[p]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8,9,10,11],"num":[12],"fill":[13],"return":[14]}'>
+                    #include <cstdlib>
+                    #include <numeric>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int findTargetSumWays(std::vector<int>& nums, int target) {
+                            int total = std::accumulate(nums.begin(), nums.end(), 0); // P − N = target and P + N = total, so P = (total + target) / 2
+                            if (std::abs(target) > total || (total + target) % 2) return 0;
+                            int p = (total + target) / 2;
+                            std::vector<int> dp(p + 1, 0); // dp[s]: ways to pick some numbers so far that add up to s
+                            dp[0] = 1;
+                            for (int x : nums)
+                                for (int s = p; s >= x; --s) dp[s] += dp[s - x]; // downwards, so x is used at most once
+                            return dp[p];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5,6,7,8],"num":[9],"fill":[10],"return":[11]}'>
+                    class Solution {
+                        public int findTargetSumWays(int[] nums, int target) {
+                            int total = 0; // P − N = target and P + N = total, so P = (total + target) / 2
+                            for (int x : nums) total += x;
+                            if (Math.abs(target) > total || (total + target) % 2 != 0) return 0;
+                            int p = (total + target) / 2;
+                            int[] dp = new int[p + 1]; // dp[s]: ways to pick some numbers so far that add up to s
+                            dp[0] = 1;
+                            for (int x : nums)
+                                for (int s = p; s >= x; s--) dp[s] += dp[s - x]; // downwards, so x is used at most once
+                            return dp[p];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>Nothing built in. Approach 3 is what you'd write; Approach 2 if you don't spot the <code>P</code> trick.</p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Try Every Sign</th>
+                        <td>Recursion over ±</td>
+                        <td>O(2ⁿ)</td>
+                        <td>O(n)</td>
+                        <td>0.2 s at n = 20 in Python</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Ways per Total</th>
+                        <td>Count map, total ± x</td>
+                        <td>O(n · sum)</td>
+                        <td>O(sum)</td>
+                        <td>No algebra needed</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Subset-Count Knapsack</th>
+                        <td>Count subsets adding to P</td>
                         <td>O(n · sum)</td>
                         <td>O(sum)</td>
                         <td>Expected answer</td>
@@ -81417,6 +81747,104 @@
             else { marks[i] = "visited"; steps.push({ line: "scan", note: `[${s}, ${e}] starts before ${end}: it overlaps the last kept one. Skip it (removed).`, view: [ivv(iv, "sorted by end; green = kept, grey = removed", { ...marks, [i]: "cut" }), vars()] }); }
           });
           steps.push({ line: "return", note: `Return ${iv.length - kept}: ${iv.length} intervals, ${kept} kept. O(n log n) for the sort.`, view: [ivv(iv, "sorted by end; green = kept, grey = removed", marks), vars()] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0494-target-sum/approach1.visual.js -->
+    <script>
+      // Try both signs for every number: 2ⁿ sign choices, count the ones that hit target.
+      (function () {
+      const sumOf = (a) => a.reduce((s, x) => s + x, 0);
+      const nv = (nums, marks = {}, label = "nums") => ({ type: "array", label, values: nums, marks });
+      DSAViz.register("0494-target-sum/approach1", {
+        inputs: [
+          { name: "nums", type: "int[]", value: "[1, 1, 1, 1, 1]", minLength: 1, maxLength: 6, minValue: 0, maxValue: 100 },
+          { name: "target", type: "int", value: "3", min: -1000, max: 1000 },
+        ],
+        trace({ nums, target }) {
+          const steps = [{ line: "call", note: `Give each number a + or −. Count the choices whose total is ${target}.`, view: [nv(nums)] }];
+          const signs = [];
+          let found = 0, leaves = 0;
+          const sv = () => ({ type: "array", label: "signs so far", values: signs.length ? signs.map((s, i) => `${s}${nums[i]}`) : ["—"], marks: signs.length ? { [signs.length - 1]: "new" } : { 0: "ghost" } });
+          function ways(i, total) {
+            if (i === nums.length) {
+              leaves++;
+              const ok = total === target;
+              if (ok) found++;
+              steps.push({ line: "leaf", note: `${signs.map((s, k) => `${s}${nums[k]}`).join(" ")} = ${total}${ok ? ` = target. Count it (${found} so far).` : `, not ${target}.`}`, view: [nv(nums), sv(), { type: "vars", items: [{ name: "total", value: total, mark: ok ? "match" : "cut" }, { name: "ways", value: found }] }] });
+              return ok ? 1 : 0;
+            }
+            signs.push("+"); const a = ways(i + 1, total + nums[i]); signs.pop();
+            signs.push("−"); const b = ways(i + 1, total - nums[i]); signs.pop();
+            return a + b;
+          }
+          const r = ways(0, 0);
+          steps.push({ line: "return", note: `Return ${r}. All ${leaves} sign choices were tried: O(2ⁿ).`, view: [nv(nums), { type: "vars", items: [{ name: "ways", value: r, mark: "match" }] }] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0494-target-sum/approach2.visual.js -->
+    <script>
+      // Map each reachable running total to how many sign choices reach it. Each number splits every total into total ± x.
+      (function () {
+      const sumOf = (a) => a.reduce((s, x) => s + x, 0);
+      const nv = (nums, marks = {}, label = "nums") => ({ type: "array", label, values: nums, marks });
+      DSAViz.register("0494-target-sum/approach2", {
+        inputs: [
+          { name: "nums", type: "int[]", value: "[1, 1, 1, 1, 1]", minLength: 1, maxLength: 10, minValue: 0, maxValue: 100 },
+          { name: "target", type: "int", value: "3", min: -1000, max: 1000 },
+        ],
+        trace({ nums, target }) {
+          let count = new Map([[0, 1]]);
+          const cv = (marks = {}) => ({ type: "map", label: "total → ways to reach it", columns: ["total", "ways"], entries: [...count.keys()].sort((a, b) => a - b).map((k) => [k, count.get(k)]), marks });
+          const steps = [{ line: "init", note: "Before any number: total 0, reached 1 way.", view: [nv(nums), cv()] }];
+          nums.forEach((x, i) => {
+            const nxt = new Map();
+            for (const [t, c] of count) { nxt.set(t + x, (nxt.get(t + x) || 0) + c); nxt.set(t - x, (nxt.get(t - x) || 0) + c); }
+            count = nxt;
+            steps.push({ line: "step", note: `x = ${x}: every total t becomes t + ${x} and t − ${x}, carrying its count. ${count.size} different total${count.size > 1 ? "s" : ""} now.`, view: [nv(nums, { [i]: "active" }), cv(count.has(target) ? { [target]: "compare" } : {})] });
+          });
+          const r = count.get(target) || 0;
+          steps.push({ line: "return", note: `Return ${r}: the count for total ${target}. At most 2·sum + 1 totals per step: O(n · sum).`, view: [cv(count.has(target) ? { [target]: "match" } : {})] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0494-target-sum/approach3.visual.js -->
+    <script>
+      // The + numbers add to P = (sum + target) / 2. Count subsets with sum P using a 1-D knapsack DP.
+      (function () {
+      const sumOf = (a) => a.reduce((s, x) => s + x, 0);
+      const nv = (nums, marks = {}, label = "nums") => ({ type: "array", label, values: nums, marks });
+      DSAViz.register("0494-target-sum/approach3", {
+        inputs: [
+          { name: "nums", type: "int[]", value: "[1, 1, 1, 1, 1]", minLength: 1, maxLength: 10, minValue: 0, maxValue: 40 },
+          { name: "target", type: "int", value: "3", min: -1000, max: 1000 },
+        ],
+        trace({ nums, target }) {
+          const total = sumOf(nums);
+          if (total > 40) throw new DSAViz.InputError(`The numbers add up to ${total}; keep it at most 40 here so the table fits.`);
+          const steps = [];
+          if (Math.abs(target) > total || (total + target) % 2) {
+            steps.push({ line: "init", note: Math.abs(target) > total ? `|${target}| > the sum ${total}: even all + or all − can't reach it. Return 0.` : `sum + target = ${total + target} is odd, but it must be 2·P. Return 0.`, view: [nv(nums)] });
+            return steps;
+          }
+          const p = (total + target) / 2;
+          const dp = Array(p + 1).fill(0);
+          dp[0] = 1;
+          const dv = (marks = {}) => ({ type: "array", label: "dp[s]: ways to pick numbers adding up to s", values: [...dp], marks, compact: true });
+          steps.push({ line: "init", note: `The + numbers add to P and the − ones to N: P − N = ${target}, P + N = ${total}. So P = (${total} + ${target}) / 2 = ${p}. Count subsets that add up to ${p}.`, view: [nv(nums), dv({ 0: "match" })] });
+          nums.forEach((x, i) => {
+            const marks = {};
+            for (let s = p; s >= x; s--) if (dp[s - x]) { dp[s] += dp[s - x]; marks[s] = "new"; }
+            steps.push({ line: ["num", "fill"], note: `x = ${x}: for s from ${p} down to ${x}, dp[s] += dp[s − ${x}].${x === 0 ? " A 0 doubles every count: +0 and −0 are two different choices." : ""}`, view: [nv(nums, { [i]: "active" }), dv(marks)] });
+          });
+          steps.push({ line: "return", note: `Return ${dp[p]}: dp[${p}]. O(n · sum) time, O(sum) space.`, view: [dv({ [p]: "match" })] });
           return steps;
         },
       });
