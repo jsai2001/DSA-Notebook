@@ -1,0 +1,195 @@
+<details class="question" data-group="dynamic-programming" data-tags="dynamic programming dp memoization dfs grid matrix topological sort longest path dag">
+  <summary>
+    <span class="q-title">329. Longest Increasing Path in a Matrix</span>
+    <span class="q-meta">
+      <span class="badge hard">Hard</span>
+      <span class="tag">Dynamic Programming</span>
+      <span class="tag">Memoization</span>
+      <span class="tag">Topological Sort</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Moving only to strictly bigger neighbours
+      can never loop back, so the grid is a DAG and the longest path from a
+      cell never changes. Remember it: <code>longest(r, c) = 1 + max</code>
+      over bigger neighbours, worked out once per cell with a DFS. O(m·n).
+      Without the memo the same paths are walked again and again, which is
+      exponential.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/longest-increasing-path-in-a-matrix/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Return the length of the longest path of cells in which each value
+        is strictly bigger than the one before. You can move up, down, left
+        or right, not diagonally or off the grid.
+      </p>
+      <ul>
+        <li><code>1 &lt;= m, n &lt;= 200</code>, <code>0 &lt;= matrix[i][j] &lt;= 2³¹ − 1</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[[9,9,4],[6,6,8],[2,1,1]]</code> → <code>4</code>
+        (1 → 2 → 6 → 9). <code>[[3,4,5],[3,2,6],[2,2,1]]</code> →
+        <code>4</code> (3 → 4 → 5 → 6).
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>12 × 12 with <code>matrix[r][c] = r + c</code></td>
+              <td><code>23</code></td>
+              <td>Very many increasing paths overlap. The DFS without a memo took 5.9 s in Python; with the memo, 0.1 ms.</td>
+            </tr>
+            <tr>
+              <td>200 × 200 snake: 0, 1, 2, … back and forth</td>
+              <td><code>40000</code></td>
+              <td>One path through every cell: the memoized DFS goes 40,000 calls deep. It worked here with Python's limit raised, and with Java's and C++'s default stacks.</td>
+            </tr>
+            <tr>
+              <td><code>[[7,7],[7,7]]</code></td>
+              <td><code>1</code></td>
+              <td>Equal values don't count as increasing.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: DFS From Every Cell, No Memo</h2>
+      <p class="intuition">
+        From each cell, try every bigger neighbour and keep the longest
+        result. Nothing is remembered, so a cell's answer is worked out again
+        every time a path reaches it.
+      </p>
+      <ul>
+        <li>Correct, and fine on small or random grids.</li>
+        <li>Exponential when many increasing paths overlap.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> exponential at worst</span>
+        <span><strong>Space</strong> O(m·n) call stack</span>
+      </div>
+      <p class="note">
+        The <code>r + c</code> grid in Python: 10 × 10 took 0.42 s, 11 × 11
+        1.5 s, 12 × 12 5.9 s, about 4 times longer per extra row and column.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Peel Layers (Topological Sort)</h2>
+      <p class="intuition">
+        Count each cell's bigger neighbours. Cells with none are peaks (every
+        path ends at one): that's the first layer. Peel it; each smaller
+        neighbour loses a bigger neighbour, and those that reach 0 form the
+        next layer. The number of layers is the answer.
+      </p>
+      <ul>
+        <li>Kahn's algorithm on the grid. No recursion at all.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n)</span>
+        <span><strong>Space</strong> O(m·n)</span>
+      </div>
+      <p class="note">
+        200 × 200 random: Python 80 ms, Java 2.7 ms, C++ 1.4 ms, 1.2 to 2.2
+        times the time of Approach 3.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: DFS + Memo
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        The same DFS as Approach 1, but store <code>longest(r, c)</code> the
+        first time it's worked out. Because values strictly increase along a
+        path, a call can never come back to a cell that's still being worked
+        out.
+      </p>
+      <ul>
+        <li>No <code>visited</code> set is needed: the "strictly bigger" rule already rules out loops.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n)</span>
+        <span><strong>Space</strong> O(m·n)</span>
+      </div>
+      <p class="note">
+        200 × 200 random: Python 36 ms, Java 1.6 ms, C++ 1.2 ms, the fastest
+        in every language.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>Nothing built in. Approach 3 is what you'd write; Approach 2 if deep recursion is a worry.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">DFS, No Memo</th>
+              <td>Search again from every cell</td>
+              <td>Exponential</td>
+              <td>O(m·n)</td>
+              <td>5.9 s at 12 × 12</td>
+            </tr>
+            <tr>
+              <th scope="row">Peel Layers</th>
+              <td>Kahn's algorithm from the peaks</td>
+              <td>O(m·n)</td>
+              <td>O(m·n)</td>
+              <td>No recursion</td>
+            </tr>
+            <tr>
+              <th scope="row">DFS + Memo</th>
+              <td>longest(r, c) once per cell</td>
+              <td>O(m·n)</td>
+              <td>O(m·n)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
