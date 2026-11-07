@@ -1,0 +1,196 @@
+<details class="question" data-group="bit-manipulation" data-tags="bit manipulation xor carry adder two's complement math">
+  <summary>
+    <span class="q-title">371. Sum of Two Integers</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Bit Manipulation</span>
+      <span class="tag">Math</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> <code>a ^ b</code> is the sum without
+      carries, and <code>(a &amp; b) &lt;&lt; 1</code> is the carries. Add
+      those two the same way, until the carries are 0. In Python, mask to 32
+      bits every round, or a negative sum never stops.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/sum-of-two-integers/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>Return <code>a + b</code> without using the operators <code>+</code> and <code>-</code>.</p>
+      <ul>
+        <li><code>-1000 &lt;= a, b &lt;= 1000</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>a = 1, b = 2</code> → <code>3</code>.
+        <code>a = 2, b = 3</code> → <code>5</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>a = -1, b = 1</code></td>
+              <td><code>0</code></td>
+              <td>The carry runs through all 32 bits: 32 rounds of the carry loop. Python ints have no bit 31 to fall off, so without a mask the carry moves up forever. That never stopped on 1,142 of 4,694 tests.</td>
+            </tr>
+            <tr>
+              <td><code>a = -1000, b = -1000</code></td>
+              <td><code>-2000</code></td>
+              <td>A negative answer. In Python, turn a 32-bit pattern with bit 31 set back into a negative number: <code>~(x ^ 0xFFFFFFFF)</code>.</td>
+            </tr>
+            <tr>
+              <td><code>a = 5, b = 0</code></td>
+              <td><code>5</code></td>
+              <td>No carries at all: the loop doesn't run.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Bit-by-Bit Full Adder</h2>
+      <p class="intuition">
+        Add like on paper, in binary. For each of the 32 bits, from the
+        lowest: the sum bit is <code>x ^ y ^ carry</code> (1 when an odd
+        number of them are 1), and the new carry is 1 when at least two of
+        them are 1.
+      </p>
+      <ul>
+        <li>This is how a ripple-carry adder circuit works.</li>
+        <li>Always 32 rounds.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(1): 32 rounds</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Average over 4,694 pairs: Python 4.9 µs, 3.5 times Approach 3. In
+        Java and C++ every approach averaged under 0.1 µs, too fast to rank.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Carry Recursion</h2>
+      <p class="intuition">
+        <code>a + b = (a ^ b) + ((a &amp; b) &lt;&lt; 1)</code>: the bits
+        without carries, plus the carries one place up. Call yourself on
+        those two until the carry part is 0.
+      </p>
+      <ul>
+        <li>Each round, the lowest carry moves up at least one bit, so it ends within 32 rounds.</li>
+        <li>In C++ use <code>unsigned</code>: shifting a negative number left is undefined before C++20.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(1): at most 32 rounds</span>
+        <span><strong>Space</strong> O(1): at most 32 calls deep</span>
+      </div>
+      <p class="note">
+        Python 1.9 µs on average. For random pairs in range it took 8.5 rounds
+        on average, not 32.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Carry Loop
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        The same as Approach 2 as a loop: <code>a, b = a ^ b, (a &amp; b)
+        &lt;&lt; 1</code> until <code>b</code> is 0. In Python, mask both to
+        32 bits each round and fix the sign at the end.
+      </p>
+      <ul>
+        <li>In Java, <code>int</code> already wraps at 32 bits, so no mask is needed.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(1): at most 32 rounds</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">Python 1.4 µs on average, the fastest of the three.</p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        You'd write <code>a + b</code>. If the rule is only "no
+        <code>+</code> in your code", <code>sum((a, b))</code>,
+        <code>std::plus&lt;int&gt;()(a, b)</code> and
+        <code>Integer.sum(a, b)</code> follow the letter of it, not the
+        point.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(1)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">Python 0.26 µs on average, 5 times faster than Approach 3.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Full Adder</th>
+              <td>Sum bit and carry per bit</td>
+              <td>O(1), 32 rounds</td>
+              <td>O(1)</td>
+              <td>Slowest in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">Carry Recursion</th>
+              <td><code>(a ^ b) + ((a &amp; b) &lt;&lt; 1)</code></td>
+              <td>O(1), ≤ 32 rounds</td>
+              <td>O(1)</td>
+              <td>Up to 32 calls deep</td>
+            </tr>
+            <tr>
+              <th scope="row">Carry Loop</th>
+              <td>Same, as a loop</td>
+              <td>O(1), ≤ 32 rounds</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

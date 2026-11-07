@@ -56736,7 +56736,7 @@
       <details class="pattern-group" id="g-bit-manipulation">
         <summary>
           <span class="g-name">Bit Manipulation</span>
-          <span class="g-count"><span class="g-total">4 problems</span></span>
+          <span class="g-count"><span class="g-total">5 problems</span></span>
           <span class="g-hint">Shift, mask and count the bits</span>
         </summary>
         <div class="g-body">
@@ -58025,6 +58025,334 @@
                         <th scope="row">DP on the Last Bit</th>
                         <td><code>ans[i &gt;&gt; 1] + (i &amp; 1)</code></td>
                         <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0371-sum-of-two-integers ===== -->
+          <details class="question" data-group="bit-manipulation" data-tags="bit manipulation xor carry adder two's complement math">
+            <summary>
+              <span class="q-title">371. Sum of Two Integers</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Bit Manipulation</span>
+                <span class="tag">Math</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> <code>a ^ b</code> is the sum without
+                carries, and <code>(a &amp; b) &lt;&lt; 1</code> is the carries. Add
+                those two the same way, until the carries are 0. In Python, mask to 32
+                bits every round, or a negative sum never stops.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/sum-of-two-integers/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>Return <code>a + b</code> without using the operators <code>+</code> and <code>-</code>.</p>
+                <ul>
+                  <li><code>-1000 &lt;= a, b &lt;= 1000</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>a = 1, b = 2</code> → <code>3</code>.
+                  <code>a = 2, b = 3</code> → <code>5</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>a = -1, b = 1</code></td>
+                        <td><code>0</code></td>
+                        <td>The carry runs through all 32 bits: 32 rounds of the carry loop. Python ints have no bit 31 to fall off, so without a mask the carry moves up forever. That never stopped on 1,142 of 4,694 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>a = -1000, b = -1000</code></td>
+                        <td><code>-2000</code></td>
+                        <td>A negative answer. In Python, turn a 32-bit pattern with bit 31 set back into a negative number: <code>~(x ^ 0xFFFFFFFF)</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>a = 5, b = 0</code></td>
+                        <td><code>5</code></td>
+                        <td>No carries at all: the loop doesn't run.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Bit-by-Bit Full Adder</h2>
+                <p class="intuition">
+                  Add like on paper, in binary. For each of the 32 bits, from the
+                  lowest: the sum bit is <code>x ^ y ^ carry</code> (1 when an odd
+                  number of them are 1), and the new carry is 1 when at least two of
+                  them are 1.
+                </p>
+                <ul>
+                  <li>This is how a ripple-carry adder circuit works.</li>
+                  <li>Always 32 rounds.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(1): 32 rounds</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  Average over 4,694 pairs: Python 4.9 µs, 3.5 times Approach 3. In
+                  Java and C++ every approach averaged under 0.1 µs, too fast to rank.
+                </p>
+                <div class="code-tabs" data-viz="0371-sum-of-two-integers/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"bit":[6,7,8,9],"return":[10]}'>
+                    class Solution(object):
+                        def getSum(self, a, b):
+                            MASK = 0xFFFFFFFF  # work on 32-bit two's complement, like C++ and Java
+                            a, b = a & MASK, b & MASK
+                            res, carry = 0, 0
+                            for i in range(32):  # one full adder per bit, lowest first
+                                x, y = a >> i & 1, b >> i & 1
+                                res |= (x ^ y ^ carry) << i  # the sum bit: odd number of 1s
+                                carry = (x & y) | (carry & (x ^ y))  # the carry: at least two 1s
+                            return res if res <= 0x7FFFFFFF else ~(res ^ MASK)  # bit 31 set: turn it back into a negative Python int
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[4],"bit":[5,6,7,8],"return":[10]}'>
+                    class Solution {
+                    public:
+                        int getSum(int a, int b) {
+                            unsigned x = a, y = b, res = 0, carry = 0; // unsigned: shifts are well defined
+                            for (int i = 0; i < 32; ++i) { // one full adder per bit, lowest first
+                                unsigned p = x >> i & 1, q = y >> i & 1;
+                                res |= (p ^ q ^ carry) << i; // the sum bit: odd number of 1s
+                                carry = (p & q) | (carry & (p ^ q)); // the carry: at least two 1s
+                            }
+                            return (int)res;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"bit":[4,5,6,7],"return":[9]}'>
+                    class Solution {
+                        public int getSum(int a, int b) {
+                            int res = 0, carry = 0;
+                            for (int i = 0; i < 32; i++) { // one full adder per bit, lowest first
+                                int p = a >> i & 1, q = b >> i & 1;
+                                res |= (p ^ q ^ carry) << i; // the sum bit: odd number of 1s
+                                carry = (p & q) | (carry & (p ^ q)); // the carry: at least two 1s
+                            }
+                            return res;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Carry Recursion</h2>
+                <p class="intuition">
+                  <code>a + b = (a ^ b) + ((a &amp; b) &lt;&lt; 1)</code>: the bits
+                  without carries, plus the carries one place up. Call yourself on
+                  those two until the carry part is 0.
+                </p>
+                <ul>
+                  <li>Each round, the lowest carry moves up at least one bit, so it ends within 32 rounds.</li>
+                  <li>In C++ use <code>unsigned</code>: shifting a negative number left is undefined before C++20.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(1): at most 32 rounds</span>
+                  <span><strong>Space</strong> O(1): at most 32 calls deep</span>
+                </div>
+                <p class="note">
+                  Python 1.9 µs on average. For random pairs in range it took 8.5 rounds
+                  on average, not 32.
+                </p>
+                <div class="code-tabs" data-viz="0371-sum-of-two-integers/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,8],"return":[5,6,9],"step":[7]}'>
+                    class Solution(object):
+                        def getSum(self, a, b):
+                            MASK = 0xFFFFFFFF
+                            def add(x, y):  # x, y are 32-bit patterns
+                                if y == 0:  # no carry left
+                                    return x
+                                return add((x ^ y) & MASK, ((x & y) << 1) & MASK)  # sum without carries, and the carries one place up
+                            r = add(a & MASK, b & MASK)
+                            return r if r <= 0x7FFFFFFF else ~(r ^ MASK)  # bit 31 set: turn it back into a negative Python int
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[2,8],"return":[3,8],"step":[4]}'>
+                    class Solution {
+                        unsigned add(unsigned x, unsigned y) {
+                            if (y == 0) return x; // no carry left
+                            return add(x ^ y, (x & y) << 1); // sum without carries, and the carries one place up
+                        }
+                    public:
+                        int getSum(int a, int b) {
+                            return (int)add(a, b); // unsigned: shifting a carry out of bit 31 is well defined
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"return":[3],"step":[4]}'>
+                    class Solution {
+                        public int getSum(int a, int b) {
+                            if (b == 0) return a; // no carry left
+                            return getSum(a ^ b, (a & b) << 1); // sum without carries, and the carries one place up
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Carry Loop
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  The same as Approach 2 as a loop: <code>a, b = a ^ b, (a &amp; b)
+                  &lt;&lt; 1</code> until <code>b</code> is 0. In Python, mask both to
+                  32 bits each round and fix the sign at the end.
+                </p>
+                <ul>
+                  <li>In Java, <code>int</code> already wraps at 32 bits, so no mask is needed.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(1): at most 32 rounds</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">Python 1.4 µs on average, the fastest of the three.</p>
+                <div class="code-tabs" data-viz="0371-sum-of-two-integers/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"loop":[5],"step":[6],"return":[7]}'>
+                    class Solution(object):
+                        def getSum(self, a, b):
+                            MASK = 0xFFFFFFFF  # Python ints never overflow, so keep 32 bits by hand
+                            a, b = a & MASK, b & MASK
+                            while b:  # until no carry is left
+                                a, b = (a ^ b) & MASK, ((a & b) << 1) & MASK  # sum without carries, and the carries one place up
+                            return a if a <= 0x7FFFFFFF else ~(a ^ MASK)  # bit 31 set: turn it back into a negative Python int
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[4],"loop":[5],"step":[6,7,8],"return":[10]}'>
+                    class Solution {
+                    public:
+                        int getSum(int a, int b) {
+                            unsigned x = a, y = b; // unsigned: shifting a carry out of bit 31 is well defined
+                            while (y) { // until no carry is left
+                                unsigned carry = (x & y) << 1; // the carries, one place up
+                                x ^= y; // sum without carries
+                                y = carry;
+                            }
+                            return (int)x;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"loop":[3],"step":[4,5,6],"return":[8]}'>
+                    class Solution {
+                        public int getSum(int a, int b) {
+                            while (b != 0) { // until no carry is left
+                                int carry = (a & b) << 1; // the carries, one place up
+                                a ^= b; // sum without carries
+                                b = carry;
+                            }
+                            return a;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  You'd write <code>a + b</code>. If the rule is only "no
+                  <code>+</code> in your code", <code>sum((a, b))</code>,
+                  <code>std::plus&lt;int&gt;()(a, b)</code> and
+                  <code>Integer.sum(a, b)</code> follow the letter of it, not the
+                  point.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    class Solution(object):
+                        def getSum(self, a, b):
+                            return sum((a, b))  # no + in your code; the + happens inside sum
+                  </script>
+                  <script type="text/plain" data-lang="C++">
+                    #include <functional>
+                    class Solution {
+                    public:
+                        int getSum(int a, int b) {
+                            return std::plus<int>()(a, b); // no + in your code; std::plus does it
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java">
+                    class Solution {
+                        public int getSum(int a, int b) {
+                            return Integer.sum(a, b); // no + in your code; Integer.sum does it
+                        }
+                    }
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(1)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">Python 0.26 µs on average, 5 times faster than Approach 3.</p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Full Adder</th>
+                        <td>Sum bit and carry per bit</td>
+                        <td>O(1), 32 rounds</td>
+                        <td>O(1)</td>
+                        <td>Slowest in Python</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Carry Recursion</th>
+                        <td><code>(a ^ b) + ((a &amp; b) &lt;&lt; 1)</code></td>
+                        <td>O(1), ≤ 32 rounds</td>
+                        <td>O(1)</td>
+                        <td>Up to 32 calls deep</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Carry Loop</th>
+                        <td>Same, as a loop</td>
+                        <td>O(1), ≤ 32 rounds</td>
                         <td>O(1)</td>
                         <td>Expected answer</td>
                       </tr>
@@ -77625,6 +77953,93 @@
         const had = follows.get(a).delete(b);
         return had ? `unfollow(${a}, ${b}).` : `unfollow(${a}, ${b}): ${a} didn't follow ${b}, so nothing changes (no error).`;
       }
+      })();
+    </script>
+    <!-- problems/0371-sum-of-two-integers/approach1.visual.js -->
+    <script>
+      // A full adder per bit: sum bit = x ^ y ^ carry, carry out = at least two of them are 1. Always 32 rounds.
+      (function () {
+      const INPUTS = [
+        { name: "a", type: "int", value: "-1", min: -1000, max: 1000 },
+        { name: "b", type: "int", value: "1", min: -1000, max: 1000 },
+      ];
+      // 32-bit pattern as 4 bytes, highest first
+      const bits = (x) => (x >>> 0).toString(2).padStart(32, "0").replace(/(.{8})(?!$)/g, "$1 ");
+      DSAViz.register("0371-sum-of-two-integers/approach1", {
+        inputs: [{ ...INPUTS[0], value: "5" }, { ...INPUTS[1], value: "-3" }],
+        trace({ a, b }) {
+          let res = 0, carry = 0;
+          const view = (i, extra = []) => [{ type: "vars", items: [{ name: "a", value: bits(a) }, { name: "b", value: bits(b) }, { name: "res", value: bits(res), mark: i === undefined ? "" : "new" }, ...extra] }];
+          const steps = [{ line: "init", note: `Add ${a} and ${b} as 32-bit patterns, one bit at a time from the right.`, view: view() }];
+          for (let i = 0; i < 32; i++) {
+            const x = (a >>> i) & 1, y = (b >>> i) & 1, c = carry;
+            const s = x ^ y ^ c;
+            res = (res | (s << i)) | 0;
+            carry = (x & y) | (c & (x ^ y));
+            steps.push({ line: "bit", note: `Bit ${i}: ${x} + ${y} + carry ${c} → sum bit ${s}, carry ${carry}.`, view: view(i, [{ name: "bit", value: i, mark: "active" }, { name: "carry", value: carry }]) });
+          }
+          steps.push({ line: "return", note: `Return ${res}. Always 32 rounds, whatever the numbers. O(1), but the most work of the three.`, view: view() });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0371-sum-of-two-integers/approach2.visual.js -->
+    <script>
+      // Carry loop: a ^ b adds without carries; (a & b) << 1 is the carries. Repeat until there are none.
+      (function () {
+      const INPUTS = [
+        { name: "a", type: "int", value: "-1", min: -1000, max: 1000 },
+        { name: "b", type: "int", value: "1", min: -1000, max: 1000 },
+      ];
+      // 32-bit pattern as 4 bytes, highest first
+      const bits = (x) => (x >>> 0).toString(2).padStart(32, "0").replace(/(.{8})(?!$)/g, "$1 ");
+      DSAViz.register("0371-sum-of-two-integers/approach2", {
+        inputs: INPUTS,
+        trace({ a, b }) {
+          let x = a | 0, y = b | 0, round = 0;
+          const view = (mark) => [{ type: "vars", items: [{ name: "a", value: bits(x), mark }, { name: "b", value: bits(y), mark }, { name: "round", value: round }] }];
+          const steps = [{ line: "init", note: `Add ${a} and ${b} as 32-bit patterns.`, view: view() }];
+          while (y !== 0) {
+            round++;
+            const nx = x ^ y, ny = (x & y) << 1;
+            steps.push({ line: "step", note: `Round ${round}: a ^ b = ${nx} (the sum without carries). (a & b) << 1 = ${ny} (${ny === 0 ? "no carries left" : "the carries, one place up"}).`, view: view() });
+            x = nx; y = ny;
+            steps[steps.length - 1].view = view("new");
+          }
+          steps.push({ line: "return", note: `Return ${x}. b is 0: no carry left after ${round} round${round === 1 ? "" : "s"}. A carry moves up at least one bit per round, so at most 32: O(1).`, view: view() });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0371-sum-of-two-integers/approach3.visual.js -->
+    <script>
+      // Carry loop: a ^ b adds without carries; (a & b) << 1 is the carries. Repeat until there are none.
+      (function () {
+      const INPUTS = [
+        { name: "a", type: "int", value: "-1", min: -1000, max: 1000 },
+        { name: "b", type: "int", value: "1", min: -1000, max: 1000 },
+      ];
+      // 32-bit pattern as 4 bytes, highest first
+      const bits = (x) => (x >>> 0).toString(2).padStart(32, "0").replace(/(.{8})(?!$)/g, "$1 ");
+      DSAViz.register("0371-sum-of-two-integers/approach3", {
+        inputs: INPUTS,
+        trace({ a, b }) {
+          let x = a | 0, y = b | 0, round = 0;
+          const view = (mark) => [{ type: "vars", items: [{ name: "a", value: bits(x), mark }, { name: "b", value: bits(y), mark }, { name: "round", value: round }] }];
+          const steps = [{ line: "init", note: `Add ${a} and ${b} as 32-bit patterns.`, view: view() }];
+          while (y !== 0) {
+            round++;
+            const nx = x ^ y, ny = (x & y) << 1;
+            steps.push({ line: ["loop", "step"], note: `Round ${round}: a ^ b = ${nx} (the sum without carries). (a & b) << 1 = ${ny} (${ny === 0 ? "no carries left" : "the carries, one place up"}).`, view: view() });
+            x = nx; y = ny;
+            steps[steps.length - 1].view = view("new");
+          }
+          steps.push({ line: "return", note: `Return ${x}. b is 0: no carry left after ${round} round${round === 1 ? "" : "s"}. A carry moves up at least one bit per round, so at most 32: O(1).`, view: view() });
+          return steps;
+        },
+      });
       })();
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->
