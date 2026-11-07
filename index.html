@@ -33199,7 +33199,7 @@
       <details class="pattern-group" id="g-dynamic-programming">
         <summary>
           <span class="g-name">Dynamic Programming</span>
-          <span class="g-count"><span class="g-total">15 problems</span></span>
+          <span class="g-count"><span class="g-total">16 problems</span></span>
           <span class="g-hint">Reuse the answers to smaller problems</span>
         </summary>
         <div class="g-body">
@@ -39652,6 +39652,370 @@
                         <td>2n − 1 centers, grow while ends match</td>
                         <td>O(n²)</td>
                         <td>O(1)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/1143-longest-common-subsequence ===== -->
+          <details class="question" data-group="dynamic-programming" data-tags="dynamic programming dp 2d string subsequence lcs memoization table">
+            <summary>
+              <span class="q-title">1143. Longest Common Subsequence</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">String</span>
+                <span class="tag">Dynamic Programming</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Compare the last letters of the two
+                prefixes. If they match, they're part of the answer:
+                <code>dp[i][j] = dp[i−1][j−1] + 1</code>. If not, one of them is left
+                out: <code>dp[i][j] = max(dp[i−1][j], dp[i][j−1])</code>. Fill the
+                table row by row; each row needs only the row above, so one row of
+                memory is enough.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/longest-common-subsequence/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Return the length of the longest sequence of letters that appears in
+                  both texts in the same order (not necessarily side by side), or
+                  <code>0</code> if they share none.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= text1.length, text2.length &lt;= 1000</code></li>
+                  <li>Lowercase English letters only</li>
+                </ul>
+                <p class="note">
+                  Example: <code>"abcde", "ace"</code> → <code>3</code> ("ace").
+                  <code>"abc", "abc"</code> → <code>3</code>. <code>"abc", "def"</code>
+                  → <code>0</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>"aca", "ca"</code></td>
+                        <td><code>2</code></td>
+                        <td>Greedy "match each letter of text1 at its first spot in text2" grabs the first <code>a</code> too early: it said <code>1</code>. Wrong on 471 of 3006 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"b", "bc"</code></td>
+                        <td><code>1</code></td>
+                        <td>On a mismatch, copying the diagonal (<code>dp[i−1][j−1]</code>) instead of the best of up and left forgets the match: it said <code>0</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"abc", "def"</code></td>
+                        <td><code>0</code></td>
+                        <td>Nothing in common.</td>
+                      </tr>
+                      <tr>
+                        <td>two random 1000-letter texts</td>
+                        <td>-</td>
+                        <td>10⁶ subproblems. The memoized recursion took 0.49 s in Python and goes up to 2000 calls deep.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Recursion with Memo</h2>
+                <p class="intuition">
+                  <code>lcs(i, j)</code> is the answer for <code>text1[i:]</code> and
+                  <code>text2[j:]</code>. Same first letter: <code>1 + lcs(i+1, j+1)</code>.
+                  Otherwise: <code>max(lcs(i+1, j), lcs(i, j+1))</code>. Remember each
+                  result.
+                </p>
+                <ul>
+                  <li>Without the memo, the calls grow exponentially.</li>
+                  <li>Only the pairs actually reached are worked out: when the texts are equal, it walks straight down the diagonal.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(m·n)</span>
+                  <span><strong>Space</strong> O(m·n) memo + O(m + n) call stack</span>
+                </div>
+                <p class="note">
+                  Two random 1000-letter texts: Python 485 ms, Java 6.6 ms, C++ 9.9 ms.
+                  Two equal texts: Python 0.34 ms, because only 1000 pairs are reached.
+                </p>
+                <div class="code-tabs" data-viz="1143-longest-common-subsequence/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[6],"call":[7],"base":[8,9],"same":[10,11],"diff":[12],"return":[13]}'>
+                    import sys
+                    from functools import lru_cache
+                    sys.setrecursionlimit(10000)  # the calls can go m + n deep: up to 2000
+                    class Solution(object):
+                        def longestCommonSubsequence(self, text1, text2):
+                            @lru_cache(maxsize=None)  # remember lcs(i, j) for each pair
+                            def lcs(i, j):  # LCS of text1[i:] and text2[j:]
+                                if i == len(text1) or j == len(text2):  # one of them is used up
+                                    return 0
+                                if text1[i] == text2[j]:  # same letter: take it, move on in both
+                                    return 1 + lcs(i + 1, j + 1)
+                                return max(lcs(i + 1, j), lcs(i, j + 1))  # different: drop one letter from either side
+                            return lcs(0, 0)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8,9],"return":[10],"call":[15,17,18],"base":[16],"same":[19],"diff":[20]}'>
+                    #include <algorithm>
+                    #include <string>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int longestCommonSubsequence(std::string text1, std::string text2) {
+                            a = text1;
+                            b = text2;
+                            memo.assign(a.size(), std::vector<int>(b.size(), -1)); // remember lcs(i, j) for each pair (-1 = not yet)
+                            return lcs(0, 0);
+                        }
+                    private:
+                        std::string a, b;
+                        std::vector<std::vector<int>> memo;
+                        int lcs(int i, int j) { // LCS of a[i:] and b[j:]
+                            if (i == (int)a.size() || j == (int)b.size()) return 0; // one of them is used up
+                            int& m = memo[i][j];
+                            if (m >= 0) return m;
+                            if (a[i] == b[j]) return m = 1 + lcs(i + 1, j + 1); // same letter: take it, move on in both
+                            return m = std::max(lcs(i + 1, j), lcs(i, j + 1)); // different: drop one letter from either side
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[6,7,8,9],"return":[10],"call":[12,14],"base":[13],"same":[15],"diff":[16]}'>
+                    import java.util.*;
+                    class Solution {
+                        private String a, b;
+                        private int[][] memo;
+                        public int longestCommonSubsequence(String text1, String text2) {
+                            a = text1;
+                            b = text2;
+                            memo = new int[a.length()][b.length()]; // remember lcs(i, j) for each pair (-1 = not yet)
+                            for (int[] row : memo) Arrays.fill(row, -1);
+                            return lcs(0, 0);
+                        }
+                        private int lcs(int i, int j) { // LCS of a[i:] and b[j:]
+                            if (i == a.length() || j == b.length()) return 0; // one of them is used up
+                            if (memo[i][j] >= 0) return memo[i][j];
+                            if (a.charAt(i) == b.charAt(j)) return memo[i][j] = 1 + lcs(i + 1, j + 1); // same letter: take it, move on in both
+                            return memo[i][j] = Math.max(lcs(i + 1, j), lcs(i, j + 1)); // different: drop one letter from either side
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: DP Table</h2>
+                <p class="intuition">
+                  <code>dp[i][j]</code> is the LCS of the first <code>i</code> letters of
+                  <code>text1</code> and the first <code>j</code> of
+                  <code>text2</code>. Row 0 and column 0 are 0. Each cell looks at the
+                  cell diagonally up-left (on a match) or the cells above and to the
+                  left.
+                </p>
+                <ul>
+                  <li>No recursion; every cell is filled exactly once.</li>
+                  <li>The table also lets you walk back from <code>dp[m][n]</code> to spell out the subsequence itself.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(m·n)</span>
+                  <span><strong>Space</strong> O(m·n)</span>
+                </div>
+                <p class="note">
+                  Two random 1000-letter texts: Python 129 ms, Java 1.6 ms, C++ 3.2 ms.
+                </p>
+                <div class="code-tabs" data-viz="1143-longest-common-subsequence/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"row":[5],"cell":[6],"same":[7,8],"diff":[9,10],"return":[11]}'>
+                    class Solution(object):
+                        def longestCommonSubsequence(self, text1, text2):
+                            m, n = len(text1), len(text2)
+                            dp = [[0] * (n + 1) for _ in range(m + 1)]  # dp[i][j] = LCS of the first i letters and the first j letters
+                            for i in range(1, m + 1):
+                                for j in range(1, n + 1):
+                                    if text1[i - 1] == text2[j - 1]:  # the last letters match: extend the diagonal
+                                        dp[i][j] = dp[i - 1][j - 1] + 1
+                                    else:  # drop the last letter of one of them
+                                        dp[i][j] = max(dp[i - 1][j], dp[i][j - 1])
+                            return dp[m][n]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8],"row":[9],"cell":[10],"same":[11],"diff":[12],"return":[13]}'>
+                    #include <algorithm>
+                    #include <string>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int longestCommonSubsequence(std::string text1, std::string text2) {
+                            const int m = text1.size(), n = text2.size();
+                            std::vector<std::vector<int>> dp(m + 1, std::vector<int>(n + 1, 0)); // dp[i][j] = LCS of the first i letters and the first j letters
+                            for (int i = 1; i <= m; ++i)
+                                for (int j = 1; j <= n; ++j)
+                                    if (text1[i - 1] == text2[j - 1]) dp[i][j] = dp[i - 1][j - 1] + 1; // the last letters match: extend the diagonal
+                                    else dp[i][j] = std::max(dp[i - 1][j], dp[i][j - 1]); // drop the last letter of one of them
+                            return dp[m][n];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4],"row":[5],"cell":[6],"same":[7],"diff":[8],"return":[9]}'>
+                    class Solution {
+                        public int longestCommonSubsequence(String text1, String text2) {
+                            int m = text1.length(), n = text2.length();
+                            int[][] dp = new int[m + 1][n + 1]; // dp[i][j] = LCS of the first i letters and the first j letters
+                            for (int i = 1; i <= m; i++)
+                                for (int j = 1; j <= n; j++)
+                                    if (text1.charAt(i - 1) == text2.charAt(j - 1)) dp[i][j] = dp[i - 1][j - 1] + 1; // the last letters match: extend the diagonal
+                                    else dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]); // drop the last letter of one of them
+                            return dp[m][n];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: One Row at a Time
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Row <code>i</code> only needs row <code>i − 1</code>. Keep
+                  <code>prev</code> and build <code>cur</code>: diagonal is
+                  <code>prev[j]</code>, up is <code>prev[j + 1]</code>, left is
+                  <code>cur[j]</code>. Make the shorter text the row so it's as small as
+                  possible.
+                </p>
+                <ul>
+                  <li>Same work as Approach 2, with 1001 numbers instead of a million.</li>
+                  <li>You can't rebuild the subsequence itself from one row; use Approach 2 for that.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(m·n)</span>
+                  <span><strong>Space</strong> O(min(m, n))</span>
+                </div>
+                <p class="note">
+                  Two random 1000-letter texts: Python 85 ms, Java 1.0 ms, C++ 2.5 ms,
+                  the fastest in every language (less memory to touch).
+                </p>
+                <div class="code-tabs" data-viz="1143-longest-common-subsequence/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"row":[6,7,10],"cell":[8],"same":[9],"diff":[9],"return":[11]}'>
+                    class Solution(object):
+                        def longestCommonSubsequence(self, text1, text2):
+                            if len(text2) > len(text1):  # keep the shorter text as the row
+                                text1, text2 = text2, text1
+                            prev = [0] * (len(text2) + 1)  # the previous row of the table
+                            for a in text1:
+                                cur = [0]
+                                for j, b in enumerate(text2):
+                                    cur.append(prev[j] + 1 if a == b else max(prev[j + 1], cur[j]))  # diagonal + 1, or the best of up and left
+                                prev = cur  # only one row is ever needed
+                            return prev[-1]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[8,9,10],"row":[11,14],"cell":[12],"same":[13],"diff":[13],"return":[16]}'>
+                    #include <algorithm>
+                    #include <string>
+                    #include <utility>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int longestCommonSubsequence(std::string text1, std::string text2) {
+                            if (text2.size() > text1.size()) std::swap(text1, text2); // keep the shorter text as the row
+                            const int n = text2.size();
+                            std::vector<int> prev(n + 1, 0), cur(n + 1, 0); // two rows of the table
+                            for (char a : text1) {
+                                for (int j = 1; j <= n; ++j)
+                                    cur[j] = a == text2[j - 1] ? prev[j - 1] + 1 : std::max(prev[j], cur[j - 1]); // diagonal + 1, or the best of up and left
+                                std::swap(prev, cur); // only one row is ever needed
+                            }
+                            return prev[n];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5],"row":[6,7,10],"cell":[8],"same":[9],"diff":[9],"return":[12]}'>
+                    class Solution {
+                        public int longestCommonSubsequence(String text1, String text2) {
+                            if (text2.length() > text1.length()) { String t = text1; text1 = text2; text2 = t; } // keep the shorter text as the row
+                            int n = text2.length();
+                            int[] prev = new int[n + 1], cur = new int[n + 1]; // two rows of the table
+                            for (int i = 0; i < text1.length(); i++) {
+                                char a = text1.charAt(i);
+                                for (int j = 1; j <= n; j++)
+                                    cur[j] = a == text2.charAt(j - 1) ? prev[j - 1] + 1 : Math.max(prev[j], cur[j - 1]); // diagonal + 1, or the best of up and left
+                                int[] t = prev; prev = cur; cur = t; // only one row is ever needed
+                            }
+                            return prev[n];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  Python's <code>difflib.SequenceMatcher</code> finds matching blocks,
+                  but it's a heuristic for diffs, not an exact LCS. No standard library
+                  computes the LCS length, so Approach 3 is what you'd write.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Recursion with Memo</th>
+                        <td>lcs(i, j) from the front</td>
+                        <td>O(m·n)</td>
+                        <td>O(m·n)</td>
+                        <td>2000 calls deep at worst</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">DP Table</th>
+                        <td>Fill dp row by row</td>
+                        <td>O(m·n)</td>
+                        <td>O(m·n)</td>
+                        <td>Can rebuild the subsequence</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">One Row at a Time</th>
+                        <td>prev and cur rows</td>
+                        <td>O(m·n)</td>
+                        <td>O(min(m, n))</td>
                         <td>Expected answer</td>
                       </tr>
                     </tbody>
@@ -67466,6 +67830,112 @@
             note: heap.length ? `One stone is left: return ${heap[0]}. Each pop and push is O(log n).` : "No stone is left: return 0.",
             view: view({ topMark: "match" }),
           });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/1143-longest-common-subsequence/approach1.visual.js -->
+    <script>
+      // lcs(i, j) = LCS of text1[i:] and text2[j:]: same letter → 1 + lcs(i+1, j+1), else the better of skipping one letter.
+      DSAViz.register("1143-longest-common-subsequence/approach1", {
+        inputs: [
+          { name: "text1", type: "string", value: "abcde", maxLength: 7 },
+          { name: "text2", type: "string", value: "ace", maxLength: 7 },
+        ],
+        trace({ text1, text2 }) {
+          if (!/^[a-z]+$/.test(text1) || !/^[a-z]+$/.test(text2)) throw new DSAViz.InputError("Both texts must be 1 to 7 lowercase letters.");
+          const m = text1.length, n = text2.length;
+          const memo = Array.from({ length: m }, () => Array(n).fill(null));
+          const steps = [];
+          let calls = 0;
+          const MAX = 120;
+          let hidden = 0;
+          const view = (i, j, mark) => [{ type: "grid", label: "memo[i][j] = lcs(i, j), the LCS of text1[i:] and text2[j:]: rows are text1, columns text2 (blank = not known yet; dark = a different letter, yellow = new, green = known)", rows: [...text1], cols: [...text2], corner: "", cells: memo.map((r) => r.map((v) => (v === null ? "" : v))), marks: i !== undefined && i < m && j < n ? { [`${i},${j}`]: mark } : {} }, { type: "vars", items: [{ name: "calls", value: calls }] }];
+          const push = (s) => (steps.length < MAX ? steps.push(s) : hidden++);
+          push({ line: "init", note: "lcs(i, j) is remembered the first time it's worked out.", view: view() });
+          const lcs = (i, j) => {
+            calls++;
+            if (i === m || j === n) return 0;
+            if (memo[i][j] !== null) { push({ line: "call", note: `lcs(${i}, ${j}) is already known: ${memo[i][j]}.`, view: view(i, j, "match") }); return memo[i][j]; }
+            let r;
+            if (text1[i] === text2[j]) {
+              r = 1 + lcs(i + 1, j + 1);
+              memo[i][j] = r;
+              push({ line: ["call", "same"], note: `text1[${i}] = text2[${j}] = '${text1[i]}': take it. lcs(${i}, ${j}) = 1 + lcs(${i + 1}, ${j + 1}) = ${r}.`, view: view(i, j, "new") });
+            } else {
+              const a = lcs(i + 1, j), b = lcs(i, j + 1);
+              r = Math.max(a, b);
+              memo[i][j] = r;
+              push({ line: ["call", "diff"], note: `'${text1[i]}' ≠ '${text2[j]}': drop one. max(lcs(${i + 1}, ${j}) = ${a}, lcs(${i}, ${j + 1}) = ${b}) = ${r}.`, view: view(i, j, "compare") });
+            }
+            return r;
+          };
+          const ans = lcs(0, 0);
+          steps.push({ line: "return", note: `Return ${ans}. ${calls} calls${hidden ? ` (${hidden} steps not shown)` : ""}; each (i, j) is worked out once: O(m·n).`, view: view(0, 0, "match") });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/1143-longest-common-subsequence/approach2.visual.js -->
+    <script>
+      // dp[i][j] = LCS of the first i letters of text1 and the first j of text2, filled row by row.
+      DSAViz.register("1143-longest-common-subsequence/approach2", {
+        inputs: [
+          { name: "text1", type: "string", value: "abcde", maxLength: 7 },
+          { name: "text2", type: "string", value: "ace", maxLength: 7 },
+        ],
+        trace({ text1, text2 }) {
+          if (!/^[a-z]+$/.test(text1) || !/^[a-z]+$/.test(text2)) throw new DSAViz.InputError("Both texts must be 1 to 7 lowercase letters.");
+          const m = text1.length, n = text2.length;
+          const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+          const filled = Array.from({ length: m + 1 }, (_, i) => Array(n + 1).fill(i === 0));
+          for (let i = 0; i <= m; i++) filled[i][0] = true;
+          const steps = [];
+          const view = (marks = {}) => [{ type: "grid", label: "dp[i][j]: rows are text1, columns text2; · = no letters (yellow = the cells it came from; green = new, from a match; dark = new)", rows: ["·", ...text1], cols: ["·", ...text2], corner: "", cells: dp.map((r, i) => r.map((v, j) => (filled[i][j] ? v : ""))), marks }];
+          steps.push({ line: "init", note: "Row 0 and column 0 are 0: an empty text has nothing in common with anything.", view: view() });
+          for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) {
+            filled[i][j] = true;
+            if (text1[i - 1] === text2[j - 1]) {
+              dp[i][j] = dp[i - 1][j - 1] + 1;
+              steps.push({ line: ["row", "cell", "same"], note: `'${text1[i - 1]}' = '${text2[j - 1]}': dp[${i}][${j}] = dp[${i - 1}][${j - 1}] + 1 = ${dp[i][j]}.`, view: view({ [`${i - 1},${j - 1}`]: "compare", [`${i},${j}`]: "match" }) });
+            } else {
+              dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
+              steps.push({ line: ["row", "cell", "diff"], note: `'${text1[i - 1]}' ≠ '${text2[j - 1]}': dp[${i}][${j}] = max(up ${dp[i - 1][j]}, left ${dp[i][j - 1]}) = ${dp[i][j]}.`, view: view({ [`${i - 1},${j}`]: "compare", [`${i},${j - 1}`]: "compare", [`${i},${j}`]: "active" }) });
+            }
+          }
+          steps.push({ line: "return", note: `Return ${dp[m][n]}. (m + 1) × (n + 1) cells: O(m·n) time and space.`, view: view({ [`${m},${n}`]: "match" }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/1143-longest-common-subsequence/approach3.visual.js -->
+    <script>
+      // The same table, but only the previous row is kept. The shorter text runs along the row.
+      DSAViz.register("1143-longest-common-subsequence/approach3", {
+        inputs: [
+          { name: "text1", type: "string", value: "abcde", maxLength: 7 },
+          { name: "text2", type: "string", value: "ace", maxLength: 7 },
+        ],
+        trace({ text1: t1, text2: t2 }) {
+          const text1 = t1, text2 = t2;
+          if (!/^[a-z]+$/.test(text1) || !/^[a-z]+$/.test(text2)) throw new DSAViz.InputError("Both texts must be 1 to 7 lowercase letters.");
+          const [a, b] = t2.length > t1.length ? [t2, t1] : [t1, t2];
+          const n = b.length;
+          let prev = Array(n + 1).fill(0);
+          const steps = [];
+          const view = (cur, j, mk) => [{ type: "grid", label: "two rows of the table (yellow = the cells used, green = new from a match, dark = new)", rows: ["prev", "cur"], cols: ["·", ...b], corner: "", cells: [prev.slice(), cur ? cur.concat(Array(n + 1 - cur.length).fill("")) : Array(n + 1).fill("")], marks: mk || {} }, { type: "vars", items: [{ name: "row letter", value: cur ? `'${cur.letter}'` : "-" }] }];
+          steps.push({ line: "init", note: t2.length > t1.length ? `text2 is longer, so swap: rows run over "${a}", the row is "${b}" (${n + 1} cells).` : `The row runs over text2 "${b}" (${n + 1} cells). prev starts as all 0s.`, view: view() });
+          for (const ch of a) {
+            const cur = [0];
+            cur.letter = ch;
+            for (let j = 0; j < n; j++) {
+              const same = ch === b[j];
+              cur.push(same ? prev[j] + 1 : Math.max(prev[j + 1], cur[j]));
+              steps.push({ line: ["row", "cell", "same", "diff"], note: same ? `'${ch}' = '${b[j]}': diagonal prev[${j}] + 1 = ${cur[j + 1]}.` : `'${ch}' ≠ '${b[j]}': max(up prev[${j + 1}] = ${prev[j + 1]}, left cur[${j}] = ${cur[j]}) = ${cur[j + 1]}.`, view: view(cur, j, same ? { [`0,${j}`]: "compare", [`1,${j + 1}`]: "match" } : { [`0,${j + 1}`]: "compare", [`1,${j}`]: "compare", [`1,${j + 1}`]: "active" }) });
+            }
+            prev = cur.slice();
+          }
+          steps.push({ line: "return", note: `Return ${prev[n]}. O(m·n) time, but only O(min(m, n)) space.`, view: view(null, 0, { [`0,${n}`]: "match" }) });
           return steps;
         },
       });
