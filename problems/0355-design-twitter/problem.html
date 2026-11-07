@@ -1,0 +1,201 @@
+<details class="question" data-group="heap" data-tags="heap priority queue design hash map merge k sorted lists news feed">
+  <summary>
+    <span class="q-title">355. Design Twitter</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Heap</span>
+      <span class="tag">Design</span>
+      <span class="tag">Hash Map</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Keep each user's tweets in posting order
+      with a time stamp. A feed is "merge k sorted lists", stopped after 10:
+      put each followed user's newest tweet in a max-heap, pop the newest,
+      and push that user's next older tweet. O(F + 10 log F) per feed.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/design-twitter/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>Build a <code>Twitter</code> class:</p>
+      <ul>
+        <li><code>postTweet(userId, tweetId)</code>: the user posts a new tweet. Tweet ids are unique.</li>
+        <li><code>getNewsFeed(userId)</code>: the 10 most recent tweet ids posted by the user or anyone they follow, newest first.</li>
+        <li><code>follow(followerId, followeeId)</code> and <code>unfollow(followerId, followeeId)</code>.</li>
+        <li><code>1 &lt;= userId &lt;= 500</code>, <code>0 &lt;= tweetId &lt;= 10⁴</code>, at most 3·10⁴ calls in all.</li>
+      </ul>
+      <p class="note">
+        Example: <code>post(1, 5)</code>, <code>feed(1)</code> →
+        <code>[5]</code>, <code>follow(1, 2)</code>, <code>post(2, 6)</code>,
+        <code>feed(1)</code> → <code>[6, 5]</code>, <code>unfollow(1, 2)</code>,
+        <code>feed(1)</code> → <code>[5]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>post(2, 1)</code>, <code>feed(2)</code></td>
+              <td><code>[1]</code></td>
+              <td>The feed includes your own tweets. Reading only the users you follow was wrong on 1,137 of 1,504 tests.</td>
+            </tr>
+            <tr>
+              <td><code>unfollow(1, 2)</code> before any follow</td>
+              <td>nothing happens</td>
+              <td>Python's <code>set.remove</code> raises a KeyError here; use <code>discard</code>. With <code>remove</code>, 1,175 of 1,504 tests crashed.</td>
+            </tr>
+            <tr>
+              <td>12 posts by user 1, then <code>feed(1)</code></td>
+              <td>the last 10, newest first</td>
+              <td>Stop at 10.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: One Global List</h2>
+      <p class="intuition">
+        Append every <code>(user, tweet)</code> to one list. For a feed, walk
+        it from the newest end and keep tweets by the user or anyone they
+        follow, stopping at 10.
+      </p>
+      <ul>
+        <li>No clock needed: the list order is the time order.</li>
+        <li>Fast when the newest tweets are the ones you want. Slow for a user whose tweets are old: the scan passes everyone else's.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> post O(1), feed O(T) for T tweets</span>
+        <span><strong>Space</strong> O(T + follows)</span>
+      </div>
+      <p class="note">
+        15,000 feeds for a user whose one tweet is behind 15,000 others':
+        Python 8.2 s, Java 0.53 s, C++ 0.11 s. 3·10⁴ random calls over 500
+        users: Python 260 ms, 6 times Approach 3.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Gather and Sort</h2>
+      <p class="intuition">
+        Keep tweets per user, each with a time stamp. For a feed, take the
+        last 10 tweets of the user and of each followed user (older ones can
+        never make the top 10), sort them newest first, and keep 10.
+      </p>
+      <ul>
+        <li>The "last 10" cut keeps a feed from depending on how much anyone has posted.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> post O(1), feed O(10F log(10F)) for F followed users</span>
+        <span><strong>Space</strong> O(T + follows)</span>
+      </div>
+      <p class="note">
+        A user following 499 busy users, 14,500 feeds: Python 14.4 s, Java
+        4.7 s, C++ 1.8 s, the slowest here. It sorts about 5,000 tweets for
+        every feed.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Merge With a Heap
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Each user's tweets are already sorted by time. Put every followed
+        user's newest tweet in a max-heap by time. Pop the newest into the
+        feed and push that user's next older tweet. Stop after 10 pops.
+      </p>
+      <ul>
+        <li>The same merge as 23. Merge k Sorted Lists, cut off at 10.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> post O(1), feed O(F + 10 log F)</span>
+        <span><strong>Space</strong> O(T + follows)</span>
+      </div>
+      <p class="note">
+        3·10⁴ random calls: Python 41 ms, Java 18 ms, C++ 5.5 ms, the fastest
+        in every language. Following 499 users: Python 1.6 s, Java 0.31 s,
+        C++ 0.061 s, 9 to 30 times faster than Approach 2. Approach 1 was
+        faster still there (C++ 2.3 ms) because the newest 10 tweets were all
+        in the feed.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        Nothing built in. Python's <code>heapq.merge</code> could replace the
+        hand-written merge in Approach 3. Real feed systems usually do the
+        work when tweets are posted (fan-out on write) instead of on every
+        read.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">One Global List</th>
+              <td>Scan every tweet from the newest</td>
+              <td>Feed O(T)</td>
+              <td>O(T)</td>
+              <td>8.2 s worst case in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">Gather and Sort</th>
+              <td>Last 10 of each user, sorted</td>
+              <td>Feed O(10F log(10F))</td>
+              <td>O(T)</td>
+              <td>Slow with many follows</td>
+            </tr>
+            <tr>
+              <th scope="row">Merge With a Heap</th>
+              <td>Merge k sorted lists, stop at 10</td>
+              <td>Feed O(F + 10 log F)</td>
+              <td>O(T)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

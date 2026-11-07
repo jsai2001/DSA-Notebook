@@ -24943,7 +24943,7 @@
       <details class="pattern-group" id="g-heap">
         <summary>
           <span class="g-name">Heap / Priority Queue</span>
-          <span class="g-count"><span class="g-total">4 problems</span></span>
+          <span class="g-count"><span class="g-total">5 problems</span></span>
           <span class="g-hint">Always pop the smallest (or biggest) first</span>
         </summary>
         <div class="g-body">
@@ -26033,6 +26033,495 @@
                         <td><code>bucket[count]</code>, read from the top</td>
                         <td>O(n)</td>
                         <td>O(n)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0355-design-twitter ===== -->
+          <details class="question" data-group="heap" data-tags="heap priority queue design hash map merge k sorted lists news feed">
+            <summary>
+              <span class="q-title">355. Design Twitter</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Heap</span>
+                <span class="tag">Design</span>
+                <span class="tag">Hash Map</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Keep each user's tweets in posting order
+                with a time stamp. A feed is "merge k sorted lists", stopped after 10:
+                put each followed user's newest tweet in a max-heap, pop the newest,
+                and push that user's next older tweet. O(F + 10 log F) per feed.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/design-twitter/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>Build a <code>Twitter</code> class:</p>
+                <ul>
+                  <li><code>postTweet(userId, tweetId)</code>: the user posts a new tweet. Tweet ids are unique.</li>
+                  <li><code>getNewsFeed(userId)</code>: the 10 most recent tweet ids posted by the user or anyone they follow, newest first.</li>
+                  <li><code>follow(followerId, followeeId)</code> and <code>unfollow(followerId, followeeId)</code>.</li>
+                  <li><code>1 &lt;= userId &lt;= 500</code>, <code>0 &lt;= tweetId &lt;= 10⁴</code>, at most 3·10⁴ calls in all.</li>
+                </ul>
+                <p class="note">
+                  Example: <code>post(1, 5)</code>, <code>feed(1)</code> →
+                  <code>[5]</code>, <code>follow(1, 2)</code>, <code>post(2, 6)</code>,
+                  <code>feed(1)</code> → <code>[6, 5]</code>, <code>unfollow(1, 2)</code>,
+                  <code>feed(1)</code> → <code>[5]</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>post(2, 1)</code>, <code>feed(2)</code></td>
+                        <td><code>[1]</code></td>
+                        <td>The feed includes your own tweets. Reading only the users you follow was wrong on 1,137 of 1,504 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>unfollow(1, 2)</code> before any follow</td>
+                        <td>nothing happens</td>
+                        <td>Python's <code>set.remove</code> raises a KeyError here; use <code>discard</code>. With <code>remove</code>, 1,175 of 1,504 tests crashed.</td>
+                      </tr>
+                      <tr>
+                        <td>12 posts by user 1, then <code>feed(1)</code></td>
+                        <td>the last 10, newest first</td>
+                        <td>Stop at 10.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: One Global List</h2>
+                <p class="intuition">
+                  Append every <code>(user, tweet)</code> to one list. For a feed, walk
+                  it from the newest end and keep tweets by the user or anyone they
+                  follow, stopping at 10.
+                </p>
+                <ul>
+                  <li>No clock needed: the list order is the time order.</li>
+                  <li>Fast when the newest tweets are the ones you want. Slow for a user whose tweets are old: the scan passes everyone else's.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> post O(1), feed O(T) for T tweets</span>
+                  <span><strong>Space</strong> O(T + follows)</span>
+                </div>
+                <p class="note">
+                  15,000 feeds for a user whose one tweet is behind 15,000 others':
+                  Python 8.2 s, Java 0.53 s, C++ 0.11 s. 3·10⁴ random calls over 500
+                  users: Python 260 ms, 6 times Approach 3.
+                </p>
+                <div class="code-tabs" data-viz="0355-design-twitter/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"post":[6],"feed":[8,9],"scan":[10,11],"take":[12,13,14],"return":[15],"follow":[17],"unfollow":[19]}'>
+                    class Twitter(object):
+                        def __init__(self):
+                            self.tweets = []  # every (userId, tweetId), oldest first
+                            self.follows = {}  # user -> set of users they follow
+                        def postTweet(self, userId, tweetId):
+                            self.tweets.append((userId, tweetId))
+                        def getNewsFeed(self, userId):
+                            who = self.follows.get(userId, set()) | {userId}
+                            feed = []
+                            for i in range(len(self.tweets) - 1, -1, -1):  # newest first, over everyone's tweets
+                                if self.tweets[i][0] in who:
+                                    feed.append(self.tweets[i][1])
+                                    if len(feed) == 10:
+                                        break
+                            return feed
+                        def follow(self, followerId, followeeId):
+                            self.follows.setdefault(followerId, set()).add(followeeId)
+                        def unfollow(self, followerId, followeeId):
+                            self.follows.get(followerId, set()).discard(followeeId)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,9],"post":[11],"feed":[14,15],"scan":[16,17],"take":[18,19],"return":[22],"follow":[25],"unfollow":[28]}'>
+                    #include <unordered_map>
+                    #include <unordered_set>
+                    #include <utility>
+                    #include <vector>
+                    class Twitter {
+                        std::vector<std::pair<int, int>> tweets; // every (userId, tweetId), oldest first
+                        std::unordered_map<int, std::unordered_set<int>> follows; // user -> users they follow
+                    public:
+                        Twitter() {}
+                        void postTweet(int userId, int tweetId) {
+                            tweets.push_back({userId, tweetId});
+                        }
+                        std::vector<int> getNewsFeed(int userId) {
+                            auto& who = follows[userId];
+                            std::vector<int> feed;
+                            for (int i = (int)tweets.size() - 1; i >= 0; --i) { // newest first, over everyone's tweets
+                                if (tweets[i].first == userId || who.count(tweets[i].first)) {
+                                    feed.push_back(tweets[i].second);
+                                    if (feed.size() == 10) break;
+                                }
+                            }
+                            return feed;
+                        }
+                        void follow(int followerId, int followeeId) {
+                            follows[followerId].insert(followeeId);
+                        }
+                        void unfollow(int followerId, int followeeId) {
+                            follows[followerId].erase(followeeId);
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5],"post":[7],"feed":[10,11],"scan":[12,13,14],"take":[15,16],"return":[19],"follow":[22],"unfollow":[25,26]}'>
+                    import java.util.*;
+                    class Twitter {
+                        private final List<int[]> tweets = new ArrayList<>(); // every {userId, tweetId}, oldest first
+                        private final Map<Integer, Set<Integer>> follows = new HashMap<>(); // user -> users they follow
+                        public Twitter() {}
+                        public void postTweet(int userId, int tweetId) {
+                            tweets.add(new int[] {userId, tweetId});
+                        }
+                        public List<Integer> getNewsFeed(int userId) {
+                            Set<Integer> who = follows.getOrDefault(userId, Collections.emptySet());
+                            List<Integer> feed = new ArrayList<>();
+                            for (int i = tweets.size() - 1; i >= 0; i--) { // newest first, over everyone's tweets
+                                int[] t = tweets.get(i);
+                                if (t[0] == userId || who.contains(t[0])) {
+                                    feed.add(t[1]);
+                                    if (feed.size() == 10) break;
+                                }
+                            }
+                            return feed;
+                        }
+                        public void follow(int followerId, int followeeId) {
+                            follows.computeIfAbsent(followerId, k -> new HashSet<>()).add(followeeId);
+                        }
+                        public void unfollow(int followerId, int followeeId) {
+                            Set<Integer> s = follows.get(followerId);
+                            if (s != null) s.remove(followeeId);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Gather and Sort</h2>
+                <p class="intuition">
+                  Keep tweets per user, each with a time stamp. For a feed, take the
+                  last 10 tweets of the user and of each followed user (older ones can
+                  never make the top 10), sort them newest first, and keep 10.
+                </p>
+                <ul>
+                  <li>The "last 10" cut keeps a feed from depending on how much anyone has posted.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> post O(1), feed O(10F log(10F)) for F followed users</span>
+                  <span><strong>Space</strong> O(T + follows)</span>
+                </div>
+                <p class="note">
+                  A user following 499 busy users, 14,500 feeds: Python 14.4 s, Java
+                  4.7 s, C++ 1.8 s, the slowest here. It sorts about 5,000 tweets for
+                  every feed.
+                </p>
+                <div class="code-tabs" data-viz="0355-design-twitter/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"post":[7,8],"feed":[10,11,12],"sort":[13],"return":[14],"follow":[16],"unfollow":[18]}'>
+                    class Twitter(object):
+                        def __init__(self):
+                            self.time = 0
+                            self.tweets = {}  # user -> list of (time, tweetId), oldest first
+                            self.follows = {}  # user -> set of users they follow
+                        def postTweet(self, userId, tweetId):
+                            self.time += 1
+                            self.tweets.setdefault(userId, []).append((self.time, tweetId))
+                        def getNewsFeed(self, userId):
+                            all_tweets = []
+                            for u in self.follows.get(userId, set()) | {userId}:
+                                all_tweets += self.tweets.get(u, [])[-10:]  # only a user's last 10 can make the feed
+                            all_tweets.sort(reverse=True)  # newest first
+                            return [t for _, t in all_tweets[:10]]
+                        def follow(self, followerId, followeeId):
+                            self.follows.setdefault(followerId, set()).add(followeeId)
+                        def unfollow(self, followerId, followeeId):
+                            self.follows.get(followerId, set()).discard(followeeId)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[8,9,10,12],"post":[14],"feed":[17,18,19,20,21,22,24,25],"sort":[26],"return":[27,28,29],"follow":[32],"unfollow":[35]}'>
+                    #include <algorithm>
+                    #include <functional>
+                    #include <unordered_map>
+                    #include <unordered_set>
+                    #include <utility>
+                    #include <vector>
+                    class Twitter {
+                        int time = 0;
+                        std::unordered_map<int, std::vector<std::pair<int, int>>> tweets; // user -> (time, tweetId), oldest first
+                        std::unordered_map<int, std::unordered_set<int>> follows; // user -> users they follow
+                    public:
+                        Twitter() {}
+                        void postTweet(int userId, int tweetId) {
+                            tweets[userId].push_back({++time, tweetId});
+                        }
+                        std::vector<int> getNewsFeed(int userId) {
+                            std::vector<std::pair<int, int>> all;
+                            auto add = [&](int u) { // only a user's last 10 can make the feed
+                                auto it = tweets.find(u);
+                                if (it == tweets.end()) return;
+                                auto& t = it->second;
+                                all.insert(all.end(), t.end() - std::min<size_t>(10, t.size()), t.end());
+                            };
+                            add(userId);
+                            for (int u : follows[userId]) if (u != userId) add(u);
+                            std::sort(all.begin(), all.end(), std::greater<>()); // newest first
+                            std::vector<int> feed;
+                            for (size_t i = 0; i < all.size() && i < 10; ++i) feed.push_back(all[i].second);
+                            return feed;
+                        }
+                        void follow(int followerId, int followeeId) {
+                            follows[followerId].insert(followeeId);
+                        }
+                        void unfollow(int followerId, int followeeId) {
+                            follows[followerId].erase(followeeId);
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5,6],"post":[8],"feed":[11,12,13,14,15,16],"sort":[18],"return":[19,20,21],"follow":[24],"unfollow":[27,28]}'>
+                    import java.util.*;
+                    class Twitter {
+                        private int time = 0;
+                        private final Map<Integer, List<int[]>> tweets = new HashMap<>(); // user -> {time, tweetId}, oldest first
+                        private final Map<Integer, Set<Integer>> follows = new HashMap<>(); // user -> users they follow
+                        public Twitter() {}
+                        public void postTweet(int userId, int tweetId) {
+                            tweets.computeIfAbsent(userId, k -> new ArrayList<>()).add(new int[] {++time, tweetId});
+                        }
+                        public List<Integer> getNewsFeed(int userId) {
+                            Set<Integer> who = new HashSet<>(follows.getOrDefault(userId, Collections.emptySet()));
+                            who.add(userId);
+                            List<int[]> all = new ArrayList<>();
+                            for (int u : who) {
+                                List<int[]> t = tweets.getOrDefault(u, Collections.emptyList());
+                                all.addAll(t.subList(Math.max(0, t.size() - 10), t.size())); // only a user's last 10 can make the feed
+                            }
+                            all.sort((a, b) -> b[0] - a[0]); // newest first
+                            List<Integer> feed = new ArrayList<>();
+                            for (int i = 0; i < all.size() && i < 10; i++) feed.add(all.get(i)[1]);
+                            return feed;
+                        }
+                        public void follow(int followerId, int followeeId) {
+                            follows.computeIfAbsent(followerId, k -> new HashSet<>()).add(followeeId);
+                        }
+                        public void unfollow(int followerId, int followeeId) {
+                            Set<Integer> s = follows.get(followerId);
+                            if (s != null) s.remove(followeeId);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Merge With a Heap
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Each user's tweets are already sorted by time. Put every followed
+                  user's newest tweet in a max-heap by time. Pop the newest into the
+                  feed and push that user's next older tweet. Stop after 10 pops.
+                </p>
+                <ul>
+                  <li>The same merge as 23. Merge k Sorted Lists, cut off at 10.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> post O(1), feed O(F + 10 log F)</span>
+                  <span><strong>Space</strong> O(T + follows)</span>
+                </div>
+                <p class="note">
+                  3·10⁴ random calls: Python 41 ms, Java 18 ms, C++ 5.5 ms, the fastest
+                  in every language. Following 499 users: Python 1.6 s, Java 0.31 s,
+                  C++ 0.061 s, 9 to 30 times faster than Approach 2. Approach 1 was
+                  faster still there (C++ 2.3 ms) because the newest 10 tweets were all
+                  in the feed.
+                </p>
+                <div class="code-tabs" data-viz="0355-design-twitter/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5,6],"post":[8,9],"feed":[11,12,13,14,15,16],"pop":[17,18,19,20],"next":[21,22],"return":[23],"follow":[25],"unfollow":[27]}'>
+                    import heapq
+                    class Twitter(object):
+                        def __init__(self):
+                            self.time = 0
+                            self.tweets = {}  # user -> list of (time, tweetId), oldest first
+                            self.follows = {}  # user -> set of users they follow
+                        def postTweet(self, userId, tweetId):
+                            self.time += 1
+                            self.tweets.setdefault(userId, []).append((self.time, tweetId))
+                        def getNewsFeed(self, userId):
+                            heap = []  # each user's newest unread tweet: (-time, tweetId, user, index)
+                            for u in self.follows.get(userId, set()) | {userId}:
+                                t = self.tweets.get(u)
+                                if t:
+                                    heap.append((-t[-1][0], t[-1][1], u, len(t) - 1))
+                            heapq.heapify(heap)
+                            feed = []
+                            while heap and len(feed) < 10:
+                                _, tweetId, u, i = heapq.heappop(heap)  # the newest of all the heads
+                                feed.append(tweetId)
+                                if i > 0:  # that user's next older tweet takes its place
+                                    heapq.heappush(heap, (-self.tweets[u][i - 1][0], self.tweets[u][i - 1][1], u, i - 1))
+                            return feed
+                        def follow(self, followerId, followeeId):
+                            self.follows.setdefault(followerId, set()).add(followeeId)
+                        def unfollow(self, followerId, followeeId):
+                            self.follows.get(followerId, set()).discard(followeeId)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[8,9,10,12],"post":[14],"feed":[18,19,20,21,22,24,25],"pop":[26,27,28,29,30],"next":[31],"return":[33],"follow":[36],"unfollow":[39]}'>
+                    #include <queue>
+                    #include <tuple>
+                    #include <unordered_map>
+                    #include <unordered_set>
+                    #include <utility>
+                    #include <vector>
+                    class Twitter {
+                        int time = 0;
+                        std::unordered_map<int, std::vector<std::pair<int, int>>> tweets; // user -> (time, tweetId), oldest first
+                        std::unordered_map<int, std::unordered_set<int>> follows; // user -> users they follow
+                    public:
+                        Twitter() {}
+                        void postTweet(int userId, int tweetId) {
+                            tweets[userId].push_back({++time, tweetId});
+                        }
+                        std::vector<int> getNewsFeed(int userId) {
+                            // each user's newest unread tweet: (time, user, index); the max-heap gives the newest
+                            std::priority_queue<std::tuple<int, int, int>> heap;
+                            auto add = [&](int u) {
+                                auto it = tweets.find(u);
+                                if (it != tweets.end() && !it->second.empty())
+                                    heap.push({it->second.back().first, u, (int)it->second.size() - 1});
+                            };
+                            add(userId);
+                            for (int u : follows[userId]) if (u != userId) add(u);
+                            std::vector<int> feed;
+                            while (!heap.empty() && feed.size() < 10) {
+                                auto [t, u, i] = heap.top(); // the newest of all the heads
+                                heap.pop();
+                                feed.push_back(tweets[u][i].second);
+                                if (i > 0) heap.push({tweets[u][i - 1].first, u, i - 1}); // that user's next older tweet takes its place
+                            }
+                            return feed;
+                        }
+                        void follow(int followerId, int followeeId) {
+                            follows[followerId].insert(followeeId);
+                        }
+                        void unfollow(int followerId, int followeeId) {
+                            follows[followerId].erase(followeeId);
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5,6],"post":[8],"feed":[12,13,14,15,16,17],"pop":[19,20,21,22,23],"next":[24],"return":[26],"follow":[29],"unfollow":[32,33]}'>
+                    import java.util.*;
+                    class Twitter {
+                        private int time = 0;
+                        private final Map<Integer, List<int[]>> tweets = new HashMap<>(); // user -> {time, tweetId}, oldest first
+                        private final Map<Integer, Set<Integer>> follows = new HashMap<>(); // user -> users they follow
+                        public Twitter() {}
+                        public void postTweet(int userId, int tweetId) {
+                            tweets.computeIfAbsent(userId, k -> new ArrayList<>()).add(new int[] {++time, tweetId});
+                        }
+                        public List<Integer> getNewsFeed(int userId) {
+                            // each user's newest unread tweet: {time, user, index}; newest on top
+                            PriorityQueue<int[]> heap = new PriorityQueue<>((a, b) -> b[0] - a[0]);
+                            Set<Integer> who = new HashSet<>(follows.getOrDefault(userId, Collections.emptySet()));
+                            who.add(userId);
+                            for (int u : who) {
+                                List<int[]> t = tweets.get(u);
+                                if (t != null && !t.isEmpty()) heap.add(new int[] {t.get(t.size() - 1)[0], u, t.size() - 1});
+                            }
+                            List<Integer> feed = new ArrayList<>();
+                            while (!heap.isEmpty() && feed.size() < 10) {
+                                int[] top = heap.poll(); // the newest of all the heads
+                                List<int[]> t = tweets.get(top[1]);
+                                feed.add(t.get(top[2])[1]);
+                                if (top[2] > 0) heap.add(new int[] {t.get(top[2] - 1)[0], top[1], top[2] - 1}); // that user's next older tweet takes its place
+                            }
+                            return feed;
+                        }
+                        public void follow(int followerId, int followeeId) {
+                            follows.computeIfAbsent(followerId, k -> new HashSet<>()).add(followeeId);
+                        }
+                        public void unfollow(int followerId, int followeeId) {
+                            Set<Integer> s = follows.get(followerId);
+                            if (s != null) s.remove(followeeId);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  Nothing built in. Python's <code>heapq.merge</code> could replace the
+                  hand-written merge in Approach 3. Real feed systems usually do the
+                  work when tweets are posted (fan-out on write) instead of on every
+                  read.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">One Global List</th>
+                        <td>Scan every tweet from the newest</td>
+                        <td>Feed O(T)</td>
+                        <td>O(T)</td>
+                        <td>8.2 s worst case in Python</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Gather and Sort</th>
+                        <td>Last 10 of each user, sorted</td>
+                        <td>Feed O(10F log(10F))</td>
+                        <td>O(T)</td>
+                        <td>Slow with many follows</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Merge With a Heap</th>
+                        <td>Merge k sorted lists, stop at 10</td>
+                        <td>Feed O(F + 10 log F)</td>
+                        <td>O(T)</td>
                         <td>Expected answer</td>
                       </tr>
                     </tbody>
@@ -76461,7 +76950,7 @@
           const less = (a, b) => a[0] < b[0] || (a[0] === b[0] && a[1] < b[1]);
           const up = () => { let i = heap.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (!less(heap[i], heap[p])) break; [heap[i], heap[p]] = [heap[p], heap[i]]; i = p; } };
           const down = () => { let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < heap.length && less(heap[l], heap[m])) m = l; if (r < heap.length && less(heap[r], heap[m])) m = r; if (m === i) break; [heap[i], heap[m]] = [heap[m], heap[i]]; i = m; } };
-          const hview = (marks = {}) => ({ type: "tree", label: "min-heap of (count, value); least frequent on top", values: heap.length ? heap.map(([c, x]) => `${x} ×${c}`) : [], marks });
+          const hview = (marks = {}) => ({ type: "tree", label: "min-heap by count; caption = count", values: heap.map(([, x]) => x), captions: Object.fromEntries(heap.map(([c], i) => [i, `×${c}`])), marks });
           for (const [x, c] of count) {
             heap.push([c, x]);
             up();
@@ -76548,6 +77037,193 @@
           steps.push({ line, note: `Count ${x}: seen ${count.get(x)} time${count.get(x) > 1 ? "s" : ""}.`, view: [{ type: "array", label: "nums", values: nums, marks: { [i]: "active" }, pointers: { i } }, cview({ [x]: "new" }), ...extra()] });
         });
         return { count, cview };
+      }
+      })();
+    </script>
+    <!-- problems/0355-design-twitter/approach1.visual.js -->
+    <script>
+      // One list of every tweet; a feed scans it from the newest end, keeping tweets by the user or anyone they follow.
+      (function () {
+      DSAViz.register("0355-design-twitter/approach1", {
+        inputs: [{ name: "ops", label: "calls (comma-separated)", type: "string", value: "post 1 5, follow 1 2, post 2 6, post 3 7, feed 1, unfollow 1 2, feed 1", maxLength: 200, raw: true }],
+        trace({ ops: text }) {
+          const ops = parseOps(text);
+          const tweets = [], follows = new Map(), feeds = [];
+          const tview = (marks = {}, pointers = {}) => ({ type: "array", label: "all tweets, oldest first (user: tweet)", values: tweets.length ? tweets.map(([u, t]) => `${u}: ${t}`) : ["—"], wide: true, marks: tweets.length ? marks : { 0: "ghost" }, pointers });
+          const steps = [{ line: "init", note: "One list for every tweet, plus who follows whom.", view: [tview(), followView(follows)] }];
+          for (const [op, a, b] of ops) {
+            if (op === "post") { tweets.push([a, b]); steps.push({ line: "post", note: `postTweet(${a}, ${b}): add it to the end.`, view: [tview({ [tweets.length - 1]: "new" }), followView(follows)] }); continue; }
+            if (op !== "feed") { const note = follower(follows, op, a, b); steps.push({ line: op, note, view: [tview(), followView(follows, a)] }); continue; }
+            const who = new Set([...(follows.get(a) || []), a]);
+            const feed = [], marks = {};
+            let i = tweets.length - 1;
+            for (; i >= 0; i--) {
+              if (who.has(tweets[i][0])) { feed.push(tweets[i][1]); marks[i] = "match"; if (feed.length === 10) break; } else marks[i] = "visited";
+            }
+            feeds.push(feed);
+            const looked = tweets.length - Math.max(i, 0);
+            steps.push({ line: ["feed", "scan", "take", "return"], note: `getNewsFeed(${a}): users ${[...who].sort((x, y) => x - y).join(", ")}. Scan from the newest: looked at ${looked} tweet${looked === 1 ? "" : "s"}, kept ${feed.length} (green). Return [${feed.join(", ")}].`, view: [tview(marks), followView(follows, a), { type: "array", label: "feed", values: feed.length ? feed : ["—"], marks: feed.length ? {} : { 0: "ghost" } }] });
+          }
+          steps.push({ line: "return", note: `Return feeds: ${feeds.length ? showFeeds(feeds) : "none"}. Posting is O(1), but a feed may scan every tweet anyone has posted: O(T).`, view: [tview(), followView(follows)] });
+          return steps;
+        },
+      });
+      function parseOps(text) {
+        const parts = text.split(",").map((p) => p.trim()).filter(Boolean);
+        if (!parts.length) throw new DSAViz.InputError('Write calls like "post 1 5, follow 1 2, feed 1".');
+        if (parts.length > 16) throw new DSAViz.InputError("At most 16 calls here (kept small so the steps stay readable).");
+        const ids = new Set();
+        return parts.map((p) => {
+          const w = p.toLowerCase().split(/\s+/);
+          const nums = w.slice(1).map(Number);
+          const want = { post: 2, feed: 1, follow: 2, unfollow: 2 }[w[0]];
+          if (want === undefined || nums.length !== want || nums.some((x) => !Number.isInteger(x))) throw new DSAViz.InputError(`"${p}": use post user tweet, feed user, follow a b, or unfollow a b.`);
+          if (nums.slice(0, w[0] === "post" ? 1 : 2).some((u) => u < 1 || u > 9)) throw new DSAViz.InputError("User ids are 1 to 9 here.");
+          if (w[0] === "post") {
+            if (nums[1] < 0 || nums[1] > 10000) throw new DSAViz.InputError("Tweet ids are 0 to 10000.");
+            if (ids.has(nums[1])) throw new DSAViz.InputError(`Tweet id ${nums[1]} is used twice. Each tweet id is unique.`);
+            ids.add(nums[1]);
+          }
+          if ((w[0] === "follow" || w[0] === "unfollow") && nums[0] === nums[1]) throw new DSAViz.InputError("A user can't follow or unfollow themselves.");
+          return [w[0], ...nums];
+        });
+      }
+      const showFeeds = (feeds) => feeds.map((f) => `[${f.join(", ")}]`).join("; ");
+      const followView = (follows, mark) => ({ type: "map", label: "follows", columns: ["user", "follows"], entries: [...follows.keys()].sort((a, b) => a - b).map((u) => [u, [...follows.get(u)].sort((a, b) => a - b).join(", ") || "—"]), marks: mark ? { [mark]: "active" } : {} });
+      function follower(follows, op, a, b) {
+        if (!follows.has(a)) follows.set(a, new Set());
+        if (op === "follow") { follows.get(a).add(b); return `follow(${a}, ${b}): ${b}'s tweets now show in ${a}'s feed.`; }
+        const had = follows.get(a).delete(b);
+        return had ? `unfollow(${a}, ${b}).` : `unfollow(${a}, ${b}): ${a} didn't follow ${b}, so nothing changes (no error).`;
+      }
+      })();
+    </script>
+    <!-- problems/0355-design-twitter/approach2.visual.js -->
+    <script>
+      // Tweets per user with a time stamp; a feed gathers each followed user's last 10 and sorts them.
+      (function () {
+      DSAViz.register("0355-design-twitter/approach2", {
+        inputs: [{ name: "ops", label: "calls (comma-separated)", type: "string", value: "post 1 5, follow 1 2, post 2 6, post 3 7, post 1 8, feed 1, unfollow 1 2, feed 1", maxLength: 200, raw: true }],
+        trace({ ops: text }) {
+          const ops = parseOps(text);
+          let time = 0;
+          const tweets = new Map(), follows = new Map(), feeds = [];
+          const uview = (marks = {}) => ({ type: "map", label: "tweets per user (time: tweet), oldest first", columns: ["user", "tweets"], entries: [...tweets.keys()].sort((a, b) => a - b).map((u) => [u, tweets.get(u).map(([t, id]) => `${t}: ${id}`).join(", ")]), marks });
+          const steps = [{ line: "init", note: "A clock, each user's tweets, and who follows whom.", view: [uview(), followView(follows)] }];
+          for (const [op, a, b] of ops) {
+            if (op === "post") { time++; if (!tweets.has(a)) tweets.set(a, []); tweets.get(a).push([time, b]); steps.push({ line: "post", note: `postTweet(${a}, ${b}) at time ${time}.`, view: [uview({ [a]: "new" }), followView(follows)] }); continue; }
+            if (op !== "feed") { const note = follower(follows, op, a, b); steps.push({ line: op, note, view: [uview(), followView(follows, a)] }); continue; }
+            const who = [...new Set([...(follows.get(a) || []), a])].sort((x, y) => x - y);
+            const all = who.flatMap((u) => (tweets.get(u) || []).slice(-10));
+            steps.push({ line: "feed", note: `getNewsFeed(${a}): gather the last 10 tweets (at most) of users ${who.join(", ")}: ${all.length} in all.`, view: [uview(Object.fromEntries(who.filter((u) => tweets.has(u)).map((u) => [u, "compare"]))), { type: "array", label: "gathered (time: tweet)", values: all.length ? all.map(([t, id]) => `${t}: ${id}`) : ["—"], wide: true, marks: all.length ? {} : { 0: "ghost" } }] });
+            all.sort((x, y) => y[0] - x[0]);
+            const feed = all.slice(0, 10).map(([, id]) => id);
+            feeds.push(feed);
+            steps.push({ line: ["sort", "return"], note: `Sort them newest first and keep the first 10: [${feed.join(", ")}].`, view: [{ type: "array", label: "sorted, newest first", values: all.length ? all.map(([t, id]) => `${t}: ${id}`) : ["—"], wide: true, marks: all.length ? Object.fromEntries(feed.map((_, i) => [i, "match"])) : { 0: "ghost" }, cut: all.length > 10 ? 10 : undefined }] });
+          }
+          steps.push({ line: "return", note: `Return feeds: ${feeds.length ? showFeeds(feeds) : "none"}. A feed sorts up to 10 tweets per followed user: O(10F log(10F)).`, view: [uview(), followView(follows)] });
+          return steps;
+        },
+      });
+      function parseOps(text) {
+        const parts = text.split(",").map((p) => p.trim()).filter(Boolean);
+        if (!parts.length) throw new DSAViz.InputError('Write calls like "post 1 5, follow 1 2, feed 1".');
+        if (parts.length > 16) throw new DSAViz.InputError("At most 16 calls here (kept small so the steps stay readable).");
+        const ids = new Set();
+        return parts.map((p) => {
+          const w = p.toLowerCase().split(/\s+/);
+          const nums = w.slice(1).map(Number);
+          const want = { post: 2, feed: 1, follow: 2, unfollow: 2 }[w[0]];
+          if (want === undefined || nums.length !== want || nums.some((x) => !Number.isInteger(x))) throw new DSAViz.InputError(`"${p}": use post user tweet, feed user, follow a b, or unfollow a b.`);
+          if (nums.slice(0, w[0] === "post" ? 1 : 2).some((u) => u < 1 || u > 9)) throw new DSAViz.InputError("User ids are 1 to 9 here.");
+          if (w[0] === "post") {
+            if (nums[1] < 0 || nums[1] > 10000) throw new DSAViz.InputError("Tweet ids are 0 to 10000.");
+            if (ids.has(nums[1])) throw new DSAViz.InputError(`Tweet id ${nums[1]} is used twice. Each tweet id is unique.`);
+            ids.add(nums[1]);
+          }
+          if ((w[0] === "follow" || w[0] === "unfollow") && nums[0] === nums[1]) throw new DSAViz.InputError("A user can't follow or unfollow themselves.");
+          return [w[0], ...nums];
+        });
+      }
+      const showFeeds = (feeds) => feeds.map((f) => `[${f.join(", ")}]`).join("; ");
+      const followView = (follows, mark) => ({ type: "map", label: "follows", columns: ["user", "follows"], entries: [...follows.keys()].sort((a, b) => a - b).map((u) => [u, [...follows.get(u)].sort((a, b) => a - b).join(", ") || "—"]), marks: mark ? { [mark]: "active" } : {} });
+      function follower(follows, op, a, b) {
+        if (!follows.has(a)) follows.set(a, new Set());
+        if (op === "follow") { follows.get(a).add(b); return `follow(${a}, ${b}): ${b}'s tweets now show in ${a}'s feed.`; }
+        const had = follows.get(a).delete(b);
+        return had ? `unfollow(${a}, ${b}).` : `unfollow(${a}, ${b}): ${a} didn't follow ${b}, so nothing changes (no error).`;
+      }
+      })();
+    </script>
+    <!-- problems/0355-design-twitter/approach3.visual.js -->
+    <script>
+      // Tweets per user; a feed merges the users' lists with a heap of their newest unread tweets, popping 10 times at most.
+      (function () {
+      DSAViz.register("0355-design-twitter/approach3", {
+        inputs: [{ name: "ops", label: "calls (comma-separated)", type: "string", value: "post 1 5, follow 1 2, post 2 6, post 3 7, post 1 8, feed 1, unfollow 1 2, feed 1", maxLength: 200, raw: true }],
+        trace({ ops: text }) {
+          const ops = parseOps(text);
+          let time = 0;
+          const tweets = new Map(), follows = new Map(), feeds = [];
+          const uview = (marks = {}) => ({ type: "map", label: "tweets per user (time: tweet), oldest first", columns: ["user", "tweets"], entries: [...tweets.keys()].sort((a, b) => a - b).map((u) => [u, tweets.get(u).map(([t, id]) => `${t}: ${id}`).join(", ")]), marks });
+          const steps = [{ line: "init", note: "A clock, each user's tweets, and who follows whom.", view: [uview(), followView(follows)] }];
+          const heap = [];
+          const less = (x, y) => x[0] > y[0]; // newer on top
+          const up = () => { let i = heap.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (!less(heap[i], heap[p])) break; [heap[i], heap[p]] = [heap[p], heap[i]]; i = p; } };
+          const down = () => { let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < heap.length && less(heap[l], heap[m])) m = l; if (r < heap.length && less(heap[r], heap[m])) m = r; if (m === i) break; [heap[i], heap[m]] = [heap[m], heap[i]]; i = m; } };
+          const hview = (marks = {}) => ({ type: "tree", label: "heap of each user's newest unread tweet id (newest on top)", values: heap.map(([, id]) => id), captions: Object.fromEntries(heap.map(([, , u], i) => [i, `user ${u}`])), marks });
+          for (const [op, a, b] of ops) {
+            if (op === "post") { time++; if (!tweets.has(a)) tweets.set(a, []); tweets.get(a).push([time, b]); steps.push({ line: "post", note: `postTweet(${a}, ${b}) at time ${time}.`, view: [uview({ [a]: "new" }), followView(follows)] }); continue; }
+            if (op !== "feed") { const note = follower(follows, op, a, b); steps.push({ line: op, note, view: [uview(), followView(follows, a)] }); continue; }
+            const who = [...new Set([...(follows.get(a) || []), a])].sort((x, y) => x - y);
+            heap.length = 0;
+            for (const u of who) { const t = tweets.get(u); if (t && t.length) { heap.push([t[t.length - 1][0], t[t.length - 1][1], u, t.length - 1]); up(); } }
+            const feed = [];
+            const fview = () => ({ type: "array", label: "feed", values: feed.length ? [...feed] : ["—"], marks: feed.length ? { [feed.length - 1]: "new" } : { 0: "ghost" } });
+            steps.push({ line: "feed", note: `getNewsFeed(${a}): users ${who.join(", ")}. Put each one's newest tweet in the heap (${heap.length} in all).`, view: [uview(), hview(), fview()] });
+            while (heap.length && feed.length < 10) {
+              const [, id, u, i] = heap[0];
+              feed.push(id);
+              heap[0] = heap[heap.length - 1]; heap.pop(); down();
+              let note = `Pop the newest head: tweet ${id} by user ${u}. Add it to the feed.`;
+              const line = ["pop"];
+              if (i > 0) { const [t2, id2] = tweets.get(u)[i - 1]; heap.push([t2, id2, u, i - 1]); up(); note += ` User ${u}'s next older tweet, ${id2}, takes its place.`; line.push("next"); }
+              steps.push({ line, note, view: [uview({ [u]: "compare" }), hview(), fview()] });
+            }
+            feeds.push(feed);
+            steps.push({ line: "return", note: `${heap.length ? "10 tweets: stop." : "The heap is empty: no more tweets."} Return [${feed.join(", ")}].`, view: [uview(), fview()] });
+          }
+          steps.push({ line: "return", note: `Return feeds: ${feeds.length ? showFeeds(feeds) : "none"}. A feed builds a heap of F heads and pops at most 10: O(F + 10 log F).`, view: [uview(), followView(follows)] });
+          return steps;
+        },
+      });
+      function parseOps(text) {
+        const parts = text.split(",").map((p) => p.trim()).filter(Boolean);
+        if (!parts.length) throw new DSAViz.InputError('Write calls like "post 1 5, follow 1 2, feed 1".');
+        if (parts.length > 16) throw new DSAViz.InputError("At most 16 calls here (kept small so the steps stay readable).");
+        const ids = new Set();
+        return parts.map((p) => {
+          const w = p.toLowerCase().split(/\s+/);
+          const nums = w.slice(1).map(Number);
+          const want = { post: 2, feed: 1, follow: 2, unfollow: 2 }[w[0]];
+          if (want === undefined || nums.length !== want || nums.some((x) => !Number.isInteger(x))) throw new DSAViz.InputError(`"${p}": use post user tweet, feed user, follow a b, or unfollow a b.`);
+          if (nums.slice(0, w[0] === "post" ? 1 : 2).some((u) => u < 1 || u > 9)) throw new DSAViz.InputError("User ids are 1 to 9 here.");
+          if (w[0] === "post") {
+            if (nums[1] < 0 || nums[1] > 10000) throw new DSAViz.InputError("Tweet ids are 0 to 10000.");
+            if (ids.has(nums[1])) throw new DSAViz.InputError(`Tweet id ${nums[1]} is used twice. Each tweet id is unique.`);
+            ids.add(nums[1]);
+          }
+          if ((w[0] === "follow" || w[0] === "unfollow") && nums[0] === nums[1]) throw new DSAViz.InputError("A user can't follow or unfollow themselves.");
+          return [w[0], ...nums];
+        });
+      }
+      const showFeeds = (feeds) => feeds.map((f) => `[${f.join(", ")}]`).join("; ");
+      const followView = (follows, mark) => ({ type: "map", label: "follows", columns: ["user", "follows"], entries: [...follows.keys()].sort((a, b) => a - b).map((u) => [u, [...follows.get(u)].sort((a, b) => a - b).join(", ") || "—"]), marks: mark ? { [mark]: "active" } : {} });
+      function follower(follows, op, a, b) {
+        if (!follows.has(a)) follows.set(a, new Set());
+        if (op === "follow") { follows.get(a).add(b); return `follow(${a}, ${b}): ${b}'s tweets now show in ${a}'s feed.`; }
+        const had = follows.get(a).delete(b);
+        return had ? `unfollow(${a}, ${b}).` : `unfollow(${a}, ${b}): ${a} didn't follow ${b}, so nothing changes (no error).`;
       }
       })();
     </script>
