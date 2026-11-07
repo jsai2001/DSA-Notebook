@@ -55478,7 +55478,7 @@
       <details class="pattern-group" id="g-bit-manipulation">
         <summary>
           <span class="g-name">Bit Manipulation</span>
-          <span class="g-count"><span class="g-total">3 problems</span></span>
+          <span class="g-count"><span class="g-total">4 problems</span></span>
           <span class="g-hint">Shift, mask and count the bits</span>
         </summary>
         <div class="g-body">
@@ -56428,6 +56428,344 @@
                       <tr>
                         <th scope="row">XOR</th>
                         <td>Pairs cancel</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0338-counting-bits ===== -->
+          <details class="question" data-group="bit-manipulation" data-tags="bit manipulation dynamic programming dp popcount count set bits">
+            <summary>
+              <span class="q-title">338. Counting Bits</span>
+              <span class="q-meta">
+                <span class="badge easy">Easy</span>
+                <span class="tag">Bit Manipulation</span>
+                <span class="tag">Dynamic Programming</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> <code>i &gt;&gt; 1</code> is <code>i</code>
+                without its last bit. It's smaller, so its count is already known:
+                <code>ans[i] = ans[i &gt;&gt; 1] + (i &amp; 1)</code>. One step per
+                number, O(n).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/counting-bits/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Return an array <code>ans</code> of length <code>n + 1</code> where
+                  <code>ans[i]</code> is the number of 1 bits in <code>i</code>.
+                </p>
+                <ul>
+                  <li><code>0 &lt;= n &lt;= 10⁵</code></li>
+                  <li>Follow-up: do it in O(n) without a built-in popcount.</li>
+                </ul>
+                <p class="note">
+                  Example: <code>n = 2</code> → <code>[0,1,1]</code>.
+                  <code>n = 5</code> → <code>[0,1,1,2,1,2]</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>n = 0</code></td>
+                        <td><code>[0]</code></td>
+                        <td>The array still has one entry.</td>
+                      </tr>
+                      <tr>
+                        <td><code>n = 3</code></td>
+                        <td><code>[0,1,1,2]</code></td>
+                        <td><code>ans[i &gt;&gt; 1] + i &amp; 1</code> without brackets means <code>(ans[i &gt;&gt; 1] + i) &amp; 1</code>, because <code>+</code> comes before <code>&amp;</code>. It gave <code>[0,1,1,0]</code>, and was wrong for 297 of the 300 values of n tried.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Count Each Number</h2>
+                <p class="intuition">
+                  For every <code>i</code>, clear its lowest 1 with
+                  <code>x &amp; (x − 1)</code> until it's 0, counting the rounds (as in
+                  191. Number of 1 Bits).
+                </p>
+                <ul>
+                  <li>Nothing is reused between numbers.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n)</span>
+                  <span><strong>Space</strong> O(1) besides the answer</span>
+                </div>
+                <p class="note">
+                  <code>n = 10⁵</code>, average of 60 runs: Python 40 ms, Java 0.44 ms,
+                  C++ 0.063 ms.
+                </p>
+                <div class="code-tabs" data-viz="0338-counting-bits/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"num":[4,5],"clear":[6,7,8],"store":[9],"return":[10]}'>
+                    class Solution(object):
+                        def countBits(self, n):
+                            ans = []
+                            for i in range(n + 1):  # count each number on its own
+                                x, c = i, 0
+                                while x:  # one round per 1 bit
+                                    x &= x - 1  # clear the lowest 1
+                                    c += 1
+                                ans.append(c)
+                            return ans
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"num":[6,7],"clear":[8,9,10],"store":[12],"return":[14]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> countBits(int n) {
+                            std::vector<int> ans;
+                            for (int i = 0; i <= n; ++i) { // count each number on its own
+                                int x = i, c = 0;
+                                while (x) { // one round per 1 bit
+                                    x &= x - 1; // clear the lowest 1
+                                    ++c;
+                                }
+                                ans.push_back(c);
+                            }
+                            return ans;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"num":[4,5],"clear":[6,7,8],"store":[10],"return":[12]}'>
+                    class Solution {
+                        public int[] countBits(int n) {
+                            int[] ans = new int[n + 1];
+                            for (int i = 0; i <= n; i++) { // count each number on its own
+                                int x = i, c = 0;
+                                while (x != 0) { // one round per 1 bit
+                                    x &= x - 1; // clear the lowest 1
+                                    c++;
+                                }
+                                ans[i] = c;
+                            }
+                            return ans;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: DP on the Lowest 1</h2>
+                <p class="intuition">
+                  <code>i &amp; (i − 1)</code> is <code>i</code> with its lowest 1
+                  cleared. It's smaller, so its count is known, and it has exactly one
+                  1 less: <code>ans[i] = ans[i &amp; (i − 1)] + 1</code>.
+                </p>
+                <ul>
+                  <li>O(n) and short.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1) besides the answer</span>
+                </div>
+                <p class="note">
+                  <code>n = 10⁵</code>: Python 5.2 ms, Java 0.087 ms, C++ 0.23 ms. In
+                  C++ that's slower than Approach 1. Probably because for every odd
+                  <code>i</code>, <code>i &amp; (i − 1)</code> is <code>i − 1</code>:
+                  each step waits for the value the step before just wrote.
+                </p>
+                <div class="code-tabs" data-viz="0338-counting-bits/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"num":[4],"store":[5],"return":[6]}'>
+                    class Solution(object):
+                        def countBits(self, n):
+                            ans = [0] * (n + 1)  # ans[0] = 0
+                            for i in range(1, n + 1):
+                                ans[i] = ans[i & (i - 1)] + 1  # i with its lowest 1 cleared is smaller and already known
+                            return ans
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"num":[6],"store":[7],"return":[8]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> countBits(int n) {
+                            std::vector<int> ans(n + 1, 0); // ans[0] = 0
+                            for (int i = 1; i <= n; ++i)
+                                ans[i] = ans[i & (i - 1)] + 1; // i with its lowest 1 cleared is smaller and already known
+                            return ans;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"num":[4],"store":[5],"return":[6]}'>
+                    class Solution {
+                        public int[] countBits(int n) {
+                            int[] ans = new int[n + 1]; // ans[0] = 0
+                            for (int i = 1; i <= n; i++)
+                                ans[i] = ans[i & (i - 1)] + 1; // i with its lowest 1 cleared is smaller and already known
+                            return ans;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: DP on the Last Bit
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  <code>i &gt;&gt; 1</code> drops the last bit, so
+                  <code>ans[i] = ans[i &gt;&gt; 1] + (i &amp; 1)</code>. Odd numbers
+                  have one more 1 than half of them; even numbers have the same.
+                </p>
+                <ul>
+                  <li>It reads <code>ans[i / 2]</code>, written long ago, so steps don't wait on each other.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1) besides the answer</span>
+                </div>
+                <p class="note">
+                  <code>n = 10⁵</code>: Python 5.4 ms, Java 0.069 ms, C++ 0.039 ms.
+                  Fastest in C++ (5.8 times Approach 2) and Java; in Python, 5% behind
+                  Approach 2.
+                </p>
+                <div class="code-tabs" data-viz="0338-counting-bits/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"num":[4],"store":[5],"return":[6]}'>
+                    class Solution(object):
+                        def countBits(self, n):
+                            ans = [0] * (n + 1)  # ans[0] = 0
+                            for i in range(1, n + 1):
+                                ans[i] = ans[i >> 1] + (i & 1)  # i without its last bit, plus that last bit
+                            return ans
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"num":[6],"store":[7],"return":[8]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> countBits(int n) {
+                            std::vector<int> ans(n + 1, 0); // ans[0] = 0
+                            for (int i = 1; i <= n; ++i)
+                                ans[i] = ans[i >> 1] + (i & 1); // i without its last bit, plus that last bit
+                            return ans;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"num":[4],"store":[5],"return":[6]}'>
+                    class Solution {
+                        public int[] countBits(int n) {
+                            int[] ans = new int[n + 1]; // ans[0] = 0
+                            for (int i = 1; i <= n; i++)
+                                ans[i] = ans[i >> 1] + (i & 1); // i without its last bit, plus that last bit
+                            return ans;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  Call a popcount on each number: <code>i.bit_count()</code> (Python
+                  3.10+), <code>__builtin_popcount</code> or C++20's
+                  <code>std::popcount</code>, Java's <code>Integer.bitCount</code>.
+                  It doesn't meet the follow-up, but it's what you'd write.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    class Solution(object):
+                        def countBits(self, n):
+                            return [i.bit_count() for i in range(n + 1)]  # Python 3.10+; older: bin(i).count("1")
+                  </script>
+                  <script type="text/plain" data-lang="C++">
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> countBits(int n) {
+                            std::vector<int> ans(n + 1);
+                            for (int i = 0; i <= n; ++i) ans[i] = __builtin_popcount(i); // GCC/Clang; C++20: std::popcount
+                            return ans;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java">
+                    class Solution {
+                        public int[] countBits(int n) {
+                            int[] ans = new int[n + 1];
+                            for (int i = 0; i <= n; i++) ans[i] = Integer.bitCount(i);
+                            return ans;
+                        }
+                    }
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1) besides the answer</span>
+                </div>
+                <p class="note">
+                  <code>n = 10⁵</code>: Python 2.3 ms (2.3 times faster than Approach
+                  3), C++ 0.018 ms (2.2 times faster). Java 0.21 ms, 3 times slower
+                  than Approach 3 here.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Count Each Number</th>
+                        <td>Clear the lowest 1, repeat</td>
+                        <td>O(n log n)</td>
+                        <td>O(1)</td>
+                        <td>40 ms in Python</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">DP on the Lowest 1</th>
+                        <td><code>ans[i &amp; (i − 1)] + 1</code></td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>Slow in C++</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">DP on the Last Bit</th>
+                        <td><code>ans[i &gt;&gt; 1] + (i &amp; 1)</code></td>
                         <td>O(n)</td>
                         <td>O(1)</td>
                         <td>Expected answer</td>
@@ -75615,6 +75953,87 @@
         for (let i = 1; i < route.length; i++) { const k = route[i - 1] + route[i]; if (!left[k]) return false; left[k]--; }
         return true;
       }
+      })();
+    </script>
+    <!-- problems/0338-counting-bits/approach1.visual.js -->
+    <script>
+      // Count each number on its own: clear its lowest 1 until it's 0.
+      (function () {
+      DSAViz.register("0338-counting-bits/approach1", {
+        inputs: [{ name: "n", type: "int", value: "5", min: 0, max: 16 }],
+        trace({ n }) {
+          const ans = [];
+          const steps = [];
+          const view = (marks = {}, vars) => [
+            { type: "array", label: "ans; index = number", values: ans.length ? [...ans] : ["—"], marks: ans.length ? marks : { 0: "ghost" }, sub: ans.length ? ans.map((_, i) => bin(i)) : undefined },
+            ...(vars ? [{ type: "vars", items: vars }] : []),
+          ];
+          steps.push({ line: "init", note: `Count the 1 bits of every number from 0 to ${n}, one number at a time.`, view: view() });
+          for (let i = 0; i <= n; i++) {
+            let x = i, c = 0;
+            steps.push({ line: "num", note: `i = ${i} = ${bin(i)} in binary.`, view: view({}, [{ name: "i", value: i }, { name: "x", value: bin(x), mark: "active" }, { name: "count", value: c }]) });
+            while (x) {
+              const y = x & (x - 1);
+              c++;
+              steps.push({ line: "clear", note: `x & (x - 1): ${bin(x)} → ${bin(y)}. The lowest 1 is gone. count = ${c}.`, view: view({}, [{ name: "i", value: i }, { name: "x", value: bin(y), mark: "new" }, { name: "count", value: c, mark: "new" }]) });
+              x = y;
+            }
+            ans.push(c);
+            steps.push({ line: "store", note: `x is 0: ${i} has ${c} one bit${c === 1 ? "" : "s"}. ans[${i}] = ${c}.`, view: view({ [i]: "new" }) });
+          }
+          steps.push({ line: "return", note: `Return [${ans.join(", ")}]. Each number costs one round per 1 bit: O(n log n).`, view: view(Object.fromEntries(ans.map((_, i) => [i, "match"]))) });
+          return steps;
+        },
+      });
+      const bin = (x) => x.toString(2);
+      })();
+    </script>
+    <!-- problems/0338-counting-bits/approach2.visual.js -->
+    <script>
+      // DP: clearing the lowest 1 gives a smaller number we already know; add 1.
+      (function () {
+      DSAViz.register("0338-counting-bits/approach2", {
+        inputs: [{ name: "n", type: "int", value: "8", min: 0, max: 16 }],
+        trace({ n }) {
+          const ans = Array(n + 1).fill(0);
+          const done = (k) => ans.map((v, i) => (i <= k ? v : "·"));
+          const steps = [];
+          const view = (k, marks = {}) => ({ type: "array", label: "ans; caption = number in binary", values: done(k), marks: { ...Object.fromEntries(ans.map((_, i) => [i, i > k ? "ghost" : ""]).filter(([, m]) => m)), ...marks }, sub: ans.map((_, i) => bin(i)) });
+          steps.push({ line: "init", note: "ans[0] = 0: zero has no 1 bits.", view: [view(0, { 0: "match" })] });
+          for (let i = 1; i <= n; i++) {
+            const j = i & (i - 1);
+            ans[i] = ans[j] + 1;
+            steps.push({ line: ["num", "store"], note: `i = ${bin(i)}. Clear its lowest 1: ${bin(j)} = ${j}. ans[${i}] = ans[${j}] + 1 = ${ans[i]}.`, view: [view(i, { [j]: "compare", [i]: "new" })] });
+          }
+          steps.push({ line: "return", note: `Return [${ans.join(", ")}]. One step per number: O(n).`, view: [view(n, Object.fromEntries(ans.map((_, i) => [i, "match"])))] });
+          return steps;
+        },
+      });
+      const bin = (x) => x.toString(2);
+      })();
+    </script>
+    <!-- problems/0338-counting-bits/approach3.visual.js -->
+    <script>
+      // DP: i >> 1 drops the last bit; it's smaller and already known. Add that last bit back.
+      (function () {
+      DSAViz.register("0338-counting-bits/approach3", {
+        inputs: [{ name: "n", type: "int", value: "8", min: 0, max: 16 }],
+        trace({ n }) {
+          const ans = Array(n + 1).fill(0);
+          const done = (k) => ans.map((v, i) => (i <= k ? v : "·"));
+          const steps = [];
+          const view = (k, marks = {}) => ({ type: "array", label: "ans; caption = number in binary", values: done(k), marks: { ...Object.fromEntries(ans.map((_, i) => [i, i > k ? "ghost" : ""]).filter(([, m]) => m)), ...marks }, sub: ans.map((_, i) => bin(i)) });
+          steps.push({ line: "init", note: "ans[0] = 0: zero has no 1 bits.", view: [view(0, { 0: "match" })] });
+          for (let i = 1; i <= n; i++) {
+            const j = i >> 1;
+            ans[i] = ans[j] + (i & 1);
+            steps.push({ line: ["num", "store"], note: `i = ${bin(i)}. Drop the last bit: ${j ? bin(j) : "0"} = ${j}. ans[${i}] = ans[${j}] + ${i & 1} = ${ans[i]}.`, view: [view(i, { [j]: "compare", [i]: "new" })] });
+          }
+          steps.push({ line: "return", note: `Return [${ans.join(", ")}]. One step per number: O(n).`, view: [view(n, Object.fromEntries(ans.map((_, i) => [i, "match"])))] });
+          return steps;
+        },
+      });
+      const bin = (x) => x.toString(2);
       })();
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->

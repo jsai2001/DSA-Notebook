@@ -1,0 +1,201 @@
+<details class="question" data-group="bit-manipulation" data-tags="bit manipulation dynamic programming dp popcount count set bits">
+  <summary>
+    <span class="q-title">338. Counting Bits</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Bit Manipulation</span>
+      <span class="tag">Dynamic Programming</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> <code>i &gt;&gt; 1</code> is <code>i</code>
+      without its last bit. It's smaller, so its count is already known:
+      <code>ans[i] = ans[i &gt;&gt; 1] + (i &amp; 1)</code>. One step per
+      number, O(n).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/counting-bits/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Return an array <code>ans</code> of length <code>n + 1</code> where
+        <code>ans[i]</code> is the number of 1 bits in <code>i</code>.
+      </p>
+      <ul>
+        <li><code>0 &lt;= n &lt;= 10⁵</code></li>
+        <li>Follow-up: do it in O(n) without a built-in popcount.</li>
+      </ul>
+      <p class="note">
+        Example: <code>n = 2</code> → <code>[0,1,1]</code>.
+        <code>n = 5</code> → <code>[0,1,1,2,1,2]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>n = 0</code></td>
+              <td><code>[0]</code></td>
+              <td>The array still has one entry.</td>
+            </tr>
+            <tr>
+              <td><code>n = 3</code></td>
+              <td><code>[0,1,1,2]</code></td>
+              <td><code>ans[i &gt;&gt; 1] + i &amp; 1</code> without brackets means <code>(ans[i &gt;&gt; 1] + i) &amp; 1</code>, because <code>+</code> comes before <code>&amp;</code>. It gave <code>[0,1,1,0]</code>, and was wrong for 297 of the 300 values of n tried.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Count Each Number</h2>
+      <p class="intuition">
+        For every <code>i</code>, clear its lowest 1 with
+        <code>x &amp; (x − 1)</code> until it's 0, counting the rounds (as in
+        191. Number of 1 Bits).
+      </p>
+      <ul>
+        <li>Nothing is reused between numbers.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(1) besides the answer</span>
+      </div>
+      <p class="note">
+        <code>n = 10⁵</code>, average of 60 runs: Python 40 ms, Java 0.44 ms,
+        C++ 0.063 ms.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: DP on the Lowest 1</h2>
+      <p class="intuition">
+        <code>i &amp; (i − 1)</code> is <code>i</code> with its lowest 1
+        cleared. It's smaller, so its count is known, and it has exactly one
+        1 less: <code>ans[i] = ans[i &amp; (i − 1)] + 1</code>.
+      </p>
+      <ul>
+        <li>O(n) and short.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1) besides the answer</span>
+      </div>
+      <p class="note">
+        <code>n = 10⁵</code>: Python 5.2 ms, Java 0.087 ms, C++ 0.23 ms. In
+        C++ that's slower than Approach 1. Probably because for every odd
+        <code>i</code>, <code>i &amp; (i − 1)</code> is <code>i − 1</code>:
+        each step waits for the value the step before just wrote.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: DP on the Last Bit
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        <code>i &gt;&gt; 1</code> drops the last bit, so
+        <code>ans[i] = ans[i &gt;&gt; 1] + (i &amp; 1)</code>. Odd numbers
+        have one more 1 than half of them; even numbers have the same.
+      </p>
+      <ul>
+        <li>It reads <code>ans[i / 2]</code>, written long ago, so steps don't wait on each other.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1) besides the answer</span>
+      </div>
+      <p class="note">
+        <code>n = 10⁵</code>: Python 5.4 ms, Java 0.069 ms, C++ 0.039 ms.
+        Fastest in C++ (5.8 times Approach 2) and Java; in Python, 5% behind
+        Approach 2.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Call a popcount on each number: <code>i.bit_count()</code> (Python
+        3.10+), <code>__builtin_popcount</code> or C++20's
+        <code>std::popcount</code>, Java's <code>Integer.bitCount</code>.
+        It doesn't meet the follow-up, but it's what you'd write.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1) besides the answer</span>
+      </div>
+      <p class="note">
+        <code>n = 10⁵</code>: Python 2.3 ms (2.3 times faster than Approach
+        3), C++ 0.018 ms (2.2 times faster). Java 0.21 ms, 3 times slower
+        than Approach 3 here.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Count Each Number</th>
+              <td>Clear the lowest 1, repeat</td>
+              <td>O(n log n)</td>
+              <td>O(1)</td>
+              <td>40 ms in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">DP on the Lowest 1</th>
+              <td><code>ans[i &amp; (i − 1)] + 1</code></td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Slow in C++</td>
+            </tr>
+            <tr>
+              <th scope="row">DP on the Last Bit</th>
+              <td><code>ans[i &gt;&gt; 1] + (i &amp; 1)</code></td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
