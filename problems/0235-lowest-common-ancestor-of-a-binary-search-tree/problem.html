@@ -1,0 +1,194 @@
+<details class="question" data-group="trees" data-tags="tree binary search tree bst lowest common ancestor lca split point">
+  <summary>
+    <span class="q-title">235. Lowest Common Ancestor of a Binary Search Tree</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Binary Search Tree</span>
+      <span class="tag">Tree</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> In a BST, values tell you which way a node
+      is. Walk down from the root: if <code>p</code> and <code>q</code> are
+      both smaller, go left; if both bigger, go right. The first node where
+      they're <strong>not on the same side</strong> (or that is one of them)
+      is the answer. O(h) time, O(1) space.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given a BST and two of its nodes <code>p</code> and <code>q</code>,
+        return their lowest common ancestor: the deepest node that has both
+        below it. A node counts as its own ancestor.
+      </p>
+      <ul>
+        <li><code>2 &lt;= n &lt;= 10⁵</code>; all values are different</li>
+        <li><code>p != q</code>, and both are in the tree</li>
+      </ul>
+      <p class="note">
+        Example: <code>[6,2,8,0,4,7,9,null,null,3,5], p = 2, q = 8</code> →
+        <code>6</code>. Same tree, <code>p = 2, q = 4</code> → <code>2</code>.
+        <code>[2,1], p = 2, q = 1</code> → <code>2</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[2,1], p = 2, q = 1</code></td>
+              <td><code>2</code></td>
+              <td>p is the ancestor of q. Stopping only when <code>p &lt; node &lt; q</code> (strictly) walked past it and returned nothing; wrong on 1915 of 3003 tests.</td>
+            </tr>
+            <tr>
+              <td><code>p = 2, q = 4</code> in the example tree</td>
+              <td><code>2</code></td>
+              <td>The same: the answer is p itself.</td>
+            </tr>
+            <tr>
+              <td>10⁵ nodes in one chain, the two deepest</td>
+              <td>the second deepest</td>
+              <td>h = n: walking down takes 10⁵ steps. A recursive walk would also go 10⁵ calls deep.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Parent Pointers (Any Binary Tree)</h2>
+      <p class="intuition">
+        Walk the whole tree and record each node's parent. Put
+        <code>p</code> and all its ancestors in a set. Climb from
+        <code>q</code> until you reach a node in that set.
+      </p>
+      <ul>
+        <li>Doesn't use the BST order, so it works on any binary tree.</li>
+        <li>Visits all n nodes even when the answer is the root.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        10⁵ random values: Python 18 ms, Java 20 ms, C++ 7.3 ms, about 700
+        times slower than Approach 3 in Python.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Compare the Two Search Paths</h2>
+      <p class="intuition">
+        Search for <code>p</code> from the root (smaller left, bigger right)
+        and keep the path. Do the same for <code>q</code>. Both paths start
+        the same way; the last node they share is the answer.
+      </p>
+      <ul>
+        <li>Uses the BST order: only two root-to-node paths are walked.</li>
+        <li>Keeps both paths, O(h) memory.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(h)</span>
+        <span><strong>Space</strong> O(h)</span>
+      </div>
+      <p class="note">
+        A 10⁵-node chain: Python 13.5 ms, Java 3.0 ms, C++ 1.2 ms. On the
+        random tree (h about 40): Python 26 µs.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Walk Down to the Split Point
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Start at the root. If both values are smaller than the node, go
+        left; if both are bigger, go right. Otherwise this node is between
+        them, or is one of them: return it.
+      </p>
+      <ul>
+        <li>One walk, no lists, no recursion.</li>
+        <li>Everything below the split point is on one side of it, so nothing deeper can hold both.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(h)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        A 10⁵-node chain: Python 5.5 ms, Java 0.23 ms, C++ 0.13 ms, the fastest
+        in every language.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>No library works on LeetCode's <code>TreeNode</code>. Approach 3 is a few lines and is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Parent Pointers</th>
+              <td>Ancestors of p, climb from q</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Works on any binary tree</td>
+            </tr>
+            <tr>
+              <th scope="row">Compare the Search Paths</th>
+              <td>Last node both paths share</td>
+              <td>O(h)</td>
+              <td>O(h)</td>
+              <td>Uses the BST order</td>
+            </tr>
+            <tr>
+              <th scope="row">Walk Down to the Split</th>
+              <td>Both smaller: left; both bigger: right</td>
+              <td>O(h)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

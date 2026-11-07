@@ -15592,7 +15592,7 @@
       <details class="pattern-group" id="g-trees">
         <summary>
           <span class="g-name">Trees</span>
-          <span class="g-count"><span class="g-total">13 problems</span></span>
+          <span class="g-count"><span class="g-total">14 problems</span></span>
           <span class="g-hint">A DFS that returns something to the parent</span>
         </summary>
         <div class="g-body">
@@ -20439,6 +20439,465 @@
                         <td>Push left, pop, go right</td>
                         <td>O(h + k)</td>
                         <td>O(h)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0235-lowest-common-ancestor-of-a-binary-search-tree ===== -->
+          <details class="question" data-group="trees" data-tags="tree binary search tree bst lowest common ancestor lca split point">
+            <summary>
+              <span class="q-title">235. Lowest Common Ancestor of a Binary Search Tree</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Binary Search Tree</span>
+                <span class="tag">Tree</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> In a BST, values tell you which way a node
+                is. Walk down from the root: if <code>p</code> and <code>q</code> are
+                both smaller, go left; if both bigger, go right. The first node where
+                they're <strong>not on the same side</strong> (or that is one of them)
+                is the answer. O(h) time, O(1) space.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-search-tree/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Given a BST and two of its nodes <code>p</code> and <code>q</code>,
+                  return their lowest common ancestor: the deepest node that has both
+                  below it. A node counts as its own ancestor.
+                </p>
+                <ul>
+                  <li><code>2 &lt;= n &lt;= 10⁵</code>; all values are different</li>
+                  <li><code>p != q</code>, and both are in the tree</li>
+                </ul>
+                <p class="note">
+                  Example: <code>[6,2,8,0,4,7,9,null,null,3,5], p = 2, q = 8</code> →
+                  <code>6</code>. Same tree, <code>p = 2, q = 4</code> → <code>2</code>.
+                  <code>[2,1], p = 2, q = 1</code> → <code>2</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[2,1], p = 2, q = 1</code></td>
+                        <td><code>2</code></td>
+                        <td>p is the ancestor of q. Stopping only when <code>p &lt; node &lt; q</code> (strictly) walked past it and returned nothing; wrong on 1915 of 3003 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>p = 2, q = 4</code> in the example tree</td>
+                        <td><code>2</code></td>
+                        <td>The same: the answer is p itself.</td>
+                      </tr>
+                      <tr>
+                        <td>10⁵ nodes in one chain, the two deepest</td>
+                        <td>the second deepest</td>
+                        <td>h = n: walking down takes 10⁵ steps. A recursive walk would also go 10⁵ calls deep.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Parent Pointers (Any Binary Tree)</h2>
+                <p class="intuition">
+                  Walk the whole tree and record each node's parent. Put
+                  <code>p</code> and all its ancestors in a set. Climb from
+                  <code>q</code> until you reach a node in that set.
+                </p>
+                <ul>
+                  <li>Doesn't use the BST order, so it works on any binary tree.</li>
+                  <li>Visits all n nodes even when the answer is the root.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  10⁵ random values: Python 18 ms, Java 20 ms, C++ 7.3 ms, about 700
+                  times slower than Approach 3 in Python.
+                </p>
+                <div class="code-tabs" data-viz="0235-lowest-common-ancestor-of-a-binary-search-tree/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"walk":[9,10,11,12,13,14,15,16],"up":[17,18,19,20],"meet":[21,22],"return":[23]}'>
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, x):
+                    #         self.val = x
+                    #         self.left = None
+                    #         self.right = None
+                    class Solution(object):
+                        def lowestCommonAncestor(self, root, p, q):
+                            parent = {root: None}  # each node's parent, found by walking the whole tree
+                            stack = [root]
+                            while stack:
+                                node = stack.pop()
+                                for child in (node.left, node.right):
+                                    if child:
+                                        parent[child] = node
+                                        stack.append(child)
+                            ancestors = set()  # p and everything above it
+                            while p:
+                                ancestors.add(p)
+                                p = parent[p]
+                            while q not in ancestors:  # climb from q until the paths meet
+                                q = parent[q]
+                            return q
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"walk":[18,19,20,21,22,23,24,25,26],"up":[29,30],"meet":[31],"return":[32]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <unordered_map>
+                    #include <unordered_set>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+                            std::unordered_map<TreeNode*, TreeNode*> parent{{root, nullptr}}; // each node's parent, found by walking the whole tree
+                            std::vector<TreeNode*> stack{root};
+                            while (!stack.empty()) {
+                                TreeNode* node = stack.back();
+                                stack.pop_back();
+                                for (TreeNode* child : {node->left, node->right})
+                                    if (child) {
+                                        parent[child] = node;
+                                        stack.push_back(child);
+                                    }
+                            }
+                            std::unordered_set<TreeNode*> ancestors; // p and everything above it
+                            for (; p; p = parent[p]) ancestors.insert(p);
+                            while (!ancestors.count(q)) q = parent[q]; // climb from q until the paths meet
+                            return q;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"walk":[19,20,21,22,23,24,25,26,27,28],"up":[31,32],"meet":[33],"return":[34]}'>
+                    import java.util.*;
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    class Solution {
+                        public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+                            Map<TreeNode, TreeNode> parent = new HashMap<>(); // each node's parent, found by walking the whole tree
+                            parent.put(root, null);
+                            ArrayDeque<TreeNode> stack = new ArrayDeque<>();
+                            stack.push(root);
+                            while (!stack.isEmpty()) {
+                                TreeNode node = stack.pop();
+                                for (TreeNode child : new TreeNode[] {node.left, node.right})
+                                    if (child != null) {
+                                        parent.put(child, node);
+                                        stack.push(child);
+                                    }
+                            }
+                            Set<TreeNode> ancestors = new HashSet<>(); // p and everything above it
+                            for (; p != null; p = parent.get(p)) ancestors.add(p);
+                            while (!ancestors.contains(q)) q = parent.get(q); // climb from q until the paths meet
+                            return q;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Compare the Two Search Paths</h2>
+                <p class="intuition">
+                  Search for <code>p</code> from the root (smaller left, bigger right)
+                  and keep the path. Do the same for <code>q</code>. Both paths start
+                  the same way; the last node they share is the answer.
+                </p>
+                <ul>
+                  <li>Uses the BST order: only two root-to-node paths are walked.</li>
+                  <li>Keeps both paths, O(h) memory.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(h)</span>
+                  <span><strong>Space</strong> O(h)</span>
+                </div>
+                <p class="note">
+                  A 10⁵-node chain: Python 13.5 ms, Java 3.0 ms, C++ 1.2 ms. On the
+                  random tree (h about 40): Python 26 µs.
+                </p>
+                <div class="code-tabs" data-viz="0235-lowest-common-ancestor-of-a-binary-search-tree/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"path":[9,10,11,12,13,14,15],"both":[16],"compare":[17,18,19,20,21],"return":[22]}'>
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, x):
+                    #         self.val = x
+                    #         self.left = None
+                    #         self.right = None
+                    class Solution(object):
+                        def lowestCommonAncestor(self, root, p, q):
+                            def path(target):  # the BST search path from the root down to target
+                                out, node = [], root
+                                while node is not target:
+                                    out.append(node)
+                                    node = node.left if target.val < node.val else node.right  # smaller: go left; bigger: go right
+                                out.append(node)
+                                return out
+                            a, b = path(p), path(q)
+                            lca = root
+                            for x, y in zip(a, b):  # the two paths share a beginning
+                                if x is not y:  # they split here
+                                    break
+                                lca = x  # the deepest shared node so far
+                            return lca
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"both":[16],"compare":[17,18],"return":[19],"path":[22,23,24,25,26,28,29]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <vector>
+                    class Solution {
+                    public:
+                        TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+                            std::vector<TreeNode*> a = path(root, p), b = path(root, q);
+                            TreeNode* lca = root;
+                            for (size_t i = 0; i < a.size() && i < b.size() && a[i] == b[i]; ++i) lca = a[i]; // the deepest node both paths share
+                            return lca;
+                        }
+                    private:
+                        std::vector<TreeNode*> path(TreeNode* node, TreeNode* target) { // the BST search path from the root down to target
+                            std::vector<TreeNode*> out;
+                            while (node != target) {
+                                out.push_back(node);
+                                node = target->val < node->val ? node->left : node->right; // smaller: go left; bigger: go right
+                            }
+                            out.push_back(node);
+                            return out;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"both":[19],"compare":[20,21],"return":[22],"path":[24,25,26,27,28,30,31]}'>
+                    import java.util.*;
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    class Solution {
+                        public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+                            List<TreeNode> a = path(root, p), b = path(root, q);
+                            TreeNode lca = root;
+                            for (int i = 0; i < a.size() && i < b.size() && a.get(i) == b.get(i); i++) lca = a.get(i); // the deepest node both paths share
+                            return lca;
+                        }
+                        private List<TreeNode> path(TreeNode node, TreeNode target) { // the BST search path from the root down to target
+                            List<TreeNode> out = new ArrayList<>();
+                            while (node != target) {
+                                out.add(node);
+                                node = target.val < node.val ? node.left : node.right; // smaller: go left; bigger: go right
+                            }
+                            out.add(node);
+                            return out;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Walk Down to the Split Point
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Start at the root. If both values are smaller than the node, go
+                  left; if both are bigger, go right. Otherwise this node is between
+                  them, or is one of them: return it.
+                </p>
+                <ul>
+                  <li>One walk, no lists, no recursion.</li>
+                  <li>Everything below the split point is on one side of it, so nothing deeper can hold both.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(h)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  A 10⁵-node chain: Python 5.5 ms, Java 0.23 ms, C++ 0.13 ms, the fastest
+                  in every language.
+                </p>
+                <div class="code-tabs" data-viz="0235-lowest-common-ancestor-of-a-binary-search-tree/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[9],"loop":[10],"left":[11,12],"right":[13,14],"found":[15,16]}'>
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, x):
+                    #         self.val = x
+                    #         self.left = None
+                    #         self.right = None
+                    class Solution(object):
+                        def lowestCommonAncestor(self, root, p, q):
+                            node = root
+                            while True:
+                                if p.val < node.val and q.val < node.val:  # both are smaller: both are in the left subtree
+                                    node = node.left
+                                elif p.val > node.val and q.val > node.val:  # both bigger: both on the right
+                                    node = node.right
+                                else:  # they split here (or one of them is this node)
+                                    return node
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[15],"loop":[16],"left":[17],"right":[18],"found":[19]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    class Solution {
+                    public:
+                        TreeNode* lowestCommonAncestor(TreeNode* root, TreeNode* p, TreeNode* q) {
+                            TreeNode* node = root;
+                            while (true) {
+                                if (p->val < node->val && q->val < node->val) node = node->left; // both are smaller: both are in the left subtree
+                                else if (p->val > node->val && q->val > node->val) node = node->right; // both bigger: both on the right
+                                else return node; // they split here (or one of them is this node)
+                            }
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[18],"loop":[19],"left":[20],"right":[21],"found":[22]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    class Solution {
+                        public TreeNode lowestCommonAncestor(TreeNode root, TreeNode p, TreeNode q) {
+                            TreeNode node = root;
+                            while (true) {
+                                if (p.val < node.val && q.val < node.val) node = node.left; // both are smaller: both are in the left subtree
+                                else if (p.val > node.val && q.val > node.val) node = node.right; // both bigger: both on the right
+                                else return node; // they split here (or one of them is this node)
+                            }
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>No library works on LeetCode's <code>TreeNode</code>. Approach 3 is a few lines and is what you'd write.</p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Parent Pointers</th>
+                        <td>Ancestors of p, climb from q</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Works on any binary tree</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Compare the Search Paths</th>
+                        <td>Last node both paths share</td>
+                        <td>O(h)</td>
+                        <td>O(h)</td>
+                        <td>Uses the BST order</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Walk Down to the Split</th>
+                        <td>Both smaller: left; both bigger: right</td>
+                        <td>O(h)</td>
+                        <td>O(1)</td>
                         <td>Expected answer</td>
                       </tr>
                     </tbody>
@@ -66515,6 +66974,149 @@
         if (!ok(root, -Infinity, Infinity)) throw new DSAViz.InputError("That isn't a BST: every left subtree must be smaller and every right subtree bigger than its node.");
         if (k < 1 || k > ids.length) throw new DSAViz.InputError(`k must be between 1 and ${ids.length} (the number of nodes).`);
         return { root, nodes };
+      }
+      })();
+    </script>
+    <!-- problems/0235-lowest-common-ancestor-of-a-binary-search-tree/approach1.visual.js -->
+    <script>
+      // Works for any binary tree: record every node's parent, mark p's ancestors, then climb from q until you hit one.
+      (function () {
+      DSAViz.register("0235-lowest-common-ancestor-of-a-binary-search-tree/approach1", {
+        inputs: [
+          { name: "root", type: "tree", value: "[6, 2, 8, 0, 4, 7, 9, null, null, 3, 5]", maxLength: 15 },
+          { name: "p", type: "int", value: "3", min: -99, max: 99 },
+          { name: "q", type: "int", value: "0", min: -99, max: 99 },
+        ],
+        trace({ root: values, p, q }) {
+          const { root, nodes, pid, qid } = check(values, p, q);
+          const parent = { [root]: -1 };
+          const stack = [root];
+          while (stack.length) { const id = stack.pop(); for (const c of [nodes[id].left, nodes[id].right]) if (c >= 0) { parent[c] = id; stack.push(c); } }
+          const steps = [];
+          const all = Object.keys(nodes).map(Number);
+          const tv = (marks, label) => ({ type: "tree", label, values, marks, captions: Object.fromEntries(all.map((id) => [id, id === pid ? "p" : id === qid ? "q" : ""]).filter(([, c]) => c)) });
+          steps.push({ line: "walk", note: `Walk the whole tree once (${all.length} nodes) and record each node's parent. This ignores the BST order completely.`, view: [tv(Object.fromEntries(all.map((id) => [id, "visited"])), "tree (dashed = visited to record parents)"), { type: "map", label: "parent", columns: ["node", "parent"], entries: all.map((id) => [String(nodes[id].val), parent[id] < 0 ? "None" : String(nodes[parent[id]].val)]) }] });
+          const anc = [];
+          for (let x = pid; x >= 0; x = parent[x]) anc.push(x);
+          steps.push({ line: "up", note: `From p = ${p}, follow parents up to the root: ${anc.map((id) => nodes[id].val).join(" → ")}. Put them in a set.`, view: [tv(Object.fromEntries(anc.map((id) => [id, "compare"])), "tree (yellow = p and its ancestors)"), { type: "set", label: "ancestors of p", items: anc.map((id) => String(nodes[id].val)) }] });
+          let x = qid;
+          const climbed = [];
+          while (!anc.includes(x)) { climbed.push(x); x = parent[x]; }
+          const marks = Object.fromEntries(anc.map((id) => [id, "compare"]));
+          climbed.forEach((id) => (marks[id] = "visited"));
+          marks[x] = "match";
+          steps.push({ line: ["meet", "return"], note: `Return ${nodes[x].val}. Climbing from q = ${q}${climbed.length > 1 ? ` (past ${climbed.slice(1).map((id) => nodes[id].val).join(", ")})` : ""}, the first node that's also above p is ${nodes[x].val}. O(n) time and space.`, view: [tv(marks, "tree (yellow = above p, dashed = climbed from q, green = where they meet)"), { type: "set", label: "ancestors of p", items: anc.map((id) => String(nodes[id].val)), marks: { [String(nodes[x].val)]: "match" } }] });
+          return steps;
+        },
+      });
+
+      function check(values, p, q) {
+        const { root, nodes } = DSAViz.buildTree(values);
+        const ids = Object.keys(nodes).map(Number);
+        if (root < 0) throw new DSAViz.InputError("The tree needs at least two nodes.");
+        if (new Set(ids.map((id) => nodes[id].val)).size !== ids.length) throw new DSAViz.InputError("BST values must all be different.");
+        const ok = (id, lo, hi) => id < 0 || (nodes[id].val > lo && nodes[id].val < hi && ok(nodes[id].left, lo, nodes[id].val) && ok(nodes[id].right, nodes[id].val, hi));
+        if (!ok(root, -Infinity, Infinity)) throw new DSAViz.InputError("That isn't a BST: every left subtree must be smaller and every right subtree bigger than its node.");
+        const idOf = (v) => ids.find((id) => nodes[id].val === v);
+        if (p === q) throw new DSAViz.InputError("p and q must be different nodes.");
+        if (idOf(p) === undefined || idOf(q) === undefined) throw new DSAViz.InputError("p and q must be values in the tree.");
+        return { root, nodes, pid: idOf(p), qid: idOf(q) };
+      }
+      })();
+    </script>
+    <!-- problems/0235-lowest-common-ancestor-of-a-binary-search-tree/approach2.visual.js -->
+    <script>
+      // Search for p and for q from the root, keeping both paths. The last node the two paths share is the answer.
+      (function () {
+      DSAViz.register("0235-lowest-common-ancestor-of-a-binary-search-tree/approach2", {
+        inputs: [
+          { name: "root", type: "tree", value: "[6, 2, 8, 0, 4, 7, 9, null, null, 3, 5]", maxLength: 15 },
+          { name: "p", type: "int", value: "3", min: -99, max: 99 },
+          { name: "q", type: "int", value: "0", min: -99, max: 99 },
+        ],
+        trace({ root: values, p, q }) {
+          const { root, nodes, pid, qid } = check(values, p, q);
+          const path = (t) => { const out = []; let id = root; while (id !== t) { out.push(id); id = nodes[t].val < nodes[id].val ? nodes[id].left : nodes[id].right; } out.push(id); return out; };
+          const a = path(pid), b = path(qid);
+          const all = Object.keys(nodes).map(Number);
+          const caps = Object.fromEntries(all.map((id) => [id, id === pid ? "p" : id === qid ? "q" : ""]).filter(([, c]) => c));
+          const steps = [];
+          const show = (ids) => ids.map((id) => nodes[id].val);
+          steps.push({ line: ["both", "path"], note: `Search for p = ${p}: smaller goes left, bigger goes right. Path: ${show(a).join(" → ")}.`, view: [{ type: "tree", label: "tree (yellow = the path to p)", values, marks: Object.fromEntries(a.map((id) => [id, "compare"])), captions: caps }, { type: "array", label: "path to p", values: show(a), compact: true }] });
+          steps.push({ line: ["both", "path"], note: `Search for q = ${q}. Path: ${show(b).join(" → ")}.`, view: [{ type: "tree", label: "tree (yellow = the path to q)", values, marks: Object.fromEntries(b.map((id) => [id, "compare"])), captions: caps }, { type: "array", label: "path to p", values: show(a), compact: true }, { type: "array", label: "path to q", values: show(b), compact: true }] });
+          let k = 0;
+          while (k < a.length && k < b.length && a[k] === b[k]) k++;
+          const lca = a[k - 1];
+          const m = Object.fromEntries([...a, ...b].map((id) => [id, "visited"]));
+          a.slice(0, k).forEach((id) => (m[id] = "compare"));
+          m[lca] = "match";
+          const shared = Object.fromEntries([...Array(k).keys()].map((i) => [i, i === k - 1 ? "match" : "compare"]));
+          steps.push({ line: ["compare", "return"], note: `Return ${nodes[lca].val}. The paths share their first ${k} node${k > 1 ? "s" : ""}; the last shared one is the answer. O(h) time, O(h) space for the paths.`, view: [{ type: "tree", label: "tree (yellow = shared by both paths, green = the last shared node)", values, marks: m, captions: caps }, { type: "array", label: "path to p", values: show(a), compact: true, marks: shared }, { type: "array", label: "path to q", values: show(b), compact: true, marks: shared }] });
+          return steps;
+        },
+      });
+
+      function check(values, p, q) {
+        const { root, nodes } = DSAViz.buildTree(values);
+        const ids = Object.keys(nodes).map(Number);
+        if (root < 0) throw new DSAViz.InputError("The tree needs at least two nodes.");
+        if (new Set(ids.map((id) => nodes[id].val)).size !== ids.length) throw new DSAViz.InputError("BST values must all be different.");
+        const ok = (id, lo, hi) => id < 0 || (nodes[id].val > lo && nodes[id].val < hi && ok(nodes[id].left, lo, nodes[id].val) && ok(nodes[id].right, nodes[id].val, hi));
+        if (!ok(root, -Infinity, Infinity)) throw new DSAViz.InputError("That isn't a BST: every left subtree must be smaller and every right subtree bigger than its node.");
+        const idOf = (v) => ids.find((id) => nodes[id].val === v);
+        if (p === q) throw new DSAViz.InputError("p and q must be different nodes.");
+        if (idOf(p) === undefined || idOf(q) === undefined) throw new DSAViz.InputError("p and q must be values in the tree.");
+        return { root, nodes, pid: idOf(p), qid: idOf(q) };
+      }
+      })();
+    </script>
+    <!-- problems/0235-lowest-common-ancestor-of-a-binary-search-tree/approach3.visual.js -->
+    <script>
+      // One walk from the root: while p and q are both smaller (or both bigger), go that way. Where they split is the answer.
+      (function () {
+      DSAViz.register("0235-lowest-common-ancestor-of-a-binary-search-tree/approach3", {
+        inputs: [
+          { name: "root", type: "tree", value: "[6, 2, 8, 0, 4, 7, 9, null, null, 3, 5]", maxLength: 15 },
+          { name: "p", type: "int", value: "3", min: -99, max: 99 },
+          { name: "q", type: "int", value: "0", min: -99, max: 99 },
+        ],
+        trace({ root: values, p, q }) {
+          const { root, nodes, pid, qid } = check(values, p, q);
+          const all = Object.keys(nodes).map(Number);
+          const caps = Object.fromEntries(all.map((id) => [id, id === pid ? "p" : id === qid ? "q" : ""]).filter(([, c]) => c));
+          const steps = [];
+          const seen = [];
+          let id = root;
+          const view = (m) => [{ type: "tree", label: "tree (dashed = passed, dark = this node, green = the answer)", values, marks: { ...Object.fromEntries(seen.map((x) => [x, "visited"])), ...m }, captions: caps }, { type: "vars", items: [{ name: "p", value: p }, { name: "q", value: q }, { name: "node", value: nodes[id].val }] }];
+          steps.push({ line: "init", note: "Start at the root.", view: view({ [id]: "active" }) });
+          while (true) {
+            const v = nodes[id].val;
+            if (p < v && q < v) {
+              steps.push({ line: ["loop", "left"], note: `${p} and ${q} are both smaller than ${v}: both are in the left subtree. Go left.`, view: view({ [id]: "active" }) });
+              seen.push(id); id = nodes[id].left;
+            } else if (p > v && q > v) {
+              steps.push({ line: ["loop", "left", "right"], note: `${p} and ${q} are both bigger than ${v}: both are on the right. Go right.`, view: view({ [id]: "active" }) });
+              seen.push(id); id = nodes[id].right;
+            } else {
+              const why = v === p || v === q ? `${v} is ${v === p ? "p" : "q"} itself, and the other is below it` : `${Math.min(p, q)} < ${v} < ${Math.max(p, q)}: they're on different sides`;
+              steps.push({ line: ["loop", "left", "right", "found"], note: `Return ${v}. ${why}. O(h) time, O(1) space.`, view: view({ [id]: "match" }) });
+              return steps;
+            }
+          }
+        },
+      });
+
+      function check(values, p, q) {
+        const { root, nodes } = DSAViz.buildTree(values);
+        const ids = Object.keys(nodes).map(Number);
+        if (root < 0) throw new DSAViz.InputError("The tree needs at least two nodes.");
+        if (new Set(ids.map((id) => nodes[id].val)).size !== ids.length) throw new DSAViz.InputError("BST values must all be different.");
+        const ok = (id, lo, hi) => id < 0 || (nodes[id].val > lo && nodes[id].val < hi && ok(nodes[id].left, lo, nodes[id].val) && ok(nodes[id].right, nodes[id].val, hi));
+        if (!ok(root, -Infinity, Infinity)) throw new DSAViz.InputError("That isn't a BST: every left subtree must be smaller and every right subtree bigger than its node.");
+        const idOf = (v) => ids.find((id) => nodes[id].val === v);
+        if (p === q) throw new DSAViz.InputError("p and q must be different nodes.");
+        if (idOf(p) === undefined || idOf(q) === undefined) throw new DSAViz.InputError("p and q must be values in the tree.");
+        return { root, nodes, pid: idOf(p), qid: idOf(q) };
       }
       })();
     </script>
