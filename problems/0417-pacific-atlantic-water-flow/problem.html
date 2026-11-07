@@ -1,0 +1,198 @@
+<details class="question" data-group="graphs" data-tags="graph bfs dfs grid matrix multi-source bfs reverse flow">
+  <summary>
+    <span class="q-title">417. Pacific Atlantic Water Flow</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Graph</span>
+      <span class="tag">BFS</span>
+      <span class="tag">DFS</span>
+      <span class="tag">Grid</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Don't follow the water down from every
+      cell. Go backwards: start at each ocean's edge cells and climb to
+      neighbours that are <strong>equal or higher</strong>. Every cell
+      reached can drain into that ocean. Two searches, then keep the cells
+      both reached. O(m·n).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/pacific-atlantic-water-flow/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>heights</code> is an island. The Pacific touches the top and
+        left edges, the Atlantic the bottom and right edges. Rain flows from a
+        cell to a neighbour (up, down, left, right) whose height is less than
+        or equal, and from an edge cell into the ocean next to it. Return
+        every <code>[r, c]</code> whose water can reach both oceans, in any
+        order.
+      </p>
+      <ul>
+        <li><code>1 &lt;= m, n &lt;= 200</code>, <code>0 &lt;= heights[r][c] &lt;= 10⁵</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[[1,2,2,3,5],[3,2,3,4,4],[2,4,5,3,1],[6,7,1,4,5],[5,1,1,2,4]]</code>
+        → <code>[[0,4],[1,3],[1,4],[2,2],[3,0],[3,1],[4,0]]</code>.
+        <code>[[1]]</code> → <code>[[0,0]]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>200 × 200, every height equal</td>
+              <td>all 40,000 cells</td>
+              <td>Water moves to <em>equal</em> heights too, so one search runs through every cell. The recursive DFS goes thousands of calls deep: in Java it threw StackOverflowError here with the default stack.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,2,3]]</code></td>
+              <td>all three cells</td>
+              <td>One row touches all four edges: every cell is on both oceans.</td>
+            </tr>
+            <tr>
+              <td>A flat 5 area walled by 9s on the bottom and right</td>
+              <td>only the wall cells</td>
+              <td>The flat water reaches the Pacific but never climbs to the Atlantic, so a search from each cell walks the whole flat area every time.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Search Downhill From Every Cell</h2>
+      <p class="intuition">
+        For each cell, spread to equal or lower neighbours and note whether
+        the water touches a Pacific edge and an Atlantic edge. Stop early once
+        it touches both.
+      </p>
+      <ul>
+        <li>The same cells are searched again for every start: nothing is shared.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O((m·n)²)</span>
+        <span><strong>Space</strong> O(m·n)</span>
+      </div>
+      <p class="note">
+        The walled flat grid: Python 4.5 s at 50 × 50 and 78 s at 100 × 100.
+        At 200 × 200: C++ 9.0 s, Java 17 s.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Climb From the Oceans, DFS</h2>
+      <p class="intuition">
+        Run a DFS from every Pacific edge cell, climbing to neighbours at
+        least as high, into one shared visited set. Do the same for the
+        Atlantic. The answer is the cells in both sets.
+      </p>
+      <ul>
+        <li>Each cell is visited at most once per ocean.</li>
+        <li>Recursion depth can reach m·n. Python here needs a raised limit.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n)</span>
+        <span><strong>Space</strong> O(m·n), including the call stack</span>
+      </div>
+      <p class="note">
+        200 × 200 random heights: Python 3.2 ms, Java 0.16 ms, C++ 0.09 ms.
+        All equal: Python 99 ms, C++ 2.5 ms, Java crashed (stack overflow).
+        Python 3.14 handled a 40,000-deep snake with the limit at 50,000.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Climb From the Oceans, BFS
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        The same reverse search with a queue: put all of an ocean's edge
+        cells in at once (multi-source BFS) and climb outwards. Two BFS runs,
+        then keep the cells both reached.
+      </p>
+      <ul>
+        <li>No recursion, so no stack limit to hit.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n)</span>
+        <span><strong>Space</strong> O(m·n)</span>
+      </div>
+      <p class="note">
+        200 × 200 random: Python 2.2 ms, Java 0.31 ms, C++ 0.07 ms. All
+        equal: Python 48 ms, Java 1.8 ms, C++ 1.1 ms. The walled grid that
+        took Approach 1 seconds: C++ 0.22 ms.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>Nothing built in. Approach 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Downhill From Every Cell</th>
+              <td>One search per cell</td>
+              <td>O((m·n)²)</td>
+              <td>O(m·n)</td>
+              <td>78 s at 100 × 100 in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">Climb, DFS</th>
+              <td>Reverse search, recursive</td>
+              <td>O(m·n)</td>
+              <td>O(m·n)</td>
+              <td>Java stack overflow</td>
+            </tr>
+            <tr>
+              <th scope="row">Climb, BFS</th>
+              <td>Multi-source BFS per ocean</td>
+              <td>O(m·n)</td>
+              <td>O(m·n)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
