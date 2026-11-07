@@ -32081,7 +32081,7 @@
       <details class="pattern-group" id="g-greedy">
         <summary>
           <span class="g-name">Greedy</span>
-          <span class="g-count"><span class="g-total">5 problems</span></span>
+          <span class="g-count"><span class="g-total">6 problems</span></span>
           <span class="g-hint">Take the best step you can see</span>
         </summary>
         <div class="g-body">
@@ -33688,6 +33688,456 @@
                         <td>O(N)</td>
                         <td>O(26)</td>
                         <td>Fastest; no clock</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0678-valid-parenthesis-string ===== -->
+          <details class="question" data-group="greedy" data-tags="string greedy stack dynamic-programming parentheses wildcard star balance">
+            <summary>
+              <span class="q-title">678. Valid Parenthesis String</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">String</span>
+                <span class="tag">Greedy</span>
+                <span class="tag">Stack</span>
+              </span>
+            </summary>
+
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Don't decide what each <code>*</code> is.
+                Track the <strong>range</strong> of how many <code>(</code> could be
+                open: <code>lo</code> (every <code>*</code> as <code>)</code>) and
+                <code>hi</code> (every <code>*</code> as <code>(</code>). Fail if
+                <code>hi &lt; 0</code>; never let <code>lo</code> go below 0. At the
+                end, valid if <code>lo == 0</code>. O(n), O(1).
+              </div>
+
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/valid-parenthesis-string/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  <code>s</code> has only <code>(</code>, <code>)</code> and
+                  <code>*</code>. Each <code>*</code> can stand for <code>(</code>,
+                  <code>)</code> or nothing. Return <code>true</code> if some choice
+                  makes the brackets balanced: every <code>(</code> closed by a later
+                  <code>)</code>, and no <code>)</code> without an earlier
+                  <code>(</code>.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= s.length &lt;= 100</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>"()"</code> → <code>true</code>, <code>"(*)"</code> →
+                  <code>true</code>, <code>"(*))"</code> → <code>true</code> (the
+                  <code>*</code> is a <code>(</code>).
+                </p>
+              </section>
+
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>"*"</code></td>
+                        <td><code>true</code></td>
+                        <td>A star can be nothing. In the range version, not raising <code>lo</code> back to 0 left it at −1: said <code>false</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"("</code></td>
+                        <td><code>false</code></td>
+                        <td>Something is still open. Checking <code>hi &gt;= 0</code> at the end instead of <code>lo == 0</code> said <code>true</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"*("</code></td>
+                        <td><code>false</code></td>
+                        <td>A star can't close a <code>(</code> that comes after it. The two-stack version without the index check said <code>true</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>")("</code></td>
+                        <td><code>false</code></td>
+                        <td>Order matters. Only comparing the counts of each character said <code>true</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"(*))"</code></td>
+                        <td><code>true</code></td>
+                        <td>The star must be <code>(</code> here.</td>
+                      </tr>
+                      <tr>
+                        <td>18 stars, then <code>"("</code></td>
+                        <td><code>false</code></td>
+                        <td>Trying all three meanings of each star took 22 s in Python here; the real limit is 100 characters.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Try Every Meaning of Each Star</h2>
+                <p class="intuition">
+                  Recursively walk the string with a count of open <code>(</code>. A
+                  <code>(</code> adds one, a <code>)</code> removes one; a
+                  <code>*</code> tries all three. A path dies when the count goes
+                  negative; it succeeds if the count is 0 at the end.
+                </p>
+                <ul>
+                  <li>Correct, and shows exactly what the problem asks.</li>
+                  <li>
+                    Exponential in the number of stars. Adding a memo on
+                    <code>(i, open)</code> brings it down to O(n²), the DP version.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(3ᵏ) for k stars</span>
+                  <span><strong>Space</strong> O(n) call stack</span>
+                </div>
+                <p class="note">
+                  About 8× slower for every 2 more stars. Python: 0.3 s at 14 stars,
+                  2.6 s at 16, 22 s at 18. C++: 3 s at 20, 40 s at 22.
+                </p>
+                <div class="code-tabs" data-viz="0678-valid-parenthesis-string/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"dead":[4,5],"end":[6,7],"try":[8,9,10,11,12],"star":[14],"init":[16]}'>
+                    class Solution(object):
+                        def checkValidString(self, s):
+                            def ok(i, open_):  # can s[i:] finish, with open_ "(" still waiting for a ")"?
+                                if open_ < 0:  # a ")" with nothing to close
+                                    return False
+                                if i == len(s):
+                                    return open_ == 0  # everything closed
+                                c = s[i]
+                                if c == "(":
+                                    return ok(i + 1, open_ + 1)
+                                if c == ")":
+                                    return ok(i + 1, open_ - 1)
+                                # "*": try all three meanings
+                                return ok(i + 1, open_ + 1) or ok(i + 1, open_ - 1) or ok(i + 1, open_)
+
+                            return ok(0, 0)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,6],"dead":[13],"end":[14],"try":[15,16],"star":[18]}'>
+                    #include <string>
+                    class Solution {
+                    public:
+                        bool checkValidString(std::string s) {
+                            this->s = s;
+                            return ok(0, 0);
+                        }
+
+                    private:
+                        std::string s;
+
+                        bool ok(size_t i, int open) { // can s[i:] finish, with `open` "(" still waiting for a ")"?
+                            if (open < 0) return false; // a ")" with nothing to close
+                            if (i == s.size()) return open == 0; // everything closed
+                            if (s[i] == '(') return ok(i + 1, open + 1);
+                            if (s[i] == ')') return ok(i + 1, open - 1);
+                            // "*": try all three meanings
+                            return ok(i + 1, open + 1) || ok(i + 1, open - 1) || ok(i + 1, open);
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6],"dead":[10],"end":[11],"try":[12,13,14],"star":[16]}'>
+                    class Solution {
+                        private String s;
+
+                        public boolean checkValidString(String s) {
+                            this.s = s;
+                            return ok(0, 0);
+                        }
+
+                        private boolean ok(int i, int open) { // can s[i:] finish, with `open` "(" still waiting for a ")"?
+                            if (open < 0) return false; // a ")" with nothing to close
+                            if (i == s.length()) return open == 0; // everything closed
+                            char c = s.charAt(i);
+                            if (c == '(') return ok(i + 1, open + 1);
+                            if (c == ')') return ok(i + 1, open - 1);
+                            // "*": try all three meanings
+                            return ok(i + 1, open + 1) || ok(i + 1, open - 1) || ok(i + 1, open);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Two Stacks of Indexes</h2>
+                <p class="intuition">
+                  Push the index of every <code>(</code> and every <code>*</code> on
+                  two stacks. A <code>)</code> closes the latest <code>(</code>, or
+                  else the latest <code>*</code>, or fails. At the end, pair each
+                  leftover <code>(</code> with a leftover <code>*</code> that comes
+                  <strong>after</strong> it.
+                </p>
+                <ul>
+                  <li>Prefer a real <code>(</code> for each <code>)</code>, and keep stars for later.</li>
+                  <li>Popping both stacks pairs the latest <code>(</code> with the latest star; if the star is earlier, it fails.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  About 6–7 µs per call in Python for 100 characters. Easier to
+                  explain than the range trick, and it shows which characters match.
+                </p>
+                <div class="code-tabs" data-viz="0678-valid-parenthesis-string/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"loop":[4],"open":[5,6],"star":[7,8],"close":[9,10,11,12,13,14],"pair":[16,17,18],"return":[19]}'>
+                    class Solution(object):
+                        def checkValidString(self, s):
+                            opens, stars = [], []  # indexes of unmatched "(" and of unused "*"
+                            for i, c in enumerate(s):
+                                if c == "(":
+                                    opens.append(i)
+                                elif c == "*":
+                                    stars.append(i)
+                                elif opens:  # ")": match the nearest "(" first
+                                    opens.pop()
+                                elif stars:  # no "(" left: use a "*" as "("
+                                    stars.pop()
+                                else:
+                                    return False
+                            # Each leftover "(" needs a "*" AFTER it to act as ")".
+                            while opens and stars:
+                                if opens.pop() > stars.pop():  # the "*" comes first: it can't close this "("
+                                    return False
+                            return not opens  # leftover "*" can just be empty
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"loop":[7],"open":[8,9],"star":[10,11],"close":[12,13,14,15,16,17],"pair":[21,22,23,24],"return":[26]}'>
+                    #include <string>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool checkValidString(std::string s) {
+                            std::vector<int> opens, stars; // indexes of unmatched "(" and of unused "*"
+                            for (int i = 0; i < static_cast<int>(s.size()); ++i) {
+                                if (s[i] == '(') {
+                                    opens.push_back(i);
+                                } else if (s[i] == '*') {
+                                    stars.push_back(i);
+                                } else if (!opens.empty()) { // ")": match the nearest "(" first
+                                    opens.pop_back();
+                                } else if (!stars.empty()) { // no "(" left: use a "*" as "("
+                                    stars.pop_back();
+                                } else {
+                                    return false;
+                                }
+                            }
+                            // Each leftover "(" needs a "*" AFTER it to act as ")".
+                            while (!opens.empty() && !stars.empty()) {
+                                if (opens.back() > stars.back()) return false; // the "*" comes first: it can't close this "("
+                                opens.pop_back();
+                                stars.pop_back();
+                            }
+                            return opens.empty(); // leftover "*" can just be empty
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5],"loop":[6,7],"open":[8,9],"star":[10,11],"close":[12,13,14,15,16,17],"pair":[21,22],"return":[24]}'>
+                    import java.util.*;
+
+                    class Solution {
+                        public boolean checkValidString(String s) {
+                            ArrayDeque<Integer> opens = new ArrayDeque<>(), stars = new ArrayDeque<>(); // indexes of unmatched "(" and of unused "*"
+                            for (int i = 0; i < s.length(); i++) {
+                                char c = s.charAt(i);
+                                if (c == '(') {
+                                    opens.push(i);
+                                } else if (c == '*') {
+                                    stars.push(i);
+                                } else if (!opens.isEmpty()) { // ")": match the nearest "(" first
+                                    opens.pop();
+                                } else if (!stars.isEmpty()) { // no "(" left: use a "*" as "("
+                                    stars.pop();
+                                } else {
+                                    return false;
+                                }
+                            }
+                            // Each leftover "(" needs a "*" AFTER it to act as ")".
+                            while (!opens.isEmpty() && !stars.isEmpty()) {
+                                if (opens.pop() > stars.pop()) return false; // the "*" comes first: it can't close this "("
+                            }
+                            return opens.isEmpty(); // leftover "*" can just be empty
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Range of Open Counts
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  <code>lo</code> and <code>hi</code> are the fewest and the most
+                  <code>(</code> that could be open after each character, over every
+                  way of reading the stars. <code>(</code>: both +1. <code>)</code>:
+                  both −1. <code>*</code>: <code>lo − 1</code>, <code>hi + 1</code>.
+                </p>
+                <ul>
+                  <li>
+                    <code>hi &lt; 0</code> means even the most generous reading has too
+                    many <code>)</code>: fail now.
+                  </li>
+                  <li>
+                    <code>lo = max(lo, 0)</code>: readings that go negative are already
+                    invalid, so drop them. Every count between lo and hi stays
+                    reachable.
+                  </li>
+                  <li>Valid if 0 is in the final range, that is, <code>lo == 0</code>.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  About 8–9 µs per call in Python for 100 characters. The expected
+                  answer; the "why lo can be clamped" point is the usual follow-up.
+                </p>
+                <div class="code-tabs" data-viz="0678-valid-parenthesis-string/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"loop":[4],"open":[5,6],"close":[7,8],"star":[9,10],"fail":[11,12],"clamp":[13],"return":[14]}'>
+                    class Solution(object):
+                        def checkValidString(self, s):
+                            lo = hi = 0  # the fewest and the most "(" that could be open right now
+                            for c in s:
+                                if c == "(":
+                                    lo, hi = lo + 1, hi + 1
+                                elif c == ")":
+                                    lo, hi = lo - 1, hi - 1
+                                else:  # "*" could be ")", "" or "("
+                                    lo, hi = lo - 1, hi + 1
+                                if hi < 0:  # even treating every "*" as "(" there are too many ")"
+                                    return False
+                                lo = max(lo, 0)  # a count can't go below 0: drop the choices that would
+                            return lo == 0  # some choice closes everything
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"loop":[7],"open":[8,9,10],"close":[11,12,13],"star":[14,15,16],"fail":[18],"clamp":[19],"return":[21]}'>
+                    #include <algorithm>
+                    #include <string>
+                    class Solution {
+                    public:
+                        bool checkValidString(std::string s) {
+                            int lo = 0, hi = 0; // the fewest and the most "(" that could be open right now
+                            for (char c : s) {
+                                if (c == '(') {
+                                    ++lo;
+                                    ++hi;
+                                } else if (c == ')') {
+                                    --lo;
+                                    --hi;
+                                } else { // "*" could be ")", "" or "("
+                                    --lo;
+                                    ++hi;
+                                }
+                                if (hi < 0) return false; // even treating every "*" as "(" there are too many ")"
+                                lo = std::max(lo, 0); // a count can't go below 0: drop the choices that would
+                            }
+                            return lo == 0; // some choice closes everything
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"loop":[4],"open":[5,6,7],"close":[8,9,10],"star":[11,12,13],"fail":[15],"clamp":[16],"return":[18]}'>
+                    class Solution {
+                        public boolean checkValidString(String s) {
+                            int lo = 0, hi = 0; // the fewest and the most "(" that could be open right now
+                            for (char c : s.toCharArray()) {
+                                if (c == '(') {
+                                    lo++;
+                                    hi++;
+                                } else if (c == ')') {
+                                    lo--;
+                                    hi--;
+                                } else { // "*" could be ")", "" or "("
+                                    lo--;
+                                    hi++;
+                                }
+                                if (hi < 0) return false; // even treating every "*" as "(" there are too many ")"
+                                lo = Math.max(lo, 0); // a count can't go below 0: drop the choices that would
+                            }
+                            return lo == 0; // some choice closes everything
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  No standard library checks brackets with wildcards. Counting
+                  characters with <code>s.count</code> isn't enough: <code>")("</code>
+                  has balanced counts but isn't valid.
+                </p>
+                <p class="note">
+                  Approach 3 is what you'd write: one loop and two numbers.
+                </p>
+              </section>
+
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Try Every Meaning of Each Star</th>
+                        <td>Recursion, three branches per star</td>
+                        <td>O(3ᵏ)</td>
+                        <td>O(n)</td>
+                        <td>22 s in Python at 18 stars</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Two Stacks of Indexes</th>
+                        <td>Match ")" with "(" first; then pair leftovers</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Shows the matching</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Range of Open Counts</th>
+                        <td>Track lo and hi; clamp lo at 0</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>Expected answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -54896,6 +55346,176 @@
         const w = s.trim();
         if (!/^[a-z]{1,8}$/.test(w)) throw new DSAViz.InputError("s: 1 to 8 lowercase letters, like aaa.");
         return w;
+      }
+      })();
+    </script>
+    <!-- problems/0678-valid-parenthesis-string/approach1.visual.js -->
+    <script>
+      // Try every meaning of each "*" ("(", ")" or nothing), stopping a path as soon as a ")" has nothing to close.
+      (function () {
+      DSAViz.register("0678-valid-parenthesis-string/approach1", {
+        inputs: [{ name: "s", type: "string", value: "(*))", maxLength: 10, raw: true }],
+        trace({ s: text }) {
+          const s = parseS(text, 10);
+          const steps = [];
+          const LIMIT = 150;
+          let wanted = 0;
+          let calls = 0;
+          const path = [];
+          const push = (st) => { wanted++; if (steps.length < LIMIT) steps.push(st); };
+          const view = (i, open, o = {}) => [
+            { type: "array", label: "s", values: [...s], marks: Object.fromEntries([...s].map((_, k) => [k, k < i ? "visited" : k === i ? "active" : ""])), pointers: i < s.length ? { i } : {} },
+            { type: "array", label: "choices on this path (what each character became)", values: [...path], compact: true, marks: o.last ? { [path.length - 1]: "new" } : {} },
+            { type: "vars", items: [{ name: "open", value: open, mark: open < 0 ? "cut" : "" }, { name: "calls", value: calls }] },
+          ];
+          push({ line: "init", note: 'ok(i, open): can s[i:] be finished with `open` "(" still waiting? A "*" branches three ways.', view: view(0, 0) });
+          const ok = (i, open) => {
+            calls++;
+            if (open < 0) { push({ line: "dead", note: `open = ${open}: a ")" had nothing to close. This path fails.`, view: view(i, open) }); return false; }
+            if (i === s.length) {
+              push({ line: "end", note: open === 0 ? `End of s with open = 0: everything closed. Valid: ${path.join("")}.` : `End of s with ${open} "(" never closed. This path fails.`, view: view(i, open) });
+              return open === 0;
+            }
+            const c = s[i];
+            if (c !== "*") {
+              path.push(c);
+              push({ line: "try", note: `s[${i}] = "${c}": open becomes ${open + (c === "(" ? 1 : -1)}.`, view: view(i, open, { last: true }) });
+              const r = ok(i + 1, open + (c === "(" ? 1 : -1));
+              path.pop();
+              return r;
+            }
+            for (const [as, d] of [["(", 1], [")", -1], ["·", 0]]) {
+              path.push(as);
+              push({ line: ["try", "star"], note: `s[${i}] = "*": try it as ${as === "·" ? "nothing" : `"${as}"`}.`, view: view(i, open, { last: true }) });
+              const r = ok(i + 1, open + d);
+              path.pop();
+              if (r) return true;
+            }
+            return false;
+          };
+          const r = ok(0, 0);
+          steps.push({ line: "init", note: `Return ${r}. ${calls} calls${wanted > LIMIT ? ` (only the first ${LIMIT} of ${wanted} steps are shown)` : ""}. Each "*" can triple the work: O(3^k) for k stars.`, view: view(s.length, 0) });
+          return steps;
+        },
+      });
+
+      function parseS(text, maxLen) {
+        const s = text.trim();
+        if (!s.length || s.length > maxLen || !/^[()*]+$/.test(s)) throw new DSAViz.InputError(`s: 1 to ${maxLen} characters, each ( or ) or *.`);
+        return s;
+      }
+      })();
+    </script>
+    <!-- problems/0678-valid-parenthesis-string/approach2.visual.js -->
+    <script>
+      // Two stacks of indexes: unmatched "(" and unused "*". A ")" uses a "(" first; leftovers pair "(" with a later "*".
+      (function () {
+      DSAViz.register("0678-valid-parenthesis-string/approach2", {
+        inputs: [{ name: "s", type: "string", value: "(*(*)*(", maxLength: 16, raw: true }],
+        trace({ s: text }) {
+          const s = parseS(text, 16);
+          const steps = [];
+          const opens = [];
+          const stars = [];
+          const used = {};
+          const view = (i, o = {}) => {
+            const marks = { ...used };
+            if (i !== undefined) marks[i] = "active";
+            (o.pairs || []).forEach((k) => (marks[k] = "match"));
+            (o.bad || []).forEach((k) => (marks[k] = "cut"));
+            return [
+              { type: "array", label: "s (green = matched)", values: [...s], marks, pointers: i !== undefined ? { i } : {} },
+              { type: "array", label: 'opens: indexes of unmatched "("', values: opens.map(String), compact: true },
+              { type: "array", label: 'stars: indexes of unused "*"', values: stars.map(String), compact: true },
+            ];
+          };
+          steps.push({ line: "init", note: 'Keep the indexes of every "(" not matched yet, and of every "*" not used yet.', view: view() });
+          for (let i = 0; i < s.length; i++) {
+            const c = s[i];
+            if (c === "(") { opens.push(i); steps.push({ line: ["loop", "open"], note: `"(" at ${i}: push ${i} onto opens.`, view: view(i) }); continue; }
+            if (c === "*") { stars.push(i); steps.push({ line: ["loop", "open", "star"], note: `"*" at ${i}: push ${i} onto stars, to decide later.`, view: view(i) }); continue; }
+            if (opens.length) { const k = opens.pop(); used[k] = "match"; used[i] = "match"; steps.push({ line: ["loop", "open", "star", "close"], note: `")" at ${i}: close the "(" at ${k}, the nearest one.`, view: view(i) }); continue; }
+            if (stars.length) { const k = stars.pop(); used[k] = "match"; used[i] = "match"; steps.push({ line: ["loop", "open", "star", "close"], note: `")" at ${i}: no "(" left, so the "*" at ${k} acts as "(".`, view: view(i) }); continue; }
+            steps.push({ line: ["loop", "open", "star", "close"], note: `")" at ${i} with no "(" and no "*" before it. Return false.`, view: view(i, { bad: [i] }) });
+            return steps;
+          }
+          while (opens.length && stars.length) {
+            const o = opens.pop();
+            const t = stars.pop();
+            if (o > t) {
+              steps.push({ line: "pair", note: `The last "(" is at ${o}, but the last "*" is at ${t}, before it: a "*" can't close a "(" that comes later. Return false.`, view: view(undefined, { bad: [o, t] }) });
+              return steps;
+            }
+            used[o] = "match";
+            used[t] = "match";
+            steps.push({ line: "pair", note: `Leftover "(" at ${o} pairs with the "*" at ${t}, which comes after it and acts as ")".`, view: view(undefined, { pairs: [o, t] }) });
+          }
+          steps.push({
+            line: "return",
+            note: opens.length ? `${opens.length} "(" left with no "*" to close ${opens.length === 1 ? "it" : "them"}. Return false.` : `No "(" left over; any remaining "*" is just empty. Return true. O(n).`,
+            view: view(undefined, { bad: opens }),
+          });
+          return steps;
+        },
+      });
+
+      function parseS(text, maxLen) {
+        const s = text.trim();
+        if (!s.length || s.length > maxLen || !/^[()*]+$/.test(s)) throw new DSAViz.InputError(`s: 1 to ${maxLen} characters, each ( or ) or *.`);
+        return s;
+      }
+      })();
+    </script>
+    <!-- problems/0678-valid-parenthesis-string/approach3.visual.js -->
+    <script>
+      // Track the range [lo, hi] of how many "(" could be open: "(" +1, ")" -1, "*" widens it. Never let lo go below 0.
+      (function () {
+      DSAViz.register("0678-valid-parenthesis-string/approach3", {
+        inputs: [{ name: "s", type: "string", value: "(*))", maxLength: 16, raw: true }],
+        trace({ s: text }) {
+          const s = parseS(text, 16);
+          const steps = [];
+          let lo = 0;
+          let hi = 0;
+          const view = (i, o = {}) => {
+            const range = [];
+            for (let k = Math.max(lo, 0); k <= hi; k++) range.push(k);
+            return [
+              { type: "array", label: "s", values: [...s], marks: Object.fromEntries([...s].map((_, k) => [k, k < (i ?? s.length) ? "visited" : k === i ? "active" : ""])), pointers: i !== undefined ? { i } : {} },
+              { type: "array", label: 'possible numbers of open "(" right now (lo to hi)', values: range.map(String), compact: true, marks: o.zero && range[0] === 0 ? { 0: "match" } : {} },
+              { type: "vars", items: [{ name: "lo", value: lo, mark: o.clamped ? "new" : lo < 0 ? "cut" : "" }, { name: "hi", value: hi, mark: hi < 0 ? "cut" : "" }] },
+            ];
+          };
+          steps.push({ line: "init", note: 'Before anything, exactly 0 "(" are open: lo = hi = 0.', view: view(undefined) });
+          for (let i = 0; i < s.length; i++) {
+            const c = s[i];
+            let line;
+            let what;
+            if (c === "(") { lo++; hi++; line = ["loop", "open"]; what = `"(": every count goes up by 1`; }
+            else if (c === ")") { lo--; hi--; line = ["loop", "open", "close"]; what = `")": every count goes down by 1`; }
+            else { lo--; hi++; line = ["loop", "open", "close", "star"]; what = `"*": it could be ")" (lo − 1) or "(" (hi + 1)`; }
+            if (hi < 0) {
+              steps.push({ line: [...line, "fail"], note: `${what}. hi = ${hi}: even with every "*" as "(", there are too many ")". Return false.`, view: view(i) });
+              return steps;
+            }
+            const clamped = lo < 0;
+            const before = lo;
+            lo = Math.max(lo, 0);
+            steps.push({ line: [...line, "fail", "clamp"], note: `${what}: lo = ${before}, hi = ${hi}.${clamped ? ' lo can\'t be negative: those choices would close a "(" that isn\'t there, so lo = 0.' : ""}`, view: view(i, { clamped }) });
+          }
+          steps.push({
+            line: "return",
+            note: lo === 0 ? `lo = 0: some way of reading the "*"s closes everything. Return true. One pass, two numbers: O(n) time, O(1) memory.` : `lo = ${lo}: at least ${lo} "(" can't be closed. Return false.`,
+            view: view(undefined, { zero: true }),
+          });
+          return steps;
+        },
+      });
+
+      function parseS(text, maxLen) {
+        const s = text.trim();
+        if (!s.length || s.length > maxLen || !/^[()*]+$/.test(s)) throw new DSAViz.InputError(`s: 1 to ${maxLen} characters, each ( or ) or *.`);
+        return s;
       }
       })();
     </script>

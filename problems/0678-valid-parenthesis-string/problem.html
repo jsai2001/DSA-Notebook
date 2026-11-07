@@ -1,0 +1,243 @@
+<details class="question" data-group="greedy" data-tags="string greedy stack dynamic-programming parentheses wildcard star balance">
+  <summary>
+    <span class="q-title">678. Valid Parenthesis String</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">String</span>
+      <span class="tag">Greedy</span>
+      <span class="tag">Stack</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Don't decide what each <code>*</code> is.
+      Track the <strong>range</strong> of how many <code>(</code> could be
+      open: <code>lo</code> (every <code>*</code> as <code>)</code>) and
+      <code>hi</code> (every <code>*</code> as <code>(</code>). Fail if
+      <code>hi &lt; 0</code>; never let <code>lo</code> go below 0. At the
+      end, valid if <code>lo == 0</code>. O(n), O(1).
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/valid-parenthesis-string/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>s</code> has only <code>(</code>, <code>)</code> and
+        <code>*</code>. Each <code>*</code> can stand for <code>(</code>,
+        <code>)</code> or nothing. Return <code>true</code> if some choice
+        makes the brackets balanced: every <code>(</code> closed by a later
+        <code>)</code>, and no <code>)</code> without an earlier
+        <code>(</code>.
+      </p>
+      <ul>
+        <li><code>1 &lt;= s.length &lt;= 100</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>"()"</code> → <code>true</code>, <code>"(*)"</code> →
+        <code>true</code>, <code>"(*))"</code> → <code>true</code> (the
+        <code>*</code> is a <code>(</code>).
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>"*"</code></td>
+              <td><code>true</code></td>
+              <td>A star can be nothing. In the range version, not raising <code>lo</code> back to 0 left it at −1: said <code>false</code>.</td>
+            </tr>
+            <tr>
+              <td><code>"("</code></td>
+              <td><code>false</code></td>
+              <td>Something is still open. Checking <code>hi &gt;= 0</code> at the end instead of <code>lo == 0</code> said <code>true</code>.</td>
+            </tr>
+            <tr>
+              <td><code>"*("</code></td>
+              <td><code>false</code></td>
+              <td>A star can't close a <code>(</code> that comes after it. The two-stack version without the index check said <code>true</code>.</td>
+            </tr>
+            <tr>
+              <td><code>")("</code></td>
+              <td><code>false</code></td>
+              <td>Order matters. Only comparing the counts of each character said <code>true</code>.</td>
+            </tr>
+            <tr>
+              <td><code>"(*))"</code></td>
+              <td><code>true</code></td>
+              <td>The star must be <code>(</code> here.</td>
+            </tr>
+            <tr>
+              <td>18 stars, then <code>"("</code></td>
+              <td><code>false</code></td>
+              <td>Trying all three meanings of each star took 22 s in Python here; the real limit is 100 characters.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Try Every Meaning of Each Star</h2>
+      <p class="intuition">
+        Recursively walk the string with a count of open <code>(</code>. A
+        <code>(</code> adds one, a <code>)</code> removes one; a
+        <code>*</code> tries all three. A path dies when the count goes
+        negative; it succeeds if the count is 0 at the end.
+      </p>
+      <ul>
+        <li>Correct, and shows exactly what the problem asks.</li>
+        <li>
+          Exponential in the number of stars. Adding a memo on
+          <code>(i, open)</code> brings it down to O(n²), the DP version.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(3ᵏ) for k stars</span>
+        <span><strong>Space</strong> O(n) call stack</span>
+      </div>
+      <p class="note">
+        About 8× slower for every 2 more stars. Python: 0.3 s at 14 stars,
+        2.6 s at 16, 22 s at 18. C++: 3 s at 20, 40 s at 22.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Two Stacks of Indexes</h2>
+      <p class="intuition">
+        Push the index of every <code>(</code> and every <code>*</code> on
+        two stacks. A <code>)</code> closes the latest <code>(</code>, or
+        else the latest <code>*</code>, or fails. At the end, pair each
+        leftover <code>(</code> with a leftover <code>*</code> that comes
+        <strong>after</strong> it.
+      </p>
+      <ul>
+        <li>Prefer a real <code>(</code> for each <code>)</code>, and keep stars for later.</li>
+        <li>Popping both stacks pairs the latest <code>(</code> with the latest star; if the star is earlier, it fails.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        About 6–7 µs per call in Python for 100 characters. Easier to
+        explain than the range trick, and it shows which characters match.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Range of Open Counts
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        <code>lo</code> and <code>hi</code> are the fewest and the most
+        <code>(</code> that could be open after each character, over every
+        way of reading the stars. <code>(</code>: both +1. <code>)</code>:
+        both −1. <code>*</code>: <code>lo − 1</code>, <code>hi + 1</code>.
+      </p>
+      <ul>
+        <li>
+          <code>hi &lt; 0</code> means even the most generous reading has too
+          many <code>)</code>: fail now.
+        </li>
+        <li>
+          <code>lo = max(lo, 0)</code>: readings that go negative are already
+          invalid, so drop them. Every count between lo and hi stays
+          reachable.
+        </li>
+        <li>Valid if 0 is in the final range, that is, <code>lo == 0</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        About 8–9 µs per call in Python for 100 characters. The expected
+        answer; the "why lo can be clamped" point is the usual follow-up.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No standard library checks brackets with wildcards. Counting
+        characters with <code>s.count</code> isn't enough: <code>")("</code>
+        has balanced counts but isn't valid.
+      </p>
+      <p class="note">
+        Approach 3 is what you'd write: one loop and two numbers.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Try Every Meaning of Each Star</th>
+              <td>Recursion, three branches per star</td>
+              <td>O(3ᵏ)</td>
+              <td>O(n)</td>
+              <td>22 s in Python at 18 stars</td>
+            </tr>
+            <tr>
+              <th scope="row">Two Stacks of Indexes</th>
+              <td>Match ")" with "(" first; then pair leftovers</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Shows the matching</td>
+            </tr>
+            <tr>
+              <th scope="row">Range of Open Counts</th>
+              <td>Track lo and hi; clamp lo at 0</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
