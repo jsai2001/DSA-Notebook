@@ -1,0 +1,205 @@
+<details class="question" data-group="graphs" data-tags="graph grid matrix island dfs bfs flood fill connected components area">
+  <summary>
+    <span class="q-title">695. Max Area of Island</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Matrix</span>
+      <span class="tag">Depth-First Search</span>
+      <span class="tag">Breadth-First Search</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Scan the grid. Each land cell you meet starts
+      a new island: flood it with a DFS and count the cells. <strong>Sink</strong>
+      every cell you reach (set it to 0) so no cell is counted twice. Every
+      cell is touched a constant number of times: O(m·n).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/max-area-of-island/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>grid</code> holds 0 (water) and 1 (land). An island is a group
+        of land cells joined up, down, left or right. Return the area (number
+        of cells) of the biggest island, or <code>0</code> if there is no land.
+      </p>
+      <ul>
+        <li><code>1 &lt;= m, n &lt;= 50</code></li>
+        <li><code>grid[i][j]</code> is <code>0</code> or <code>1</code></li>
+      </ul>
+      <p class="note">
+        Example: LeetCode's 8 × 13 grid → <code>6</code>.
+        <code>[[0,0,0,0,0,0,0,0]]</code> → <code>0</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[[0,0,0,0,0,0,0,0]]</code></td>
+              <td><code>0</code></td>
+              <td>No land at all: the answer is 0, not an error from <code>max</code> of nothing.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,1],[1,1]]</code></td>
+              <td><code>4</code></td>
+              <td>Approach 3 sinking a cell when it's popped instead of when it's pushed lets a cell be pushed twice: it said <code>5</code>.</td>
+            </tr>
+            <tr>
+              <td>50 × 50, all land</td>
+              <td><code>2500</code></td>
+              <td>Recursive DFS goes 2500 calls deep. With Python's default limit of 1000 it raised <code>RecursionError</code>, so Approach 2 raises the limit.</td>
+            </tr>
+            <tr>
+              <td>50 × 50, all land</td>
+              <td><code>2500</code></td>
+              <td>Approach 1 floods the same island once per cell: 6.25 million cell visits, 4.6 s in Python.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Flood From Every Land Cell</h2>
+      <p class="intuition">
+        For each land cell, find its whole island with a fresh
+        <code>seen</code> set and a stack, and count it. Keep the biggest
+        count. The grid isn't changed.
+      </p>
+      <ul>
+        <li>Easy to get right: each count starts clean.</li>
+        <li>But an island of k cells is counted k times, k cells each time.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O((m·n)²)</span>
+        <span><strong>Space</strong> O(m·n)</span>
+      </div>
+      <p class="note">
+        On a 50 × 50 grid of land: Python 4.6 s, Java 174 ms, C++ 41 ms. Too
+        slow; it shows why sinking matters.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Recursive DFS, Sinking Cells</h2>
+      <p class="intuition">
+        <code>area(r, c)</code> returns 0 for off-grid, water, or an already
+        sunk cell. Otherwise it sinks the cell and returns
+        <code>1 +</code> the areas of its four neighbours. Call it on each land
+        cell the scan finds.
+      </p>
+      <ul>
+        <li>Sinking replaces the <code>seen</code> set, so each cell is counted once.</li>
+        <li>It changes <code>grid</code>. Copy it first if the caller still needs it.</li>
+        <li>One call per cell can stack up m·n deep, hence <code>sys.setrecursionlimit</code> in Python.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n)</span>
+        <span><strong>Space</strong> O(m·n) call stack</span>
+      </div>
+      <p class="note">
+        On a 50 × 50 grid of land: Python 1.6 ms, Java 0.3 ms, C++ 0.06 ms.
+        Java and C++ handled 2500 calls deep without trouble here.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: DFS With a Stack
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Same flood, but with your own stack instead of recursion. Sink a cell
+        the moment you push it, and count it when you pop it. When the stack
+        is empty, the island is done.
+      </p>
+      <ul>
+        <li>Sink on <em>push</em>: if you sink on pop, two neighbours can push the same cell.</li>
+        <li>No recursion limit to worry about in any language.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n)</span>
+        <span><strong>Space</strong> O(m·n)</span>
+      </div>
+      <p class="note">
+        On a 50 × 50 grid of land: Python 1.5 ms, Java 0.4 ms, C++ 0.02 ms.
+        Same speed as Approach 2, without the deep calls.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        The standard libraries have no flood fill. Outside LeetCode,
+        <code>scipy.ndimage.label</code> labels every island of a NumPy grid
+        in one call (4-way joins by default); counting the cells of each label gives the answer.
+      </p>
+      <p class="note">On LeetCode, Approach 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Flood From Every Land Cell</th>
+              <td>New seen set per cell</td>
+              <td>O((m·n)²)</td>
+              <td>O(m·n)</td>
+              <td>4.6 s in Python at 50 × 50</td>
+            </tr>
+            <tr>
+              <th scope="row">Recursive DFS, Sinking Cells</th>
+              <td>Sink, then add the 4 neighbours</td>
+              <td>O(m·n)</td>
+              <td>O(m·n)</td>
+              <td>Needs a higher recursion limit in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">DFS With a Stack</th>
+              <td>Sink on push, count on pop</td>
+              <td>O(m·n)</td>
+              <td>O(m·n)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
