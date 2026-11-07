@@ -57,7 +57,7 @@
       <details class="pattern-group" id="g-arrays-hashing">
         <summary>
           <span class="g-name">Arrays &amp; Hashing</span>
-          <span class="g-count"><span class="g-total">6 problems</span></span>
+          <span class="g-count"><span class="g-total">7 problems</span></span>
           <span class="g-hint">Count or look things up in a hash map</span>
         </summary>
         <div class="g-body">
@@ -1964,6 +1964,334 @@
                         <td>Left pass, then right pass</td>
                         <td>O(n)</td>
                         <td>O(1) extra</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0242-valid-anagram ===== -->
+          <details class="question" data-group="arrays-hashing" data-tags="string hash map count anagram sort letters frequency">
+            <summary>
+              <span class="q-title">242. Valid Anagram</span>
+              <span class="q-meta">
+                <span class="badge easy">Easy</span>
+                <span class="tag">String</span>
+                <span class="tag">Hash Table</span>
+                <span class="tag">Sorting</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Two strings are anagrams when every letter
+                appears the same number of times in both. Check the lengths, count the
+                letters of <code>s</code> in an array of 26, and count
+                <code>t</code> back down. If a count ever goes below 0, they're not
+                anagrams. O(n) time, O(1) space.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/valid-anagram/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Return <code>true</code> if <code>t</code> uses exactly the same
+                  letters as <code>s</code>, the same number of times, in any order.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= s.length, t.length &lt;= 5 × 10⁴</code></li>
+                  <li>Lowercase English letters only</li>
+                </ul>
+                <p class="note">
+                  Example: <code>"anagram", "nagaram"</code> → <code>true</code>.
+                  <code>"rat", "car"</code> → <code>false</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>"ab", "a"</code></td>
+                        <td><code>false</code></td>
+                        <td>Counting <code>t</code> down without checking the lengths never goes below 0: it said <code>true</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"aacc", "ccac"</code></td>
+                        <td><code>false</code></td>
+                        <td>Same letters, different counts. Comparing <code>set(s) == set(t)</code> says <code>true</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"a", "a"</code></td>
+                        <td><code>true</code></td>
+                        <td>One letter.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Sort Both</h2>
+                <p class="intuition">
+                  Anagrams contain the same letters, so their sorted letters are equal.
+                  Sort both and compare.
+                </p>
+                <ul>
+                  <li>One line in Python; works for any characters, not just a–z.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  5 × 10⁴ letters: Python 8.5 ms, Java 1.9 ms, C++ 0.81 ms, the slowest
+                  in every language.
+                </p>
+                <div class="code-tabs" data-viz="0242-valid-anagram/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"sort":[3]}'>
+                    class Solution(object):
+                        def isAnagram(self, s, t):
+                            return sorted(s) == sorted(t)  # anagrams have the same letters, so the same sorted order
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"sort":[6,7,8]}'>
+                    #include <algorithm>
+                    #include <string>
+                    class Solution {
+                    public:
+                        bool isAnagram(std::string s, std::string t) {
+                            std::sort(s.begin(), s.end()); // anagrams have the same letters, so the same sorted order
+                            std::sort(t.begin(), t.end());
+                            return s == t;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"sort":[4,5,6,7]}'>
+                    import java.util.*;
+                    class Solution {
+                        public boolean isAnagram(String s, String t) {
+                            char[] a = s.toCharArray(), b = t.toCharArray();
+                            Arrays.sort(a); // anagrams have the same letters, so the same sorted order
+                            Arrays.sort(b);
+                            return Arrays.equals(a, b);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Hash Map of Counts</h2>
+                <p class="intuition">
+                  Walk both strings together: +1 for the letter from <code>s</code>, −1
+                  for the one from <code>t</code>. Anagrams end with every count at 0.
+                </p>
+                <ul>
+                  <li>Handles any characters, including Unicode (LeetCode's follow-up).</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(k) for k different characters</span>
+                </div>
+                <p class="note">
+                  5 × 10⁴ letters: Python 5.9 ms, Java 4.4 ms, C++ 0.31 ms. In Java the
+                  <code>HashMap</code> was slower than sorting.
+                </p>
+                <div class="code-tabs" data-viz="0242-valid-anagram/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"len":[3,4],"count":[5,6,7,8],"check":[9]}'>
+                    class Solution(object):
+                        def isAnagram(self, s, t):
+                            if len(s) != len(t):
+                                return False
+                            count = {}  # letter -> (times in s) - (times in t)
+                            for a, b in zip(s, t):
+                                count[a] = count.get(a, 0) + 1
+                                count[b] = count.get(b, 0) - 1
+                            return all(v == 0 for v in count.values())  # every letter evens out
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"len":[6],"count":[7,8,9,10],"check":[12,13,14]}'>
+                    #include <string>
+                    #include <unordered_map>
+                    class Solution {
+                    public:
+                        bool isAnagram(std::string s, std::string t) {
+                            if (s.size() != t.size()) return false;
+                            std::unordered_map<char, int> count; // letter -> (times in s) - (times in t)
+                            for (size_t i = 0; i < s.size(); ++i) {
+                                ++count[s[i]];
+                                --count[t[i]];
+                            }
+                            for (auto& [ch, v] : count)
+                                if (v != 0) return false;
+                            return true; // every letter evens out
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"len":[4],"count":[5,6,7,8],"check":[10,11,12]}'>
+                    import java.util.*;
+                    class Solution {
+                        public boolean isAnagram(String s, String t) {
+                            if (s.length() != t.length()) return false;
+                            Map<Character, Integer> count = new HashMap<>(); // letter -> (times in s) - (times in t)
+                            for (int i = 0; i < s.length(); i++) {
+                                count.merge(s.charAt(i), 1, Integer::sum);
+                                count.merge(t.charAt(i), -1, Integer::sum);
+                            }
+                            for (int v : count.values())
+                                if (v != 0) return false;
+                            return true; // every letter evens out
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Array of 26 Counts
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  After checking the lengths, count each letter of <code>s</code> into
+                  <code>count[ch − 'a']</code>. Then count <code>t</code> down. The
+                  moment a count drops below 0, return <code>false</code>.
+                </p>
+                <ul>
+                  <li>The same lengths plus no negative count means every count ended at 0.</li>
+                  <li>An index instead of a hash: no hashing, no objects.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1) (26 counters)</span>
+                </div>
+                <p class="note">
+                  5 × 10⁴ letters: Python 5.9 ms, Java 1.0 ms, C++ 0.07 ms, the fastest
+                  in C++ and Java.
+                </p>
+                <div class="code-tabs" data-viz="0242-valid-anagram/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"len":[3,4],"count":[5,6,7],"use":[8,9,10],"short":[11,12],"return":[13]}'>
+                    class Solution(object):
+                        def isAnagram(self, s, t):
+                            if len(s) != len(t):
+                                return False
+                            count = [0] * 26  # one slot per letter a..z
+                            for ch in s:
+                                count[ord(ch) - 97] += 1
+                            for ch in t:
+                                k = ord(ch) - 97
+                                count[k] -= 1
+                                if count[k] < 0:  # t has more of this letter than s
+                                    return False
+                            return True  # same length and no letter went negative: every count is 0
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"len":[5],"count":[6,7],"use":[8,9],"short":[9],"return":[10]}'>
+                    #include <string>
+                    class Solution {
+                    public:
+                        bool isAnagram(std::string s, std::string t) {
+                            if (s.size() != t.size()) return false;
+                            int count[26] = {}; // one slot per letter a..z
+                            for (char ch : s) ++count[ch - 'a'];
+                            for (char ch : t)
+                                if (--count[ch - 'a'] < 0) return false; // t has more of this letter than s
+                            return true; // same length and no letter went negative: every count is 0
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"len":[3],"count":[4,5],"use":[6,7],"short":[7],"return":[8]}'>
+                    class Solution {
+                        public boolean isAnagram(String s, String t) {
+                            if (s.length() != t.length()) return false;
+                            int[] count = new int[26]; // one slot per letter a..z
+                            for (int i = 0; i < s.length(); i++) count[s.charAt(i) - 'a']++;
+                            for (int i = 0; i < t.length(); i++)
+                                if (--count[t.charAt(i) - 'a'] < 0) return false; // t has more of this letter than s
+                            return true; // same length and no letter went negative: every count is 0
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  <code>Counter(s) == Counter(t)</code> counts the letters of each and
+                  compares the two counts.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    from collections import Counter
+                    class Solution(object):
+                        def isAnagram(self, s, t):
+                            return Counter(s) == Counter(t)  # letter counts, compared as dicts
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(k)</span>
+                </div>
+                <p class="note">
+                  Should pass on LeetCode: 2.8 ms for 5 × 10⁴ letters, the fastest in
+                  Python because the counting runs in C. C++ and Java have no
+                  equivalent; use Approach 3.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Sort Both</th>
+                        <td>Compare sorted letters</td>
+                        <td>O(n log n)</td>
+                        <td>O(n)</td>
+                        <td>Any characters</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Hash Map of Counts</th>
+                        <td>+1 for s, −1 for t</td>
+                        <td>O(n)</td>
+                        <td>O(k)</td>
+                        <td>Unicode follow-up</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Array of 26 Counts</th>
+                        <td>count[ch − 'a']</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
                         <td>Expected answer</td>
                       </tr>
                     </tbody>
@@ -68294,6 +68622,91 @@
         },
       });
       })();
+    </script>
+    <!-- problems/0242-valid-anagram/approach1.visual.js -->
+    <script>
+      // Sort both strings: anagrams sort to the same text.
+      DSAViz.register("0242-valid-anagram/approach1", {
+        inputs: [
+          { name: "s", type: "string", value: "anagram", maxLength: 10 },
+          { name: "t", type: "string", value: "nagaram", maxLength: 10 },
+        ],
+        trace({ s, t }) {
+          if (!/^[a-z]+$/.test(s) || !/^[a-z]+$/.test(t)) throw new DSAViz.InputError("s and t must be 1 to 10 lowercase letters.");
+          const a = [...s].sort(), b = [...t].sort();
+          const same = a.join("") === b.join("");
+          const k = a.findIndex((ch, i) => ch !== b[i]);
+          const first = k < 0 && a.length !== b.length ? Math.min(a.length, b.length) : k;
+          return [
+            { line: "sort", note: `Sort the letters of both: "${a.join("")}" and "${b.join("")}".`, view: [{ type: "array", label: "sorted s", values: a }, { type: "array", label: "sorted t", values: b }] },
+            { line: "sort", note: `Return ${same}. ${same ? "The sorted letters are the same." : `They first differ at position ${first}.`} Sorting costs O(n log n).`, view: [{ type: "array", label: "sorted s", values: a, marks: same ? Object.fromEntries(a.map((_, i) => [i, "match"])) : first < a.length ? { [first]: "cut" } : {} }, { type: "array", label: "sorted t", values: b, marks: same ? Object.fromEntries(b.map((_, i) => [i, "match"])) : first < b.length ? { [first]: "cut" } : {} }] },
+          ];
+        },
+      });
+    </script>
+    <!-- problems/0242-valid-anagram/approach2.visual.js -->
+    <script>
+      // One hash map: +1 for each letter of s, -1 for each letter of t. Anagrams end with every count at 0.
+      DSAViz.register("0242-valid-anagram/approach2", {
+        inputs: [
+          { name: "s", type: "string", value: "anagram", maxLength: 10 },
+          { name: "t", type: "string", value: "nagaram", maxLength: 10 },
+        ],
+        trace({ s, t }) {
+          if (!/^[a-z]+$/.test(s) || !/^[a-z]+$/.test(t)) throw new DSAViz.InputError("s and t must be 1 to 10 lowercase letters.");
+          const steps = [];
+          if (s.length !== t.length) {
+            steps.push({ line: "len", note: `Return false. The lengths differ (${s.length} vs ${t.length}).`, view: [{ type: "vars", items: [{ name: "len(s)", value: s.length }, { name: "len(t)", value: t.length, mark: "cut" }] }] });
+            return steps;
+          }
+          const count = new Map();
+          const view = (i, o = {}) => [{ type: "array", label: "s", values: [...s], marks: i !== undefined ? { [i]: "new" } : {} }, { type: "array", label: "t", values: [...t], marks: i !== undefined ? { [i]: "compare" } : {} }, { type: "map", label: "count: (times in s) − (times in t)", columns: ["letter", "count"], entries: [...count].map(([k, v]) => [k, String(v)]), marks: o.marks || {} }];
+          steps.push({ line: ["len", "count"], note: `Same length (${s.length}). Walk both strings together.`, view: view() });
+          for (let i = 0; i < s.length; i++) {
+            count.set(s[i], (count.get(s[i]) || 0) + 1);
+            count.set(t[i], (count.get(t[i]) || 0) - 1);
+            steps.push({ line: "count", note: `'${s[i]}' from s: +1. '${t[i]}' from t: −1.`, view: view(i, { marks: { [s[i]]: "new", [t[i]]: "compare" } }) });
+          }
+          const off = [...count].filter(([, v]) => v !== 0).map(([k]) => k);
+          steps.push({ line: "check", note: off.length ? `Return false. ${off.map((k) => `'${k}' is at ${count.get(k)}`).join(", ")}: the letters don't even out.` : "Return true. Every count is 0. O(n) time, O(k) space for k different letters.", view: view(undefined, { marks: Object.fromEntries([...count].map(([k, v]) => [k, v ? "cut" : "match"])) }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0242-valid-anagram/approach3.visual.js -->
+    <script>
+      // 26 counters: count s up, then count t down. Any counter below 0 means t has an extra letter.
+      DSAViz.register("0242-valid-anagram/approach3", {
+        inputs: [
+          { name: "s", type: "string", value: "anagram", maxLength: 10 },
+          { name: "t", type: "string", value: "nagaram", maxLength: 10 },
+        ],
+        trace({ s, t }) {
+          if (!/^[a-z]+$/.test(s) || !/^[a-z]+$/.test(t)) throw new DSAViz.InputError("s and t must be 1 to 10 lowercase letters.");
+          const steps = [];
+          if (s.length !== t.length) {
+            steps.push({ line: "len", note: `Return false. The lengths differ (${s.length} vs ${t.length}).`, view: [{ type: "vars", items: [{ name: "len(s)", value: s.length }, { name: "len(t)", value: t.length, mark: "cut" }] }] });
+            return steps;
+          }
+          const count = Array(26).fill(0);
+          const used = [...new Set([...s, ...t])].sort();
+          const view = (o = {}) => [{ type: "array", label: "count, only the letters that appear (under each: letter [its slot of 26])", values: used.map((ch) => count[ch.charCodeAt(0) - 97]), sub: used.map((ch) => `${ch} [${ch.charCodeAt(0) - 97}]`), marks: o.m || {} }, { type: "array", label: "s", values: [...s], marks: o.sm || {} }, { type: "array", label: "t", values: [...t], marks: o.tm || {} }];
+          const at = (ch) => used.indexOf(ch);
+          for (const ch of s) count[ch.charCodeAt(0) - 97]++;
+          steps.push({ line: ["len", "count"], note: `Same length. Count every letter of s: ${used.filter((c) => count[c.charCodeAt(0) - 97]).map((c) => `${c}×${count[c.charCodeAt(0) - 97]}`).join(", ")}.`, view: view({ sm: Object.fromEntries([...s].map((_, i) => [i, "new"])) }) });
+          for (let i = 0; i < t.length; i++) {
+            const k = t.charCodeAt(i) - 97;
+            count[k]--;
+            if (count[k] < 0) {
+              steps.push({ line: ["use", "short"], note: `Return false. '${t[i]}' goes to −1: t has more '${t[i]}' than s.`, view: view({ m: { [at(t[i])]: "cut" }, tm: { [i]: "cut" } }) });
+              return steps;
+            }
+            steps.push({ line: "use", note: `'${t[i]}' from t: count down to ${count[k]}.`, view: view({ m: { [at(t[i])]: "new" }, tm: { [i]: "active" } }) });
+          }
+          steps.push({ line: "return", note: "Return true. Same length and no count went below 0, so every count is back to 0. O(n) time, O(1) space.", view: view({ m: Object.fromEntries(used.map((_, i) => [i, "match"])) }) });
+          return steps;
+        },
+      });
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->
     <script>
