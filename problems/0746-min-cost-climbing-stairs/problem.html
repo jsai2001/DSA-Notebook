@@ -1,0 +1,194 @@
+<details class="question" data-group="dynamic-programming" data-tags="dynamic programming dp stairs climbing minimum cost memoization">
+  <summary>
+    <span class="q-title">746. Min Cost Climbing Stairs</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Array</span>
+      <span class="tag">Dynamic Programming</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> To stand on step <code>i</code>, you came
+      from step <code>i − 1</code> or <code>i − 2</code> and paid that
+      step's cost. So
+      <code>dp[i] = min(dp[i−1] + cost[i−1], dp[i−2] + cost[i−2])</code>,
+      with <code>dp[0] = dp[1] = 0</code>. The top is step <code>n</code>,
+      one past the last stair. Two variables are enough.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/min-cost-climbing-stairs/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>cost[i]</code> is what you pay to step off stair <code>i</code>;
+        from there you climb one or two stairs. You can start on stair 0 or
+        stair 1. Return the cheapest way to get past the last stair (the top).
+      </p>
+      <ul>
+        <li><code>2 &lt;= cost.length &lt;= 1000</code></li>
+        <li><code>0 &lt;= cost[i] &lt;= 999</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[10,15,20]</code> → <code>15</code> (start on 15, jump
+        to the top). <code>[1,100,1,1,1,100,1,1,100,1]</code> →
+        <code>6</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[5,3]</code></td>
+              <td><code>3</code></td>
+              <td>The top is past the last stair. Returning <code>dp[n − 1]</code> (standing on the last stair) said <code>0</code>; wrong on 1618 of 3005 tests.</td>
+            </tr>
+            <tr>
+              <td><code>[5,3]</code></td>
+              <td><code>3</code></td>
+              <td>You may start on stair 1. Starting only on stair 0 said <code>5</code>; wrong on 1773 tests.</td>
+            </tr>
+            <tr>
+              <td><code>[0,0]</code></td>
+              <td><code>0</code></td>
+              <td>Free stairs.</td>
+            </tr>
+            <tr>
+              <td>1000 stairs</td>
+              <td>-</td>
+              <td>The recursion goes about 1000 calls deep: without raising Python's limit it raised <code>RecursionError</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Recursion with Memo</h2>
+      <p class="intuition">
+        <code>reach(i)</code> = the cheapest way to stand on step
+        <code>i</code>. Steps 0 and 1 are free. Otherwise it's the cheaper of
+        coming from <code>i − 1</code> (paying <code>cost[i − 1]</code>) or
+        from <code>i − 2</code>. Start with <code>reach(n)</code>.
+      </p>
+      <ul>
+        <li>Without the memo, the calls double like Fibonacci.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        1000 stairs: Python 0.33 ms, Java 7.5 µs, C++ 8.1 µs.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: DP Table</h2>
+      <p class="intuition">
+        Fill <code>dp[0..n]</code> from the bottom with the same rule, and
+        return <code>dp[n]</code>.
+      </p>
+      <ul>
+        <li>The table has n + 1 slots: the extra one is the top.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        1000 stairs: Python 0.14 ms, Java 3.2 µs, C++ 2.2 µs.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Two Variables
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Each <code>dp[i]</code> uses only the two before it. Keep them as
+        <code>two</code> and <code>one</code>, and shift them along.
+      </p>
+      <ul>
+        <li>The same pattern as Climbing Stairs and House Robber.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        1000 stairs: Python 98 µs, Java 1.0 µs, C++ 0.9 µs, the fastest in
+        every language.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>Nothing built in. Approach 3 is four lines.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Recursion with Memo</th>
+              <td>reach(i) from the top down</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>About 1000 calls deep</td>
+            </tr>
+            <tr>
+              <th scope="row">DP Table</th>
+              <td>dp[0..n] from the bottom up</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>dp[n] is the top</td>
+            </tr>
+            <tr>
+              <th scope="row">Two Variables</th>
+              <td>Keep only two and one</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
