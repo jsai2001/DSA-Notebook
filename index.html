@@ -7611,7 +7611,7 @@
       <details class="pattern-group" id="g-binary-search">
         <summary>
           <span class="g-name">Binary Search</span>
-          <span class="g-count"><span class="g-total">6 problems</span></span>
+          <span class="g-count"><span class="g-total">7 problems</span></span>
           <span class="g-hint">Halve the search space each step</span>
         </summary>
         <div class="g-body">
@@ -10207,6 +10207,432 @@
                         <td>Search the speed</td>
                         <td>O(n log max)</td>
                         <td>O(1)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0981-time-based-key-value-store ===== -->
+          <details class="question" data-group="binary-search" data-tags="binary search design hash map sorted list floor lookup treemap">
+            <summary>
+              <span class="q-title">981. Time Based Key-Value Store</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Binary Search</span>
+                <span class="tag">Design</span>
+                <span class="tag">Hash Map</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> <code>set</code> timestamps only go up, so
+                appending <code>(time, value)</code> to each key's list keeps it sorted
+                for free. A <code>get</code> is then a binary search for the last time
+                <code>&lt;= timestamp</code>: find the first time that's bigger and step
+                back one. O(1) set, O(log n) get.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/time-based-key-value-store/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>Build a <code>TimeMap</code>:</p>
+                <ul>
+                  <li><code>set(key, value, timestamp)</code> stores <code>value</code> for <code>key</code> at that time.</li>
+                  <li><code>get(key, timestamp)</code> returns the value set with the largest time <code>&lt;= timestamp</code>, or <code>""</code> if there is none.</li>
+                  <li>The timestamps of <code>set</code> calls strictly increase. <code>1 &lt;= timestamp &lt;= 10⁷</code>, at most 2·10⁵ calls.</li>
+                </ul>
+                <p class="note">
+                  Example: <code>set("foo","bar",1)</code>, <code>get("foo",1)</code> →
+                  <code>"bar"</code>, <code>get("foo",3)</code> → <code>"bar"</code>,
+                  <code>set("foo","bar2",4)</code>, <code>get("foo",4)</code> →
+                  <code>"bar2"</code>, <code>get("foo",5)</code> → <code>"bar2"</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>set("b","cbc",3)</code>, <code>get("b",3)</code></td>
+                        <td><code>"cbc"</code></td>
+                        <td>An exact time match counts. <code>bisect_left</code> instead of <code>bisect_right</code> skipped it and returned <code>""</code>: wrong on 346 of 1,503 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>set("a","x",5)</code>, <code>get("a",4)</code></td>
+                        <td><code>""</code></td>
+                        <td>Every stored time is later than the query.</td>
+                      </tr>
+                      <tr>
+                        <td><code>get("zz",5)</code> before any <code>set</code> of <code>"zz"</code></td>
+                        <td><code>""</code></td>
+                        <td>An unknown key must not crash.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Try Every Earlier Time</h2>
+                <p class="intuition">
+                  Store each value under <code>(key, timestamp)</code>. For a
+                  <code>get</code>, look up <code>timestamp</code>, then
+                  <code>timestamp − 1</code>, and so on down to 1.
+                </p>
+                <ul>
+                  <li>A <code>get</code> long after the last <code>set</code>, or for an unknown key, tries up to 10⁷ times.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> set O(1), get O(timestamp)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  1,000 gets that each try 10⁴ times: Python 0.46 s, Java 0.22 s, C++
+                  0.27 s. One get at time 10⁷ is 1,000 times that work.
+                </p>
+                <div class="code-tabs" data-viz="0981-time-based-key-value-store/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"set":[5],"scan":[7,8],"found":[9],"none":[10]}'>
+                    class TimeMap(object):
+                        def __init__(self):
+                            self.at = {}  # (key, timestamp) -> value
+                        def set(self, key, value, timestamp):
+                            self.at[(key, timestamp)] = value
+                        def get(self, key, timestamp):
+                            for t in range(timestamp, 0, -1):  # try timestamp, timestamp - 1, ... down to 1
+                                if (key, t) in self.at:
+                                    return self.at[(key, t)]
+                            return ""  # nothing set at or before timestamp
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[4,6],"set":[8],"scan":[11,12],"found":[13],"none":[15]}'>
+                    #include <string>
+                    #include <unordered_map>
+                    class TimeMap {
+                        std::unordered_map<std::string, std::string> at; // key + "#" + timestamp -> value
+                    public:
+                        TimeMap() {}
+                        void set(std::string key, std::string value, int timestamp) {
+                            at[key + "#" + std::to_string(timestamp)] = value;
+                        }
+                        std::string get(std::string key, int timestamp) {
+                            for (int t = timestamp; t >= 1; --t) { // try timestamp, timestamp - 1, ... down to 1
+                                auto it = at.find(key + "#" + std::to_string(t));
+                                if (it != at.end()) return it->second;
+                            }
+                            return ""; // nothing set at or before timestamp
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4],"set":[6],"scan":[9,10],"found":[11],"none":[13]}'>
+                    import java.util.*;
+                    class TimeMap {
+                        private final Map<String, String> at = new HashMap<>(); // key + "#" + timestamp -> value
+                        public TimeMap() {}
+                        public void set(String key, String value, int timestamp) {
+                            at.put(key + "#" + timestamp, value);
+                        }
+                        public String get(String key, int timestamp) {
+                            for (int t = timestamp; t >= 1; t--) { // try timestamp, timestamp - 1, ... down to 1
+                                String v = at.get(key + "#" + t);
+                                if (v != null) return v;
+                            }
+                            return ""; // nothing set at or before timestamp
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Sorted List per Key, Scan Back</h2>
+                <p class="intuition">
+                  Append <code>(time, value)</code> to the key's list; it stays sorted.
+                  For a <code>get</code>, walk back from the newest pair and return the
+                  first one at or before <code>timestamp</code>.
+                </p>
+                <ul>
+                  <li>Fast when queries ask about recent times. Slow when they ask about old ones.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> set O(1), get O(pairs for that key)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  2·10⁵ random calls on 10 keys: Python 1.6 s, Java 66 ms, C++ 21 ms.
+                  One key with 2·10⁴ pairs and 2·10⁴ gets for early times: Python 12 s.
+                  But for recent times it beat Approach 3 in Python (57 ms vs 161 ms).
+                </p>
+                <div class="code-tabs" data-viz="0981-time-based-key-value-store/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"set":[5],"scan":[7,8],"found":[9,10],"none":[11]}'>
+                    class TimeMap(object):
+                        def __init__(self):
+                            self.store = {}  # key -> list of (timestamp, value); timestamps only grow, so it's sorted
+                        def set(self, key, value, timestamp):
+                            self.store.setdefault(key, []).append((timestamp, value))
+                        def get(self, key, timestamp):
+                            pairs = self.store.get(key, [])
+                            for i in range(len(pairs) - 1, -1, -1):  # newest first
+                                if pairs[i][0] <= timestamp:  # the first one at or before timestamp is the latest
+                                    return pairs[i][1]
+                            return ""
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,8],"set":[10],"scan":[13,15,16],"none":[14,18],"found":[17]}'>
+                    #include <string>
+                    #include <unordered_map>
+                    #include <utility>
+                    #include <vector>
+                    class TimeMap {
+                        std::unordered_map<std::string, std::vector<std::pair<int, std::string>>> store; // key -> (timestamp, value), sorted
+                    public:
+                        TimeMap() {}
+                        void set(std::string key, std::string value, int timestamp) {
+                            store[key].push_back({timestamp, value}); // timestamps only grow, so the list stays sorted
+                        }
+                        std::string get(std::string key, int timestamp) {
+                            auto it = store.find(key);
+                            if (it == store.end()) return "";
+                            auto& pairs = it->second;
+                            for (int i = (int)pairs.size() - 1; i >= 0; --i) // newest first
+                                if (pairs[i].first <= timestamp) return pairs[i].second; // the first one at or before timestamp is the latest
+                            return "";
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5],"set":[7,8],"scan":[11,13],"none":[12,15],"found":[14]}'>
+                    import java.util.*;
+                    class TimeMap {
+                        private final Map<String, List<Integer>> times = new HashMap<>(); // key -> timestamps, sorted
+                        private final Map<String, List<String>> values = new HashMap<>(); // key -> values, same order
+                        public TimeMap() {}
+                        public void set(String key, String value, int timestamp) {
+                            times.computeIfAbsent(key, k -> new ArrayList<>()).add(timestamp); // timestamps only grow, so the list stays sorted
+                            values.computeIfAbsent(key, k -> new ArrayList<>()).add(value);
+                        }
+                        public String get(String key, int timestamp) {
+                            List<Integer> ts = times.get(key);
+                            if (ts == null) return "";
+                            for (int i = ts.size() - 1; i >= 0; i--) // newest first
+                                if (ts.get(i) <= timestamp) return values.get(key).get(i); // the first one at or before timestamp is the latest
+                            return "";
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Sorted List per Key, Binary Search
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Same lists. For a <code>get</code>, binary search for the first pair
+                  whose time is greater than <code>timestamp</code>. The pair just
+                  before it is the answer; if there's none before it, return
+                  <code>""</code>.
+                </p>
+                <ul>
+                  <li>Searching for "first time &gt; t" handles exact matches without a special case.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> set O(1), get O(log n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  2·10⁵ random calls: Python 146 ms, Java 25 ms, C++ 9.6 ms. The early
+                  gets that took Approach 2 twelve seconds: Python 28 ms, Java 2.3 ms,
+                  C++ 1.5 ms.
+                </p>
+                <div class="code-tabs" data-viz="0981-time-based-key-value-store/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"set":[5],"search":[7,8,9,10,11,12,13,14],"return":[15]}'>
+                    class TimeMap(object):
+                        def __init__(self):
+                            self.store = {}  # key -> list of (timestamp, value); timestamps only grow, so it's sorted
+                        def set(self, key, value, timestamp):
+                            self.store.setdefault(key, []).append((timestamp, value))
+                        def get(self, key, timestamp):
+                            pairs = self.store.get(key, [])
+                            lo, hi = 0, len(pairs)  # find the first pair with time > timestamp
+                            while lo < hi:
+                                mid = (lo + hi) // 2
+                                if pairs[mid][0] <= timestamp:
+                                    lo = mid + 1
+                                else:
+                                    hi = mid
+                            return pairs[lo - 1][1] if lo else ""  # the one just before it is the latest at or before timestamp
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,8],"set":[10],"search":[13,15,16,17,18,19,20],"return":[14,22]}'>
+                    #include <string>
+                    #include <unordered_map>
+                    #include <utility>
+                    #include <vector>
+                    class TimeMap {
+                        std::unordered_map<std::string, std::vector<std::pair<int, std::string>>> store; // key -> (timestamp, value), sorted
+                    public:
+                        TimeMap() {}
+                        void set(std::string key, std::string value, int timestamp) {
+                            store[key].push_back({timestamp, value}); // timestamps only grow, so the list stays sorted
+                        }
+                        std::string get(std::string key, int timestamp) {
+                            auto it = store.find(key);
+                            if (it == store.end()) return "";
+                            auto& pairs = it->second;
+                            int lo = 0, hi = pairs.size(); // find the first pair with time > timestamp
+                            while (lo < hi) {
+                                int mid = (lo + hi) / 2;
+                                if (pairs[mid].first <= timestamp) lo = mid + 1;
+                                else hi = mid;
+                            }
+                            return lo ? pairs[lo - 1].second : ""; // the one just before it is the latest at or before timestamp
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5],"set":[7,8],"search":[11,13,14,15,16,17],"return":[12,19]}'>
+                    import java.util.*;
+                    class TimeMap {
+                        private final Map<String, List<Integer>> times = new HashMap<>(); // key -> timestamps, sorted
+                        private final Map<String, List<String>> values = new HashMap<>(); // key -> values, same order
+                        public TimeMap() {}
+                        public void set(String key, String value, int timestamp) {
+                            times.computeIfAbsent(key, k -> new ArrayList<>()).add(timestamp); // timestamps only grow, so the list stays sorted
+                            values.computeIfAbsent(key, k -> new ArrayList<>()).add(value);
+                        }
+                        public String get(String key, int timestamp) {
+                            List<Integer> ts = times.get(key);
+                            if (ts == null) return "";
+                            int lo = 0, hi = ts.size(); // find the first timestamp > timestamp
+                            while (lo < hi) {
+                                int mid = (lo + hi) >>> 1;
+                                if (ts.get(mid) <= timestamp) lo = mid + 1;
+                                else hi = mid;
+                            }
+                            return lo > 0 ? values.get(key).get(lo - 1) : ""; // the one just before it is the latest at or before timestamp
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  Python: <code>bisect_right</code> on a list of times. C++: a
+                  <code>std::map</code> per key with <code>upper_bound</code>. Java: a
+                  <code>TreeMap</code> per key with <code>floorEntry</code>.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    from bisect import bisect_right
+                    class TimeMap(object):
+                        def __init__(self):
+                            self.times, self.values = {}, {}
+                        def set(self, key, value, timestamp):
+                            self.times.setdefault(key, []).append(timestamp)
+                            self.values.setdefault(key, []).append(value)
+                        def get(self, key, timestamp):
+                            i = bisect_right(self.times.get(key, []), timestamp)  # first time > timestamp
+                            return self.values[key][i - 1] if i else ""
+                  </script>
+                  <script type="text/plain" data-lang="C++">
+                    #include <map>
+                    #include <string>
+                    #include <unordered_map>
+                    class TimeMap {
+                        std::unordered_map<std::string, std::map<int, std::string>> store; // a sorted map per key
+                    public:
+                        TimeMap() {}
+                        void set(std::string key, std::string value, int timestamp) { store[key][timestamp] = value; }
+                        std::string get(std::string key, int timestamp) {
+                            auto it = store.find(key);
+                            if (it == store.end()) return "";
+                            auto up = it->second.upper_bound(timestamp); // first time > timestamp
+                            return up == it->second.begin() ? "" : std::prev(up)->second;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java">
+                    import java.util.*;
+                    class TimeMap {
+                        private final Map<String, TreeMap<Integer, String>> store = new HashMap<>(); // a sorted map per key
+                        public TimeMap() {}
+                        public void set(String key, String value, int timestamp) {
+                            store.computeIfAbsent(key, k -> new TreeMap<>()).put(timestamp, value);
+                        }
+                        public String get(String key, int timestamp) {
+                            TreeMap<Integer, String> m = store.get(key);
+                            if (m == null) return "";
+                            Map.Entry<Integer, String> e = m.floorEntry(timestamp); // latest time <= timestamp
+                            return e == null ? "" : e.getValue();
+                        }
+                    }
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> set O(1) / O(log n), get O(log n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  Should pass on LeetCode. 2·10⁵ random calls: Python 62 ms, 2.3 times
+                  faster than Approach 3 (the search runs in C). The tree maps were
+                  slower than Approach 3: C++ 17 ms, Java 35 ms.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Try Every Earlier Time</th>
+                        <td>Look up t, t − 1, …</td>
+                        <td>get O(timestamp)</td>
+                        <td>O(n)</td>
+                        <td>Up to 10⁷ tries per get</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Scan Back</th>
+                        <td>Newest first per key</td>
+                        <td>get O(pairs)</td>
+                        <td>O(n)</td>
+                        <td>12 s on old times in Python</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Binary Search</th>
+                        <td>First time &gt; t, step back</td>
+                        <td>get O(log n)</td>
+                        <td>O(n)</td>
                         <td>Expected answer</td>
                       </tr>
                     </tbody>
@@ -85523,6 +85949,162 @@
           }
           const ans = idx.slice(0, k).map((i) => points[i]);
           steps.push({ line: "return", note: `Return ${show(ans)}: places 0 to ${k - 1}. Each round keeps one side, about half: O(n) on average.`, view: [iv(Object.fromEntries(ans.map((_, i) => [i, "match"])), { cut: k < idx.length ? k : undefined })] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0981-time-based-key-value-store/approach1.visual.js -->
+    <script>
+      // Store each (key, time) on its own; a get tries time, time − 1, ... down to 1.
+      (function () {
+      const INPUT = [{ name: "ops", label: "calls (comma-separated)", type: "string", value: "set foo bar 1, get foo 1, get foo 3, set foo bar2 4, get foo 4, get foo 5, get foo 0", maxLength: 200, raw: true }];
+      function parseOps(text) {
+        const parts = text.split(",").map((p) => p.trim()).filter(Boolean);
+        if (!parts.length) throw new DSAViz.InputError('Write calls like "set foo bar 1, get foo 3".');
+        if (parts.length > 14) throw new DSAViz.InputError("At most 14 calls here (kept small so the steps stay readable).");
+        let last = 0;
+        return parts.map((p) => {
+          const w = p.split(/\s+/);
+          if (w[0] === "set" && w.length === 4 && /^[a-z]+$/.test(w[1]) && /^[a-z0-9]+$/.test(w[2]) && /^\d+$/.test(w[3])) {
+            const t = Number(w[3]);
+            if (t < 1 || t > 100) throw new DSAViz.InputError("Timestamps are 1 to 100 here.");
+            if (t <= last) throw new DSAViz.InputError(`set timestamps must keep increasing: ${t} comes after ${last}.`);
+            last = t;
+            return ["set", w[1], w[2], t];
+          }
+          if (w[0] === "get" && w.length === 3 && /^[a-z]+$/.test(w[1]) && /^\d+$/.test(w[2])) {
+            const t = Number(w[2]);
+            if (t > 100) throw new DSAViz.InputError("Timestamps are 0 to 100 here.");
+            return ["get", w[1], t];
+          }
+          throw new DSAViz.InputError(`"${p}": use set key value time or get key time (lowercase keys).`);
+        });
+      }
+      const showGets = (g) => `[${g.map((v) => (v === "" ? '""' : v)).join(", ")}]`;
+      DSAViz.register("0981-time-based-key-value-store/approach1", {
+        inputs: INPUT,
+        trace({ ops: text }) {
+          const ops = parseOps(text);
+          const at = new Map(), gets = [];
+          const mv = (mark) => ({ type: "map", label: "(key, time) → value", columns: ["key, time", "value"], entries: [...at], marks: mark ? { [mark]: "match" } : {} });
+          const steps = [{ line: "init", note: "One hash map from (key, time) to value.", view: [mv()] }];
+          for (const op of ops) {
+            if (op[0] === "set") { at.set(`${op[1]}, ${op[3]}`, op[2]); steps.push({ line: "set", note: `set(${op[1]}, ${op[2]}, ${op[3]}).`, view: [mv(`${op[1]}, ${op[3]}`)] }); continue; }
+            const [, key, t] = op;
+            let found = "", tries = 0, hitKey = null;
+            for (let s = t; s >= 1; s--) { tries++; if (at.has(`${key}, ${s}`)) { found = at.get(`${key}, ${s}`); hitKey = `${key}, ${s}`; break; } }
+            gets.push(found);
+            steps.push({ line: hitKey ? ["scan", "found"] : ["scan", "none"], note: hitKey ? `get(${key}, ${t}): tried times ${t} down to ${t - tries + 1} (${tries} lookup${tries > 1 ? "s" : ""}); found ${found}.` : `get(${key}, ${t}): tried ${tries} time${tries === 1 ? "" : "s"} down to 1, nothing. Return "".`, view: [mv(hitKey)] });
+          }
+          steps.push({ line: "none", note: `Return gets: ${showGets(gets)}. A get can try every time down to 1: O(timestamp), up to 10⁷.`, view: [mv()] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0981-time-based-key-value-store/approach2.visual.js -->
+    <script>
+      // Each key keeps (time, value) pairs in time order. A get walks back from the newest to the first one at or before the time.
+      (function () {
+      const INPUT = [{ name: "ops", label: "calls (comma-separated)", type: "string", value: "set foo bar 1, get foo 1, get foo 3, set foo bar2 4, get foo 4, get foo 5, get foo 0", maxLength: 200, raw: true }];
+      function parseOps(text) {
+        const parts = text.split(",").map((p) => p.trim()).filter(Boolean);
+        if (!parts.length) throw new DSAViz.InputError('Write calls like "set foo bar 1, get foo 3".');
+        if (parts.length > 14) throw new DSAViz.InputError("At most 14 calls here (kept small so the steps stay readable).");
+        let last = 0;
+        return parts.map((p) => {
+          const w = p.split(/\s+/);
+          if (w[0] === "set" && w.length === 4 && /^[a-z]+$/.test(w[1]) && /^[a-z0-9]+$/.test(w[2]) && /^\d+$/.test(w[3])) {
+            const t = Number(w[3]);
+            if (t < 1 || t > 100) throw new DSAViz.InputError("Timestamps are 1 to 100 here.");
+            if (t <= last) throw new DSAViz.InputError(`set timestamps must keep increasing: ${t} comes after ${last}.`);
+            last = t;
+            return ["set", w[1], w[2], t];
+          }
+          if (w[0] === "get" && w.length === 3 && /^[a-z]+$/.test(w[1]) && /^\d+$/.test(w[2])) {
+            const t = Number(w[2]);
+            if (t > 100) throw new DSAViz.InputError("Timestamps are 0 to 100 here.");
+            return ["get", w[1], t];
+          }
+          throw new DSAViz.InputError(`"${p}": use set key value time or get key time (lowercase keys).`);
+        });
+      }
+      const showGets = (g) => `[${g.map((v) => (v === "" ? '""' : v)).join(", ")}]`;
+      DSAViz.register("0981-time-based-key-value-store/approach2", {
+        inputs: INPUT,
+        trace({ ops: text }) {
+          const ops = parseOps(text);
+          const store = new Map(), gets = [];
+          const sv = (key, marks = {}) => ({ type: "array", label: `pairs for "${key}" (time: value)`, values: (store.get(key) || []).length ? store.get(key).map(([t, v]) => `${t}: ${v}`) : ["—"], wide: true, marks: (store.get(key) || []).length ? marks : { 0: "ghost" } });
+          const steps = [{ line: "init", note: "Each key gets a list of (time, value). set times only grow, so each list is sorted.", view: [{ type: "vars", items: [{ name: "keys stored", value: store.size }] }] }];
+          for (const op of ops) {
+            if (op[0] === "set") { if (!store.has(op[1])) store.set(op[1], []); store.get(op[1]).push([op[3], op[2]]); steps.push({ line: "set", note: `set(${op[1]}, ${op[2]}, ${op[3]}): append.`, view: [sv(op[1], { [store.get(op[1]).length - 1]: "new" })] }); continue; }
+            const [, key, t] = op;
+            const pairs = store.get(key) || [];
+            let i = pairs.length - 1;
+            const marks = {};
+            while (i >= 0 && pairs[i][0] > t) { marks[i] = "visited"; i--; }
+            if (i >= 0) marks[i] = "match";
+            gets.push(i >= 0 ? pairs[i][1] : "");
+            steps.push({ line: i >= 0 ? ["scan", "found"] : ["scan", "none"], note: i >= 0 ? `get(${key}, ${t}): walk back from the newest; ${pairs.length - 1 - i} pair${pairs.length - 1 - i === 1 ? " is" : "s are"} too new. ${pairs[i][0]}: ${pairs[i][1]} is the latest at or before ${t}.` : `get(${key}, ${t}): ${pairs.length ? "every pair is newer than " + t : "no pairs for " + key}. Return "".`, view: [sv(key, marks)] });
+          }
+          steps.push({ line: "none", note: `Return gets: ${showGets(gets)}. Fast for recent times, but an old time walks the whole list: O(pairs) per get.`, view: [{ type: "vars", items: [{ name: "keys stored", value: store.size }] }] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0981-time-based-key-value-store/approach3.visual.js -->
+    <script>
+      // Each key keeps (time, value) pairs in time order. A get binary-searches for the first time after the query, then steps back one.
+      (function () {
+      const INPUT = [{ name: "ops", label: "calls (comma-separated)", type: "string", value: "set foo bar 1, get foo 1, get foo 3, set foo bar2 4, get foo 4, get foo 5, get foo 0", maxLength: 200, raw: true }];
+      function parseOps(text) {
+        const parts = text.split(",").map((p) => p.trim()).filter(Boolean);
+        if (!parts.length) throw new DSAViz.InputError('Write calls like "set foo bar 1, get foo 3".');
+        if (parts.length > 14) throw new DSAViz.InputError("At most 14 calls here (kept small so the steps stay readable).");
+        let last = 0;
+        return parts.map((p) => {
+          const w = p.split(/\s+/);
+          if (w[0] === "set" && w.length === 4 && /^[a-z]+$/.test(w[1]) && /^[a-z0-9]+$/.test(w[2]) && /^\d+$/.test(w[3])) {
+            const t = Number(w[3]);
+            if (t < 1 || t > 100) throw new DSAViz.InputError("Timestamps are 1 to 100 here.");
+            if (t <= last) throw new DSAViz.InputError(`set timestamps must keep increasing: ${t} comes after ${last}.`);
+            last = t;
+            return ["set", w[1], w[2], t];
+          }
+          if (w[0] === "get" && w.length === 3 && /^[a-z]+$/.test(w[1]) && /^\d+$/.test(w[2])) {
+            const t = Number(w[2]);
+            if (t > 100) throw new DSAViz.InputError("Timestamps are 0 to 100 here.");
+            return ["get", w[1], t];
+          }
+          throw new DSAViz.InputError(`"${p}": use set key value time or get key time (lowercase keys).`);
+        });
+      }
+      const showGets = (g) => `[${g.map((v) => (v === "" ? '""' : v)).join(", ")}]`;
+      DSAViz.register("0981-time-based-key-value-store/approach3", {
+        inputs: INPUT,
+        trace({ ops: text }) {
+          const ops = parseOps(text);
+          const store = new Map(), gets = [];
+          const sv = (key, marks = {}, pointers = {}) => ({ type: "array", label: `pairs for "${key}" (time: value)`, values: (store.get(key) || []).length ? store.get(key).map(([t, v]) => `${t}: ${v}`) : ["—"], wide: true, marks: (store.get(key) || []).length ? marks : { 0: "ghost" }, pointers });
+          const steps = [{ line: "init", note: "Each key gets a list of (time, value). set times only grow, so each list is sorted.", view: [{ type: "vars", items: [{ name: "keys stored", value: store.size }] }] }];
+          for (const op of ops) {
+            if (op[0] === "set") { if (!store.has(op[1])) store.set(op[1], []); store.get(op[1]).push([op[3], op[2]]); steps.push({ line: "set", note: `set(${op[1]}, ${op[2]}, ${op[3]}): append. No sorting needed.`, view: [sv(op[1], { [store.get(op[1]).length - 1]: "new" })] }); continue; }
+            const [, key, t] = op;
+            const pairs = store.get(key) || [];
+            let lo = 0, hi = pairs.length;
+            while (lo < hi) {
+              const mid = (lo + hi) >> 1;
+              const ok = pairs[mid][0] <= t;
+              steps.push({ line: "search", note: `get(${key}, ${t}): lo = ${lo}, hi = ${hi}, mid = ${mid}. Time ${pairs[mid][0]} ${ok ? `≤ ${t}: the first time after ${t} is past mid, lo = ${mid + 1}` : `> ${t}: hi = ${mid}`}.`, view: [sv(key, { [mid]: ok ? "compare" : "cut" }, { mid })] });
+              if (ok) lo = mid + 1; else hi = mid;
+            }
+            gets.push(lo ? pairs[lo - 1][1] : "");
+            steps.push({ line: "return", note: lo ? `The first time after ${t} is at index ${lo}${lo === pairs.length ? " (past the end)" : ""}. One back: ${pairs[lo - 1][0]}: ${pairs[lo - 1][1]}. Return ${pairs[lo - 1][1]}.` : `Every time is after ${t}${pairs.length ? "" : " (no pairs at all)"}. Return "".`, view: [sv(key, lo ? { [lo - 1]: "match" } : {})] });
+          }
+          steps.push({ line: "return", note: `Return gets: ${showGets(gets)}. set is O(1); get is O(log n) binary search.`, view: [{ type: "vars", items: [{ name: "keys stored", value: store.size }] }] });
           return steps;
         },
       });

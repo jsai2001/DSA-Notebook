@@ -1,0 +1,207 @@
+<details class="question" data-group="binary-search" data-tags="binary search design hash map sorted list floor lookup treemap">
+  <summary>
+    <span class="q-title">981. Time Based Key-Value Store</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Binary Search</span>
+      <span class="tag">Design</span>
+      <span class="tag">Hash Map</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> <code>set</code> timestamps only go up, so
+      appending <code>(time, value)</code> to each key's list keeps it sorted
+      for free. A <code>get</code> is then a binary search for the last time
+      <code>&lt;= timestamp</code>: find the first time that's bigger and step
+      back one. O(1) set, O(log n) get.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/time-based-key-value-store/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>Build a <code>TimeMap</code>:</p>
+      <ul>
+        <li><code>set(key, value, timestamp)</code> stores <code>value</code> for <code>key</code> at that time.</li>
+        <li><code>get(key, timestamp)</code> returns the value set with the largest time <code>&lt;= timestamp</code>, or <code>""</code> if there is none.</li>
+        <li>The timestamps of <code>set</code> calls strictly increase. <code>1 &lt;= timestamp &lt;= 10⁷</code>, at most 2·10⁵ calls.</li>
+      </ul>
+      <p class="note">
+        Example: <code>set("foo","bar",1)</code>, <code>get("foo",1)</code> →
+        <code>"bar"</code>, <code>get("foo",3)</code> → <code>"bar"</code>,
+        <code>set("foo","bar2",4)</code>, <code>get("foo",4)</code> →
+        <code>"bar2"</code>, <code>get("foo",5)</code> → <code>"bar2"</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>set("b","cbc",3)</code>, <code>get("b",3)</code></td>
+              <td><code>"cbc"</code></td>
+              <td>An exact time match counts. <code>bisect_left</code> instead of <code>bisect_right</code> skipped it and returned <code>""</code>: wrong on 346 of 1,503 tests.</td>
+            </tr>
+            <tr>
+              <td><code>set("a","x",5)</code>, <code>get("a",4)</code></td>
+              <td><code>""</code></td>
+              <td>Every stored time is later than the query.</td>
+            </tr>
+            <tr>
+              <td><code>get("zz",5)</code> before any <code>set</code> of <code>"zz"</code></td>
+              <td><code>""</code></td>
+              <td>An unknown key must not crash.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Try Every Earlier Time</h2>
+      <p class="intuition">
+        Store each value under <code>(key, timestamp)</code>. For a
+        <code>get</code>, look up <code>timestamp</code>, then
+        <code>timestamp − 1</code>, and so on down to 1.
+      </p>
+      <ul>
+        <li>A <code>get</code> long after the last <code>set</code>, or for an unknown key, tries up to 10⁷ times.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> set O(1), get O(timestamp)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        1,000 gets that each try 10⁴ times: Python 0.46 s, Java 0.22 s, C++
+        0.27 s. One get at time 10⁷ is 1,000 times that work.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Sorted List per Key, Scan Back</h2>
+      <p class="intuition">
+        Append <code>(time, value)</code> to the key's list; it stays sorted.
+        For a <code>get</code>, walk back from the newest pair and return the
+        first one at or before <code>timestamp</code>.
+      </p>
+      <ul>
+        <li>Fast when queries ask about recent times. Slow when they ask about old ones.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> set O(1), get O(pairs for that key)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        2·10⁵ random calls on 10 keys: Python 1.6 s, Java 66 ms, C++ 21 ms.
+        One key with 2·10⁴ pairs and 2·10⁴ gets for early times: Python 12 s.
+        But for recent times it beat Approach 3 in Python (57 ms vs 161 ms).
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Sorted List per Key, Binary Search
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Same lists. For a <code>get</code>, binary search for the first pair
+        whose time is greater than <code>timestamp</code>. The pair just
+        before it is the answer; if there's none before it, return
+        <code>""</code>.
+      </p>
+      <ul>
+        <li>Searching for "first time &gt; t" handles exact matches without a special case.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> set O(1), get O(log n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        2·10⁵ random calls: Python 146 ms, Java 25 ms, C++ 9.6 ms. The early
+        gets that took Approach 2 twelve seconds: Python 28 ms, Java 2.3 ms,
+        C++ 1.5 ms.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Python: <code>bisect_right</code> on a list of times. C++: a
+        <code>std::map</code> per key with <code>upper_bound</code>. Java: a
+        <code>TreeMap</code> per key with <code>floorEntry</code>.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> set O(1) / O(log n), get O(log n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Should pass on LeetCode. 2·10⁵ random calls: Python 62 ms, 2.3 times
+        faster than Approach 3 (the search runs in C). The tree maps were
+        slower than Approach 3: C++ 17 ms, Java 35 ms.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Try Every Earlier Time</th>
+              <td>Look up t, t − 1, …</td>
+              <td>get O(timestamp)</td>
+              <td>O(n)</td>
+              <td>Up to 10⁷ tries per get</td>
+            </tr>
+            <tr>
+              <th scope="row">Scan Back</th>
+              <td>Newest first per key</td>
+              <td>get O(pairs)</td>
+              <td>O(n)</td>
+              <td>12 s on old times in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">Binary Search</th>
+              <td>First time &gt; t, step back</td>
+              <td>get O(log n)</td>
+              <td>O(n)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
