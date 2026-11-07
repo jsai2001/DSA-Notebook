@@ -40670,6 +40670,343 @@
           </details>
         </div>
       </details>
+
+      <!-- ===== group: bit-manipulation ===== -->
+      <details class="pattern-group" id="g-bit-manipulation">
+        <summary>
+          <span class="g-name">Bit Manipulation</span>
+          <span class="g-count"><span class="g-total">1 problem</span></span>
+          <span class="g-hint">Shift, mask and count the bits</span>
+        </summary>
+        <div class="g-body">
+          <!-- ===== problems/0190-reverse-bits ===== -->
+          <details class="question" data-group="bit-manipulation" data-tags="bit manipulation reverse bits shift mask divide and conquer binary">
+            <summary>
+              <span class="q-title">190. Reverse Bits</span>
+              <span class="q-meta">
+                <span class="badge easy">Easy</span>
+                <span class="tag">Bit Manipulation</span>
+                <span class="tag">Divide and Conquer</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Move bits one at a time: 32 times, take
+                <code>n &amp; 1</code>, push it onto <code>res</code> with
+                <code>res = (res &lt;&lt; 1) | bit</code>, and shift <code>n</code> right.
+                Always do all <strong>32</strong> rounds, even after <code>n</code> is 0,
+                because the leading zeros of <code>n</code> become the trailing zeros of
+                the answer.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/reverse-bits/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Reverse the 32 bits of the integer <code>n</code>: bit 0 becomes bit
+                  31, bit 1 becomes bit 30, and so on. Return the new number.
+                </p>
+                <ul>
+                  <li><code>0 &lt;= n &lt;= 2³¹ − 2</code>, and <code>n</code> is even</li>
+                  <li>Even means bit 0 is 0, so the answer's top bit is 0 and it fits in an <code>int</code>.</li>
+                </ul>
+                <p class="note">
+                  Example: <code>43261596</code> → <code>964176192</code>.
+                  <code>2147483644</code> → <code>1073741822</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>2</code></td>
+                        <td><code>1073741824</code></td>
+                        <td>A loop that stops <code>while n</code> is non-zero runs only 2 rounds: it said <code>1</code>. Wrong on all 10,004 inputs tried.</td>
+                      </tr>
+                      <tr>
+                        <td><code>43261596</code></td>
+                        <td><code>964176192</code></td>
+                        <td>Reversing <code>bin(n)</code> without padding to 32 digits drops the leading zeros: it said <code>15065253</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>0</code></td>
+                        <td><code>0</code></td>
+                        <td>No 1 bits at all.</td>
+                      </tr>
+                      <tr>
+                        <td><code>2147483646</code></td>
+                        <td><code>2147483646</code></td>
+                        <td>31 ones then a 0: reversed, it's the same pattern. The biggest input.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Binary String, Reversed</h2>
+                <p class="intuition">
+                  Write <code>n</code> as exactly 32 binary digits, reverse the text, and
+                  parse it back in base 2.
+                </p>
+                <ul>
+                  <li>The width 32 matters: the leading zeros are the bits that end up at the bottom.</li>
+                  <li>It builds two 32-character strings each call.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(1) (32 characters)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  Average per call over 20,007 inputs: Python 0.47 µs (the fastest in
+                  Python, because the work happens inside C), C++ 0.28 µs, Java 0.65 µs,
+                  6 to 13 times slower than the bit versions in C++ and Java.
+                </p>
+                <div class="code-tabs" data-viz="0190-reverse-bits/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"text":[3],"back":[4]}'>
+                    class Solution(object):
+                        def reverseBits(self, n):
+                            bits = format(n, "032b")  # exactly 32 digits, leading zeros kept
+                            return int(bits[::-1], 2)  # read the digits backwards
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"text":[7],"back":[8,9]}'>
+                    #include <algorithm>
+                    #include <bitset>
+                    #include <string>
+                    class Solution {
+                    public:
+                        int reverseBits(int n) {
+                            std::string bits = std::bitset<32>(n).to_string(); // exactly 32 digits, leading zeros kept
+                            std::reverse(bits.begin(), bits.end()); // read the digits backwards
+                            return (int)std::stoul(bits, nullptr, 2);
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"text":[3],"back":[4,5]}'>
+                    class Solution {
+                        public int reverseBits(int n) {
+                            String bits = String.format("%32s", Integer.toBinaryString(n)).replace(' ', '0'); // exactly 32 digits, leading zeros kept
+                            String back = new StringBuilder(bits).reverse().toString(); // read the digits backwards
+                            return Integer.parseUnsignedInt(back, 2);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Bit by Bit</h2>
+                <p class="intuition">
+                  32 rounds. Each round, <code>n &amp; 1</code> is the lowest bit of
+                  <code>n</code>. Shift <code>res</code> left and put that bit at its
+                  right end, then shift <code>n</code> right. The first bit taken ends
+                  up at the top after 31 more shifts.
+                </p>
+                <ul>
+                  <li>Never stop early: the rounds after <code>n</code> becomes 0 are what move the bits up.</li>
+                  <li>In Java use <code>&gt;&gt;&gt;</code>, and in C++ an <code>unsigned</code>, so a shift never copies a sign bit.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(1) (32 rounds)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  Average per call: Python 2.6 µs (32 trips through the interpreter),
+                  Java 0.05 µs, C++ 0.05 µs. The answer most interviewers expect.
+                </p>
+                <div class="code-tabs" data-viz="0190-reverse-bits/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"loop":[4],"move":[5,6],"return":[7]}'>
+                    class Solution(object):
+                        def reverseBits(self, n):
+                            res = 0
+                            for _ in range(32):  # all 32 bits, even after n becomes 0
+                                res = (res << 1) | (n & 1)  # n's lowest bit goes onto res's right end
+                                n >>= 1
+                            return res
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[4],"loop":[5],"move":[6,7],"return":[9]}'>
+                    class Solution {
+                    public:
+                        int reverseBits(int n) {
+                            unsigned x = n, res = 0; // unsigned: shifts never touch a sign bit
+                            for (int i = 0; i < 32; ++i) { // all 32 bits, even after x becomes 0
+                                res = (res << 1) | (x & 1); // x's lowest bit goes onto res's right end
+                                x >>= 1;
+                            }
+                            return (int)res;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"loop":[4],"move":[5,6],"return":[8]}'>
+                    class Solution {
+                        public int reverseBits(int n) {
+                            int res = 0;
+                            for (int i = 0; i < 32; i++) { // all 32 bits, even after n becomes 0
+                                res = (res << 1) | (n & 1); // n's lowest bit goes onto res's right end
+                                n >>>= 1; // >>> fills with 0, unlike >>
+                            }
+                            return res;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Swap Blocks With Masks
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Reversing 32 bits is the same as swapping the two 16-bit halves and
+                  then reversing each half. Keep going: swap the bytes in each half, the
+                  4-bit pieces in each byte, the pairs, and finally neighbouring bits.
+                  Each swap is one line: shift one way, shift the other, and keep the
+                  right blocks with a mask.
+                </p>
+                <ul>
+                  <li>The masks are patterns: <code>0x55555555</code> is <code>0101…</code>, <code>0x33333333</code> is <code>0011…</code>, and so on.</li>
+                  <li>5 lines instead of 32 rounds: log₂ 32 = 5.</li>
+                  <li>For the follow-up ("called many times"), a 256-entry table of reversed bytes is the other common answer.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(1) (5 steps)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  Average per call: Python 0.76 µs, Java 0.045 µs, C++ 0.04 µs, about the
+                  same as Approach 2 in C++ and Java. At this size the timer itself is a
+                  big part of what's measured.
+                </p>
+                <div class="code-tabs" data-viz="0190-reverse-bits/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"s16":[3],"s8":[4],"s4":[5],"s2":[6],"s1":[7],"return":[8]}'>
+                    class Solution(object):
+                        def reverseBits(self, n):
+                            n = ((n >> 16) | (n << 16)) & 0xFFFFFFFF  # swap the two 16-bit halves
+                            n = ((n >> 8) & 0x00FF00FF) | ((n & 0x00FF00FF) << 8)  # swap the bytes in each half
+                            n = ((n >> 4) & 0x0F0F0F0F) | ((n & 0x0F0F0F0F) << 4)  # swap the 4-bit pieces in each byte
+                            n = ((n >> 2) & 0x33333333) | ((n & 0x33333333) << 2)  # swap the pairs
+                            n = ((n >> 1) & 0x55555555) | ((n & 0x55555555) << 1)  # swap neighbouring bits
+                            return n
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"s16":[5,6],"s8":[7],"s4":[8],"s2":[9],"s1":[10],"return":[11]}'>
+                    #include <cstdint>
+                    class Solution {
+                    public:
+                        int reverseBits(int n) {
+                            uint32_t x = n; // unsigned: shifts never touch a sign bit
+                            x = (x >> 16) | (x << 16); // swap the two 16-bit halves
+                            x = ((x >> 8) & 0x00FF00FF) | ((x & 0x00FF00FF) << 8); // swap the bytes in each half
+                            x = ((x >> 4) & 0x0F0F0F0F) | ((x & 0x0F0F0F0F) << 4); // swap the 4-bit pieces in each byte
+                            x = ((x >> 2) & 0x33333333) | ((x & 0x33333333) << 2); // swap the pairs
+                            x = ((x >> 1) & 0x55555555) | ((x & 0x55555555) << 1); // swap neighbouring bits
+                            return (int)x;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"s16":[3],"s8":[4],"s4":[5],"s2":[6],"s1":[7],"return":[8]}'>
+                    class Solution {
+                        public int reverseBits(int n) {
+                            n = (n >>> 16) | (n << 16); // swap the two 16-bit halves
+                            n = ((n >>> 8) & 0x00FF00FF) | ((n & 0x00FF00FF) << 8); // swap the bytes in each half
+                            n = ((n >>> 4) & 0x0F0F0F0F) | ((n & 0x0F0F0F0F) << 4); // swap the 4-bit pieces in each byte
+                            n = ((n >>> 2) & 0x33333333) | ((n & 0x33333333) << 2); // swap the pairs
+                            n = ((n >>> 1) & 0x55555555) | ((n & 0x55555555) << 1); // swap neighbouring bits
+                            return n;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  Java has <code>Integer.reverse(n)</code>, which does the mask swaps of
+                  Approach 3 for you.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Java">
+                    class Solution {
+                        public int reverseBits(int n) {
+                            return Integer.reverse(n);
+                        }
+                    }
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(1)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  Should pass on LeetCode (0.05 µs per call here). Python and C++ have no
+                  bit-reverse function. In Python, Approach 1 is the short way.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Binary String, Reversed</th>
+                        <td>Pad to 32 digits, reverse, parse</td>
+                        <td>O(1)</td>
+                        <td>O(1)</td>
+                        <td>Fastest in Python, slowest elsewhere</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Bit by Bit</th>
+                        <td>32 rounds of shift and OR</td>
+                        <td>O(1)</td>
+                        <td>O(1)</td>
+                        <td>Never stop when n hits 0</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Swap Blocks With Masks</th>
+                        <td>Swap 16, 8, 4, 2, 1-bit blocks</td>
+                        <td>O(1)</td>
+                        <td>O(1)</td>
+                        <td>5 lines, no loop</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+        </div>
+      </details>
     </main>
 
     <!-- Floating bar, bottom center: search and Surprise me, reachable while reading.
@@ -55857,6 +56194,125 @@
         let pairs = 0;
         for (let i = 0; i < numbers.length; i++) for (let j = i + 1; j < numbers.length; j++) if (numbers[i] + numbers[j] === target) pairs++;
         if (pairs !== 1) throw new DSAViz.InputError(pairs ? `${pairs} pairs add up to ${target}; the problem promises exactly one.` : `No pair adds up to ${target}; the problem promises exactly one.`);
+      }
+      })();
+    </script>
+    <!-- problems/0190-reverse-bits/approach1.visual.js -->
+    <script>
+      // Write n as exactly 32 binary digits, reverse the text, and read it back as a number.
+      (function () {
+      DSAViz.register("0190-reverse-bits/approach1", {
+        inputs: [{ name: "n", type: "int", value: "43261596", min: 0, max: 2147483646 }],
+        trace({ n }) {
+          check(n);
+          const text = n.toString(2).padStart(32, "0");
+          const back = [...text].reverse().join("");
+          const res = parseInt(back, 2);
+          const ones = (s) => Object.fromEntries([...s].map((ch, k) => [31 - k, ch === "1" ? "new" : ""]).filter(([, v]) => v));
+          return [
+            { line: "text", note: `format(n, "032b") = "${text}". The 032 keeps the leading zeros: without them the reversed text would be too short.`, view: [bits(n, "n (yellow = 1 bits)", ones(text)), { type: "vars", items: [{ name: "n", value: n }] }] },
+            { line: "back", note: `Reverse the text: "${back}". Read it in base 2: ${res}.`, view: [bits(n, "n", ones(text)), bits(res, "reversed text, read in base 2", ones(back)), { type: "vars", items: [{ name: "result", value: res, mark: "new" }] }] },
+            { line: "back", note: `Return ${res}. 32 characters each way: O(1) time, but it builds two strings.`, view: [bits(res, "result", ones(back)), { type: "vars", items: [{ name: "result", value: res, mark: "match" }] }] },
+          ];
+        },
+      });
+
+      function check(n) {
+        if (n % 2 !== 0) throw new DSAViz.InputError("LeetCode gives an even n (0 to 2147483646), so the result fits in an int.");
+      }
+      // The 32 bits as 4 rows of 8 (bit 31 at the top left). marks: { bitIndex: mark }.
+      function bits(x, label, marks = {}) {
+        const rows = [3, 2, 1, 0];
+        const cols = [7, 6, 5, 4, 3, 2, 1, 0];
+        const m = {};
+        rows.forEach((b, r) => cols.forEach((k, c) => { const i = b * 8 + k; if (marks[i]) m[`${r},${c}`] = marks[i]; }));
+        return { type: "grid", label, rows: rows.map((b) => `${b * 8 + 7}–${b * 8}`), cols, corner: "bits", cells: rows.map((b) => cols.map((k) => String(Math.floor(x / 2 ** (b * 8 + k)) % 2))), marks: m };
+      }
+      })();
+    </script>
+    <!-- problems/0190-reverse-bits/approach2.visual.js -->
+    <script>
+      // 32 times: take n's lowest bit, push it onto the right end of res, and shift n right.
+      (function () {
+      DSAViz.register("0190-reverse-bits/approach2", {
+        inputs: [{ name: "n", type: "int", value: "43261596", min: 0, max: 2147483646 }],
+        trace({ n }) {
+          check(n);
+          const steps = [];
+          let x = n;
+          let res = 0;
+          const view = (o = {}) => [
+            bits(x, "n (dark = its lowest bit, the one taken next)", o.done ? {} : { 0: "active" }),
+            bits(res, "res (yellow = the bit just added)", o.added ? { 0: "new" } : {}),
+            { type: "vars", items: [{ name: "i", value: o.i === undefined ? "-" : o.i }, { name: "n", value: x }, { name: "res", value: res, mark: o.done ? "match" : "" }] },
+          ];
+          steps.push({ line: "init", note: "res = 0. Each round moves one bit from the right end of n to the right end of res.", view: view() });
+          for (let i = 0; i < 32; i++) {
+            const b = x % 2;
+            res = res * 2 + b;
+            x = Math.floor(x / 2);
+            steps.push({ line: ["loop", "move"], note: `Round ${i + 1}: n's lowest bit is ${b}. Shift res left and add ${b}; shift n right.${x === 0 && i < 31 ? " n is 0 now, but keep going: the remaining shifts put the bits in their right places." : ""}`, view: view({ i, added: true }) });
+          }
+          steps.push({ line: "return", note: `Return ${res}. Always exactly 32 rounds: O(1) time, O(1) space.`, view: view({ done: true }) });
+          return steps;
+        },
+      });
+
+      function check(n) {
+        if (n % 2 !== 0) throw new DSAViz.InputError("LeetCode gives an even n (0 to 2147483646), so the result fits in an int.");
+      }
+      // The 32 bits as 4 rows of 8 (bit 31 at the top left). marks: { bitIndex: mark }.
+      function bits(x, label, marks = {}) {
+        const rows = [3, 2, 1, 0];
+        const cols = [7, 6, 5, 4, 3, 2, 1, 0];
+        const m = {};
+        rows.forEach((b, r) => cols.forEach((k, c) => { const i = b * 8 + k; if (marks[i]) m[`${r},${c}`] = marks[i]; }));
+        return { type: "grid", label, rows: rows.map((b) => `${b * 8 + 7}–${b * 8}`), cols, corner: "bits", cells: rows.map((b) => cols.map((k) => String(Math.floor(x / 2 ** (b * 8 + k)) % 2))), marks: m };
+      }
+      })();
+    </script>
+    <!-- problems/0190-reverse-bits/approach3.visual.js -->
+    <script>
+      // Swap halves, then bytes, nibbles, pairs and single bits, each with one mask: 5 steps reverse all 32 bits.
+      (function () {
+      DSAViz.register("0190-reverse-bits/approach3", {
+        inputs: [{ name: "n", type: "int", value: "43261596", min: 0, max: 2147483646 }],
+        trace({ n }) {
+          check(n);
+          const steps = [];
+          let x = n >>> 0;
+          // Bits in blocks of size k: every other block yellow, so you can see the pairs that trade places.
+          const blocks = (k) => Object.fromEntries([...Array(32).keys()].filter((i) => Math.floor(i / k) % 2 === 1).map((i) => [i, "new"]));
+          const view = (k, label) => [bits(x, label, k ? blocks(k) : {}), { type: "vars", items: [{ name: "n", value: x >>> 0 }] }];
+          const rounds = [
+            [16, "s16", "Swap the two 16-bit halves: (n >> 16) | (n << 16)."],
+            [8, "s8", "In each half, swap the two bytes. 0x00FF00FF picks the low byte of each half."],
+            [4, "s4", "In each byte, swap the two 4-bit pieces (mask 0x0F0F0F0F)."],
+            [2, "s2", "In each 4-bit piece, swap the two pairs (mask 0x33333333 = 0011 0011 …)."],
+            [1, "s1", "Swap each pair of neighbouring bits (mask 0x55555555 = 0101 0101 …)."],
+          ];
+          steps.push({ line: "s16", note: "Reversing 32 bits = swap the halves, then reverse each half the same way. Yellow and white blocks are about to trade places.", view: view(16, "n before (yellow / white = the two halves)") });
+          const masks = { 8: 0x00ff00ff, 4: 0x0f0f0f0f, 2: 0x33333333, 1: 0x55555555 };
+          for (const [k, line, note] of rounds) {
+            x = k === 16 ? ((x >>> 16) | (x << 16)) >>> 0 : (((x >>> k) & masks[k]) | ((x & masks[k]) << k)) >>> 0;
+            const next = k / 2;
+            steps.push({ line, note: `${note} n = ${x}.${next >= 1 ? ` Next: blocks of ${next}.` : ""}`, view: view(next >= 1 ? next : 0, next >= 1 ? `n after (yellow / white = the blocks of ${next} that swap next)` : "n after all 5 swaps") });
+          }
+          steps.push({ line: "return", note: `Return ${x}. Five shift-and-mask lines, no loop: O(log 32) = 5 steps, O(1) space.`, view: view(0, "result") });
+          return steps;
+        },
+      });
+
+      function check(n) {
+        if (n % 2 !== 0) throw new DSAViz.InputError("LeetCode gives an even n (0 to 2147483646), so the result fits in an int.");
+      }
+      // The 32 bits as 4 rows of 8 (bit 31 at the top left). marks: { bitIndex: mark }.
+      function bits(x, label, marks = {}) {
+        const rows = [3, 2, 1, 0];
+        const cols = [7, 6, 5, 4, 3, 2, 1, 0];
+        const m = {};
+        rows.forEach((b, r) => cols.forEach((k, c) => { const i = b * 8 + k; if (marks[i]) m[`${r},${c}`] = marks[i]; }));
+        return { type: "grid", label, rows: rows.map((b) => `${b * 8 + 7}–${b * 8}`), cols, corner: "bits", cells: rows.map((b) => cols.map((k) => String(Math.floor(x / 2 ** (b * 8 + k)) % 2))), marks: m };
       }
       })();
     </script>

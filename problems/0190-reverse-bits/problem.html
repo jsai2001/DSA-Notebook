@@ -1,0 +1,215 @@
+<details class="question" data-group="bit-manipulation" data-tags="bit manipulation reverse bits shift mask divide and conquer binary">
+  <summary>
+    <span class="q-title">190. Reverse Bits</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Bit Manipulation</span>
+      <span class="tag">Divide and Conquer</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Move bits one at a time: 32 times, take
+      <code>n &amp; 1</code>, push it onto <code>res</code> with
+      <code>res = (res &lt;&lt; 1) | bit</code>, and shift <code>n</code> right.
+      Always do all <strong>32</strong> rounds, even after <code>n</code> is 0,
+      because the leading zeros of <code>n</code> become the trailing zeros of
+      the answer.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/reverse-bits/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Reverse the 32 bits of the integer <code>n</code>: bit 0 becomes bit
+        31, bit 1 becomes bit 30, and so on. Return the new number.
+      </p>
+      <ul>
+        <li><code>0 &lt;= n &lt;= 2³¹ − 2</code>, and <code>n</code> is even</li>
+        <li>Even means bit 0 is 0, so the answer's top bit is 0 and it fits in an <code>int</code>.</li>
+      </ul>
+      <p class="note">
+        Example: <code>43261596</code> → <code>964176192</code>.
+        <code>2147483644</code> → <code>1073741822</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>2</code></td>
+              <td><code>1073741824</code></td>
+              <td>A loop that stops <code>while n</code> is non-zero runs only 2 rounds: it said <code>1</code>. Wrong on all 10,004 inputs tried.</td>
+            </tr>
+            <tr>
+              <td><code>43261596</code></td>
+              <td><code>964176192</code></td>
+              <td>Reversing <code>bin(n)</code> without padding to 32 digits drops the leading zeros: it said <code>15065253</code>.</td>
+            </tr>
+            <tr>
+              <td><code>0</code></td>
+              <td><code>0</code></td>
+              <td>No 1 bits at all.</td>
+            </tr>
+            <tr>
+              <td><code>2147483646</code></td>
+              <td><code>2147483646</code></td>
+              <td>31 ones then a 0: reversed, it's the same pattern. The biggest input.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Binary String, Reversed</h2>
+      <p class="intuition">
+        Write <code>n</code> as exactly 32 binary digits, reverse the text, and
+        parse it back in base 2.
+      </p>
+      <ul>
+        <li>The width 32 matters: the leading zeros are the bits that end up at the bottom.</li>
+        <li>It builds two 32-character strings each call.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(1) (32 characters)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Average per call over 20,007 inputs: Python 0.47 µs (the fastest in
+        Python, because the work happens inside C), C++ 0.28 µs, Java 0.65 µs,
+        6 to 13 times slower than the bit versions in C++ and Java.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Bit by Bit</h2>
+      <p class="intuition">
+        32 rounds. Each round, <code>n &amp; 1</code> is the lowest bit of
+        <code>n</code>. Shift <code>res</code> left and put that bit at its
+        right end, then shift <code>n</code> right. The first bit taken ends
+        up at the top after 31 more shifts.
+      </p>
+      <ul>
+        <li>Never stop early: the rounds after <code>n</code> becomes 0 are what move the bits up.</li>
+        <li>In Java use <code>&gt;&gt;&gt;</code>, and in C++ an <code>unsigned</code>, so a shift never copies a sign bit.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(1) (32 rounds)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Average per call: Python 2.6 µs (32 trips through the interpreter),
+        Java 0.05 µs, C++ 0.05 µs. The answer most interviewers expect.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Swap Blocks With Masks
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Reversing 32 bits is the same as swapping the two 16-bit halves and
+        then reversing each half. Keep going: swap the bytes in each half, the
+        4-bit pieces in each byte, the pairs, and finally neighbouring bits.
+        Each swap is one line: shift one way, shift the other, and keep the
+        right blocks with a mask.
+      </p>
+      <ul>
+        <li>The masks are patterns: <code>0x55555555</code> is <code>0101…</code>, <code>0x33333333</code> is <code>0011…</code>, and so on.</li>
+        <li>5 lines instead of 32 rounds: log₂ 32 = 5.</li>
+        <li>For the follow-up ("called many times"), a 256-entry table of reversed bytes is the other common answer.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(1) (5 steps)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Average per call: Python 0.76 µs, Java 0.045 µs, C++ 0.04 µs, about the
+        same as Approach 2 in C++ and Java. At this size the timer itself is a
+        big part of what's measured.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Java has <code>Integer.reverse(n)</code>, which does the mask swaps of
+        Approach 3 for you.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(1)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Should pass on LeetCode (0.05 µs per call here). Python and C++ have no
+        bit-reverse function. In Python, Approach 1 is the short way.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Binary String, Reversed</th>
+              <td>Pad to 32 digits, reverse, parse</td>
+              <td>O(1)</td>
+              <td>O(1)</td>
+              <td>Fastest in Python, slowest elsewhere</td>
+            </tr>
+            <tr>
+              <th scope="row">Bit by Bit</th>
+              <td>32 rounds of shift and OR</td>
+              <td>O(1)</td>
+              <td>O(1)</td>
+              <td>Never stop when n hits 0</td>
+            </tr>
+            <tr>
+              <th scope="row">Swap Blocks With Masks</th>
+              <td>Swap 16, 8, 4, 2, 1-bit blocks</td>
+              <td>O(1)</td>
+              <td>O(1)</td>
+              <td>5 lines, no loop</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
