@@ -42729,7 +42729,7 @@
       <details class="pattern-group" id="g-greedy">
         <summary>
           <span class="g-name">Greedy</span>
-          <span class="g-count"><span class="g-total">6 problems</span></span>
+          <span class="g-count"><span class="g-total">7 problems</span></span>
           <span class="g-hint">Take the best step you can see</span>
         </summary>
         <div class="g-body">
@@ -44783,6 +44783,391 @@
                       <tr>
                         <th scope="row">Range of Open Counts</th>
                         <td>Track lo and hi; clamp lo at 0</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0763-partition-labels ===== -->
+          <details class="question" data-group="greedy" data-tags="greedy string last occurrence partition intervals merge two pointers">
+            <summary>
+              <span class="q-title">763. Partition Labels</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Greedy</span>
+                <span class="tag">String</span>
+                <span class="tag">Hash Table</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Record each letter's <strong>last
+                index</strong>. Walk the string keeping <code>end</code> = the
+                furthest last index of any letter in the current part. When
+                <code>i == end</code>, no letter in the part appears later, so cut
+                there. Cutting as early as possible gives the most parts. O(n).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/partition-labels/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Cut <code>s</code> into as many parts as possible so that each letter
+                  appears in only one part. Return the sizes of the parts, in order.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= s.length &lt;= 500</code>, lowercase letters</li>
+                </ul>
+                <p class="note">
+                  Example: <code>"ababcbacadefegdehijhklij"</code> →
+                  <code>[9,7,8]</code>. <code>"eccbbbbdec"</code> → <code>[10]</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>"baba"</code></td>
+                        <td><code>[4]</code></td>
+                        <td>Cutting at the first letter's last copy without growing for the letters inside said <code>[3,1]</code>: the last <code>a</code> was left out. Wrong on 1249 of 3006 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"abc"</code></td>
+                        <td><code>[1,1,1]</code></td>
+                        <td>All letters different: every letter is its own part.</td>
+                      </tr>
+                      <tr>
+                        <td><code>"eccbbbbdec"</code></td>
+                        <td><code>[10]</code></td>
+                        <td>The first and last letters match, so it can't be cut at all.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Grow Each Part by Searching</h2>
+                <p class="intuition">
+                  Start a part at the next letter. Its end is at least that letter's
+                  last copy. For every letter inside, search from the back for its last
+                  copy and push the end out if needed. When nothing pushes it further,
+                  cut.
+                </p>
+                <ul>
+                  <li>Each search (<code>rindex</code>, <code>rfind</code>, <code>lastIndexOf</code>) scans up to n letters.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n²)</span>
+                  <span><strong>Space</strong> O(1) besides the answer</span>
+                </div>
+                <p class="note">
+                  With n ≤ 500 it's fast anyway: Python 0.11 ms, Java 0.10 ms, C++
+                  0.03 ms on 500 letters.
+                </p>
+                <div class="code-tabs" data-viz="0763-partition-labels/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"part":[5,6],"grow":[7,8,9,10],"cut":[11,12],"return":[13]}'>
+                    class Solution(object):
+                        def partitionLabels(self, s):
+                            res = []
+                            start = 0
+                            while start < len(s):  # build one part at a time
+                                end = s.rindex(s[start])  # the part must reach this letter's last copy
+                                j = start
+                                while j <= end:  # every letter inside pushes the end to its own last copy
+                                    end = max(end, s.rindex(s[j]))  # rindex scans from the back: O(n) each time
+                                    j += 1
+                                res.append(end - start + 1)
+                                start = end + 1
+                            return res
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8],"part":[9,10],"grow":[11,12],"cut":[13,14],"return":[16]}'>
+                    #include <algorithm>
+                    #include <string>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> partitionLabels(std::string s) {
+                            std::vector<int> res;
+                            int start = 0, n = s.size();
+                            while (start < n) { // build one part at a time
+                                int end = s.rfind(s[start]); // the part must reach this letter's last copy
+                                for (int j = start; j <= end; ++j) // every letter inside pushes the end to its own last copy
+                                    end = std::max(end, (int)s.rfind(s[j])); // rfind scans from the back: O(n) each time
+                                res.push_back(end - start + 1);
+                                start = end + 1;
+                            }
+                            return res;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5],"part":[6,7],"grow":[8,9],"cut":[10,11],"return":[13]}'>
+                    import java.util.*;
+                    class Solution {
+                        public List<Integer> partitionLabels(String s) {
+                            List<Integer> res = new ArrayList<>();
+                            int start = 0, n = s.length();
+                            while (start < n) { // build one part at a time
+                                int end = s.lastIndexOf(s.charAt(start)); // the part must reach this letter's last copy
+                                for (int j = start; j <= end; j++) // every letter inside pushes the end to its own last copy
+                                    end = Math.max(end, s.lastIndexOf(s.charAt(j))); // lastIndexOf scans from the back: O(n) each time
+                                res.add(end - start + 1);
+                                start = end + 1;
+                            }
+                            return res;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Merge Letter Spans</h2>
+                <p class="intuition">
+                  Each letter covers the span from its first to its last index. Two
+                  overlapping spans must be in the same part. Sort the spans (at most
+                  26) by start and merge them, as in Merge Intervals; each merged span
+                  is one part.
+                </p>
+                <ul>
+                  <li>Turns the problem into one you may already know.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n) (sorting ≤ 26 spans is constant)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  500 letters: Python 36 µs (the fastest in Python here), Java 7.4 µs,
+                  C++ 2.0 µs.
+                </p>
+                <div class="code-tabs" data-viz="0763-partition-labels/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"spans":[3,4,5,6,7,8],"merge":[9,10,11,12,13],"cut":[14,15,16,17],"return":[18,19]}'>
+                    class Solution(object):
+                        def partitionLabels(self, s):
+                            span = {}  # letter -> [first index, last index]
+                            for i, ch in enumerate(s):
+                                if ch in span:
+                                    span[ch][1] = i
+                                else:
+                                    span[ch] = [i, i]
+                            res = []
+                            cur = None  # the part being built, as [start, end]
+                            for a, b in sorted(span.values()):  # at most 26 spans, by start
+                                if cur and a <= cur[1]:  # overlaps the current part: the letters must stay together
+                                    cur[1] = max(cur[1], b)
+                                else:
+                                    if cur:
+                                        res.append(cur[1] - cur[0] + 1)
+                                    cur = [a, b]
+                            res.append(cur[1] - cur[0] + 1)
+                            return res
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"spans":[8,9,10,11,12,14,15],"merge":[16,17,18,19,20],"cut":[21,22,23,24],"return":[27,28]}'>
+                    #include <algorithm>
+                    #include <string>
+                    #include <utility>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> partitionLabels(std::string s) {
+                            std::vector<int> first(26, -1), last(26, -1); // each letter's first and last index
+                            for (int i = 0; i < (int)s.size(); ++i) {
+                                int k = s[i] - 'a';
+                                if (first[k] < 0) first[k] = i;
+                                last[k] = i;
+                            }
+                            std::vector<std::pair<int, int>> spans;
+                            for (int k = 0; k < 26; ++k) if (first[k] >= 0) spans.push_back({first[k], last[k]});
+                            std::sort(spans.begin(), spans.end()); // at most 26 spans, by start
+                            std::vector<int> res;
+                            int a = spans[0].first, b = spans[0].second; // the part being built
+                            for (size_t i = 1; i < spans.size(); ++i) {
+                                if (spans[i].first <= b) b = std::max(b, spans[i].second); // overlaps: the letters must stay together
+                                else {
+                                    res.push_back(b - a + 1);
+                                    a = spans[i].first;
+                                    b = spans[i].second;
+                                }
+                            }
+                            res.push_back(b - a + 1);
+                            return res;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"spans":[4,5,6,7,8,9,11,12],"merge":[13,14,15,16,17],"cut":[18,19,20,21],"return":[24,25]}'>
+                    import java.util.*;
+                    class Solution {
+                        public List<Integer> partitionLabels(String s) {
+                            int[] first = new int[26], last = new int[26]; // each letter's first and last index
+                            Arrays.fill(first, -1);
+                            for (int i = 0; i < s.length(); i++) {
+                                int k = s.charAt(i) - 'a';
+                                if (first[k] < 0) first[k] = i;
+                                last[k] = i;
+                            }
+                            List<int[]> spans = new ArrayList<>();
+                            for (int k = 0; k < 26; k++) if (first[k] >= 0) spans.add(new int[] {first[k], last[k]});
+                            spans.sort((x, y) -> x[0] - y[0]); // at most 26 spans, by start
+                            List<Integer> res = new ArrayList<>();
+                            int a = spans.get(0)[0], b = spans.get(0)[1]; // the part being built
+                            for (int i = 1; i < spans.size(); i++) {
+                                if (spans.get(i)[0] <= b) b = Math.max(b, spans.get(i)[1]); // overlaps: the letters must stay together
+                                else {
+                                    res.add(b - a + 1);
+                                    a = spans.get(i)[0];
+                                    b = spans.get(i)[1];
+                                }
+                            }
+                            res.add(b - a + 1);
+                            return res;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Last Index, One Pass
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  First record <code>last[ch]</code> for every letter. Then walk the
+                  string with <code>end = max(end, last[ch])</code>. When
+                  <code>i == end</code>, every letter seen in this part is finished:
+                  record the size and start a new part.
+                </p>
+                <ul>
+                  <li>Two short loops and an array of 26.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  500 letters: Python 52 µs, Java 11 µs, C++ 1.6 µs, the fastest in C++.
+                  At this size all three are well under a millisecond.
+                </p>
+                <div class="code-tabs" data-viz="0763-partition-labels/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"last":[3],"init":[4,5],"scan":[6,7],"cut":[8,9,10],"return":[11]}'>
+                    class Solution(object):
+                        def partitionLabels(self, s):
+                            last = {ch: i for i, ch in enumerate(s)}  # each letter's last index (later ones overwrite)
+                            res = []
+                            start = end = 0
+                            for i, ch in enumerate(s):
+                                end = max(end, last[ch])  # this part must reach at least ch's last copy
+                                if i == end:  # every letter so far ends here: cut
+                                    res.append(end - start + 1)
+                                    start = i + 1
+                            return res
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"last":[7,8],"init":[9,10],"scan":[11,12],"cut":[13,14,15],"return":[18]}'>
+                    #include <algorithm>
+                    #include <string>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> partitionLabels(std::string s) {
+                            int last[26]; // each letter's last index
+                            for (int i = 0; i < (int)s.size(); ++i) last[s[i] - 'a'] = i; // later ones overwrite
+                            std::vector<int> res;
+                            int start = 0, end = 0;
+                            for (int i = 0; i < (int)s.size(); ++i) {
+                                end = std::max(end, last[s[i] - 'a']); // this part must reach at least this letter's last copy
+                                if (i == end) { // every letter so far ends here: cut
+                                    res.push_back(end - start + 1);
+                                    start = i + 1;
+                                }
+                            }
+                            return res;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"last":[4,5],"init":[6,7],"scan":[8,9],"cut":[10,11,12],"return":[15]}'>
+                    import java.util.*;
+                    class Solution {
+                        public List<Integer> partitionLabels(String s) {
+                            int[] last = new int[26]; // each letter's last index
+                            for (int i = 0; i < s.length(); i++) last[s.charAt(i) - 'a'] = i; // later ones overwrite
+                            List<Integer> res = new ArrayList<>();
+                            int start = 0, end = 0;
+                            for (int i = 0; i < s.length(); i++) {
+                                end = Math.max(end, last[s.charAt(i) - 'a']); // this part must reach at least this letter's last copy
+                                if (i == end) { // every letter so far ends here: cut
+                                    res.add(end - start + 1);
+                                    start = i + 1;
+                                }
+                            }
+                            return res;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>Nothing built in. Approach 3 is what you'd write.</p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Grow by Searching</th>
+                        <td>rindex for each letter</td>
+                        <td>O(n²)</td>
+                        <td>O(1)</td>
+                        <td>Fine at n ≤ 500</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Merge Letter Spans</th>
+                        <td>Merge Intervals on ≤ 26 spans</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>Reuses a known pattern</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Last Index, One Pass</th>
+                        <td>Cut when i == end</td>
                         <td>O(n)</td>
                         <td>O(1)</td>
                         <td>Expected answer</td>
@@ -70984,6 +71369,100 @@
           return steps;
         },
       });
+    </script>
+    <!-- problems/0763-partition-labels/approach1.visual.js -->
+    <script>
+      // Start a part at its first letter; every letter inside pushes the end to that letter's last copy, found by scanning from the back.
+      (function () {
+      const cuts = (n, parts) => { const m = {}; let a = 0; parts.forEach((len, k) => { for (let i = a; i < a + len; i++) m[i] = k % 2 ? "compare" : "match"; a += len; }); return m; };
+      DSAViz.register("0763-partition-labels/approach1", {
+        inputs: [{ name: "s", type: "string", value: "ababcbacadefegde", maxLength: 16 }],
+        trace({ s }) {
+          if (!/^[a-z]+$/.test(s)) throw new DSAViz.InputError("s must be 1 to 16 lowercase letters.");
+          const res = [];
+          const steps = [];
+          let start = 0, scans = 0;
+          const view = (m, o = {}) => [{ type: "array", label: "s (green / yellow = finished parts; outlined = the part being built)", values: [...s], marks: m, pointers: o.p || {} }, { type: "array", label: "res", values: res.slice(), marks: o.rec ? { [res.length - 1]: "new" } : {} }, { type: "vars", items: [{ name: "rindex scans", value: scans }] }];
+          while (start < s.length) {
+            let end = s.lastIndexOf(s[start]); scans++;
+            steps.push({ line: "part", note: `New part at ${start}. Its first letter '${s[start]}' last appears at ${end}, so the part reaches at least ${end}.`, view: view({ ...cuts(s.length, res), ...Object.fromEntries(Array.from({ length: end - start + 1 }, (_, k) => [start + k, "window"])) }, { p: { start, end } }) });
+            for (let j = start; j <= end; j++) { const e = s.lastIndexOf(s[j]); scans++; if (e > end) { steps.push({ line: "grow", note: `'${s[j]}' at ${j} last appears at ${e}: the part grows to ${e}.`, view: view({ ...cuts(s.length, res), ...Object.fromEntries(Array.from({ length: e - start + 1 }, (_, k) => [start + k, "window"])), [j]: "active" }, { p: { start, end: e } }) }); end = e; } }
+            res.push(end - start + 1);
+            steps.push({ line: "cut", note: `No letter inside reaches past ${end}: cut. Part size ${end - start + 1}.`, view: view(cuts(s.length, res), { rec: true }) });
+            start = end + 1;
+          }
+          steps.push({ line: "return", note: `Return [${res.join(", ")}]. ${scans} back-to-front scans of up to n letters each: O(n²) at worst.`, view: view(cuts(s.length, res)) });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0763-partition-labels/approach2.visual.js -->
+    <script>
+      // Each letter covers [first, last]. Merge overlapping spans, like Merge Intervals; each merged span is a part.
+      (function () {
+      const cuts = (n, parts) => { const m = {}; let a = 0; parts.forEach((len, k) => { for (let i = a; i < a + len; i++) m[i] = k % 2 ? "compare" : "match"; a += len; }); return m; };
+      DSAViz.register("0763-partition-labels/approach2", {
+        inputs: [{ name: "s", type: "string", value: "ababcbacadefegde", maxLength: 16 }],
+        trace({ s }) {
+          if (!/^[a-z]+$/.test(s)) throw new DSAViz.InputError("s must be 1 to 16 lowercase letters.");
+          const span = new Map();
+          [...s].forEach((ch, i) => (span.has(ch) ? (span.get(ch)[1] = i) : span.set(ch, [i, i])));
+          const sp = [...span].sort((a, b) => a[1][0] - b[1][0]);
+          const steps = [];
+          const res = [];
+          const show = sp.map(([ch, [a, b]]) => `${ch}: ${a}–${b}`);
+          steps.push({ line: "spans", note: `Each letter must stay inside one part, so it covers its first to last index. ${sp.length} spans, sorted by start.`, view: [{ type: "array", label: "s", values: [...s] }, { type: "array", label: "spans (letter: first–last)", values: show, wide: true }] });
+          let cur = null, members = [];
+          sp.forEach(([ch, [a, b]], k) => {
+            if (cur && a <= cur[1]) {
+              cur[1] = Math.max(cur[1], b); members.push(k);
+              steps.push({ line: "merge", note: `'${ch}' starts at ${a}, inside the current part (ends ${cur[1] === b ? "now at " : "at "}${cur[1]}): merge.`, view: [{ type: "array", label: "s", values: [...s], marks: { ...cuts(s.length, res), ...Object.fromEntries(Array.from({ length: cur[1] - cur[0] + 1 }, (_, j) => [cur[0] + j, "window"])) } }, { type: "array", label: "spans (yellow = in the current part)", values: show, wide: true, marks: Object.fromEntries(members.map((j) => [j, "compare"])) }, { type: "array", label: "res", values: res.slice() }] });
+            } else {
+              if (cur) res.push(cur[1] - cur[0] + 1);
+              cur = [a, b]; members = [k];
+              steps.push({ line: ["merge", "cut"], note: `${res.length ? `'${ch}' starts at ${a}, after the last part ended: that part is done. ` : ""}Start a new part with '${ch}' (${a}–${b}).`, view: [{ type: "array", label: "s", values: [...s], marks: { ...cuts(s.length, res), ...Object.fromEntries(Array.from({ length: b - a + 1 }, (_, j) => [a + j, "window"])) } }, { type: "array", label: "spans (yellow = in the current part)", values: show, wide: true, marks: { [k]: "compare" } }, { type: "array", label: "res", values: res.slice(), marks: res.length ? { [res.length - 1]: "new" } : {} }] });
+            }
+          });
+          res.push(cur[1] - cur[0] + 1);
+          steps.push({ line: "return", note: `Return [${res.join(", ")}]. One pass for the spans, then at most 26 to sort and merge: O(n).`, view: [{ type: "array", label: "s", values: [...s], marks: cuts(s.length, res) }, { type: "array", label: "res", values: res }] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0763-partition-labels/approach3.visual.js -->
+    <script>
+      // One pass: end = the furthest last index of any letter seen in this part. When i reaches end, cut.
+      (function () {
+      const cuts = (n, parts) => { const m = {}; let a = 0; parts.forEach((len, k) => { for (let i = a; i < a + len; i++) m[i] = k % 2 ? "compare" : "match"; a += len; }); return m; };
+      DSAViz.register("0763-partition-labels/approach3", {
+        inputs: [{ name: "s", type: "string", value: "ababcbacadefegde", maxLength: 16 }],
+        trace({ s }) {
+          if (!/^[a-z]+$/.test(s)) throw new DSAViz.InputError("s must be 1 to 16 lowercase letters.");
+          const last = {};
+          [...s].forEach((ch, i) => (last[ch] = i));
+          const letters = Object.keys(last).sort((a, b) => last[a] - last[b]);
+          const res = [];
+          const steps = [];
+          let start = 0, end = 0;
+          const view = (i, o = {}) => [{ type: "array", label: "s (green / yellow = finished parts, outlined = this part up to end)", values: [...s], marks: { ...cuts(s.length, res), ...(i !== undefined && !o.cut ? Object.fromEntries(Array.from({ length: end - start + 1 }, (_, k) => [start + k, "window"])) : {}), ...(i !== undefined && !o.cut ? { [i]: "active" } : {}) }, pointers: i !== undefined ? (i === end ? { "i = end": i } : { i, end }) : {} }, { type: "map", label: "last[letter]", columns: ["letter", "last index"], entries: letters.map((ch) => [ch, String(last[ch])]), marks: i !== undefined ? { [s[i]]: o.grew ? "new" : "match" } : {} }, { type: "array", label: "res", values: res.slice(), marks: o.cut ? { [res.length - 1]: "new" } : {} }];
+          steps.push({ line: "last", note: "First pass: record each letter's last index.", view: view() });
+          for (let i = 0; i < s.length; i++) {
+            const before = end;
+            end = Math.max(end, last[s[i]]);
+            const grew = end > before || i === start;
+            if (i === end) {
+              res.push(end - start + 1);
+              steps.push({ line: ["scan", "cut"], note: `'${s[i]}' at ${i}: end = ${end}. i has reached end, so nothing in this part appears later: cut. Size ${end - start + 1}.`, view: view(i, { cut: true, grew }) });
+              start = i + 1;
+            } else steps.push({ line: "scan", note: `'${s[i]}' at ${i} last appears at ${last[s[i]]}. end = ${end}.`, view: view(i, { grew }) });
+          }
+          steps.push({ line: "return", note: `Return [${res.join(", ")}]. Two passes over s: O(n) time, O(1) space (26 letters).`, view: view() });
+          return steps;
+        },
+      });
+      })();
     </script>
     <!-- problems/0994-rotting-oranges/approach1.visual.js -->
     <script>
