@@ -1,0 +1,233 @@
+<details class="question" data-group="graphs" data-tags="graph minimum spanning tree mst prim kruskal union-find heap manhattan distance dense">
+  <summary>
+    <span class="q-title">1584. Min Cost to Connect All Points</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Graph</span>
+      <span class="tag">Union Find</span>
+      <span class="tag">Minimum Spanning Tree</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> This is a minimum spanning tree on a
+      <strong>complete</strong> graph: every pair of points is an edge,
+      weighted by Manhattan distance. With n² edges, Prim's algorithm with a
+      plain <code>dist</code> array (no heap, no edge list) is the best fit:
+      n rounds, each picks the closest point outside the tree and updates
+      the others. O(n²) time, O(n) memory.
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/min-cost-to-connect-all-points/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Connecting two points costs their Manhattan distance,
+        <code>|x1 − x2| + |y1 − y2|</code>. Return the minimum total cost so
+        that every point is connected to every other, directly or through
+        other points.
+      </p>
+      <ul>
+        <li><code>1 &lt;= points.length &lt;= 1000</code>, all different</li>
+        <li><code>-10⁶ &lt;= x, y &lt;= 10⁶</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[[0,0],[2,2],[3,10],[5,2],[7,0]]</code> →
+        <code>20</code>. <code>[[3,12],[-2,5],[-4,1]]</code> →
+        <code>18</code>.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>The example above</td>
+              <td><code>20</code></td>
+              <td>Kruskal without the "same group?" check took edges that close cycles: said <code>18</code>. A heap version that doesn't skip points already in the tree also said <code>18</code>.</td>
+            </tr>
+            <tr>
+              <td>The example above</td>
+              <td><code>20</code></td>
+              <td>Straight-line distance instead of Manhattan said <code>16.72</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[[0,0]]</code></td>
+              <td><code>0</code></td>
+              <td>One point: nothing to connect.</td>
+            </tr>
+            <tr>
+              <td><code>[[-10⁶,-10⁶],[10⁶,10⁶]]</code></td>
+              <td><code>4000000</code></td>
+              <td>The longest possible edge.</td>
+            </tr>
+            <tr>
+              <td>1000 points</td>
+              <td>-</td>
+              <td>499,500 edges. Building and sorting all of them is the slow part of Kruskal: 455 ms in Python here.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Kruskal (Sort Every Edge)</h2>
+      <p class="intuition">
+        Build all n(n − 1) / 2 edges and sort them by distance. Go from the
+        cheapest: if the two points are in different groups (union-find),
+        take the edge and join the groups; if they're already in the same
+        group, skip it. Stop after n − 1 edges.
+      </p>
+      <ul>
+        <li>The cheapest edge between two separate groups is always safe to take.</li>
+        <li>Stores every edge: O(n²) memory.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n² log n)</span>
+        <span><strong>Space</strong> O(n²)</span>
+      </div>
+      <p class="note">
+        At 1000 points: Python 0.2–0.46 s, Java 24–58 ms, C++ 25–38 ms. Fine
+        here; Kruskal shines when there are few edges.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Prim With a Heap</h2>
+      <p class="intuition">
+        Grow one tree from point 0. A heap holds
+        <code>(cost, point)</code> offers. Pop the cheapest: if that point is
+        already in the tree, skip it; otherwise add it and push an offer
+        from it to every point still outside.
+      </p>
+      <ul>
+        <li>The heap may hold several offers for the same point; only the first one popped counts.</li>
+        <li>
+          On a complete graph almost every pair gets pushed: the heap peaked
+          at 496,185 entries for 1000 points.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n² log n)</span>
+        <span><strong>Space</strong> O(n²)</span>
+      </div>
+      <p class="note">
+        At 1000 points: Python 160–190 ms, Java 22–33 ms, C++ 2.6–9 ms. The
+        usual Prim; better suited to graphs with fewer edges.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Prim With an Array
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Keep <code>dist[v]</code>, the cheapest edge from the tree to each
+        outside point. Each round, scan for the outside point with the
+        smallest <code>dist</code>, add it, then lower <code>dist</code> for
+        every point that's closer to it.
+      </p>
+      <ul>
+        <li>
+          A scan of n points replaces the heap: O(n) per round, n rounds, and
+          no <code>log</code>.
+        </li>
+        <li>Distances are computed on the fly, so nothing of size n² is stored.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        At 1000 points: Python 100–106 ms, Java 9 ms, C++ 1.1–1.7 ms, the
+        fastest here in every language. The best answer for a dense graph.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        The standard libraries have no minimum spanning tree. Outside
+        LeetCode, <code>scipy.sparse.csgraph.minimum_spanning_tree</code> or
+        <code>networkx.minimum_spanning_tree</code> would do it, but each
+        still needs all n² distances first.
+      </p>
+      <p class="note">
+        Approach 3 is what you'd write: about 15 lines, no extra data
+        structures.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Kruskal (Sort Every Edge)</th>
+              <td>Sort edges, union-find</td>
+              <td>O(n² log n)</td>
+              <td>O(n²)</td>
+              <td>Best for sparse graphs</td>
+            </tr>
+            <tr>
+              <th scope="row">Prim With a Heap</th>
+              <td>Pop the cheapest offer; skip old ones</td>
+              <td>O(n² log n)</td>
+              <td>O(n²)</td>
+              <td>Heap reached 496,185 entries</td>
+            </tr>
+            <tr>
+              <th scope="row">Prim With an Array</th>
+              <td>Scan dist for the closest point</td>
+              <td>O(n²)</td>
+              <td>O(n)</td>
+              <td>Expected answer for dense graphs</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

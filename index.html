@@ -19717,7 +19717,7 @@
       <details class="pattern-group" id="g-graphs">
         <summary>
           <span class="g-name">Graphs</span>
-          <span class="g-count"><span class="g-total">4 problems</span></span>
+          <span class="g-count"><span class="g-total">5 problems</span></span>
           <span class="g-hint">BFS, level by level</span>
         </summary>
         <div class="g-body">
@@ -21931,6 +21931,518 @@
                         <td>O(m · n)</td>
                         <td>O(m · n)</td>
                         <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/1584-min-cost-to-connect-all-points ===== -->
+          <details class="question" data-group="graphs" data-tags="graph minimum spanning tree mst prim kruskal union-find heap manhattan distance dense">
+            <summary>
+              <span class="q-title">1584. Min Cost to Connect All Points</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Graph</span>
+                <span class="tag">Union Find</span>
+                <span class="tag">Minimum Spanning Tree</span>
+              </span>
+            </summary>
+
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> This is a minimum spanning tree on a
+                <strong>complete</strong> graph: every pair of points is an edge,
+                weighted by Manhattan distance. With n² edges, Prim's algorithm with a
+                plain <code>dist</code> array (no heap, no edge list) is the best fit:
+                n rounds, each picks the closest point outside the tree and updates
+                the others. O(n²) time, O(n) memory.
+              </div>
+
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/min-cost-to-connect-all-points/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Connecting two points costs their Manhattan distance,
+                  <code>|x1 − x2| + |y1 − y2|</code>. Return the minimum total cost so
+                  that every point is connected to every other, directly or through
+                  other points.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= points.length &lt;= 1000</code>, all different</li>
+                  <li><code>-10⁶ &lt;= x, y &lt;= 10⁶</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>[[0,0],[2,2],[3,10],[5,2],[7,0]]</code> →
+                  <code>20</code>. <code>[[3,12],[-2,5],[-4,1]]</code> →
+                  <code>18</code>.
+                </p>
+              </section>
+
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>The example above</td>
+                        <td><code>20</code></td>
+                        <td>Kruskal without the "same group?" check took edges that close cycles: said <code>18</code>. A heap version that doesn't skip points already in the tree also said <code>18</code>.</td>
+                      </tr>
+                      <tr>
+                        <td>The example above</td>
+                        <td><code>20</code></td>
+                        <td>Straight-line distance instead of Manhattan said <code>16.72</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[0,0]]</code></td>
+                        <td><code>0</code></td>
+                        <td>One point: nothing to connect.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[-10⁶,-10⁶],[10⁶,10⁶]]</code></td>
+                        <td><code>4000000</code></td>
+                        <td>The longest possible edge.</td>
+                      </tr>
+                      <tr>
+                        <td>1000 points</td>
+                        <td>-</td>
+                        <td>499,500 edges. Building and sorting all of them is the slow part of Kruskal: 455 ms in Python here.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Kruskal (Sort Every Edge)</h2>
+                <p class="intuition">
+                  Build all n(n − 1) / 2 edges and sort them by distance. Go from the
+                  cheapest: if the two points are in different groups (union-find),
+                  take the edge and join the groups; if they're already in the same
+                  group, skip it. Stop after n − 1 edges.
+                </p>
+                <ul>
+                  <li>The cheapest edge between two separate groups is always safe to take.</li>
+                  <li>Stores every edge: O(n²) memory.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n² log n)</span>
+                  <span><strong>Space</strong> O(n²)</span>
+                </div>
+                <p class="note">
+                  At 1000 points: Python 0.2–0.46 s, Java 24–58 ms, C++ 25–38 ms. Fine
+                  here; Kruskal shines when there are few edges.
+                </p>
+                <div class="code-tabs" data-viz="1584-min-cost-to-connect-all-points/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"edges":[4,5,6,7,8],"sort":[9,10,18],"try":[19,20],"skip":[21,22],"take":[23,24,25],"done":[26,27],"return":[28]}'>
+                    class Solution(object):
+                        def minCostConnectPoints(self, points):
+                            n = len(points)
+                            edges = []  # every pair of points is an edge
+                            for i in range(n):
+                                for j in range(i + 1, n):
+                                    d = abs(points[i][0] - points[j][0]) + abs(points[i][1] - points[j][1])
+                                    edges.append((d, i, j))
+                            edges.sort()  # cheapest first
+                            parent = list(range(n))  # union-find: which group each point is in
+
+                            def find(x):
+                                while parent[x] != x:
+                                    parent[x] = parent[parent[x]]  # path halving
+                                    x = parent[x]
+                                return x
+
+                            total = used = 0
+                            for d, i, j in edges:
+                                ri, rj = find(i), find(j)
+                                if ri == rj:  # already connected: this edge would make a cycle
+                                    continue
+                                parent[ri] = rj  # join the two groups
+                                total += d
+                                used += 1
+                                if used == n - 1:  # a tree on n points has n - 1 edges
+                                    break
+                            return total
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[9],"edges":[10,11,12,13,14,15],"sort":[18,19,20,21],"try":[22,23],"skip":[24],"take":[25,26,27],"done":[27],"return":[29]}'>
+                    #include <algorithm>
+                    #include <cstdlib>
+                    #include <numeric>
+                    #include <tuple>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int minCostConnectPoints(std::vector<std::vector<int>>& points) {
+                            const int n = points.size();
+                            std::vector<std::tuple<int, int, int>> edges; // every pair of points is an edge
+                            edges.reserve(static_cast<size_t>(n) * (n - 1) / 2);
+                            for (int i = 0; i < n; ++i) {
+                                for (int j = i + 1; j < n; ++j) {
+                                    int d = std::abs(points[i][0] - points[j][0]) + std::abs(points[i][1] - points[j][1]);
+                                    edges.emplace_back(d, i, j);
+                                }
+                            }
+                            std::sort(edges.begin(), edges.end()); // cheapest first
+                            parent.resize(n);
+                            std::iota(parent.begin(), parent.end(), 0); // union-find: which group each point is in
+                            int total = 0, used = 0; // the answer fits in int (given)
+                            for (auto [d, i, j] : edges) {
+                                int ri = find(i), rj = find(j);
+                                if (ri == rj) continue; // already connected: this edge would make a cycle
+                                parent[ri] = rj; // join the two groups
+                                total += d;
+                                if (++used == n - 1) break; // a tree on n points has n - 1 edges
+                            }
+                            return total;
+                        }
+
+                    private:
+                        std::vector<int> parent;
+                        int find(int x) {
+                            while (parent[x] != x) {
+                                parent[x] = parent[parent[x]]; // path halving
+                                x = parent[x];
+                            }
+                            return x;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[15],"edges":[16,17,18,19,20,21,22],"sort":[25,26,27,28],"try":[29,30,31],"skip":[32],"take":[33,34,35],"done":[35],"return":[37]}'>
+                    import java.util.*;
+
+                    class Solution {
+                        private int[] parent;
+
+                        private int find(int x) {
+                            while (parent[x] != x) {
+                                parent[x] = parent[parent[x]]; // path halving
+                                x = parent[x];
+                            }
+                            return x;
+                        }
+
+                        public int minCostConnectPoints(int[][] points) {
+                            int n = points.length;
+                            int m = n * (n - 1) / 2; // every pair of points is an edge
+                            long[] edges = new long[m]; // packed: distance * 2^20 + i * 2^10 + j, so a plain sort orders by distance
+                            int k = 0;
+                            for (int i = 0; i < n; i++) {
+                                for (int j = i + 1; j < n; j++) {
+                                    long d = Math.abs(points[i][0] - points[j][0]) + Math.abs(points[i][1] - points[j][1]);
+                                    edges[k++] = (d << 20) | ((long) i << 10) | j;
+                                }
+                            }
+                            Arrays.sort(edges); // cheapest first
+                            parent = new int[n];
+                            for (int i = 0; i < n; i++) parent[i] = i; // union-find: which group each point is in
+                            int total = 0, used = 0;
+                            for (long e : edges) {
+                                int i = (int) ((e >> 10) & 1023), j = (int) (e & 1023);
+                                int ri = find(i), rj = find(j);
+                                if (ri == rj) continue; // already connected: this edge would make a cycle
+                                parent[ri] = rj; // join the two groups
+                                total += (int) (e >> 20);
+                                if (++used == n - 1) break; // a tree on n points has n - 1 edges
+                            }
+                            return total;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Prim With a Heap</h2>
+                <p class="intuition">
+                  Grow one tree from point 0. A heap holds
+                  <code>(cost, point)</code> offers. Pop the cheapest: if that point is
+                  already in the tree, skip it; otherwise add it and push an offer
+                  from it to every point still outside.
+                </p>
+                <ul>
+                  <li>The heap may hold several offers for the same point; only the first one popped counts.</li>
+                  <li>
+                    On a complete graph almost every pair gets pushed: the heap peaked
+                    at 496,185 entries for 1000 points.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n² log n)</span>
+                  <span><strong>Space</strong> O(n²)</span>
+                </div>
+                <p class="note">
+                  At 1000 points: Python 160–190 ms, Java 22–33 ms, C++ 2.6–9 ms. The
+                  usual Prim; better suited to graphs with fewer edges.
+                </p>
+                <div class="code-tabs" data-viz="1584-min-cost-to-connect-all-points/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5,6,7],"pop":[8,9],"stale":[10,11],"add":[12,13,14],"push":[15,16,17],"return":[18]}'>
+                    import heapq
+                    class Solution(object):
+                        def minCostConnectPoints(self, points):
+                            n = len(points)
+                            in_tree = [False] * n
+                            heap = [(0, 0)]  # (cost to attach, point); start from point 0
+                            total = added = 0
+                            while added < n:
+                                d, u = heapq.heappop(heap)  # the cheapest way to attach a new point
+                                if in_tree[u]:  # an old, more expensive entry for a point already attached
+                                    continue
+                                in_tree[u] = True
+                                total += d
+                                added += 1
+                                for v in range(n):  # offer every point outside the tree an edge from u
+                                    if not in_tree[v]:
+                                        heapq.heappush(heap, (abs(points[u][0] - points[v][0]) + abs(points[u][1] - points[v][1]), v))
+                            return total
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[9,10,12,13,14],"pop":[15,16,17],"stale":[18],"add":[19,20,21],"push":[22,23,24],"return":[28]}'>
+                    #include <cstdlib>
+                    #include <functional>
+                    #include <queue>
+                    #include <utility>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int minCostConnectPoints(std::vector<std::vector<int>>& points) {
+                            const int n = points.size();
+                            std::vector<char> inTree(n, 0);
+                            // (cost to attach, point), cheapest on top; start from point 0
+                            std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<>> heap;
+                            heap.push({0, 0});
+                            int total = 0, added = 0;
+                            while (added < n) {
+                                auto [d, u] = heap.top(); // the cheapest way to attach a new point
+                                heap.pop();
+                                if (inTree[u]) continue; // an old, more expensive entry for a point already attached
+                                inTree[u] = 1;
+                                total += d;
+                                ++added;
+                                for (int v = 0; v < n; ++v) { // offer every point outside the tree an edge from u
+                                    if (!inTree[v]) {
+                                        heap.push({std::abs(points[u][0] - points[v][0]) + std::abs(points[u][1] - points[v][1]), v});
+                                    }
+                                }
+                            }
+                            return total;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6,7,8,9],"pop":[10,11,12],"stale":[13],"add":[14,15,16],"push":[17,18,19],"return":[23]}'>
+                    import java.util.*;
+
+                    class Solution {
+                        public int minCostConnectPoints(int[][] points) {
+                            int n = points.length;
+                            boolean[] inTree = new boolean[n];
+                            PriorityQueue<int[]> heap = new PriorityQueue<>((a, b) -> Integer.compare(a[0], b[0])); // {cost to attach, point}
+                            heap.add(new int[] {0, 0}); // start from point 0
+                            int total = 0, added = 0;
+                            while (added < n) {
+                                int[] top = heap.poll(); // the cheapest way to attach a new point
+                                int u = top[1];
+                                if (inTree[u]) continue; // an old, more expensive entry for a point already attached
+                                inTree[u] = true;
+                                total += top[0];
+                                added++;
+                                for (int v = 0; v < n; v++) { // offer every point outside the tree an edge from u
+                                    if (!inTree[v]) {
+                                        heap.add(new int[] {Math.abs(points[u][0] - points[v][0]) + Math.abs(points[u][1] - points[v][1]), v});
+                                    }
+                                }
+                            }
+                            return total;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Prim With an Array
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Keep <code>dist[v]</code>, the cheapest edge from the tree to each
+                  outside point. Each round, scan for the outside point with the
+                  smallest <code>dist</code>, add it, then lower <code>dist</code> for
+                  every point that's closer to it.
+                </p>
+                <ul>
+                  <li>
+                    A scan of n points replaces the heap: O(n) per round, n rounds, and
+                    no <code>log</code>.
+                  </li>
+                  <li>Distances are computed on the fly, so nothing of size n² is stored.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n²)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  At 1000 points: Python 100–106 ms, Java 9 ms, C++ 1.1–1.7 ms, the
+                  fastest here in every language. The best answer for a dense graph.
+                </p>
+                <div class="code-tabs" data-viz="1584-min-cost-to-connect-all-points/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5,6,7,8],"pick":[9,10,11,12,13],"add":[14,15],"relax":[16,17,18,19,20,21],"return":[22]}'>
+                    class Solution(object):
+                        def minCostConnectPoints(self, points):
+                            n = len(points)
+                            INF = float("inf")
+                            dist = [INF] * n  # dist[v]: the cheapest edge from the tree to v so far
+                            dist[0] = 0  # start from point 0
+                            in_tree = [False] * n
+                            total = 0
+                            for _ in range(n):  # add one point per round
+                                u = -1
+                                for v in range(n):  # the closest point not in the tree: a scan, no heap
+                                    if not in_tree[v] and (u == -1 or dist[v] < dist[u]):
+                                        u = v
+                                in_tree[u] = True
+                                total += dist[u]
+                                ux, uy = points[u]
+                                for v in range(n):  # u may now be a cheaper way to reach other points
+                                    if not in_tree[v]:
+                                        d = abs(ux - points[v][0]) + abs(uy - points[v][1])
+                                        if d < dist[v]:
+                                            dist[v] = d
+                            return total
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8,9,10,11],"pick":[12,13,14,15],"add":[17,18],"relax":[19,20,21,22],"return":[25]}'>
+                    #include <climits>
+                    #include <cstdlib>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int minCostConnectPoints(std::vector<std::vector<int>>& points) {
+                            const int n = points.size();
+                            std::vector<int> dist(n, INT_MAX); // dist[v]: the cheapest edge from the tree to v so far
+                            dist[0] = 0; // start from point 0
+                            std::vector<char> inTree(n, 0);
+                            int total = 0;
+                            for (int round = 0; round < n; ++round) { // add one point per round
+                                int u = -1;
+                                for (int v = 0; v < n; ++v) { // the closest point not in the tree: a scan, no heap
+                                    if (!inTree[v] && (u == -1 || dist[v] < dist[u])) u = v;
+                                }
+                                inTree[u] = 1;
+                                total += dist[u];
+                                for (int v = 0; v < n; ++v) { // u may now be a cheaper way to reach other points
+                                    if (inTree[v]) continue;
+                                    int d = std::abs(points[u][0] - points[v][0]) + std::abs(points[u][1] - points[v][1]);
+                                    if (d < dist[v]) dist[v] = d;
+                                }
+                            }
+                            return total;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6,7,8,9,10],"pick":[11,12,13,14],"add":[16,17],"relax":[18,19,20,21],"return":[24]}'>
+                    import java.util.*;
+
+                    class Solution {
+                        public int minCostConnectPoints(int[][] points) {
+                            int n = points.length;
+                            int[] dist = new int[n]; // dist[v]: the cheapest edge from the tree to v so far
+                            Arrays.fill(dist, Integer.MAX_VALUE);
+                            dist[0] = 0; // start from point 0
+                            boolean[] inTree = new boolean[n];
+                            int total = 0;
+                            for (int round = 0; round < n; round++) { // add one point per round
+                                int u = -1;
+                                for (int v = 0; v < n; v++) { // the closest point not in the tree: a scan, no heap
+                                    if (!inTree[v] && (u == -1 || dist[v] < dist[u])) u = v;
+                                }
+                                inTree[u] = true;
+                                total += dist[u];
+                                for (int v = 0; v < n; v++) { // u may now be a cheaper way to reach other points
+                                    if (inTree[v]) continue;
+                                    int d = Math.abs(points[u][0] - points[v][0]) + Math.abs(points[u][1] - points[v][1]);
+                                    if (d < dist[v]) dist[v] = d;
+                                }
+                            }
+                            return total;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  The standard libraries have no minimum spanning tree. Outside
+                  LeetCode, <code>scipy.sparse.csgraph.minimum_spanning_tree</code> or
+                  <code>networkx.minimum_spanning_tree</code> would do it, but each
+                  still needs all n² distances first.
+                </p>
+                <p class="note">
+                  Approach 3 is what you'd write: about 15 lines, no extra data
+                  structures.
+                </p>
+              </section>
+
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Kruskal (Sort Every Edge)</th>
+                        <td>Sort edges, union-find</td>
+                        <td>O(n² log n)</td>
+                        <td>O(n²)</td>
+                        <td>Best for sparse graphs</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Prim With a Heap</th>
+                        <td>Pop the cheapest offer; skip old ones</td>
+                        <td>O(n² log n)</td>
+                        <td>O(n²)</td>
+                        <td>Heap reached 496,185 entries</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Prim With an Array</th>
+                        <td>Scan dist for the closest point</td>
+                        <td>O(n²)</td>
+                        <td>O(n)</td>
+                        <td>Expected answer for dense graphs</td>
                       </tr>
                     </tbody>
                   </table>
@@ -56588,6 +57100,224 @@
           return steps;
         },
       });
+    </script>
+    <!-- problems/1584-min-cost-to-connect-all-points/approach1.visual.js -->
+    <script>
+      // Kruskal: sort all the edges, take the cheapest one that joins two separate groups, until n - 1 are taken.
+      (function () {
+      DSAViz.register("1584-min-cost-to-connect-all-points/approach1", {
+        inputs: [{ name: "points", type: "int[][]", value: "[[0, 0], [2, 2], [3, 6], [5, 2], [6, 0]]", maxRows: 6, maxCols: 2, minValue: 0, maxValue: 6 }],
+        trace({ points }) {
+          checkPoints(points);
+          const n = points.length;
+          const steps = [];
+          const edges = [];
+          for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) edges.push([dist(points[i], points[j]), i, j]);
+          edges.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]);
+          const parent = [...Array(n).keys()];
+          const find = (x) => { while (parent[x] !== x) x = parent[x]; return x; };
+          const status = {};
+          const tree = [];
+          let total = 0;
+          const view = (o = {}) => {
+            const pm = {};
+            if (o.e) { pm[o.e[1]] = o.ok ? "new" : "compare"; pm[o.e[2]] = o.ok ? "new" : "compare"; }
+            return [
+              board(points, pm, "points (yellow = the two ends of the edge being tried)"),
+              { type: "array", label: "edges, cheapest first (distance: point–point; green = taken, red = would make a cycle)", values: edges.map(([d, i, j]) => `${d}: P${i}–P${j}`), wide: true, marks: { ...status, ...(o.k !== undefined ? { [o.k]: o.ok ? "match" : "cut" } : {}) } },
+              { type: "array", label: "group of each point (same number = already connected)", values: [...Array(n).keys()].map((k) => `P${k}: ${find(k)}`), compact: true },
+              { type: "vars", items: [{ name: "total", value: total, mark: o.ok ? "new" : "" }, { name: "edges taken", value: `${tree.length} of ${n - 1}` }] },
+            ];
+          };
+          if (n === 1) { steps.push({ line: ["init", "return"], note: "One point: nothing to connect. Return 0.", view: view() }); return steps; }
+          steps.push({ line: ["init", "edges", "sort"], note: `Every pair of points is an edge: ${edges.length} edges. Sort them by Manhattan distance |x1 − x2| + |y1 − y2|.`, view: view() });
+          for (let k = 0; k < edges.length; k++) {
+            const [d, i, j] = edges[k];
+            const ri = find(i);
+            const rj = find(j);
+            if (ri === rj) {
+              status[k] = "ghost";
+              steps.push({ line: ["try", "skip"], note: `P${i}–P${j} (${d}): both already in the same group. Taking it would close a cycle: skip.`, view: view({ e: edges[k], k }) });
+              continue;
+            }
+            parent[ri] = rj;
+            total += d;
+            tree.push(k);
+            status[k] = "match";
+            const done = tree.length === n - 1;
+            steps.push({ line: done ? ["try", "take", "done"] : ["try", "take"], note: `P${i}–P${j} (${d}) joins two groups: take it. total = ${total}.${done ? ` That's ${n - 1} edges: every point is connected.` : ""}`, view: view({ e: edges[k], k, ok: true }) });
+            if (done) break;
+          }
+          steps.push({ line: "return", note: `Return ${total}. Sorting all n(n − 1) / 2 edges costs O(n² log n) time and O(n²) memory.`, view: view() });
+          return steps;
+        },
+      });
+
+      const dist = (p, q) => Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]);
+      function checkPoints(points) {
+        if (points.some((p) => p.length !== 2)) throw new DSAViz.InputError("Each point is [x, y], like [[0, 0], [2, 2]].");
+        if (new Set(points.map((p) => p.join(","))).size !== points.length) throw new DSAViz.InputError("All points must be different.");
+      }
+      // The points drawn on a small board: each cell shows the point's index.
+      function board(points, marks, label) {
+        const W = Math.max(...points.map((p) => p[0]));
+        const H = Math.max(...points.map((p) => p[1]));
+        const at = {};
+        points.forEach((p, k) => (at[p.join(",")] = k));
+        const ys = [];
+        for (let y = H; y >= 0; y--) ys.push(y);
+        const xs = [...Array(W + 1).keys()];
+        const m = {};
+        ys.forEach((y, r) => xs.forEach((x) => { const k = at[`${x},${y}`]; if (k === undefined) m[`${r},${x}`] = "ghost"; else if (marks[k]) m[`${r},${x}`] = marks[k]; }));
+        return { type: "grid", label, rows: ys, cols: xs, corner: "y \\ x", cells: ys.map((y) => xs.map((x) => (at[`${x},${y}`] === undefined ? "" : `P${at[`${x},${y}`]}`))), marks: m };
+      }
+      })();
+    </script>
+    <!-- problems/1584-min-cost-to-connect-all-points/approach2.visual.js -->
+    <script>
+      // Prim with a heap: grow one tree from point 0, always attaching the cheapest new point; skip old heap entries.
+      (function () {
+      DSAViz.register("1584-min-cost-to-connect-all-points/approach2", {
+        inputs: [{ name: "points", type: "int[][]", value: "[[0, 0], [2, 2], [3, 6], [5, 2], [6, 0]]", maxRows: 6, maxCols: 2, minValue: 0, maxValue: 6 }],
+        trace({ points }) {
+          checkPoints(points);
+          const n = points.length;
+          const steps = [];
+          const inTree = Array(n).fill(false);
+          let heap = [[0, 0, -1]];
+          let total = 0;
+          let added = 0;
+          const tree = [];
+          const view = (o = {}) => {
+            const pm = {};
+            inTree.forEach((t, k) => t && (pm[k] = "match"));
+            if (o.u !== undefined) pm[o.u] = o.stale ? "cut" : "new";
+            return [
+              board(points, pm, "points (green = in the tree, yellow = just added, red = popped again, skipped)"),
+              { type: "array", label: "heap (cost: point, via), cheapest first", values: heap.map(([d, v, f]) => `${d}: P${v}${f >= 0 ? ` via P${f}` : ""}`), wide: true, marks: Object.fromEntries(heap.map((h, k) => [k, inTree[h[1]] ? "ghost" : ""])) },
+              { type: "array", label: "tree edges so far", values: tree, wide: true },
+              { type: "vars", items: [{ name: "total", value: total }, { name: "heap size", value: heap.length }] },
+            ];
+          };
+          steps.push({ line: "init", note: "Start the tree at P0: put (0, P0) on the heap.", view: view() });
+          while (added < n) {
+            const [d, u, from] = heap.shift();
+            if (inTree[u]) {
+              steps.push({ line: ["pop", "stale"], note: `Pop (${d}, P${u}): P${u} is already in the tree, by a cheaper edge. Skip this old entry.`, view: view({ u, stale: true }) });
+              continue;
+            }
+            inTree[u] = true;
+            total += d;
+            added++;
+            if (from >= 0) tree.push(`P${from}–P${u} (${d})`);
+            const offered = [];
+            for (let v = 0; v < n; v++) if (!inTree[v]) { heap.push([dist(points[u], points[v]), v, u]); offered.push(`P${v}`); }
+            heap.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+            steps.push({
+              line: ["pop", "stale", "add", "push"],
+              note: `Pop (${d}, P${u}): the cheapest way to grow the tree. Add P${u}${from >= 0 ? ` via P${from}` : ""}; total = ${total}.${offered.length ? ` Push an edge from P${u} to each point outside: ${offered.join(", ")}.` : ""}`,
+              view: view({ u }),
+            });
+          }
+          steps.push({ line: "return", note: `Return ${total}. Every pair can end up in the heap, so it's O(n² log n) time and up to O(n²) memory.`, view: view() });
+          return steps;
+        },
+      });
+
+      const dist = (p, q) => Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]);
+      function checkPoints(points) {
+        if (points.some((p) => p.length !== 2)) throw new DSAViz.InputError("Each point is [x, y], like [[0, 0], [2, 2]].");
+        if (new Set(points.map((p) => p.join(","))).size !== points.length) throw new DSAViz.InputError("All points must be different.");
+      }
+      // The points drawn on a small board: each cell shows the point's index.
+      function board(points, marks, label) {
+        const W = Math.max(...points.map((p) => p[0]));
+        const H = Math.max(...points.map((p) => p[1]));
+        const at = {};
+        points.forEach((p, k) => (at[p.join(",")] = k));
+        const ys = [];
+        for (let y = H; y >= 0; y--) ys.push(y);
+        const xs = [...Array(W + 1).keys()];
+        const m = {};
+        ys.forEach((y, r) => xs.forEach((x) => { const k = at[`${x},${y}`]; if (k === undefined) m[`${r},${x}`] = "ghost"; else if (marks[k]) m[`${r},${x}`] = marks[k]; }));
+        return { type: "grid", label, rows: ys, cols: xs, corner: "y \\ x", cells: ys.map((y) => xs.map((x) => (at[`${x},${y}`] === undefined ? "" : `P${at[`${x},${y}`]}`))), marks: m };
+      }
+      })();
+    </script>
+    <!-- problems/1584-min-cost-to-connect-all-points/approach3.visual.js -->
+    <script>
+      // Prim with an array: dist[v] is the cheapest edge from the tree to v. Each round, add the closest point, then update dist.
+      (function () {
+      DSAViz.register("1584-min-cost-to-connect-all-points/approach3", {
+        inputs: [{ name: "points", type: "int[][]", value: "[[0, 0], [2, 2], [3, 6], [5, 2], [6, 0]]", maxRows: 6, maxCols: 2, minValue: 0, maxValue: 6 }],
+        trace({ points }) {
+          checkPoints(points);
+          const n = points.length;
+          const steps = [];
+          const D = Array(n).fill(Infinity);
+          const via = Array(n).fill(-1);
+          D[0] = 0;
+          const inTree = Array(n).fill(false);
+          let total = 0;
+          const tree = [];
+          const view = (o = {}) => {
+            const pm = {};
+            inTree.forEach((t, k) => t && (pm[k] = "match"));
+            if (o.u !== undefined) pm[o.u] = "new";
+            const dm = {};
+            inTree.forEach((t, k) => t && (dm[k] = "ghost"));
+            (o.changed || []).forEach((k) => (dm[k] = "new"));
+            if (o.u !== undefined) dm[o.u] = "active";
+            return [
+              board(points, pm, "points (green = in the tree, yellow = just added)"),
+              { type: "array", label: "dist: cheapest edge from the tree to each point (∞ = none yet; dashed = in the tree; yellow = just lowered)", values: D.map((d, k) => `P${k}: ${d === Infinity ? "∞" : d}`), wide: true, marks: dm },
+              { type: "array", label: "tree edges so far", values: tree, wide: true },
+              { type: "vars", items: [{ name: "total", value: total }] },
+            ];
+          };
+          steps.push({ line: "init", note: "dist[P0] = 0, every other point ∞. No heap: each round just scans dist.", view: view() });
+          for (let round = 0; round < n; round++) {
+            let u = -1;
+            for (let v = 0; v < n; v++) if (!inTree[v] && (u === -1 || D[v] < D[u])) u = v;
+            inTree[u] = true;
+            total += D[u];
+            if (via[u] >= 0) tree.push(`P${via[u]}–P${u} (${D[u]})`);
+            const changed = [];
+            for (let v = 0; v < n; v++) {
+              if (inTree[v]) continue;
+              const d = dist(points[u], points[v]);
+              if (d < D[v]) { D[v] = d; via[v] = u; changed.push(v); }
+            }
+            steps.push({
+              line: ["pick", "add", "relax"],
+              note: `Round ${round + 1}: P${u} has the smallest dist (${round ? D[u] : 0}). Add it${via[u] >= 0 ? ` via P${via[u]}` : ""}; total = ${total}.${changed.length ? ` P${u} is closer to ${changed.map((k) => `P${k} (now ${D[k]})`).join(", ")}.` : ""}`,
+              view: view({ u, changed }),
+            });
+          }
+          steps.push({ line: "return", note: `Return ${total}. n rounds × a scan of n points: O(n²) time and only O(n) memory, the best fit when every pair is an edge.`, view: view() });
+          return steps;
+        },
+      });
+
+      const dist = (p, q) => Math.abs(p[0] - q[0]) + Math.abs(p[1] - q[1]);
+      function checkPoints(points) {
+        if (points.some((p) => p.length !== 2)) throw new DSAViz.InputError("Each point is [x, y], like [[0, 0], [2, 2]].");
+        if (new Set(points.map((p) => p.join(","))).size !== points.length) throw new DSAViz.InputError("All points must be different.");
+      }
+      // The points drawn on a small board: each cell shows the point's index.
+      function board(points, marks, label) {
+        const W = Math.max(...points.map((p) => p[0]));
+        const H = Math.max(...points.map((p) => p[1]));
+        const at = {};
+        points.forEach((p, k) => (at[p.join(",")] = k));
+        const ys = [];
+        for (let y = H; y >= 0; y--) ys.push(y);
+        const xs = [...Array(W + 1).keys()];
+        const m = {};
+        ys.forEach((y, r) => xs.forEach((x) => { const k = at[`${x},${y}`]; if (k === undefined) m[`${r},${x}`] = "ghost"; else if (marks[k]) m[`${r},${x}`] = marks[k]; }));
+        return { type: "grid", label, rows: ys, cols: xs, corner: "y \\ x", cells: ys.map((y) => xs.map((x) => (at[`${x},${y}`] === undefined ? "" : `P${at[`${x},${y}`]}`))), marks: m };
+      }
+      })();
     </script>
     <!-- problems/2013-detect-squares/approach1.visual.js -->
     <script>
