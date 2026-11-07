@@ -1,0 +1,207 @@
+<details class="question" data-group="graphs" data-tags="graph directed cycle detection topological sort kahn bfs dfs indegree prerequisites">
+  <summary>
+    <span class="q-title">207. Course Schedule</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Graph</span>
+      <span class="tag">Topological Sort</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> The courses can all be taken unless the
+      prerequisites form a <strong>cycle</strong>. Kahn's algorithm finds out:
+      keep a count of untaken prerequisites per course, take any course whose
+      count is 0, and lower the counts of the courses after it. If every
+      course gets taken, there's no cycle. O(n + p).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/course-schedule/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        There are <code>numCourses</code> courses, <code>0</code> to
+        <code>numCourses − 1</code>. <code>prerequisites[i] = [a, b]</code>
+        means you must take <code>b</code> before <code>a</code>. Return
+        whether you can finish all of them.
+      </p>
+      <ul>
+        <li><code>1 &lt;= numCourses &lt;= 2000</code>, <code>0 &lt;= prerequisites.length &lt;= 5000</code></li>
+        <li>All pairs are different; <code>a != b</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>2, [[1,0]]</code> → <code>true</code>.
+        <code>2, [[1,0],[0,1]]</code> → <code>false</code> (each waits on the other).
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>2, [[0,1]]</code></td>
+              <td><code>true</code></td>
+              <td>A DFS with one <code>visited</code> set that calls any visited course a cycle said <code>false</code>: reaching a finished course isn't a cycle. Wrong on 1551 of 3049 tests.</td>
+            </tr>
+            <tr>
+              <td><code>2, [[1,0],[0,1]]</code></td>
+              <td><code>false</code></td>
+              <td>The opposite mistake, "visited means fine", misses real cycles: it said <code>true</code>. Wrong on 587 tests. You need a third state, "on the current path".</td>
+            </tr>
+            <tr>
+              <td>2000 courses in one chain</td>
+              <td><code>true</code></td>
+              <td>The round-by-round approach needs 2000 rounds: 245 ms in Python. The DFS goes 2000 calls deep.</td>
+            </tr>
+            <tr>
+              <td><code>1, []</code></td>
+              <td><code>true</code></td>
+              <td>No prerequisites at all.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Take Courses in Rounds</h2>
+      <p class="intuition">
+        Each round, scan every pair and count how many unfinished
+        prerequisites each course has. Take every course with a count of 0.
+        If courses are left but none is ready, they wait on each other: a
+        cycle.
+      </p>
+      <ul>
+        <li>The same idea as Approach 3, but it recounts everything every round.</li>
+        <li>A chain needs one round per course.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n·(n + p))</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        A 2000-course chain: Python 245 ms, Java 8.3 ms, C++ 5.9 ms. About 400
+        times slower than Approach 3 in Python.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: DFS With Three States</h2>
+      <p class="intuition">
+        Mark a course 1 when the DFS enters it and 2 when every course after
+        it is checked. Meeting a course that's still 1 means you came back
+        around to the current path: a cycle. A course that's 2 is safe and is
+        never searched again.
+      </p>
+      <ul>
+        <li>Two states aren't enough (see the edge cases): "finished" and "on the path" mean different things.</li>
+        <li>The calls can go n deep: Python needs a higher recursion limit for 2000.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n + p)</span>
+        <span><strong>Space</strong> O(n + p)</span>
+      </div>
+      <p class="note">
+        A 2000-course chain: Python 0.84 ms. Slowest over 3049 tests: Python
+        7.8 ms, Java 0.36 ms, C++ 0.31 ms.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Kahn's Algorithm (BFS)
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Count each course's prerequisites once (<code>need</code>). Queue the
+        courses with <code>need</code> 0. Each time you take one, lower
+        <code>need</code> for the courses after it and queue any that hit 0.
+        At the end, compare how many you took with <code>numCourses</code>.
+      </p>
+      <ul>
+        <li>Courses on a cycle never reach 0, so they're never taken.</li>
+        <li>No recursion, and the order you take them in is a valid schedule (that's Course Schedule II).</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n + p)</span>
+        <span><strong>Space</strong> O(n + p)</span>
+      </div>
+      <p class="note">
+        A 2000-course chain: Python 0.62 ms. Slowest over 3049 tests: Python
+        4.1 ms, Java 0.48 ms, C++ 0.29 ms.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        Python's <code>graphlib.TopologicalSorter</code> (3.9+) raises
+        <code>CycleError</code> when there's a cycle, so it can answer this
+        outside LeetCode. C++ and Java have nothing built in.
+      </p>
+      <p class="note">On LeetCode, Approach 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Take Courses in Rounds</th>
+              <td>Recount every round</td>
+              <td>O(n·(n + p))</td>
+              <td>O(n)</td>
+              <td>2000 rounds for a chain</td>
+            </tr>
+            <tr>
+              <th scope="row">DFS With Three States</th>
+              <td>On the path vs finished</td>
+              <td>O(n + p)</td>
+              <td>O(n + p)</td>
+              <td>Needs 3 states, not 2</td>
+            </tr>
+            <tr>
+              <th scope="row">Kahn's Algorithm</th>
+              <td>Queue courses with need 0</td>
+              <td>O(n + p)</td>
+              <td>O(n + p)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

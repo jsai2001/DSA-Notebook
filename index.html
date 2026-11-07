@@ -20590,7 +20590,7 @@
       <details class="pattern-group" id="g-graphs">
         <summary>
           <span class="g-name">Graphs</span>
-          <span class="g-count"><span class="g-total">8 problems</span></span>
+          <span class="g-count"><span class="g-total">9 problems</span></span>
           <span class="g-hint">BFS, level by level</span>
         </summary>
         <div class="g-body">
@@ -22820,6 +22820,422 @@
                         <td>Sink on queue, flood with a queue</td>
                         <td>O(m·n)</td>
                         <td>O(m·n)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0207-course-schedule ===== -->
+          <details class="question" data-group="graphs" data-tags="graph directed cycle detection topological sort kahn bfs dfs indegree prerequisites">
+            <summary>
+              <span class="q-title">207. Course Schedule</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Graph</span>
+                <span class="tag">Topological Sort</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> The courses can all be taken unless the
+                prerequisites form a <strong>cycle</strong>. Kahn's algorithm finds out:
+                keep a count of untaken prerequisites per course, take any course whose
+                count is 0, and lower the counts of the courses after it. If every
+                course gets taken, there's no cycle. O(n + p).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/course-schedule/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  There are <code>numCourses</code> courses, <code>0</code> to
+                  <code>numCourses − 1</code>. <code>prerequisites[i] = [a, b]</code>
+                  means you must take <code>b</code> before <code>a</code>. Return
+                  whether you can finish all of them.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= numCourses &lt;= 2000</code>, <code>0 &lt;= prerequisites.length &lt;= 5000</code></li>
+                  <li>All pairs are different; <code>a != b</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>2, [[1,0]]</code> → <code>true</code>.
+                  <code>2, [[1,0],[0,1]]</code> → <code>false</code> (each waits on the other).
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>2, [[0,1]]</code></td>
+                        <td><code>true</code></td>
+                        <td>A DFS with one <code>visited</code> set that calls any visited course a cycle said <code>false</code>: reaching a finished course isn't a cycle. Wrong on 1551 of 3049 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>2, [[1,0],[0,1]]</code></td>
+                        <td><code>false</code></td>
+                        <td>The opposite mistake, "visited means fine", misses real cycles: it said <code>true</code>. Wrong on 587 tests. You need a third state, "on the current path".</td>
+                      </tr>
+                      <tr>
+                        <td>2000 courses in one chain</td>
+                        <td><code>true</code></td>
+                        <td>The round-by-round approach needs 2000 rounds: 245 ms in Python. The DFS goes 2000 calls deep.</td>
+                      </tr>
+                      <tr>
+                        <td><code>1, []</code></td>
+                        <td><code>true</code></td>
+                        <td>No prerequisites at all.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Take Courses in Rounds</h2>
+                <p class="intuition">
+                  Each round, scan every pair and count how many unfinished
+                  prerequisites each course has. Take every course with a count of 0.
+                  If courses are left but none is ready, they wait on each other: a
+                  cycle.
+                </p>
+                <ul>
+                  <li>The same idea as Approach 3, but it recounts everything every round.</li>
+                  <li>A chain needs one round per course.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n·(n + p))</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  A 2000-course chain: Python 245 ms, Java 8.3 ms, C++ 5.9 ms. About 400
+                  times slower than Approach 3 in Python.
+                </p>
+                <div class="code-tabs" data-viz="0207-course-schedule/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"round":[5],"count":[6,7,8,9],"ready":[10],"stuck":[11,12],"take":[13,14,15],"return":[16]}'>
+                    class Solution(object):
+                        def canFinish(self, numCourses, prerequisites):
+                            done = [False] * numCourses
+                            left = numCourses
+                            while left:  # one round: take every course whose prerequisites are all done
+                                need = [0] * numCourses  # prerequisites not done yet, per course
+                                for a, b in prerequisites:  # b must come before a
+                                    if not done[b]:
+                                        need[a] += 1
+                                ready = [c for c in range(numCourses) if not done[c] and need[c] == 0]
+                                if not ready:  # courses are left, but each waits on another: a cycle
+                                    return False
+                                for c in ready:
+                                    done[c] = True
+                                left -= len(ready)
+                            return True
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,6],"round":[7],"count":[8,9,10],"ready":[11,12,13],"stuck":[14],"take":[15,16],"return":[18]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool canFinish(int numCourses, std::vector<std::vector<int>>& prerequisites) {
+                            std::vector<char> done(numCourses, 0);
+                            int left = numCourses;
+                            while (left) { // one round: take every course whose prerequisites are all done
+                                std::vector<int> need(numCourses, 0); // prerequisites not done yet, per course
+                                for (auto& p : prerequisites) // p[1] must come before p[0]
+                                    if (!done[p[1]]) ++need[p[0]];
+                                std::vector<int> ready;
+                                for (int c = 0; c < numCourses; ++c)
+                                    if (!done[c] && need[c] == 0) ready.push_back(c);
+                                if (ready.empty()) return false; // courses are left, but each waits on another: a cycle
+                                for (int c : ready) done[c] = 1;
+                                left -= ready.size();
+                            }
+                            return true;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5],"round":[6],"count":[7,8,9],"ready":[10,11,12],"stuck":[13],"take":[14,15],"return":[17]}'>
+                    import java.util.*;
+                    class Solution {
+                        public boolean canFinish(int numCourses, int[][] prerequisites) {
+                            boolean[] done = new boolean[numCourses];
+                            int left = numCourses;
+                            while (left > 0) { // one round: take every course whose prerequisites are all done
+                                int[] need = new int[numCourses]; // prerequisites not done yet, per course
+                                for (int[] p : prerequisites) // p[1] must come before p[0]
+                                    if (!done[p[1]]) need[p[0]]++;
+                                List<Integer> ready = new ArrayList<>();
+                                for (int c = 0; c < numCourses; c++)
+                                    if (!done[c] && need[c] == 0) ready.add(c);
+                                if (ready.isEmpty()) return false; // courses are left, but each waits on another: a cycle
+                                for (int c : ready) done[c] = true;
+                                left -= ready.size();
+                            }
+                            return true;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: DFS With Three States</h2>
+                <p class="intuition">
+                  Mark a course 1 when the DFS enters it and 2 when every course after
+                  it is checked. Meeting a course that's still 1 means you came back
+                  around to the current path: a cycle. A course that's 2 is safe and is
+                  never searched again.
+                </p>
+                <ul>
+                  <li>Two states aren't enough (see the edge cases): "finished" and "on the path" mean different things.</li>
+                  <li>The calls can go n deep: Python needs a higher recursion limit for 2000.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n + p)</span>
+                  <span><strong>Space</strong> O(n + p)</span>
+                </div>
+                <p class="note">
+                  A 2000-course chain: Python 0.84 ms. Slowest over 3049 tests: Python
+                  7.8 ms, Java 0.36 ms, C++ 0.31 ms.
+                </p>
+                <div class="code-tabs" data-viz="0207-course-schedule/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[5,6,7,8],"visit":[9,14],"back":[10,11],"seen":[12,13],"edge":[15,16,17],"finish":[18,19],"return":[20]}'>
+                    import sys
+                    sys.setrecursionlimit(10000)  # a chain of 2000 courses is 2000 calls deep
+                    class Solution(object):
+                        def canFinish(self, numCourses, prerequisites):
+                            after = [[] for _ in range(numCourses)]  # after[b] = courses that need b
+                            for a, b in prerequisites:
+                                after[b].append(a)
+                            state = [0] * numCourses  # 0 = not visited, 1 = on the current path, 2 = finished, no cycle
+                            def has_cycle(c):
+                                if state[c] == 1:  # back to a course still on the path: a cycle
+                                    return True
+                                if state[c] == 2:  # already checked
+                                    return False
+                                state[c] = 1
+                                for nxt in after[c]:
+                                    if has_cycle(nxt):
+                                        return True
+                                state[c] = 2  # every path from c is cycle-free
+                                return False
+                            return not any(has_cycle(c) for c in range(numCourses))
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,6,7],"return":[8,9,10],"visit":[15,18],"back":[16],"seen":[17],"edge":[19,20],"finish":[21,22]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool canFinish(int numCourses, std::vector<std::vector<int>>& prerequisites) {
+                            after.assign(numCourses, {}); // after[b] = courses that need b
+                            for (auto& p : prerequisites) after[p[1]].push_back(p[0]);
+                            state.assign(numCourses, 0); // 0 = not visited, 1 = on the current path, 2 = finished, no cycle
+                            for (int c = 0; c < numCourses; ++c)
+                                if (hasCycle(c)) return false;
+                            return true;
+                        }
+                    private:
+                        std::vector<std::vector<int>> after;
+                        std::vector<int> state;
+                        bool hasCycle(int c) {
+                            if (state[c] == 1) return true; // back to a course still on the path: a cycle
+                            if (state[c] == 2) return false; // already checked
+                            state[c] = 1;
+                            for (int next : after[c])
+                                if (hasCycle(next)) return true;
+                            state[c] = 2; // every path from c is cycle-free
+                            return false;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[6,7,8,9],"return":[10,11,12],"visit":[14,17],"back":[15],"seen":[16],"edge":[18,19],"finish":[20,21]}'>
+                    import java.util.*;
+                    class Solution {
+                        private List<List<Integer>> after;
+                        private int[] state;
+                        public boolean canFinish(int numCourses, int[][] prerequisites) {
+                            after = new ArrayList<>(); // after[b] = courses that need b
+                            for (int i = 0; i < numCourses; i++) after.add(new ArrayList<>());
+                            for (int[] p : prerequisites) after.get(p[1]).add(p[0]);
+                            state = new int[numCourses]; // 0 = not visited, 1 = on the current path, 2 = finished, no cycle
+                            for (int c = 0; c < numCourses; c++)
+                                if (hasCycle(c)) return false;
+                            return true;
+                        }
+                        private boolean hasCycle(int c) {
+                            if (state[c] == 1) return true; // back to a course still on the path: a cycle
+                            if (state[c] == 2) return false; // already checked
+                            state[c] = 1;
+                            for (int next : after.get(c))
+                                if (hasCycle(next)) return true;
+                            state[c] = 2; // every path from c is cycle-free
+                            return false;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Kahn's Algorithm (BFS)
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Count each course's prerequisites once (<code>need</code>). Queue the
+                  courses with <code>need</code> 0. Each time you take one, lower
+                  <code>need</code> for the courses after it and queue any that hit 0.
+                  At the end, compare how many you took with <code>numCourses</code>.
+                </p>
+                <ul>
+                  <li>Courses on a cycle never reach 0, so they're never taken.</li>
+                  <li>No recursion, and the order you take them in is a valid schedule (that's Course Schedule II).</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n + p)</span>
+                  <span><strong>Space</strong> O(n + p)</span>
+                </div>
+                <p class="note">
+                  A 2000-course chain: Python 0.62 ms. Slowest over 3049 tests: Python
+                  4.1 ms, Java 0.48 ms, C++ 0.29 ms.
+                </p>
+                <div class="code-tabs" data-viz="0207-course-schedule/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5,6,7,8],"start":[9,10],"take":[11,12,13],"free":[14,15,16,17],"return":[18]}'>
+                    from collections import deque
+                    class Solution(object):
+                        def canFinish(self, numCourses, prerequisites):
+                            after = [[] for _ in range(numCourses)]  # after[b] = courses that need b
+                            need = [0] * numCourses  # prerequisites not taken yet
+                            for a, b in prerequisites:
+                                after[b].append(a)
+                                need[a] += 1
+                            queue = deque(c for c in range(numCourses) if need[c] == 0)  # courses you can take now
+                            taken = 0
+                            while queue:
+                                c = queue.popleft()
+                                taken += 1
+                                for nxt in after[c]:
+                                    need[nxt] -= 1  # one fewer prerequisite to wait for
+                                    if need[nxt] == 0:
+                                        queue.append(nxt)
+                            return taken == numCourses  # courses on a cycle never reach need 0
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8,9,10],"start":[12,13,14],"take":[15,16,17,18],"free":[19,20],"return":[22]}'>
+                    #include <queue>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool canFinish(int numCourses, std::vector<std::vector<int>>& prerequisites) {
+                            std::vector<std::vector<int>> after(numCourses); // after[b] = courses that need b
+                            std::vector<int> need(numCourses, 0); // prerequisites not taken yet
+                            for (auto& p : prerequisites) {
+                                after[p[1]].push_back(p[0]);
+                                ++need[p[0]];
+                            }
+                            std::queue<int> queue; // courses you can take now
+                            for (int c = 0; c < numCourses; ++c) if (need[c] == 0) queue.push(c);
+                            int taken = 0;
+                            while (!queue.empty()) {
+                                int c = queue.front();
+                                queue.pop();
+                                ++taken;
+                                for (int next : after[c])
+                                    if (--need[next] == 0) queue.push(next); // one fewer prerequisite to wait for
+                            }
+                            return taken == numCourses; // courses on a cycle never reach need 0
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5,6,7,8,9],"start":[11,12,13],"take":[14,15,16],"free":[17,18],"return":[20]}'>
+                    import java.util.*;
+                    class Solution {
+                        public boolean canFinish(int numCourses, int[][] prerequisites) {
+                            List<List<Integer>> after = new ArrayList<>(); // after[b] = courses that need b
+                            for (int i = 0; i < numCourses; i++) after.add(new ArrayList<>());
+                            int[] need = new int[numCourses]; // prerequisites not taken yet
+                            for (int[] p : prerequisites) {
+                                after.get(p[1]).add(p[0]);
+                                need[p[0]]++;
+                            }
+                            ArrayDeque<Integer> queue = new ArrayDeque<>(); // courses you can take now
+                            for (int c = 0; c < numCourses; c++) if (need[c] == 0) queue.add(c);
+                            int taken = 0;
+                            while (!queue.isEmpty()) {
+                                int c = queue.poll();
+                                taken++;
+                                for (int next : after.get(c))
+                                    if (--need[next] == 0) queue.add(next); // one fewer prerequisite to wait for
+                            }
+                            return taken == numCourses; // courses on a cycle never reach need 0
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  Python's <code>graphlib.TopologicalSorter</code> (3.9+) raises
+                  <code>CycleError</code> when there's a cycle, so it can answer this
+                  outside LeetCode. C++ and Java have nothing built in.
+                </p>
+                <p class="note">On LeetCode, Approach 3 is what you'd write.</p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Take Courses in Rounds</th>
+                        <td>Recount every round</td>
+                        <td>O(n·(n + p))</td>
+                        <td>O(n)</td>
+                        <td>2000 rounds for a chain</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">DFS With Three States</th>
+                        <td>On the path vs finished</td>
+                        <td>O(n + p)</td>
+                        <td>O(n + p)</td>
+                        <td>Needs 3 states, not 2</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Kahn's Algorithm</th>
+                        <td>Queue courses with need 0</td>
+                        <td>O(n + p)</td>
+                        <td>O(n + p)</td>
                         <td>Expected answer</td>
                       </tr>
                     </tbody>
@@ -59412,6 +59828,187 @@
           return steps;
         },
       });
+    </script>
+    <!-- problems/0207-course-schedule/approach1.visual.js -->
+    <script>
+      // Rounds: count each course's unfinished prerequisites, take every course that has none. Stuck with courses left = a cycle.
+      (function () {
+      DSAViz.register("0207-course-schedule/approach1", {
+        inputs: [
+          { name: "numCourses", type: "int", value: "5", min: 1, max: 8 },
+          { name: "prerequisites", type: "int[][]", value: "[[1, 0], [2, 0], [3, 1], [3, 2], [4, 3]]", jagged: true, maxRows: 10, maxCols: 2, minValue: 0, maxValue: 7 },
+        ],
+        trace({ numCourses: n, prerequisites: pre }) {
+          check(n, pre);
+          const steps = [];
+          const done = Array(n).fill(false);
+          let left = n;
+          let round = 0;
+          const view = (o = {}) => [
+            { type: "array", label: "prerequisites as b→a (take b, then a; dashed = b is done, so it no longer blocks a)", values: pre.map(arrow), wide: true, marks: Object.fromEntries(pre.map(([, b], k) => [k, done[b] ? "ghost" : ""]).filter(([, v]) => v)) },
+            { type: "array", label: "need[c] this round (green = done, yellow = ready now, red = stuck)", values: o.need || Array(n).fill(""), compact: true, marks: Object.fromEntries([...Array(n).keys()].map((c) => [c, done[c] ? "match" : (o.ready || []).includes(c) ? "new" : o.stuck ? "cut" : ""]).filter(([, v]) => v)) },
+            { type: "vars", items: [{ name: "round", value: round }, { name: "left", value: left }] },
+          ];
+          steps.push({ line: "init", note: `${n} courses, ${pre.length} prerequisites. Nothing done yet.`, view: view() });
+          while (left) {
+            round++;
+            const need = Array(n).fill(0);
+            pre.forEach(([a, b]) => { if (!done[b]) need[a]++; });
+            const ready = [...Array(n).keys()].filter((c) => !done[c] && need[c] === 0);
+            const shown = need.map((v, c) => (done[c] ? "✓" : v));
+            if (!ready.length) {
+              steps.push({ line: ["round", "count", "ready", "stuck"], note: `Round ${round}: scan all ${pre.length} pairs again. ${left} course${left > 1 ? "s are" : " is"} left, and each still waits on another one left: they form a cycle.`, view: view({ need: shown, stuck: true }) });
+              steps.push({ line: "stuck", note: "Return false. No order can take them all.", view: view({ need: shown, stuck: true }) });
+              return steps;
+            }
+            steps.push({ line: ["round", "count", "ready"], note: `Round ${round}: scan all ${pre.length} pairs and count unfinished prerequisites. Ready: ${ready.join(", ")}.`, view: view({ need: shown, ready }) });
+            ready.forEach((c) => (done[c] = true));
+            left -= ready.length;
+            steps.push({ line: "take", note: `Take ${ready.join(", ")}. ${left} left.`, view: view({ need: need.map((v, c) => (done[c] ? "✓" : v)) }) });
+          }
+          steps.push({ line: "return", note: `Return true. ${round} round${round > 1 ? "s" : ""}, each scanning every pair: O(n·(n + p)) at worst.`, view: view() });
+          return steps;
+        },
+      });
+
+      function check(n, pre) {
+        if (pre.some((p) => p.length !== 2)) throw new DSAViz.InputError("Each prerequisite is [a, b]: take b before a.");
+        if (pre.some(([a, b]) => a < 0 || b < 0 || a >= n || b >= n)) throw new DSAViz.InputError(`Courses are numbered 0 to ${n - 1}.`);
+        if (pre.some(([a, b]) => a === b)) throw new DSAViz.InputError("A course can't be its own prerequisite (a ≠ b).");
+        if (new Set(pre.map((p) => p.join(","))).size !== pre.length) throw new DSAViz.InputError("Each pair appears once.");
+      }
+      const arrow = ([a, b]) => `${b}→${a}`;
+      const afterMap = (n, pre, marks = {}) => {
+        const after = Array.from({ length: n }, () => []);
+        pre.forEach(([a, b]) => after[b].push(a));
+        return { type: "map", label: "after[b]: the courses that need b first", columns: ["course", "then"], entries: after.map((l, c) => [String(c), l.join(", ") || "none"]), marks };
+      };
+      })();
+    </script>
+    <!-- problems/0207-course-schedule/approach2.visual.js -->
+    <script>
+      // DFS with three states: 1 = on the current path, 2 = finished. Reaching a course that's on the path means a cycle.
+      (function () {
+      DSAViz.register("0207-course-schedule/approach2", {
+        inputs: [
+          { name: "numCourses", type: "int", value: "5", min: 1, max: 8 },
+          { name: "prerequisites", type: "int[][]", value: "[[1, 0], [2, 0], [3, 1], [3, 2], [4, 3]]", jagged: true, maxRows: 10, maxCols: 2, minValue: 0, maxValue: 7 },
+        ],
+        trace({ numCourses: n, prerequisites: pre }) {
+          check(n, pre);
+          const steps = [];
+          const after = Array.from({ length: n }, () => []);
+          pre.forEach(([a, b]) => after[b].push(a));
+          const state = Array(n).fill(0);
+          const path = [];
+          const view = (o = {}) => {
+            const marks = {};
+            state.forEach((s, c) => { if (s === 1) marks[c] = "new"; if (s === 2) marks[c] = "match"; });
+            if (o.at !== undefined) marks[o.at] = o.cycle ? "cut" : "active";
+            return [
+              afterMap(n, pre, o.at !== undefined ? { [String(o.at)]: o.cycle ? "cut" : "active" } : {}),
+              { type: "array", label: "state[c] (0 = not visited, yellow 1 = on the current path, green 2 = finished)", values: state.slice(), compact: true, marks },
+              { type: "array", label: "current path", values: path.slice(), compact: true },
+            ];
+          };
+          steps.push({ line: "init", note: "Build after[b] from the pairs. Then start a DFS from every course.", view: view() });
+          let found = false;
+          const dfs = (c) => {
+            if (state[c] === 1) {
+              steps.push({ line: ["visit", "back"], note: `Course ${c} is already on the current path (${path.join(" → ")} → ${c}): a cycle.`, view: view({ at: c, cycle: true }) });
+              return true;
+            }
+            if (state[c] === 2) {
+              steps.push({ line: ["visit", "seen"], note: `Course ${c} is finished already: no cycle through it. Skip.`, view: view({ at: c }) });
+              return false;
+            }
+            state[c] = 1;
+            path.push(c);
+            steps.push({ line: ["visit", "edge"], note: `Visit ${c}: mark it as on the path.${after[c].length ? ` Then follow ${after[c].join(", ")}.` : " Nothing needs it."}`, view: view({ at: c }) });
+            for (const x of after[c]) if (dfs(x)) return true;
+            state[c] = 2;
+            path.pop();
+            steps.push({ line: "finish", note: `Every path from ${c} is cycle-free: mark it finished.`, view: view({ at: c }) });
+            return false;
+          };
+          for (let c = 0; c < n && !found; c++) if (state[c] === 0) found = dfs(c);
+          steps.push({ line: "return", note: found ? "Return false. A cycle means no order works." : `Return true. No cycle: every course and pair is looked at once, O(n + p).`, view: view() });
+          return steps;
+        },
+      });
+
+      function check(n, pre) {
+        if (pre.some((p) => p.length !== 2)) throw new DSAViz.InputError("Each prerequisite is [a, b]: take b before a.");
+        if (pre.some(([a, b]) => a < 0 || b < 0 || a >= n || b >= n)) throw new DSAViz.InputError(`Courses are numbered 0 to ${n - 1}.`);
+        if (pre.some(([a, b]) => a === b)) throw new DSAViz.InputError("A course can't be its own prerequisite (a ≠ b).");
+        if (new Set(pre.map((p) => p.join(","))).size !== pre.length) throw new DSAViz.InputError("Each pair appears once.");
+      }
+      const arrow = ([a, b]) => `${b}→${a}`;
+      const afterMap = (n, pre, marks = {}) => {
+        const after = Array.from({ length: n }, () => []);
+        pre.forEach(([a, b]) => after[b].push(a));
+        return { type: "map", label: "after[b]: the courses that need b first", columns: ["course", "then"], entries: after.map((l, c) => [String(c), l.join(", ") || "none"]), marks };
+      };
+      })();
+    </script>
+    <!-- problems/0207-course-schedule/approach3.visual.js -->
+    <script>
+      // Kahn's algorithm: queue the courses with no prerequisites; taking one lowers need[] of the courses after it.
+      (function () {
+      DSAViz.register("0207-course-schedule/approach3", {
+        inputs: [
+          { name: "numCourses", type: "int", value: "5", min: 1, max: 8 },
+          { name: "prerequisites", type: "int[][]", value: "[[1, 0], [2, 0], [3, 1], [3, 2], [4, 3]]", jagged: true, maxRows: 10, maxCols: 2, minValue: 0, maxValue: 7 },
+        ],
+        trace({ numCourses: n, prerequisites: pre }) {
+          check(n, pre);
+          const steps = [];
+          const after = Array.from({ length: n }, () => []);
+          const need = Array(n).fill(0);
+          pre.forEach(([a, b]) => { after[b].push(a); need[a]++; });
+          const queue = [];
+          const taken = [];
+          const view = (o = {}) => {
+            const marks = {};
+            taken.forEach((c) => (marks[c] = "match"));
+            (o.freed || []).forEach((c) => (marks[c] = "new"));
+            if (o.at !== undefined) marks[o.at] = "active";
+            if (o.stuck) for (let c = 0; c < n; c++) if (!taken.includes(c)) marks[c] = "cut";
+            return [
+              afterMap(n, pre),
+              { type: "array", label: "need[c]: prerequisites not taken yet (dark = taken now, green = taken, yellow = just reached 0, red = never reached 0)", values: need.slice(), compact: true, marks },
+              { type: "array", label: "queue (can take now)", values: queue.slice(), compact: true },
+              { type: "vars", items: [{ name: "taken", value: taken.length }] },
+            ];
+          };
+          for (let c = 0; c < n; c++) if (need[c] === 0) queue.push(c);
+          steps.push({ line: ["init", "start"], note: `Count each course's prerequisites. Courses with none go in the queue: ${queue.join(", ") || "none"}.`, view: view({ freed: queue.slice() }) });
+          while (queue.length) {
+            const c = queue.shift();
+            taken.push(c);
+            const freed = [];
+            for (const x of after[c]) { need[x]--; if (need[x] === 0) { queue.push(x); freed.push(x); } }
+            steps.push({ line: ["take", "free"], note: `Take ${c}.${after[c].length ? ` Lower need for ${after[c].join(", ")}.` : ""}${freed.length ? ` ${freed.join(", ")} reached 0: queue ${freed.length > 1 ? "them" : "it"}.` : ""}`, view: view({ at: c, freed }) });
+          }
+          const ok = taken.length === n;
+          steps.push({ line: "return", note: ok ? `Return true. All ${n} courses taken, in the order ${taken.join(", ")}. O(n + p).` : `Return false. Only ${taken.length} of ${n} taken: the rest wait on each other in a cycle.`, view: view({ stuck: !ok }) });
+          return steps;
+        },
+      });
+
+      function check(n, pre) {
+        if (pre.some((p) => p.length !== 2)) throw new DSAViz.InputError("Each prerequisite is [a, b]: take b before a.");
+        if (pre.some(([a, b]) => a < 0 || b < 0 || a >= n || b >= n)) throw new DSAViz.InputError(`Courses are numbered 0 to ${n - 1}.`);
+        if (pre.some(([a, b]) => a === b)) throw new DSAViz.InputError("A course can't be its own prerequisite (a ≠ b).");
+        if (new Set(pre.map((p) => p.join(","))).size !== pre.length) throw new DSAViz.InputError("Each pair appears once.");
+      }
+      const arrow = ([a, b]) => `${b}→${a}`;
+      const afterMap = (n, pre, marks = {}) => {
+        const after = Array.from({ length: n }, () => []);
+        pre.forEach(([a, b]) => after[b].push(a));
+        return { type: "map", label: "after[b]: the courses that need b first", columns: ["course", "then"], entries: after.map((l, c) => [String(c), l.join(", ") || "none"]), marks };
+      };
+      })();
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->
     <script>
