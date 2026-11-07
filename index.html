@@ -38448,7 +38448,7 @@
       <details class="pattern-group" id="g-dynamic-programming">
         <summary>
           <span class="g-name">Dynamic Programming</span>
-          <span class="g-count"><span class="g-total">17 problems</span></span>
+          <span class="g-count"><span class="g-total">18 problems</span></span>
           <span class="g-hint">Reuse the answers to smaller problems</span>
         </summary>
         <div class="g-body">
@@ -44041,6 +44041,352 @@
                         <td>prev and cur per range</td>
                         <td>O(n)</td>
                         <td>O(1)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0300-longest-increasing-subsequence ===== -->
+          <details class="question" data-group="dynamic-programming" data-tags="dynamic programming dp lis subsequence binary search patience sorting tails">
+            <summary>
+              <span class="q-title">300. Longest Increasing Subsequence</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Dynamic Programming</span>
+                <span class="tag">Binary Search</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Keep <code>tails</code>, where
+                <code>tails[L]</code> is the <strong>smallest last value</strong> of
+                any increasing subsequence of length L + 1. It's always sorted. For
+                each value, binary search for the first tail ≥ it: replace that tail,
+                or append if there's none. The length of <code>tails</code> is the
+                answer. O(n log n), against O(n²) for the usual DP.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/longest-increasing-subsequence/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Return the length of the longest <strong>strictly</strong> increasing
+                  subsequence of <code>nums</code> (values in order, not necessarily
+                  side by side).
+                </p>
+                <ul>
+                  <li><code>1 &lt;= nums.length &lt;= 2500</code>, <code>-10⁴ &lt;= nums[i] &lt;= 10⁴</code></li>
+                  <li>Follow-up: O(n log n)</li>
+                </ul>
+                <p class="note">
+                  Example: <code>[10,9,2,5,3,7,101,18]</code> → <code>4</code> (2, 3, 7,
+                  18). <code>[0,1,0,3,2,3]</code> → <code>4</code>.
+                  <code>[7,7,7,7]</code> → <code>1</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[2,2]</code></td>
+                        <td><code>1</code></td>
+                        <td>Strictly increasing. Using <code>bisect_right</code> (first tail &gt; x) lets equal values extend: it said <code>2</code>. Wrong on 262 of 2007 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[10,9,2,5,3,7,101,18]</code></td>
+                        <td><code>4</code></td>
+                        <td>The final <code>tails</code> is [2, 3, 7, 18], which happens to be a real answer; often it isn't (see below), only its length is.</td>
+                      </tr>
+                      <tr>
+                        <td>2500 rising values</td>
+                        <td><code>2500</code></td>
+                        <td>The memoized recursion goes 2500 calls deep: Python's default limit of 1000 isn't enough.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Recursion with Memo</h2>
+                <p class="intuition">
+                  <code>longest(i)</code> = the longest increasing subsequence that
+                  starts with <code>nums[i]</code>: 1, plus the best
+                  <code>longest(j)</code> over every later, bigger <code>nums[j]</code>.
+                  Remember each result, and take the best start.
+                </p>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n²)</span>
+                  <span><strong>Space</strong> O(n) memo + O(n) calls</span>
+                </div>
+                <p class="note">
+                  2500 random values: Python 289 ms, Java 5.0 ms, C++ 4.2 ms.
+                </p>
+                <div class="code-tabs" data-viz="0300-longest-increasing-subsequence/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[5,6],"call":[7],"memo":[8,9],"try":[10,11,12],"store":[13,14],"return":[15]}'>
+                    import sys
+                    sys.setrecursionlimit(10000)  # one call per index: up to 2500 deep
+                    class Solution(object):
+                        def lengthOfLIS(self, nums):
+                            n = len(nums)
+                            memo = {}
+                            def longest(i):  # the longest increasing subsequence that starts with nums[i]
+                                if i not in memo:
+                                    best = 1  # nums[i] alone
+                                    for j in range(i + 1, n):  # try every bigger value after it as the next one
+                                        if nums[j] > nums[i]:
+                                            best = max(best, 1 + longest(j))
+                                    memo[i] = best
+                                return memo[i]
+                            return max(longest(i) for i in range(n))  # it can start anywhere
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"return":[7,8,9],"call":[13],"memo":[14,15],"try":[16,17],"store":[18]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int lengthOfLIS(std::vector<int>& nums) {
+                            memo.assign(nums.size(), 0); // 0 = not worked out yet
+                            int ans = 0;
+                            for (int i = 0; i < (int)nums.size(); ++i) ans = std::max(ans, longest(nums, i)); // it can start anywhere
+                            return ans;
+                        }
+                    private:
+                        std::vector<int> memo;
+                        int longest(const std::vector<int>& nums, int i) { // the longest increasing subsequence that starts with nums[i]
+                            if (memo[i]) return memo[i];
+                            int best = 1; // nums[i] alone
+                            for (int j = i + 1; j < (int)nums.size(); ++j) // try every bigger value after it as the next one
+                                if (nums[j] > nums[i]) best = std::max(best, 1 + longest(nums, j));
+                            return memo[i] = best;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4],"return":[5,6,7],"call":[9],"memo":[10,11],"try":[12,13],"store":[14]}'>
+                    class Solution {
+                        private int[] memo;
+                        public int lengthOfLIS(int[] nums) {
+                            memo = new int[nums.length]; // 0 = not worked out yet
+                            int ans = 0;
+                            for (int i = 0; i < nums.length; i++) ans = Math.max(ans, longest(nums, i)); // it can start anywhere
+                            return ans;
+                        }
+                        private int longest(int[] nums, int i) { // the longest increasing subsequence that starts with nums[i]
+                            if (memo[i] != 0) return memo[i];
+                            int best = 1; // nums[i] alone
+                            for (int j = i + 1; j < nums.length; j++) // try every bigger value after it as the next one
+                                if (nums[j] > nums[i]) best = Math.max(best, 1 + longest(nums, j));
+                            return memo[i] = best;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: DP, Ends at i</h2>
+                <p class="intuition">
+                  <code>dp[i]</code> = the longest increasing subsequence that ends at
+                  <code>nums[i]</code>: 1, plus the best <code>dp[j]</code> over every
+                  earlier, smaller <code>nums[j]</code>. The answer is the biggest
+                  <code>dp</code>.
+                </p>
+                <ul>
+                  <li>The usual first answer, and the base for variants like "count them" (673).</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n²)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  2500 random values: Python 163 ms, Java 2.9 ms, C++ 4.3 ms.
+                </p>
+                <div class="code-tabs" data-viz="0300-longest-increasing-subsequence/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"end":[4],"try":[5,6,7],"return":[8]}'>
+                    class Solution(object):
+                        def lengthOfLIS(self, nums):
+                            dp = [1] * len(nums)  # dp[i] = the longest increasing subsequence that ends at nums[i]
+                            for i in range(len(nums)):
+                                for j in range(i):  # any smaller value before i can come just before nums[i]
+                                    if nums[j] < nums[i]:
+                                        dp[i] = max(dp[i], dp[j] + 1)
+                            return max(dp)  # it can end anywhere
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7],"end":[8],"try":[9,10],"return":[11]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int lengthOfLIS(std::vector<int>& nums) {
+                            const int n = nums.size();
+                            std::vector<int> dp(n, 1); // dp[i] = the longest increasing subsequence that ends at nums[i]
+                            for (int i = 0; i < n; ++i)
+                                for (int j = 0; j < i; ++j) // any smaller value before i can come just before nums[i]
+                                    if (nums[j] < nums[i]) dp[i] = std::max(dp[i], dp[j] + 1);
+                            return *std::max_element(dp.begin(), dp.end()); // it can end anywhere
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5],"end":[6,7],"try":[8,9],"return":[10,12]}'>
+                    class Solution {
+                        public int lengthOfLIS(int[] nums) {
+                            int n = nums.length;
+                            int[] dp = new int[n]; // dp[i] = the longest increasing subsequence that ends at nums[i]
+                            int ans = 0;
+                            for (int i = 0; i < n; i++) {
+                                dp[i] = 1;
+                                for (int j = 0; j < i; j++) // any smaller value before i can come just before nums[i]
+                                    if (nums[j] < nums[i]) dp[i] = Math.max(dp[i], dp[j] + 1);
+                                ans = Math.max(ans, dp[i]); // it can end anywhere
+                            }
+                            return ans;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Tails + Binary Search
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  For each value x, find the first tail ≥ x with a binary search. If
+                  none, x makes a longer subsequence: append it. Otherwise replace that
+                  tail with x: a subsequence of that length can now end lower, which
+                  leaves more room for later values.
+                </p>
+                <ul>
+                  <li><code>tails</code> stays sorted, which is why binary search works.</li>
+                  <li>For <code>[3,4,1]</code> the final tails are [1, 4], which isn't a subsequence; the length 2 is still right.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  2500 random values: Python 0.28 ms, Java 0.06 ms, C++ 0.04 ms, about
+                  600 times faster than Approach 2 in Python.
+                </p>
+                <div class="code-tabs" data-viz="0300-longest-increasing-subsequence/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4],"each":[5],"search":[6],"extend":[7,8],"replace":[9,10],"return":[11]}'>
+                    import bisect
+                    class Solution(object):
+                        def lengthOfLIS(self, nums):
+                            tails = []  # tails[L] = the smallest last value of any increasing subsequence of length L + 1
+                            for x in nums:
+                                k = bisect.bisect_left(tails, x)  # the first tail >= x (tails is always sorted)
+                                if k == len(tails):  # x is bigger than every tail: it makes a longer subsequence
+                                    tails.append(x)
+                                else:  # x is a smaller end for length k + 1: keep the smaller one
+                                    tails[k] = x
+                            return len(tails)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"each":[7],"search":[8],"extend":[9],"replace":[10],"return":[12]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int lengthOfLIS(std::vector<int>& nums) {
+                            std::vector<int> tails; // tails[L] = the smallest last value of any increasing subsequence of length L + 1
+                            for (int x : nums) {
+                                auto it = std::lower_bound(tails.begin(), tails.end(), x); // the first tail >= x (tails is always sorted)
+                                if (it == tails.end()) tails.push_back(x); // x is bigger than every tail: it makes a longer subsequence
+                                else *it = x; // x is a smaller end for that length: keep the smaller one
+                            }
+                            return tails.size();
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4],"each":[5],"search":[6,7,8,9,10],"extend":[12,13],"replace":[12],"return":[15]}'>
+                    class Solution {
+                        public int lengthOfLIS(int[] nums) {
+                            int[] tails = new int[nums.length]; // tails[L] = the smallest last value of any increasing subsequence of length L + 1
+                            int len = 0;
+                            for (int x : nums) {
+                                int lo = 0, hi = len; // binary search for the first tail >= x (tails[0..len) is sorted)
+                                while (lo < hi) {
+                                    int mid = (lo + hi) >>> 1;
+                                    if (tails[mid] < x) lo = mid + 1;
+                                    else hi = mid;
+                                }
+                                tails[lo] = x; // a smaller end for length lo + 1, or a new, longer one
+                                if (lo == len) len++;
+                            }
+                            return len;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  No library computes the LIS, but Approach 3 leans on the built-in
+                  binary searches: <code>bisect_left</code> and
+                  <code>std::lower_bound</code>.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Recursion with Memo</th>
+                        <td>longest(i) from each start</td>
+                        <td>O(n²)</td>
+                        <td>O(n)</td>
+                        <td>2500 calls deep</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">DP, Ends at i</th>
+                        <td>Best smaller value before i</td>
+                        <td>O(n²)</td>
+                        <td>O(n)</td>
+                        <td>Base for variants</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Tails + Binary Search</th>
+                        <td>Smallest tail per length</td>
+                        <td>O(n log n)</td>
+                        <td>O(n)</td>
                         <td>Expected answer</td>
                       </tr>
                     </tbody>
@@ -72689,6 +73035,77 @@
       const show = (v) => `[${v.map((x) => (x === null ? "null" : x)).join(", ")}]`;
       const tokView = (toks, marks = {}, label = "the string, as tokens") => ({ type: "array", label, values: toks, wide: true, marks });
       })();
+    </script>
+    <!-- problems/0300-longest-increasing-subsequence/approach1.visual.js -->
+    <script>
+      // longest(i) = the longest increasing subsequence that starts at i: 1 + the best longest(j) over bigger nums[j] after i.
+      DSAViz.register("0300-longest-increasing-subsequence/approach1", {
+        inputs: [{ name: "nums", type: "int[]", value: "[10, 9, 2, 5, 3, 7, 101, 18]", minLength: 1, maxLength: 10, minValue: -10000, maxValue: 10000 }],
+        trace({ nums }) {
+          const n = nums.length;
+          const memo = Array(n).fill(null);
+          const steps = [];
+          const MAX = 120; let hidden = 0;
+          const push = (s) => (steps.length < MAX ? steps.push(s) : hidden++);
+          const view = (i, o = {}) => [{ type: "array", label: "nums (dark = i, yellow = bigger values after it)", values: nums, marks: i === undefined ? {} : { ...Object.fromEntries(nums.map((x, j) => [j, j > i && x > nums[i] ? "compare" : ""]).filter(([, m]) => m)), [i]: "active" } }, { type: "array", label: "memo[i] = longest(i) (? = not known yet)", values: memo.map((v) => (v === null ? "?" : v)), marks: i !== undefined && memo[i] !== null ? { [i]: o.hit ? "match" : "new" } : {} }];
+          push({ line: "init", note: "Try every start i. longest(i) is remembered the first time it's worked out.", view: view() });
+          const longest = (i) => {
+            if (memo[i] !== null) { push({ line: ["call", "store"], note: `longest(${i}) is known: ${memo[i]}.`, view: view(i, { hit: true }) }); return memo[i]; }
+            let best = 1;
+            for (let j = i + 1; j < n; j++) if (nums[j] > nums[i]) best = Math.max(best, 1 + longest(j));
+            memo[i] = best;
+            const nexts = nums.map((x, j) => (j > i && x > nums[i] ? j : -1)).filter((j) => j >= 0);
+            push({ line: ["call", "memo", "try", "store"], note: nexts.length ? `longest(${i}): ${nums[i]} can be followed by ${nexts.map((j) => nums[j]).join(", ")}. Best is 1 + ${best - 1} = ${best}.` : `longest(${i}): nothing bigger comes after ${nums[i]}, so 1.`, view: view(i) });
+            return best;
+          };
+          let ans = 0;
+          for (let i = 0; i < n; i++) ans = Math.max(ans, longest(i));
+          steps.push({ line: "return", note: `Return ${ans}, the biggest memo value${hidden ? ` (${hidden} steps not shown)` : ""}. Each i loops over every later j once: O(n²).`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0300-longest-increasing-subsequence/approach2.visual.js -->
+    <script>
+      // dp[i] = the longest increasing subsequence that ends at nums[i]: 1 + the best dp[j] over smaller nums[j] before i.
+      DSAViz.register("0300-longest-increasing-subsequence/approach2", {
+        inputs: [{ name: "nums", type: "int[]", value: "[10, 9, 2, 5, 3, 7, 101, 18]", minLength: 1, maxLength: 10, minValue: -10000, maxValue: 10000 }],
+        trace({ nums }) {
+          const n = nums.length;
+          const dp = Array(n).fill(1);
+          const steps = [{ line: "init", note: "dp[i] starts at 1: nums[i] on its own.", view: [{ type: "array", label: "nums", values: nums }, { type: "array", label: "dp[i]", values: dp.slice() }] }];
+          for (let i = 0; i < n; i++) {
+            let from = -1;
+            for (let j = 0; j < i; j++) if (nums[j] < nums[i] && dp[j] + 1 > dp[i]) { dp[i] = dp[j] + 1; from = j; }
+            const smaller = nums.map((x, j) => (j < i && x < nums[i] ? j : -1)).filter((j) => j >= 0);
+            steps.push({ line: ["end", "try"], note: smaller.length ? `End at nums[${i}] = ${nums[i]}: smaller values before it are ${smaller.map((j) => nums[j]).join(", ")}. The best is dp[${from}] + 1 = ${dp[i]}.` : `End at nums[${i}] = ${nums[i]}: nothing smaller comes before it, so dp[${i}] = 1.`, view: [{ type: "array", label: "nums (dark = i, yellow = smaller values before it, green = the best one to follow)", values: nums, marks: { ...Object.fromEntries(smaller.map((j) => [j, "compare"])), ...(from >= 0 ? { [from]: "match" } : {}), [i]: "active" } }, { type: "array", label: "dp[i]", values: dp.slice(), marks: { [i]: "new" } }] });
+          }
+          const ans = Math.max(...dp);
+          steps.push({ line: "return", note: `Return ${ans}, the biggest dp value. Two nested loops: O(n²).`, view: [{ type: "array", label: "dp[i] (green = the biggest)", values: dp, marks: { [dp.indexOf(ans)]: "match" } }] });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0300-longest-increasing-subsequence/approach3.visual.js -->
+    <script>
+      // tails[L] = the smallest possible last value of an increasing subsequence of length L + 1. Binary search keeps it sorted.
+      DSAViz.register("0300-longest-increasing-subsequence/approach3", {
+        inputs: [{ name: "nums", type: "int[]", value: "[10, 9, 2, 5, 3, 7, 101, 18]", minLength: 1, maxLength: 10, minValue: -10000, maxValue: 10000 }],
+        trace({ nums }) {
+          const tails = [];
+          const steps = [{ line: "init", note: "tails starts empty. A smaller tail is better: more values can come after it.", view: [{ type: "array", label: "nums", values: nums }, { type: "array", label: "tails (always sorted)", values: [] }] }];
+          nums.forEach((x, i) => {
+            let lo = 0, hi = tails.length;
+            while (lo < hi) { const m = (lo + hi) >> 1; if (tails[m] < x) lo = m + 1; else hi = m; }
+            const ext = lo === tails.length;
+            const old = tails[lo];
+            tails[lo] = x;
+            steps.push({ line: ext ? ["each", "search", "extend"] : ["each", "search", "replace"], note: ext ? `${x} is bigger than every tail: append it. There's now an increasing subsequence of length ${tails.length}.` : `The first tail ≥ ${x} is ${old}, at index ${lo}. Replace it: a length-${lo + 1} subsequence can now end at the smaller ${x}.`, view: [{ type: "array", label: "nums (dark = this value)", values: nums, marks: { [i]: "active" } }, { type: "array", label: "tails (always sorted; yellow = changed)", values: tails.slice(), marks: { [lo]: "new" } }] });
+          });
+          steps.push({ line: "return", note: `Return ${tails.length}. tails isn't always a real subsequence, but its length is the answer. n binary searches: O(n log n).`, view: [{ type: "array", label: "tails", values: tails, marks: Object.fromEntries(tails.map((_, k) => [k, "match"])) }] });
+          return steps;
+        },
+      });
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->
     <script>

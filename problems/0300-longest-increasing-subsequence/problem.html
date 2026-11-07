@@ -1,0 +1,195 @@
+<details class="question" data-group="dynamic-programming" data-tags="dynamic programming dp lis subsequence binary search patience sorting tails">
+  <summary>
+    <span class="q-title">300. Longest Increasing Subsequence</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Dynamic Programming</span>
+      <span class="tag">Binary Search</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Keep <code>tails</code>, where
+      <code>tails[L]</code> is the <strong>smallest last value</strong> of
+      any increasing subsequence of length L + 1. It's always sorted. For
+      each value, binary search for the first tail ≥ it: replace that tail,
+      or append if there's none. The length of <code>tails</code> is the
+      answer. O(n log n), against O(n²) for the usual DP.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/longest-increasing-subsequence/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Return the length of the longest <strong>strictly</strong> increasing
+        subsequence of <code>nums</code> (values in order, not necessarily
+        side by side).
+      </p>
+      <ul>
+        <li><code>1 &lt;= nums.length &lt;= 2500</code>, <code>-10⁴ &lt;= nums[i] &lt;= 10⁴</code></li>
+        <li>Follow-up: O(n log n)</li>
+      </ul>
+      <p class="note">
+        Example: <code>[10,9,2,5,3,7,101,18]</code> → <code>4</code> (2, 3, 7,
+        18). <code>[0,1,0,3,2,3]</code> → <code>4</code>.
+        <code>[7,7,7,7]</code> → <code>1</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[2,2]</code></td>
+              <td><code>1</code></td>
+              <td>Strictly increasing. Using <code>bisect_right</code> (first tail &gt; x) lets equal values extend: it said <code>2</code>. Wrong on 262 of 2007 tests.</td>
+            </tr>
+            <tr>
+              <td><code>[10,9,2,5,3,7,101,18]</code></td>
+              <td><code>4</code></td>
+              <td>The final <code>tails</code> is [2, 3, 7, 18], which happens to be a real answer; often it isn't (see below), only its length is.</td>
+            </tr>
+            <tr>
+              <td>2500 rising values</td>
+              <td><code>2500</code></td>
+              <td>The memoized recursion goes 2500 calls deep: Python's default limit of 1000 isn't enough.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Recursion with Memo</h2>
+      <p class="intuition">
+        <code>longest(i)</code> = the longest increasing subsequence that
+        starts with <code>nums[i]</code>: 1, plus the best
+        <code>longest(j)</code> over every later, bigger <code>nums[j]</code>.
+        Remember each result, and take the best start.
+      </p>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(n) memo + O(n) calls</span>
+      </div>
+      <p class="note">
+        2500 random values: Python 289 ms, Java 5.0 ms, C++ 4.2 ms.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: DP, Ends at i</h2>
+      <p class="intuition">
+        <code>dp[i]</code> = the longest increasing subsequence that ends at
+        <code>nums[i]</code>: 1, plus the best <code>dp[j]</code> over every
+        earlier, smaller <code>nums[j]</code>. The answer is the biggest
+        <code>dp</code>.
+      </p>
+      <ul>
+        <li>The usual first answer, and the base for variants like "count them" (673).</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        2500 random values: Python 163 ms, Java 2.9 ms, C++ 4.3 ms.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Tails + Binary Search
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        For each value x, find the first tail ≥ x with a binary search. If
+        none, x makes a longer subsequence: append it. Otherwise replace that
+        tail with x: a subsequence of that length can now end lower, which
+        leaves more room for later values.
+      </p>
+      <ul>
+        <li><code>tails</code> stays sorted, which is why binary search works.</li>
+        <li>For <code>[3,4,1]</code> the final tails are [1, 4], which isn't a subsequence; the length 2 is still right.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        2500 random values: Python 0.28 ms, Java 0.06 ms, C++ 0.04 ms, about
+        600 times faster than Approach 2 in Python.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No library computes the LIS, but Approach 3 leans on the built-in
+        binary searches: <code>bisect_left</code> and
+        <code>std::lower_bound</code>.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Recursion with Memo</th>
+              <td>longest(i) from each start</td>
+              <td>O(n²)</td>
+              <td>O(n)</td>
+              <td>2500 calls deep</td>
+            </tr>
+            <tr>
+              <th scope="row">DP, Ends at i</th>
+              <td>Best smaller value before i</td>
+              <td>O(n²)</td>
+              <td>O(n)</td>
+              <td>Base for variants</td>
+            </tr>
+            <tr>
+              <th scope="row">Tails + Binary Search</th>
+              <td>Smallest tail per length</td>
+              <td>O(n log n)</td>
+              <td>O(n)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
