@@ -15592,7 +15592,7 @@
       <details class="pattern-group" id="g-trees">
         <summary>
           <span class="g-name">Trees</span>
-          <span class="g-count"><span class="g-total">12 problems</span></span>
+          <span class="g-count"><span class="g-total">13 problems</span></span>
           <span class="g-hint">A DFS that returns something to the parent</span>
         </summary>
         <div class="g-body">
@@ -19968,6 +19968,477 @@
                         <td>Invert both sides, then cross them</td>
                         <td>O(n)</td>
                         <td>O(height)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0230-kth-smallest-element-in-a-bst ===== -->
+          <details class="question" data-group="trees" data-tags="tree binary search tree bst inorder traversal kth smallest stack iterative">
+            <summary>
+              <span class="q-title">230. Kth Smallest Element in a BST</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Binary Search Tree</span>
+                <span class="tag">Depth-First Search</span>
+                <span class="tag">Stack</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> An <strong>in-order</strong> walk of a BST
+                (left subtree, node, right subtree) visits the values in sorted order.
+                Walk it with a stack and stop at the k-th node you pop: O(h + k) time,
+                O(h) space, where h is the tree's height.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/kth-smallest-element-in-a-bst/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Given the root of a binary search tree and <code>k</code>, return the
+                  k-th smallest value in it (counting from 1).
+                </p>
+                <ul>
+                  <li><code>1 &lt;= k &lt;= n &lt;= 10⁴</code></li>
+                  <li><code>0 &lt;= Node.val &lt;= 10⁴</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>[3,1,4,null,2], k = 1</code> → <code>1</code>.
+                  <code>[5,3,6,2,4,null,null,1], k = 3</code> → <code>3</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[2,1], k = 2</code></td>
+                        <td><code>2</code></td>
+                        <td>Pre-order (node first) isn't sorted: it said <code>1</code>. Reading the level-order list as if it were sorted fails the same way; wrong on 2400 of 3105 tests.</td>
+                      </tr>
+                      <tr>
+                        <td>10⁴ nodes, each the left child of the last</td>
+                        <td>-</td>
+                        <td>The tree is one long chain. The recursive Python versions hit <code>RecursionError</code> at the default limit of 1000, so they raise it.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1], k = 1</code></td>
+                        <td><code>1</code></td>
+                        <td>One node.</td>
+                      </tr>
+                      <tr>
+                        <td>10⁴ nodes, <code>k = n</code></td>
+                        <td>the largest</td>
+                        <td>No early stop helps: every node is visited.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: List Every Value In Order</h2>
+                <p class="intuition">
+                  Do a full in-order walk, appending each value. The list comes out
+                  sorted, so the answer is <code>vals[k − 1]</code>.
+                </p>
+                <ul>
+                  <li>Simple, but it visits all n nodes even when k is 1.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  10⁴ random values, k = 1: Python 1.2 ms, Java 0.13 ms, C++ 0.08 ms;
+                  about the same for any k.
+                </p>
+                <div class="code-tabs" data-viz="0230-kth-smallest-element-in-a-bst/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[11,17],"visit":[12,13,14,16],"add":[15],"return":[18]}'>
+                    import sys
+                    sys.setrecursionlimit(20000)  # a BST of 10^4 nodes can be one long chain: 10^4 calls deep
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def kthSmallest(self, root, k):
+                            vals = []
+                            def inorder(node):  # left, node, right: a BST comes out sorted
+                                if node:
+                                    inorder(node.left)
+                                    vals.append(node.val)
+                                    inorder(node.right)
+                            inorder(root)  # every value, smallest first
+                            return vals[k - 1]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[16,17],"return":[18],"visit":[21,22,23,25],"add":[24]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int kthSmallest(TreeNode* root, int k) {
+                            std::vector<int> vals;
+                            inorder(root, vals); // every value, smallest first
+                            return vals[k - 1];
+                        }
+                    private:
+                        void inorder(TreeNode* node, std::vector<int>& vals) { // left, node, right: a BST comes out sorted
+                            if (!node) return;
+                            inorder(node->left, vals);
+                            vals.push_back(node->val);
+                            inorder(node->right, vals);
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[19,20],"return":[21],"visit":[23,24,25,27],"add":[26]}'>
+                    import java.util.*;
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    class Solution {
+                        public int kthSmallest(TreeNode root, int k) {
+                            List<Integer> vals = new ArrayList<>();
+                            inorder(root, vals); // every value, smallest first
+                            return vals.get(k - 1);
+                        }
+                        private void inorder(TreeNode node, List<Integer> vals) { // left, node, right: a BST comes out sorted
+                            if (node == null) return;
+                            inorder(node.left, vals);
+                            vals.add(node.val);
+                            inorder(node.right, vals);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Recursive In-Order, Stop Early</h2>
+                <p class="intuition">
+                  Same walk, but count down from <code>k</code> as each value is
+                  visited. At 0, save the value and make every remaining call return
+                  straight away.
+                </p>
+                <ul>
+                  <li>No list of values; the work is about h + k nodes.</li>
+                  <li>The early-stop flag must be checked after the left call, or the walk keeps going.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(h + k)</span>
+                  <span><strong>Space</strong> O(h) call stack</span>
+                </div>
+                <p class="note">
+                  10⁴ random values, k = 1: Python 2.4 µs, Java 0.5 µs, C++ 0.1 µs,
+                  500 times faster than Approach 1 in Python. With k = n it's no faster.
+                </p>
+                <div class="code-tabs" data-viz="0230-kth-smallest-element-in-a-bst/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[11,12,22],"visit":[13,16,21],"stop":[14,15],"count":[17],"found":[18,19,20],"return":[23]}'>
+                    import sys
+                    sys.setrecursionlimit(20000)  # a BST of 10^4 nodes can be one long chain: 10^4 calls deep
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def kthSmallest(self, root, k):
+                            self.left = k  # how many values are still to be counted
+                            self.ans = None
+                            def inorder(node):
+                                if not node or self.ans is not None:  # nothing here, or already found: stop
+                                    return
+                                inorder(node.left)
+                                self.left -= 1  # this node is the next smallest
+                                if self.left == 0:
+                                    self.ans = node.val
+                                    return
+                                inorder(node.right)
+                            inorder(root)
+                            return self.ans
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[15,16],"return":[17],"visit":[22,24,31],"stop":[23,25],"count":[26],"found":[26,27,28,29]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    class Solution {
+                    public:
+                        int kthSmallest(TreeNode* root, int k) {
+                            left = k; // how many values are still to be counted
+                            inorder(root);
+                            return ans;
+                        }
+                    private:
+                        int left = 0, ans = -1;
+                        bool done = false;
+                        void inorder(TreeNode* node) {
+                            if (!node || done) return; // nothing here, or already found: stop
+                            inorder(node->left);
+                            if (done) return;
+                            if (--left == 0) { // this node is the next smallest
+                                ans = node->val;
+                                done = true;
+                                return;
+                            }
+                            inorder(node->right);
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[20,21],"return":[22],"visit":[24,26,33],"stop":[25,27],"count":[28],"found":[28,29,30,31]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    class Solution {
+                        private int left, ans;
+                        private boolean done;
+                        public int kthSmallest(TreeNode root, int k) {
+                            left = k; // how many values are still to be counted
+                            inorder(root);
+                            return ans;
+                        }
+                        private void inorder(TreeNode node) {
+                            if (node == null || done) return; // nothing here, or already found: stop
+                            inorder(node.left);
+                            if (done) return;
+                            if (--left == 0) { // this node is the next smallest
+                                ans = node.val;
+                                done = true;
+                                return;
+                            }
+                            inorder(node.right);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Iterative In-Order With a Stack
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Push nodes while going left. Pop: that's the next smallest value. If
+                  it's the k-th pop, return it; otherwise move to its right child and
+                  repeat.
+                </p>
+                <ul>
+                  <li>No recursion, so a 10⁴-node chain is fine in every language.</li>
+                  <li>The stack holds at most one root-to-leaf path.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(h + k)</span>
+                  <span><strong>Space</strong> O(h)</span>
+                </div>
+                <p class="note">
+                  10⁴ random values, k = n: Python 1.0 ms (the fastest in Python),
+                  Java 0.10 ms, C++ 0.06 ms (about the same as Approach 2). A 10⁴ chain with k = 1: Python 0.36 ms,
+                  against 1.7 ms for Approach 2.
+                </p>
+                <div class="code-tabs" data-viz="0230-kth-smallest-element-in-a-bst/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[9,10],"loop":[11],"down":[12,13,14],"pop":[15,16],"found":[17,18],"right":[19]}'>
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, val=0, left=None, right=None):
+                    #         self.val = val
+                    #         self.left = left
+                    #         self.right = right
+                    class Solution(object):
+                        def kthSmallest(self, root, k):
+                            stack = []  # the path of nodes whose left side is being visited
+                            node = root
+                            while True:
+                                while node:  # go as far left as possible: that's the smallest left
+                                    stack.append(node)
+                                    node = node.left
+                                node = stack.pop()  # the next smallest value
+                                k -= 1
+                                if k == 0:
+                                    return node.val
+                                node = node.right  # then everything to its right, smallest first
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[16,17],"loop":[18],"down":[19,20,21],"pop":[23,24,25],"found":[25],"right":[26]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode() : val(0), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x) : val(x), left(nullptr), right(nullptr) {}
+                     *     TreeNode(int x, TreeNode *left, TreeNode *right) : val(x), left(left), right(right) {}
+                     * };
+                     */
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int kthSmallest(TreeNode* root, int k) {
+                            std::vector<TreeNode*> stack; // the path of nodes whose left side is being visited
+                            TreeNode* node = root;
+                            while (true) {
+                                while (node) { // go as far left as possible: that's the smallest left
+                                    stack.push_back(node);
+                                    node = node->left;
+                                }
+                                node = stack.back(); // the next smallest value
+                                stack.pop_back();
+                                if (--k == 0) return node->val;
+                                node = node->right; // then everything to its right, smallest first
+                            }
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[19,20],"loop":[21],"down":[22,23,24],"pop":[26,27],"found":[27],"right":[28]}'>
+                    import java.util.*;
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode() {}
+                     *     TreeNode(int val) { this.val = val; }
+                     *     TreeNode(int val, TreeNode left, TreeNode right) {
+                     *         this.val = val;
+                     *         this.left = left;
+                     *         this.right = right;
+                     *     }
+                     * }
+                     */
+                    class Solution {
+                        public int kthSmallest(TreeNode root, int k) {
+                            ArrayDeque<TreeNode> stack = new ArrayDeque<>(); // the path of nodes whose left side is being visited
+                            TreeNode node = root;
+                            while (true) {
+                                while (node != null) { // go as far left as possible: that's the smallest left
+                                    stack.push(node);
+                                    node = node.left;
+                                }
+                                node = stack.pop(); // the next smallest value
+                                if (--k == 0) return node.val;
+                                node = node.right; // then everything to its right, smallest first
+                            }
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  LeetCode's <code>TreeNode</code> has no methods. A sorted structure
+                  like Java's <code>TreeSet</code> or C++'s <code>std::set</code> doesn't
+                  give the k-th element directly either.
+                </p>
+                <p class="note">
+                  Follow-up (many inserts and queries): store each node's subtree size,
+                  then pick the side by comparing k with the left size, O(h) per query.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">List Every Value</th>
+                        <td>Full in-order, then index</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Same cost for any k</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Recursive, Stop Early</th>
+                        <td>Count down to 0</td>
+                        <td>O(h + k)</td>
+                        <td>O(h)</td>
+                        <td>Needs a higher recursion limit in Python</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Iterative With a Stack</th>
+                        <td>Push left, pop, go right</td>
+                        <td>O(h + k)</td>
+                        <td>O(h)</td>
                         <td>Expected answer</td>
                       </tr>
                     </tbody>
@@ -65467,6 +65938,150 @@
       }
       const listOf = (root) => treeView(root, "").values;
       const show = (v) => `[${v.map((x) => (x === null ? "null" : x)).join(", ")}]`;
+      })();
+    </script>
+    <!-- problems/0230-kth-smallest-element-in-a-bst/approach1.visual.js -->
+    <script>
+      // In-order (left, node, right) lists a BST's values smallest first. Collect all of them, then take index k - 1.
+      (function () {
+      DSAViz.register("0230-kth-smallest-element-in-a-bst/approach1", {
+        inputs: [
+          { name: "root", type: "tree", value: "[5, 3, 6, 2, 4, null, null, 1]", maxLength: 15 },
+          { name: "k", type: "int", value: "3", min: 1, max: 15 },
+        ],
+        trace({ root: values, k }) {
+          const { root, nodes } = check(values, k);
+          const vals = [];
+          const done = {};
+          const steps = [];
+          const view = (o = {}) => [{ type: "tree", label: "tree (dark = just listed, green = listed)", values, marks: { ...done, ...(o.at !== undefined ? { [o.at]: "active" } : {}) } }, { type: "array", label: "vals (in-order)", values: vals.slice(), marks: o.pick ? { [k - 1]: "match" } : vals.length && o.at !== undefined ? { [vals.length - 1]: "new" } : {} }];
+          steps.push({ line: "init", note: "Visit left subtree, node, right subtree, everywhere: the values come out sorted.", view: view() });
+          const go = (id) => {
+            if (id < 0) return;
+            go(nodes[id].left);
+            vals.push(nodes[id].val);
+            steps.push({ line: ["visit", "add"], note: `Everything left of ${nodes[id].val} is listed: add ${nodes[id].val}.`, view: view({ at: id }) });
+            done[id] = "match";
+            go(nodes[id].right);
+          };
+          go(root);
+          steps.push({ line: "return", note: `Return ${vals[k - 1]}. It's vals[k − 1] = vals[${k - 1}]. All n values were listed: O(n) time and space.`, view: view({ pick: true }) });
+          return steps;
+        },
+      });
+
+      function check(values, k) {
+        const { root, nodes } = DSAViz.buildTree(values);
+        const ids = Object.keys(nodes).map(Number);
+        if (root < 0) throw new DSAViz.InputError("The tree needs at least one node.");
+        if (new Set(ids.map((id) => nodes[id].val)).size !== ids.length) throw new DSAViz.InputError("BST values must all be different here.");
+        const ok = (id, lo, hi) => id < 0 || (nodes[id].val > lo && nodes[id].val < hi && ok(nodes[id].left, lo, nodes[id].val) && ok(nodes[id].right, nodes[id].val, hi));
+        if (!ok(root, -Infinity, Infinity)) throw new DSAViz.InputError("That isn't a BST: every left subtree must be smaller and every right subtree bigger than its node.");
+        if (k < 1 || k > ids.length) throw new DSAViz.InputError(`k must be between 1 and ${ids.length} (the number of nodes).`);
+        return { root, nodes };
+      }
+      })();
+    </script>
+    <!-- problems/0230-kth-smallest-element-in-a-bst/approach2.visual.js -->
+    <script>
+      // The same in-order walk, counting down from k; it stops as soon as the k-th value is reached.
+      (function () {
+      DSAViz.register("0230-kth-smallest-element-in-a-bst/approach2", {
+        inputs: [
+          { name: "root", type: "tree", value: "[5, 3, 6, 2, 4, null, null, 1]", maxLength: 15 },
+          { name: "k", type: "int", value: "3", min: 1, max: 15 },
+        ],
+        trace({ root: values, k }) {
+          const { root, nodes } = check(values, k);
+          const done = {};
+          const steps = [];
+          let left = k;
+          let ans = null;
+          const view = (o = {}) => [{ type: "tree", label: "tree (dark = counted now, green = counted, never visited = plain)", values, marks: { ...done, ...(o.at !== undefined ? { [o.at]: o.hit ? "match" : "active" } : {}) } }, { type: "vars", items: [{ name: "left", value: left, mark: o.at !== undefined ? "new" : "" }, { name: "ans", value: ans === null ? "None" : ans, mark: o.hit ? "match" : "" }] }];
+          steps.push({ line: "init", note: `left = ${k}: count down one per value, in sorted order.`, view: view() });
+          const go = (id) => {
+            if (id < 0 || ans !== null) return;
+            go(nodes[id].left);
+            if (ans !== null) return;
+            left--;
+            if (left === 0) {
+              ans = nodes[id].val;
+              steps.push({ line: ["visit", "count", "found"], note: `${nodes[id].val} is the next smallest: left = 0. Found it; every call returns right away.`, view: view({ at: id, hit: true }) });
+              return;
+            }
+            steps.push({ line: ["visit", "count"], note: `${nodes[id].val} is the next smallest: left = ${left}.`, view: view({ at: id }) });
+            done[id] = "match";
+            go(nodes[id].right);
+          };
+          go(root);
+          steps.push({ line: "return", note: `Return ${ans}. Only the first k values were counted, but the calls first go all the way down the left side: O(h + k).`, view: view() });
+          return steps;
+        },
+      });
+
+      function check(values, k) {
+        const { root, nodes } = DSAViz.buildTree(values);
+        const ids = Object.keys(nodes).map(Number);
+        if (root < 0) throw new DSAViz.InputError("The tree needs at least one node.");
+        if (new Set(ids.map((id) => nodes[id].val)).size !== ids.length) throw new DSAViz.InputError("BST values must all be different here.");
+        const ok = (id, lo, hi) => id < 0 || (nodes[id].val > lo && nodes[id].val < hi && ok(nodes[id].left, lo, nodes[id].val) && ok(nodes[id].right, nodes[id].val, hi));
+        if (!ok(root, -Infinity, Infinity)) throw new DSAViz.InputError("That isn't a BST: every left subtree must be smaller and every right subtree bigger than its node.");
+        if (k < 1 || k > ids.length) throw new DSAViz.InputError(`k must be between 1 and ${ids.length} (the number of nodes).`);
+        return { root, nodes };
+      }
+      })();
+    </script>
+    <!-- problems/0230-kth-smallest-element-in-a-bst/approach3.visual.js -->
+    <script>
+      // Iterative in-order with a stack: push the whole left side, pop the next smallest, then go right. Stop at the k-th pop.
+      (function () {
+      DSAViz.register("0230-kth-smallest-element-in-a-bst/approach3", {
+        inputs: [
+          { name: "root", type: "tree", value: "[5, 3, 6, 2, 4, null, null, 1]", maxLength: 15 },
+          { name: "k", type: "int", value: "3", min: 1, max: 15 },
+        ],
+        trace({ root: values, k: k0 }) {
+          const { root, nodes } = check(values, k0);
+          let k = k0;
+          const stack = [];
+          const done = {};
+          const steps = [];
+          const view = (o = {}) => {
+            const m = { ...done };
+            stack.forEach((id) => (m[id] = "compare"));
+            if (o.at !== undefined) m[o.at] = o.hit ? "match" : "active";
+            return [{ type: "tree", label: "tree (yellow = on the stack, dark = popped now, green = popped)", values, marks: m }, { type: "array", label: "stack (top on the right)", values: stack.map((id) => nodes[id].val), compact: true }, { type: "vars", items: [{ name: "k", value: k, mark: o.at !== undefined ? "new" : "" }] }];
+          };
+          let node = root;
+          steps.push({ line: "init", note: "Start at the root with an empty stack.", view: view() });
+          while (true) {
+            const pushed = [];
+            while (node >= 0) { stack.push(node); pushed.push(nodes[node].val); node = nodes[node].left; }
+            if (pushed.length) steps.push({ line: ["loop", "down"], note: `Go left as far as possible, pushing ${pushed.join(", ")}.`, view: view() });
+            const id = stack.pop();
+            k--;
+            if (k === 0) {
+              steps.push({ line: ["pop", "found"], note: `Pop ${nodes[id].val}: the next smallest. k = 0, so it's the answer.`, view: view({ at: id, hit: true }) });
+              steps.push({ line: "found", note: `Return ${nodes[id].val}. O(h + k): the stack never holds more than the tree's height.`, view: view({ at: id, hit: true }) });
+              return steps;
+            }
+            steps.push({ line: ["pop", "found", "right"], note: `Pop ${nodes[id].val}: the next smallest. k = ${k}. Now visit its right subtree${nodes[id].right < 0 ? " (empty)" : ""}.`, view: view({ at: id }) });
+            done[id] = "match";
+            node = nodes[id].right;
+          }
+        },
+      });
+
+      function check(values, k) {
+        const { root, nodes } = DSAViz.buildTree(values);
+        const ids = Object.keys(nodes).map(Number);
+        if (root < 0) throw new DSAViz.InputError("The tree needs at least one node.");
+        if (new Set(ids.map((id) => nodes[id].val)).size !== ids.length) throw new DSAViz.InputError("BST values must all be different here.");
+        const ok = (id, lo, hi) => id < 0 || (nodes[id].val > lo && nodes[id].val < hi && ok(nodes[id].left, lo, nodes[id].val) && ok(nodes[id].right, nodes[id].val, hi));
+        if (!ok(root, -Infinity, Infinity)) throw new DSAViz.InputError("That isn't a BST: every left subtree must be smaller and every right subtree bigger than its node.");
+        if (k < 1 || k > ids.length) throw new DSAViz.InputError(`k must be between 1 and ${ids.length} (the number of nodes).`);
+        return { root, nodes };
+      }
       })();
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->

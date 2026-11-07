@@ -1,0 +1,204 @@
+<details class="question" data-group="trees" data-tags="tree binary search tree bst inorder traversal kth smallest stack iterative">
+  <summary>
+    <span class="q-title">230. Kth Smallest Element in a BST</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Binary Search Tree</span>
+      <span class="tag">Depth-First Search</span>
+      <span class="tag">Stack</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> An <strong>in-order</strong> walk of a BST
+      (left subtree, node, right subtree) visits the values in sorted order.
+      Walk it with a stack and stop at the k-th node you pop: O(h + k) time,
+      O(h) space, where h is the tree's height.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/kth-smallest-element-in-a-bst/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given the root of a binary search tree and <code>k</code>, return the
+        k-th smallest value in it (counting from 1).
+      </p>
+      <ul>
+        <li><code>1 &lt;= k &lt;= n &lt;= 10⁴</code></li>
+        <li><code>0 &lt;= Node.val &lt;= 10⁴</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[3,1,4,null,2], k = 1</code> → <code>1</code>.
+        <code>[5,3,6,2,4,null,null,1], k = 3</code> → <code>3</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[2,1], k = 2</code></td>
+              <td><code>2</code></td>
+              <td>Pre-order (node first) isn't sorted: it said <code>1</code>. Reading the level-order list as if it were sorted fails the same way; wrong on 2400 of 3105 tests.</td>
+            </tr>
+            <tr>
+              <td>10⁴ nodes, each the left child of the last</td>
+              <td>-</td>
+              <td>The tree is one long chain. The recursive Python versions hit <code>RecursionError</code> at the default limit of 1000, so they raise it.</td>
+            </tr>
+            <tr>
+              <td><code>[1], k = 1</code></td>
+              <td><code>1</code></td>
+              <td>One node.</td>
+            </tr>
+            <tr>
+              <td>10⁴ nodes, <code>k = n</code></td>
+              <td>the largest</td>
+              <td>No early stop helps: every node is visited.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: List Every Value In Order</h2>
+      <p class="intuition">
+        Do a full in-order walk, appending each value. The list comes out
+        sorted, so the answer is <code>vals[k − 1]</code>.
+      </p>
+      <ul>
+        <li>Simple, but it visits all n nodes even when k is 1.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        10⁴ random values, k = 1: Python 1.2 ms, Java 0.13 ms, C++ 0.08 ms;
+        about the same for any k.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Recursive In-Order, Stop Early</h2>
+      <p class="intuition">
+        Same walk, but count down from <code>k</code> as each value is
+        visited. At 0, save the value and make every remaining call return
+        straight away.
+      </p>
+      <ul>
+        <li>No list of values; the work is about h + k nodes.</li>
+        <li>The early-stop flag must be checked after the left call, or the walk keeps going.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(h + k)</span>
+        <span><strong>Space</strong> O(h) call stack</span>
+      </div>
+      <p class="note">
+        10⁴ random values, k = 1: Python 2.4 µs, Java 0.5 µs, C++ 0.1 µs,
+        500 times faster than Approach 1 in Python. With k = n it's no faster.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Iterative In-Order With a Stack
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Push nodes while going left. Pop: that's the next smallest value. If
+        it's the k-th pop, return it; otherwise move to its right child and
+        repeat.
+      </p>
+      <ul>
+        <li>No recursion, so a 10⁴-node chain is fine in every language.</li>
+        <li>The stack holds at most one root-to-leaf path.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(h + k)</span>
+        <span><strong>Space</strong> O(h)</span>
+      </div>
+      <p class="note">
+        10⁴ random values, k = n: Python 1.0 ms (the fastest in Python),
+        Java 0.10 ms, C++ 0.06 ms (about the same as Approach 2). A 10⁴ chain with k = 1: Python 0.36 ms,
+        against 1.7 ms for Approach 2.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        LeetCode's <code>TreeNode</code> has no methods. A sorted structure
+        like Java's <code>TreeSet</code> or C++'s <code>std::set</code> doesn't
+        give the k-th element directly either.
+      </p>
+      <p class="note">
+        Follow-up (many inserts and queries): store each node's subtree size,
+        then pick the side by comparing k with the left size, O(h) per query.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">List Every Value</th>
+              <td>Full in-order, then index</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Same cost for any k</td>
+            </tr>
+            <tr>
+              <th scope="row">Recursive, Stop Early</th>
+              <td>Count down to 0</td>
+              <td>O(h + k)</td>
+              <td>O(h)</td>
+              <td>Needs a higher recursion limit in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">Iterative With a Stack</th>
+              <td>Push left, pop, go right</td>
+              <td>O(h + k)</td>
+              <td>O(h)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
