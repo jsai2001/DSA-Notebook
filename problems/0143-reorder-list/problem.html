@@ -1,0 +1,237 @@
+<details class="question" data-group="linked-list" data-tags="linked-list two-pointers stack recursion reorder reverse middle merge">
+  <summary>
+    <span class="q-title">143. Reorder List</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Linked List</span>
+      <span class="tag">Two Pointers</span>
+      <span class="tag">Stack</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Three steps you already know: find the
+      middle (slow and fast pointers), reverse the second half, then merge
+      the two halves one node at a time. O(n) time, O(1) memory. Remember to
+      cut the list after the middle, or it loops.
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/reorder-list/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Reorder the list L0 → L1 → … → Ln−1 → Ln into L0 → Ln → L1 → Ln−1 →
+        L2 → Ln−2 → …, in place. You may only change the
+        <code>next</code> links, not the values in the nodes.
+      </p>
+      <ul>
+        <li><code>1 &lt;= n &lt;= 5 × 10⁴</code></li>
+        <li><code>1 &lt;= Node.val &lt;= 1000</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[1,2,3,4]</code> → <code>[1,4,2,3]</code>.
+        <code>[1,2,3,4,5]</code> → <code>[1,5,2,4,3]</code>.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[1,2,3,4]</code></td>
+              <td><code>[1,4,2,3]</code></td>
+              <td>In the array version, the new last node still points to its old neighbor. Without the final cut, the list looped here: 1 → 4 → 2 → 3 → 4 → …</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3,4]</code></td>
+              <td><code>[1,4,2,3]</code></td>
+              <td>In the O(1) version, forgetting to cut after the middle made node 3 point to itself after the merge: another endless loop.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3,4,5]</code></td>
+              <td><code>[1,5,2,4,3]</code></td>
+              <td>Odd length: the middle node ends up last.</td>
+            </tr>
+            <tr>
+              <td><code>[1]</code> and <code>[1,2]</code></td>
+              <td>unchanged</td>
+              <td>Nothing to move.</td>
+            </tr>
+            <tr>
+              <td><code>[7,7,7,7]</code></td>
+              <td><code>[7,7,7,7]</code></td>
+              <td>Looks unchanged, but the <strong>nodes</strong> must be in the new order. Swapping values instead of links isn't allowed.</td>
+            </tr>
+            <tr>
+              <td>5 × 10⁴ nodes</td>
+              <td>reordered</td>
+              <td>The largest input. Every approach here is O(n): about 3 ms in Python, under 0.3 ms in C++.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Nodes in an Array</h2>
+      <p class="intuition">
+        Copy the nodes (not the values) into an array, so the back is easy to
+        reach. Then with <code>i</code> at the front and <code>j</code> at the
+        back, link <code>nodes[i] → nodes[j] → nodes[i + 1]</code>, moving
+        both inward until they meet.
+      </p>
+      <ul>
+        <li>
+          Finish with <code>nodes[i].next = None</code>: the node that ends up
+          last still points to its old neighbor.
+        </li>
+        <li>The simplest to get right.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        At 5 × 10⁴ nodes here: Python 3.3 ms, Java 3.5 ms, C++ 0.26 ms. Fine
+        in practice; the interviewer will ask for O(1) memory next.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Stack of Nodes</h2>
+      <p class="intuition">
+        Push every node on a stack; the top is the tail. Walk from the head
+        and, (n − 1) / 2 times, pop the top node and slip it in right after
+        the current node. Then cut the link from the node now on top, which
+        is the new tail.
+      </p>
+      <ul>
+        <li>Popping gives the back nodes in exactly the order they're needed.</li>
+        <li>Same memory as Approach 1, a different way to think about it.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        At 5 × 10⁴ nodes: Python 2.6 ms, Java 3.5 ms, C++ 0.31 ms.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Middle, Reverse, Merge
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        (1) Find the middle with <code>slow</code> and <code>fast</code>.
+        (2) Cut after it and reverse the second half: 4 → 5 becomes 5 → 4.
+        (3) Merge: take one node from the first half, then one from the
+        reversed second half, until the second half runs out.
+      </p>
+      <ul>
+        <li>
+          Stopping when <code>fast.next.next</code> is null puts the extra
+          node of an odd list in the first half, so the second half is never
+          longer.
+        </li>
+        <li>
+          Each step is a classic problem: Middle of the List (876), Reverse
+          Linked List (206), Merge Two Sorted Lists (21).
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        At 5 × 10⁴ nodes: Python 2.7 ms, Java 1.8 ms, C++ 0.13 ms, the fastest
+        in C++ and Java. The expected answer.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No standard library reorders a custom linked list. C++'s
+        <code>std::list</code> has <code>reverse</code> and
+        <code>splice</code>, but LeetCode passes its own
+        <code>ListNode</code>, so they don't apply.
+      </p>
+      <p class="note">
+        Approach 3 is what you'd write in an interview. In everyday code,
+        Approach 1 is shorter and just as fast.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Nodes in an Array</th>
+              <td>Two indexes, front and back</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Cut the last link</td>
+            </tr>
+            <tr>
+              <th scope="row">Stack of Nodes</th>
+              <td>Pop the tail, insert after the front</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Same memory, another view</td>
+            </tr>
+            <tr>
+              <th scope="row">Middle, Reverse, Merge</th>
+              <td>Three linked-list classics in a row</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Expected answer; cut after the middle</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

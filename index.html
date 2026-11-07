@@ -7081,7 +7081,7 @@
       <details class="pattern-group" id="g-linked-list">
         <summary>
           <span class="g-name">Linked List</span>
-          <span class="g-count"><span class="g-total">7 problems</span></span>
+          <span class="g-count"><span class="g-total">8 problems</span></span>
           <span class="g-hint">Pointer rewiring and dummy heads</span>
         </summary>
         <div class="g-body">
@@ -10806,6 +10806,518 @@
                         <td>O(n)</td>
                         <td>O(1)</td>
                         <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0143-reorder-list ===== -->
+          <details class="question" data-group="linked-list" data-tags="linked-list two-pointers stack recursion reorder reverse middle merge">
+            <summary>
+              <span class="q-title">143. Reorder List</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Linked List</span>
+                <span class="tag">Two Pointers</span>
+                <span class="tag">Stack</span>
+              </span>
+            </summary>
+
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Three steps you already know: find the
+                middle (slow and fast pointers), reverse the second half, then merge
+                the two halves one node at a time. O(n) time, O(1) memory. Remember to
+                cut the list after the middle, or it loops.
+              </div>
+
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/reorder-list/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Reorder the list L0 → L1 → … → Ln−1 → Ln into L0 → Ln → L1 → Ln−1 →
+                  L2 → Ln−2 → …, in place. You may only change the
+                  <code>next</code> links, not the values in the nodes.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= n &lt;= 5 × 10⁴</code></li>
+                  <li><code>1 &lt;= Node.val &lt;= 1000</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>[1,2,3,4]</code> → <code>[1,4,2,3]</code>.
+                  <code>[1,2,3,4,5]</code> → <code>[1,5,2,4,3]</code>.
+                </p>
+              </section>
+
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[1,2,3,4]</code></td>
+                        <td><code>[1,4,2,3]</code></td>
+                        <td>In the array version, the new last node still points to its old neighbor. Without the final cut, the list looped here: 1 → 4 → 2 → 3 → 4 → …</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2,3,4]</code></td>
+                        <td><code>[1,4,2,3]</code></td>
+                        <td>In the O(1) version, forgetting to cut after the middle made node 3 point to itself after the merge: another endless loop.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2,3,4,5]</code></td>
+                        <td><code>[1,5,2,4,3]</code></td>
+                        <td>Odd length: the middle node ends up last.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1]</code> and <code>[1,2]</code></td>
+                        <td>unchanged</td>
+                        <td>Nothing to move.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[7,7,7,7]</code></td>
+                        <td><code>[7,7,7,7]</code></td>
+                        <td>Looks unchanged, but the <strong>nodes</strong> must be in the new order. Swapping values instead of links isn't allowed.</td>
+                      </tr>
+                      <tr>
+                        <td>5 × 10⁴ nodes</td>
+                        <td>reordered</td>
+                        <td>The largest input. Every approach here is O(n): about 3 ms in Python, under 0.3 ms in C++.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Nodes in an Array</h2>
+                <p class="intuition">
+                  Copy the nodes (not the values) into an array, so the back is easy to
+                  reach. Then with <code>i</code> at the front and <code>j</code> at the
+                  back, link <code>nodes[i] → nodes[j] → nodes[i + 1]</code>, moving
+                  both inward until they meet.
+                </p>
+                <ul>
+                  <li>
+                    Finish with <code>nodes[i].next = None</code>: the node that ends up
+                    last still points to its old neighbor.
+                  </li>
+                  <li>The simplest to get right.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  At 5 × 10⁴ nodes here: Python 3.3 ms, Java 3.5 ms, C++ 0.26 ms. Fine
+                  in practice; the interviewer will ask for O(1) memory next.
+                </p>
+                <div class="code-tabs" data-viz="0143-reorder-list/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[8],"copy":[9,10,11],"link":[12,13,14,15,16,17,18,19],"cut":[20]}'>
+                    # Definition for singly-linked list.
+                    # class ListNode(object):
+                    #     def __init__(self, val=0, next=None):
+                    #         self.val = val
+                    #         self.next = next
+                    class Solution(object):
+                        def reorderList(self, head):
+                            nodes = []
+                            while head:  # copy the nodes (not the values) into an array
+                                nodes.append(head)
+                                head = head.next
+                            i, j = 0, len(nodes) - 1
+                            while i < j:  # take one from the front, then one from the back
+                                nodes[i].next = nodes[j]
+                                i += 1
+                                if i == j:  # odd length: they met in the middle
+                                    break
+                                nodes[j].next = nodes[i]
+                                j -= 1
+                            nodes[i].next = None  # the new last node: cut the old link, or it loops
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[15],"copy":[16,17],"link":[19,20,21,22,23,24],"cut":[26]}'>
+                    /**
+                     * Definition for singly-linked list.
+                     * struct ListNode {
+                     *     int val;
+                     *     ListNode *next;
+                     *     ListNode() : val(0), next(nullptr) {}
+                     *     ListNode(int x) : val(x), next(nullptr) {}
+                     *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+                     * };
+                     */
+                    #include <vector>
+                    class Solution {
+                    public:
+                        void reorderList(ListNode* head) {
+                            std::vector<ListNode*> nodes;
+                            for (ListNode* p = head; p; p = p->next) { // copy the nodes (not the values) into an array
+                                nodes.push_back(p);
+                            }
+                            int i = 0, j = static_cast<int>(nodes.size()) - 1;
+                            while (i < j) { // take one from the front, then one from the back
+                                nodes[i]->next = nodes[j];
+                                if (++i == j) break; // odd length: they met in the middle
+                                nodes[j]->next = nodes[i];
+                                --j;
+                            }
+                            nodes[i]->next = nullptr; // the new last node: cut the old link, or it loops
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[15],"copy":[16,17],"link":[19,20,21,22,23,24],"cut":[26]}'>
+                    /**
+                     * Definition for singly-linked list.
+                     * public class ListNode {
+                     *     int val;
+                     *     ListNode next;
+                     *     ListNode() {}
+                     *     ListNode(int val) { this.val = val; }
+                     *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+                     * }
+                     */
+                    import java.util.*;
+
+                    class Solution {
+                        public void reorderList(ListNode head) {
+                            List<ListNode> nodes = new ArrayList<>();
+                            for (ListNode p = head; p != null; p = p.next) { // copy the nodes (not the values) into an array
+                                nodes.add(p);
+                            }
+                            int i = 0, j = nodes.size() - 1;
+                            while (i < j) { // take one from the front, then one from the back
+                                nodes.get(i).next = nodes.get(j);
+                                if (++i == j) break; // odd length: they met in the middle
+                                nodes.get(j).next = nodes.get(i);
+                                j--;
+                            }
+                            nodes.get(i).next = null; // the new last node: cut the old link, or it loops
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Stack of Nodes</h2>
+                <p class="intuition">
+                  Push every node on a stack; the top is the tail. Walk from the head
+                  and, (n − 1) / 2 times, pop the top node and slip it in right after
+                  the current node. Then cut the link from the node now on top, which
+                  is the new tail.
+                </p>
+                <ul>
+                  <li>Popping gives the back nodes in exactly the order they're needed.</li>
+                  <li>Same memory as Approach 1, a different way to think about it.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  At 5 × 10⁴ nodes: Python 2.6 ms, Java 3.5 ms, C++ 0.31 ms.
+                </p>
+                <div class="code-tabs" data-viz="0143-reorder-list/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[8,9],"push":[10,11,12],"insert":[13,14,15,16,17,18],"cut":[19]}'>
+                    # Definition for singly-linked list.
+                    # class ListNode(object):
+                    #     def __init__(self, val=0, next=None):
+                    #         self.val = val
+                    #         self.next = next
+                    class Solution(object):
+                        def reorderList(self, head):
+                            stack = []
+                            node = head
+                            while node:  # push every node; the top of the stack is the tail
+                                stack.append(node)
+                                node = node.next
+                            cur = head
+                            for _ in range((len(stack) - 1) // 2):  # this many nodes move from the back
+                                last = stack.pop()  # the current tail
+                                last.next = cur.next  # slip it in right after cur
+                                cur.next = last
+                                cur = last.next
+                            stack[-1].next = None  # the node on top is the new tail: cut its old link
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[15],"push":[16,17],"insert":[19,20,21,22,23,24,25],"cut":[27]}'>
+                    /**
+                     * Definition for singly-linked list.
+                     * struct ListNode {
+                     *     int val;
+                     *     ListNode *next;
+                     *     ListNode() : val(0), next(nullptr) {}
+                     *     ListNode(int x) : val(x), next(nullptr) {}
+                     *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+                     * };
+                     */
+                    #include <vector>
+                    class Solution {
+                    public:
+                        void reorderList(ListNode* head) {
+                            std::vector<ListNode*> stack;
+                            for (ListNode* p = head; p; p = p->next) { // push every node; the top of the stack is the tail
+                                stack.push_back(p);
+                            }
+                            ListNode* cur = head;
+                            for (size_t k = (stack.size() - 1) / 2; k > 0; --k) { // this many nodes move from the back
+                                ListNode* last = stack.back(); // the current tail
+                                stack.pop_back();
+                                last->next = cur->next; // slip it in right after cur
+                                cur->next = last;
+                                cur = last->next;
+                            }
+                            stack.back()->next = nullptr; // the node on top is the new tail: cut its old link
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[15],"push":[16,17],"insert":[19,20,21,22,23,24],"cut":[26]}'>
+                    /**
+                     * Definition for singly-linked list.
+                     * public class ListNode {
+                     *     int val;
+                     *     ListNode next;
+                     *     ListNode() {}
+                     *     ListNode(int val) { this.val = val; }
+                     *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+                     * }
+                     */
+                    import java.util.*;
+
+                    class Solution {
+                        public void reorderList(ListNode head) {
+                            ArrayDeque<ListNode> stack = new ArrayDeque<>();
+                            for (ListNode p = head; p != null; p = p.next) { // push every node; the top of the stack is the tail
+                                stack.push(p);
+                            }
+                            ListNode cur = head;
+                            for (int k = (stack.size() - 1) / 2; k > 0; k--) { // this many nodes move from the back
+                                ListNode last = stack.pop(); // the current tail
+                                last.next = cur.next; // slip it in right after cur
+                                cur.next = last;
+                                cur = last.next;
+                            }
+                            stack.peek().next = null; // the node on top is the new tail: cut its old link
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Middle, Reverse, Merge
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  (1) Find the middle with <code>slow</code> and <code>fast</code>.
+                  (2) Cut after it and reverse the second half: 4 → 5 becomes 5 → 4.
+                  (3) Merge: take one node from the first half, then one from the
+                  reversed second half, until the second half runs out.
+                </p>
+                <ul>
+                  <li>
+                    Stopping when <code>fast.next.next</code> is null puts the extra
+                    node of an odd list in the first half, so the second half is never
+                    longer.
+                  </li>
+                  <li>
+                    Each step is a classic problem: Middle of the List (876), Reverse
+                    Linked List (206), Merge Two Sorted Lists (21).
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  At 5 × 10⁴ nodes: Python 2.7 ms, Java 1.8 ms, C++ 0.13 ms, the fastest
+                  in C++ and Java. The expected answer.
+                </p>
+                <div class="code-tabs" data-viz="0143-reorder-list/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"middle":[8,9,10,11],"reverse":[12,13,14,15,16],"merge":[17,18,19,20,21,22]}'>
+                    # Definition for singly-linked list.
+                    # class ListNode(object):
+                    #     def __init__(self, val=0, next=None):
+                    #         self.val = val
+                    #         self.next = next
+                    class Solution(object):
+                        def reorderList(self, head):
+                            slow = fast = head  # step 1: find the middle
+                            while fast.next and fast.next.next:
+                                slow = slow.next
+                                fast = fast.next.next
+                            second = slow.next  # step 2: cut after the middle and reverse the second half
+                            slow.next = None
+                            prev = None
+                            while second:
+                                second.next, prev, second = prev, second, second.next
+                            first, second = head, prev  # step 3: merge, one from each half
+                            while second:  # the second half is never longer than the first
+                                n1, n2 = first.next, second.next
+                                first.next = second
+                                second.next = n1
+                                first, second = n1, n2
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"middle":[14,15,16,17,18],"reverse":[20,21,22,23,24,25,26,27],"merge":[29,30,31,32,33,34,35,36,37]}'>
+                    /**
+                     * Definition for singly-linked list.
+                     * struct ListNode {
+                     *     int val;
+                     *     ListNode *next;
+                     *     ListNode() : val(0), next(nullptr) {}
+                     *     ListNode(int x) : val(x), next(nullptr) {}
+                     *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+                     * };
+                     */
+                    class Solution {
+                    public:
+                        void reorderList(ListNode* head) {
+                            ListNode* slow = head; // step 1: find the middle
+                            ListNode* fast = head;
+                            while (fast->next && fast->next->next) {
+                                slow = slow->next;
+                                fast = fast->next->next;
+                            }
+                            ListNode* second = slow->next; // step 2: cut after the middle and reverse the second half
+                            slow->next = nullptr;
+                            ListNode* prev = nullptr;
+                            while (second) {
+                                ListNode* next = second->next;
+                                second->next = prev;
+                                prev = second;
+                                second = next;
+                            }
+                            ListNode* first = head; // step 3: merge, one from each half
+                            second = prev;
+                            while (second) { // the second half is never longer than the first
+                                ListNode* n1 = first->next;
+                                ListNode* n2 = second->next;
+                                first->next = second;
+                                second->next = n1;
+                                first = n1;
+                                second = n2;
+                            }
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"middle":[13,14,15,16],"reverse":[18,19,20,21,22,23,24,25],"merge":[27,28,29,30,31,32,33,34,35]}'>
+                    /**
+                     * Definition for singly-linked list.
+                     * public class ListNode {
+                     *     int val;
+                     *     ListNode next;
+                     *     ListNode() {}
+                     *     ListNode(int val) { this.val = val; }
+                     *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+                     * }
+                     */
+                    class Solution {
+                        public void reorderList(ListNode head) {
+                            ListNode slow = head, fast = head; // step 1: find the middle
+                            while (fast.next != null && fast.next.next != null) {
+                                slow = slow.next;
+                                fast = fast.next.next;
+                            }
+                            ListNode second = slow.next; // step 2: cut after the middle and reverse the second half
+                            slow.next = null;
+                            ListNode prev = null;
+                            while (second != null) {
+                                ListNode next = second.next;
+                                second.next = prev;
+                                prev = second;
+                                second = next;
+                            }
+                            ListNode first = head; // step 3: merge, one from each half
+                            second = prev;
+                            while (second != null) { // the second half is never longer than the first
+                                ListNode n1 = first.next;
+                                ListNode n2 = second.next;
+                                first.next = second;
+                                second.next = n1;
+                                first = n1;
+                                second = n2;
+                            }
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  No standard library reorders a custom linked list. C++'s
+                  <code>std::list</code> has <code>reverse</code> and
+                  <code>splice</code>, but LeetCode passes its own
+                  <code>ListNode</code>, so they don't apply.
+                </p>
+                <p class="note">
+                  Approach 3 is what you'd write in an interview. In everyday code,
+                  Approach 1 is shorter and just as fast.
+                </p>
+              </section>
+
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Nodes in an Array</th>
+                        <td>Two indexes, front and back</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Cut the last link</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Stack of Nodes</th>
+                        <td>Pop the tail, insert after the front</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Same memory, another view</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Middle, Reverse, Merge</th>
+                        <td>Three linked-list classics in a row</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>Expected answer; cut after the middle</td>
                       </tr>
                     </tbody>
                   </table>
@@ -49491,6 +50003,182 @@
             steps.push({ line: ["loop", "move", "found"], note: `slow → node ${slow}, fast → ${fast === null ? "null" : `node ${fast}`}.${pos >= 0 ? " In the cycle, fast gains one node on slow each round." : ""}`, view: view(slow, fast) });
           }
           steps.push({ line: ["loop", "none"], note: `fast ${fast === null ? "is null" : "is on the last node"}: the list ends, so no cycle. Return false. ${moves} pointer moves, O(1) memory.`, view: view(slow, fast) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0143-reorder-list/approach1.visual.js -->
+    <script>
+      // Put the nodes in an array, then link them front, back, front, back with two indexes.
+      DSAViz.register("0143-reorder-list/approach1", {
+        inputs: [{ name: "head", type: "int[]", value: "[1, 2, 3, 4, 5]", minLength: 1, maxLength: 8, minValue: 1, maxValue: 999 }],
+        trace({ head }) {
+          const n = head.length;
+          const nxt = head.map((_, i) => (i + 1 < n ? i + 1 : -1)); // the real next links, by node index
+          const walk = (start) => {
+            const out = [];
+            for (let p = start; p !== -1 && out.length <= n; p = nxt[p]) out.push(p);
+            return out;
+          };
+          // A list widget walked from `start` through the actual links (caption = node index).
+          const listFrom = (label, start, o = {}) => ({
+            type: "list",
+            label,
+            nodes: walk(start).map((i) => ({ value: String(head[i]), caption: `node ${i}`, mark: (o.marks || {})[i] || "" })),
+            pointers: Object.fromEntries(Object.entries(o.pointers || {}).map(([k, v]) => [k, Math.max(0, walk(start).indexOf(v))])),
+          });
+          const target = [];
+          for (let i = 0, j = n - 1; i <= j; i++, j--) { target.push(i); if (i !== j) target.push(j); }
+
+          const steps = [];
+          let linked = 1; // how many nodes, from the head, are already in their new order
+          const view = (o = {}) => {
+            const list = listFrom(o.label || "linked so far, walked from the head (the rest still has its old links)", 0, { marks: o.lmarks });
+            if (!o.label) list.nodes = list.nodes.slice(0, linked);
+            return [
+              { type: "array", label: "nodes (the array holds the nodes, by index)", values: head.map((v) => `${v}`), sub: head.map((_, k) => `node ${k}`), marks: o.amarks || {}, pointers: o.ptr || {} },
+              list,
+            ];
+          };
+          steps.push({ line: ["init", "copy"], note: `Copy all ${n} nodes into an array, so the back of the list can be reached in O(1).`, view: view() });
+          let i = 0;
+          let j = n - 1;
+          while (i < j) {
+            nxt[i] = j;
+            linked++;
+            steps.push({ line: "link", note: `node ${i}.next = node ${j} (front, then back).`, view: view({ ptr: { i, j }, amarks: { [i]: "visited", [j]: "active" }, lmarks: { [i]: "visited", [j]: "new" } }) });
+            i++;
+            if (i === j) break;
+            nxt[j] = i;
+            linked++;
+            steps.push({ line: "link", note: `node ${j}.next = node ${i} (back, then front).`, view: view({ ptr: { i, j }, amarks: { [j]: "visited", [i]: "active" }, lmarks: { [j]: "visited", [i]: "new" } }) });
+            j--;
+          }
+          const looped = walk(0).length > n;
+          nxt[i] = -1;
+          steps.push({
+            line: "cut",
+            note: `node ${i} is the new last node. Set its next to null${looped ? ": it still pointed back into the list, which would loop forever" : ""}. Done: ${walk(0).map((k) => head[k]).join(" → ")}.`,
+            view: view({ label: "the reordered list", lmarks: { [i]: "match" } }),
+          });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0143-reorder-list/approach2.visual.js -->
+    <script>
+      // Push every node on a stack; pop from the back and slip each one in after the next front node.
+      DSAViz.register("0143-reorder-list/approach2", {
+        inputs: [{ name: "head", type: "int[]", value: "[1, 2, 3, 4, 5]", minLength: 1, maxLength: 8, minValue: 1, maxValue: 999 }],
+        trace({ head }) {
+          const n = head.length;
+          const nxt = head.map((_, i) => (i + 1 < n ? i + 1 : -1)); // the real next links, by node index
+          // Walk the actual links, stopping before any node comes up a second time.
+          const walk = (start) => {
+            const out = [];
+            for (let p = start; p !== -1 && !out.includes(p); p = nxt[p]) out.push(p);
+            return out;
+          };
+          // A list widget walked from `start` (caption = node index; ↩ marks a link back into the list).
+          const listFrom = (label, start, o = {}) => {
+            const order = walk(start);
+            const lastNext = order.length ? nxt[order[order.length - 1]] : -1;
+            return {
+              type: "list",
+              label,
+              nodes: order.map((i, k) => ({ value: String(head[i]), caption: k === order.length - 1 && lastNext !== -1 ? `node ${i} ↩ ${lastNext}` : `node ${i}`, mark: (o.marks || {})[i] || "" })),
+              pointers: Object.fromEntries(Object.entries(o.pointers || {}).map(([k, v]) => [k, Math.max(0, order.indexOf(v))])),
+            };
+          };
+          const target = [];
+          for (let i = 0, j = n - 1; i <= j; i++, j--) { target.push(i); if (i !== j) target.push(j); }
+
+          const steps = [];
+          const stack = [];
+          const view = (o = {}) => [
+            { type: "array", label: "stack (bottom → top; the top is the current tail)", values: stack.map((k) => `${head[k]}`), sub: stack.map((k) => `node ${k}`), marks: stack.length ? { [stack.length - 1]: "active" } : {} },
+            listFrom(o.label || "the list, walked from the head (↩ = still linked back into the list until the end)", 0, { marks: o.marks, pointers: o.cur !== undefined ? { cur: o.cur } : {} }),
+          ];
+          for (let k = 0; k < n; k++) stack.push(k);
+          steps.push({ line: ["init", "push"], note: `Push all ${n} nodes. Popping now gives the nodes from the back.`, view: view() });
+          let cur = 0;
+          const moves = Math.floor((n - 1) / 2);
+          steps.push({ line: "insert", note: `${moves} node${moves === 1 ? "" : "s"} must move from the back to the front half.`, view: view({ cur }) });
+          for (let k = 0; k < moves; k++) {
+            const last = stack.pop();
+            nxt[last] = nxt[cur];
+            nxt[cur] = last;
+            const was = cur;
+            cur = nxt[last];
+            steps.push({ line: "insert", note: `Pop node ${last} (value ${head[last]}) and put it right after node ${was}. Move cur two ahead, to node ${cur}.`, view: view({ cur, marks: { [last]: "new", [was]: "visited" } }) });
+          }
+          const top = stack[stack.length - 1];
+          nxt[top] = -1;
+          steps.push({ line: "cut", note: `node ${top}, now on top, is the new tail: set its next to null. Done: ${walk(0).map((k) => head[k]).join(" → ")}.`, view: view({ label: "the reordered list", marks: { [top]: "match" } }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0143-reorder-list/approach3.visual.js -->
+    <script>
+      // O(1) memory: find the middle, reverse the second half, then merge the two halves.
+      DSAViz.register("0143-reorder-list/approach3", {
+        inputs: [{ name: "head", type: "int[]", value: "[1, 2, 3, 4, 5]", minLength: 1, maxLength: 8, minValue: 1, maxValue: 999 }],
+        trace({ head }) {
+          const n = head.length;
+          const nxt = head.map((_, i) => (i + 1 < n ? i + 1 : -1)); // the real next links, by node index
+          const walk = (start) => {
+            const out = [];
+            for (let p = start; p !== -1 && out.length <= n; p = nxt[p]) out.push(p);
+            return out;
+          };
+          // A list widget walked from `start` through the actual links (caption = node index).
+          const listFrom = (label, start, o = {}) => ({
+            type: "list",
+            label,
+            nodes: walk(start).map((i) => ({ value: String(head[i]), caption: `node ${i}`, mark: (o.marks || {})[i] || "" })),
+            pointers: Object.fromEntries(Object.entries(o.pointers || {}).map(([k, v]) => [k, Math.max(0, walk(start).indexOf(v))])),
+          });
+          const target = [];
+          for (let i = 0, j = n - 1; i <= j; i++, j--) { target.push(i); if (i !== j) target.push(j); }
+
+          const steps = [];
+          let slow = 0;
+          let fast = 0;
+          steps.push({ line: "middle", note: "Step 1: find the middle with slow (1 step) and fast (2 steps).", view: [listFrom("the list", 0, { pointers: { slow, fast } })] });
+          while (nxt[fast] !== -1 && nxt[nxt[fast]] !== -1) {
+            slow = nxt[slow];
+            fast = nxt[nxt[fast]];
+            steps.push({ line: "middle", note: `slow → node ${slow}, fast → node ${fast}.`, view: [listFrom("the list", 0, { pointers: { slow, fast }, marks: { [slow]: "window" } })] });
+          }
+          let second = nxt[slow];
+          nxt[slow] = -1;
+          let prev = -1;
+          const firstHalf = () => listFrom("first half", 0, { marks: { [slow]: "window" } });
+          const rev = () => ({ type: "list", label: "second half, reversed so far (prev)", nodes: walk(prev).map((i) => ({ value: String(head[i]), caption: `node ${i}`, mark: "" })) });
+          const rest = () => ({ type: "list", label: "second half, not reversed yet", nodes: walk(second).map((i) => ({ value: String(head[i]), caption: `node ${i}`, mark: "" })) });
+          steps.push({ line: "reverse", note: `fast can't take two more steps, so slow (node ${slow}) ends the first half. Cut after it, and reverse what follows.`, view: [firstHalf(), rest(), rev()] });
+          while (second !== -1) {
+            const next = nxt[second];
+            nxt[second] = prev;
+            prev = second;
+            second = next;
+            steps.push({ line: "reverse", note: `Point node ${prev} back at ${nxt[prev] === -1 ? "null" : `node ${nxt[prev]}`}.`, view: [firstHalf(), rest(), rev()] });
+          }
+          let first = 0;
+          second = prev;
+          const merged = (marks) => listFrom("merged so far (walked from the head)", 0, { marks });
+          steps.push({ line: "merge", note: "Step 3: merge, taking one node from each half in turn. The reversed half is never longer than the first.", view: [merged({}), rev()] });
+          while (second !== -1) {
+            const n1 = nxt[first];
+            const n2 = nxt[second];
+            nxt[first] = second;
+            nxt[second] = n1;
+            steps.push({ line: "merge", note: `node ${first} → node ${second} → ${n1 === -1 ? "null" : `node ${n1}`}.`, view: [merged({ [first]: "visited", [second]: "new" })] });
+            first = n1;
+            second = n2;
+          }
+          steps.push({ line: "merge", note: `The second half is used up. Done, with no extra memory: ${walk(0).map((k) => head[k]).join(" → ")}.`, view: [listFrom("the reordered list", 0)] });
           return steps;
         },
       });
