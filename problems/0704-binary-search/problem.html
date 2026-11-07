@@ -1,0 +1,203 @@
+<details class="question" data-group="binary-search" data-tags="binary search sorted array lo hi mid bisect lower bound">
+  <summary>
+    <span class="q-title">704. Binary Search</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Binary Search</span>
+      <span class="tag">Array</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Keep <code>lo</code> and <code>hi</code>
+      so that target, if it's there, is always in
+      <code>nums[lo..hi]</code>. Look at the middle: too small means drop it
+      and everything to its left (<code>lo = mid + 1</code>); too big means
+      drop it and everything to its right (<code>hi = mid − 1</code>). Loop
+      <code>while lo &lt;= hi</code>. O(log n).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/binary-search/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>nums</code> is sorted in ascending order with no repeats.
+        Return the index of <code>target</code>, or <code>-1</code> if it
+        isn't there. It must run in O(log n).
+      </p>
+      <ul>
+        <li><code>1 &lt;= nums.length &lt;= 10⁴</code>, values in <code>(-10⁴, 10⁴)</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[-1,0,3,5,9,12], target = 9</code> → <code>4</code>.
+        Same array, <code>target = 2</code> → <code>-1</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[5], target = 5</code></td>
+              <td><code>0</code></td>
+              <td>Looping <code>while lo &lt; hi</code> skips the last remaining value: it said <code>-1</code>. Wrong on 1022 of 3008 tests.</td>
+            </tr>
+            <tr>
+              <td><code>[5], target = -5</code></td>
+              <td><code>-1</code></td>
+              <td>Setting <code>hi = mid</code> (not <code>mid − 1</code>) with <code>lo &lt;= hi</code> never shrinks a 1-value range: it looped forever. Hit on 873 tests.</td>
+            </tr>
+            <tr>
+              <td><code>[2,5], target = 9</code></td>
+              <td><code>-1</code></td>
+              <td>Bigger than everything: lo walks off the right end and the loop stops.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Linear Scan</h2>
+      <p class="intuition">
+        Check every value from the left. It ignores that the array is
+        sorted, and doesn't meet the O(log n) rule.
+      </p>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        10⁴ values, target at the end: Python 233 µs, Java 22 µs, C++ 3.5 µs,
+        about 100 times slower than binary search in Python.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Recursive Binary Search</h2>
+      <p class="intuition">
+        <code>find(lo, hi)</code> compares <code>target</code> with
+        <code>nums[mid]</code> and calls itself on the half that can still
+        hold it. An empty range (<code>lo &gt; hi</code>) means not found.
+      </p>
+      <ul>
+        <li>Clear to read; the calls are only about log₂ n = 14 deep for 10⁴ values.</li>
+        <li><code>mid = lo + (hi − lo) / 2</code> in C++ and Java avoids overflowing <code>lo + hi</code> on huge arrays.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log n)</span>
+        <span><strong>Space</strong> O(log n) call stack</span>
+      </div>
+      <p class="note">
+        10⁴ values, target at the end: Python 4.0 µs, Java 0.2 µs, C++ under
+        0.1 µs.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Iterative Binary Search
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        The same search as a loop: <code>while lo &lt;= hi</code>, compare
+        with the middle, then move <code>lo</code> or <code>hi</code> past
+        it.
+      </p>
+      <ul>
+        <li>Every step drops mid itself, so the range always shrinks and the loop always ends.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        10⁴ values, target at the end: Python 1.8 µs, Java 0.3 µs, C++
+        0.3 µs. Too fast to tell apart from Approach 2 in C++ and Java.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Python's <code>bisect.bisect_left</code> and C++'s
+        <code>std::lower_bound</code> give the first index with a value ≥
+        target; check that it's equal. Java's
+        <code>Arrays.binarySearch</code> returns a negative number when the
+        value is missing.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Should pass on LeetCode. In Python, <code>bisect</code> took 1.5 µs,
+        a little faster than the loop. Java's negative result encodes where the
+        value would go, so turn it into −1.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Linear Scan</th>
+              <td>Check every value</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Breaks the O(log n) rule</td>
+            </tr>
+            <tr>
+              <th scope="row">Recursive Binary Search</th>
+              <td>Recurse into one half</td>
+              <td>O(log n)</td>
+              <td>O(log n)</td>
+              <td>About 14 calls deep</td>
+            </tr>
+            <tr>
+              <th scope="row">Iterative Binary Search</th>
+              <td>Move lo or hi past mid</td>
+              <td>O(log n)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
