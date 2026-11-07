@@ -7081,7 +7081,7 @@
       <details class="pattern-group" id="g-linked-list">
         <summary>
           <span class="g-name">Linked List</span>
-          <span class="g-count"><span class="g-total">8 problems</span></span>
+          <span class="g-count"><span class="g-total">9 problems</span></span>
           <span class="g-hint">Pointer rewiring and dummy heads</span>
         </summary>
         <div class="g-body">
@@ -11318,6 +11318,755 @@
                         <td>O(n)</td>
                         <td>O(1)</td>
                         <td>Expected answer; cut after the middle</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0146-lru-cache ===== -->
+          <details class="question" data-group="linked-list" data-tags="design hash-table linked-list doubly-linked list lru cache eviction ordered dict">
+            <summary>
+              <span class="q-title">146. LRU Cache</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Design</span>
+                <span class="tag">Hash Table</span>
+                <span class="tag">Linked List</span>
+              </span>
+            </summary>
+
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> A hash map finds a key's entry in O(1); a
+                doubly linked list keeps entries in order of use and moves or removes
+                any of them in O(1). Store <strong>nodes</strong> in the map, keep the
+                most recent right after a <code>head</code> sentinel, and evict the
+                node just before <code>tail</code>. Each node stores its key so the
+                evicted one can be removed from the map.
+              </div>
+
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/lru-cache/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Design a cache that holds at most <code>capacity</code> keys.
+                  <code>get(key)</code> returns the value, or <code>-1</code> if it's
+                  missing. <code>put(key, value)</code> adds or updates a key; if that
+                  makes the cache too big, it removes the <strong>least recently
+                  used</strong> key. Both count as a use. Both must run in O(1) on
+                  average.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= capacity &lt;= 3000</code></li>
+                  <li><code>0 &lt;= key &lt;= 10⁴</code>, <code>0 &lt;= value &lt;= 10⁵</code></li>
+                  <li>At most 2 × 10⁵ calls to <code>get</code> and <code>put</code></li>
+                </ul>
+                <p class="note">
+                  Example, capacity 2: put(1,1), put(2,2), get(1) → 1, put(3,3) evicts
+                  2, get(2) → -1, put(4,4) evicts 1, get(1) → -1, get(3) → 3, get(4) →
+                  4.
+                </p>
+              </section>
+
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>The example above</td>
+                        <td><code>1, -1, -1, 3, 4</code></td>
+                        <td>A <code>get</code> is a use too. Not moving the key on <code>get</code> evicted 1 instead of 2: said <code>1, 2, -1, 3, 4</code>.</td>
+                      </tr>
+                      <tr>
+                        <td>capacity 2: put(1,1), put(2,2), put(2,20), get(1), get(2)</td>
+                        <td><code>1, 20</code></td>
+                        <td>Updating a key that's already there never evicts. Checking "full?" before "already there?" evicted 1: said <code>-1, 20</code>.</td>
+                      </tr>
+                      <tr>
+                        <td>capacity 1: put(2,1), get(2), put(3,2), get(2), get(3)</td>
+                        <td><code>1, -1, 2</code></td>
+                        <td>Capacity 1: every new key evicts the old one.</td>
+                      </tr>
+                      <tr>
+                        <td>get(5) on an empty cache</td>
+                        <td><code>-1</code></td>
+                        <td>A miss changes nothing.</td>
+                      </tr>
+                      <tr>
+                        <td>capacity 3000, 2 × 10⁵ calls</td>
+                        <td>-</td>
+                        <td>The largest input. Scanning a list on each call took 15.7 s in Python here; the linked-list version took 75 ms.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: List in Order of Use</h2>
+                <p class="intuition">
+                  Keep <code>[key, value]</code> pairs in a list, least recently used
+                  first. To use a key, find it, remove it and append it at the back. To
+                  evict, remove the front.
+                </p>
+                <ul>
+                  <li>Easy to see that it's right.</li>
+                  <li>
+                    Finding a key and removing from the middle both scan the list:
+                    O(capacity) per call.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(capacity) per call</span>
+                  <span><strong>Space</strong> O(capacity)</span>
+                </div>
+                <p class="note">
+                  2 × 10⁵ calls with capacity 3000 here: Python 11–16 s, Java 0.4–0.7
+                  s, C++ 0.17–0.22 s. Fails the O(1) requirement.
+                </p>
+                <div class="code-tabs" data-viz="0146-lru-cache/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"get":[13],"miss":[14,15],"hit":[16,17,18],"put":[21],"update":[22,23],"evict":[24,25],"insert":[26]}'>
+                    class LRUCache(object):
+                        def __init__(self, capacity):
+                            self.cap = capacity
+                            self.items = []  # [key, value] pairs, least recently used first
+
+                        def _find(self, key):  # a linear scan: O(capacity)
+                            for i, (k, _) in enumerate(self.items):
+                                if k == key:
+                                    return i
+                            return -1
+
+                        def get(self, key):
+                            i = self._find(key)
+                            if i == -1:
+                                return -1
+                            item = self.items.pop(i)  # used now: move it to the back
+                            self.items.append(item)
+                            return item[1]
+
+                        def put(self, key, value):
+                            i = self._find(key)
+                            if i != -1:  # already there: drop the old entry first
+                                self.items.pop(i)
+                            elif len(self.items) == self.cap:  # full: evict the least recently used, at the front
+                                self.items.pop(0)
+                            self.items.append([key, value])  # the newest goes at the back
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,28],"get":[8],"miss":[9],"hit":[10,11,12,13],"put":[17],"update":[18,19],"evict":[20,21],"insert":[23]}'>
+                    #include <utility>
+                    #include <vector>
+                    class LRUCache {
+                    public:
+                        LRUCache(int capacity) : cap(capacity) {}
+
+                        int get(int key) {
+                            int i = find(key);
+                            if (i == -1) return -1;
+                            auto item = items[i]; // used now: move it to the back
+                            items.erase(items.begin() + i);
+                            items.push_back(item);
+                            return item.second;
+                        }
+
+                        void put(int key, int value) {
+                            int i = find(key);
+                            if (i != -1) { // already there: drop the old entry first
+                                items.erase(items.begin() + i);
+                            } else if (static_cast<int>(items.size()) == cap) { // full: evict the least recently used, at the front
+                                items.erase(items.begin());
+                            }
+                            items.push_back({key, value}); // the newest goes at the back
+                        }
+
+                    private:
+                        int cap;
+                        std::vector<std::pair<int, int>> items; // (key, value), least recently used first
+
+                        int find(int key) const { // a linear scan: O(capacity)
+                            for (int i = 0; i < static_cast<int>(items.size()); ++i) {
+                                if (items[i].first == key) return i;
+                            }
+                            return -1;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,8],"get":[19],"miss":[20],"hit":[21,22,23],"put":[27],"update":[28,29],"evict":[30,31],"insert":[33]}'>
+                    import java.util.*;
+
+                    class LRUCache {
+                        private final int cap;
+                        private final List<int[]> items = new ArrayList<>(); // {key, value}, least recently used first
+
+                        public LRUCache(int capacity) {
+                            cap = capacity;
+                        }
+
+                        private int find(int key) { // a linear scan: O(capacity)
+                            for (int i = 0; i < items.size(); i++) {
+                                if (items.get(i)[0] == key) return i;
+                            }
+                            return -1;
+                        }
+
+                        public int get(int key) {
+                            int i = find(key);
+                            if (i == -1) return -1;
+                            int[] item = items.remove(i); // used now: move it to the back
+                            items.add(item);
+                            return item[1];
+                        }
+
+                        public void put(int key, int value) {
+                            int i = find(key);
+                            if (i != -1) { // already there: drop the old entry first
+                                items.remove(i);
+                            } else if (items.size() == cap) { // full: evict the least recently used, at the front
+                                items.remove(0);
+                            }
+                            items.add(new int[] {key, value}); // the newest goes at the back
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Timestamps and a Lazy Heap</h2>
+                <p class="intuition">
+                  Each use gets a new time from a counter. A hash map holds each key's
+                  value and latest time; a min-heap holds <code>(time, key)</code>. To
+                  evict, pop from the heap until an entry's time matches its key's
+                  current time: older entries are skipped.
+                </p>
+                <ul>
+                  <li>
+                    A key's older entries always have smaller times, so they're popped
+                    and skipped before its current one. An evicted key never leaves an
+                    entry behind.
+                  </li>
+                  <li>
+                    Old entries are only cleared on eviction. With one key and 199,999
+                    <code>get</code> calls, the heap held 200,000 entries.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(log n) per call (amortized)</span>
+                  <span><strong>Space</strong> O(number of calls) worst case</span>
+                </div>
+                <p class="note">
+                  n = heap size. Fast in practice: Python 140–180 ms, Java 64–74 ms,
+                  C++ 40–43 ms on the 2 × 10⁵-call tests. Not O(1), and its memory isn't
+                  bounded by the capacity.
+                </p>
+                <div class="code-tabs" data-viz="0146-lru-cache/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5,6,7],"miss":[15,16],"hit":[17,18],"update":[21,22],"evict":[23,24,25,26,27,28,29],"insert":[31,32]}'>
+                    import heapq
+                    class LRUCache(object):
+                        def __init__(self, capacity):
+                            self.cap = capacity
+                            self.data = {}  # key -> [value, time of last use]
+                            self.heap = []  # (time, key); old entries stay until popped
+                            self.clock = 0
+
+                        def _touch(self, key):  # mark key as used now
+                            self.clock += 1
+                            self.data[key][1] = self.clock
+                            heapq.heappush(self.heap, (self.clock, key))
+
+                        def get(self, key):
+                            if key not in self.data:
+                                return -1
+                            self._touch(key)
+                            return self.data[key][0]
+
+                        def put(self, key, value):
+                            if key in self.data:
+                                self.data[key][0] = value
+                            else:
+                                if len(self.data) == self.cap:  # full: find the least recently used
+                                    while True:
+                                        t, k = heapq.heappop(self.heap)
+                                        if self.data[k][1] == t:  # this key's latest time: it's the real LRU
+                                            del self.data[k]
+                                            break
+                                        # otherwise the key was used again later: skip this old entry
+                                self.data[key] = [value, 0]
+                            self._touch(key)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[8,40,41,43],"miss":[11,12],"hit":[13,14],"update":[18,19,20],"evict":[21,22,23,24,25,26,27,28,29],"insert":[33,35]}'>
+                    #include <functional>
+                    #include <queue>
+                    #include <unordered_map>
+                    #include <utility>
+                    #include <vector>
+                    class LRUCache {
+                    public:
+                        LRUCache(int capacity) : cap(capacity) {}
+
+                        int get(int key) {
+                            auto it = data.find(key);
+                            if (it == data.end()) return -1;
+                            touch(key);
+                            return it->second.first;
+                        }
+
+                        void put(int key, int value) {
+                            auto it = data.find(key);
+                            if (it != data.end()) {
+                                it->second.first = value;
+                            } else {
+                                if (static_cast<int>(data.size()) == cap) { // full: find the least recently used
+                                    while (true) {
+                                        auto [t, k] = heap.top();
+                                        heap.pop();
+                                        auto e = data.find(k);
+                                        if (e->second.second == t) { // this key's latest time: it's the real LRU
+                                            data.erase(e);
+                                            break;
+                                        } // otherwise the key was used again later: skip this old entry
+                                    }
+                                }
+                                data[key] = {value, 0};
+                            }
+                            touch(key);
+                        }
+
+                    private:
+                        int cap;
+                        long long clock = 0;
+                        std::unordered_map<int, std::pair<int, long long>> data; // key -> (value, time of last use)
+                        // (time, key), smallest time on top; old entries stay until popped
+                        std::priority_queue<std::pair<long long, int>, std::vector<std::pair<long long, int>>, std::greater<>> heap;
+
+                        void touch(int key) { // mark key as used now
+                            data[key].second = ++clock;
+                            heap.push({clock, key});
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6,7,10],"miss":[19,20],"hit":[21,22],"update":[26,27,28],"evict":[29,30,31,32,33,34,35,36],"insert":[40,42]}'>
+                    import java.util.*;
+
+                    class LRUCache {
+                        private final int cap;
+                        private long clock = 0;
+                        private final Map<Integer, long[]> data = new HashMap<>(); // key -> {value, time of last use}
+                        private final PriorityQueue<long[]> heap = new PriorityQueue<>((a, b) -> Long.compare(a[0], b[0])); // {time, key}; old entries stay until popped
+
+                        public LRUCache(int capacity) {
+                            cap = capacity;
+                        }
+
+                        private void touch(int key) { // mark key as used now
+                            data.get(key)[1] = ++clock;
+                            heap.add(new long[] {clock, key});
+                        }
+
+                        public int get(int key) {
+                            long[] e = data.get(key);
+                            if (e == null) return -1;
+                            touch(key);
+                            return (int) e[0];
+                        }
+
+                        public void put(int key, int value) {
+                            long[] e = data.get(key);
+                            if (e != null) {
+                                e[0] = value;
+                            } else {
+                                if (data.size() == cap) { // full: find the least recently used
+                                    while (true) {
+                                        long[] top = heap.poll();
+                                        int k = (int) top[1];
+                                        if (data.get(k)[1] == top[0]) { // this key's latest time: it's the real LRU
+                                            data.remove(k);
+                                            break;
+                                        } // otherwise the key was used again later: skip this old entry
+                                    }
+                                }
+                                data.put(key, new long[] {value, 0});
+                            }
+                            touch(key);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Hash Map + Doubly Linked List
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  The map gives a key's node. The list is ordered by use, most recent
+                  right after <code>head</code>. <code>get</code>: unlink the node and
+                  put it after <code>head</code>. <code>put</code>: update and move an
+                  existing node; otherwise, if full, remove <code>tail.prev</code> from
+                  the list and the map, then add a new node after <code>head</code>.
+                </p>
+                <ul>
+                  <li>
+                    Doubly linked: removing a node needs its <code>prev</code>, and the
+                    map can't give that.
+                  </li>
+                  <li>
+                    Sentinel <code>head</code> and <code>tail</code> nodes mean the list
+                    is never empty, so there are no null checks.
+                  </li>
+                  <li>
+                    Check "already there?" before "full?": an update never evicts.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(1) per call</span>
+                  <span><strong>Space</strong> O(capacity)</span>
+                </div>
+                <p class="note">
+                  Python 73–75 ms, Java 34–39 ms, C++ 25–32 ms on the 2 × 10⁵-call tests.
+                  The expected answer, and the classic "design" interview question.
+                </p>
+                <div class="code-tabs" data-viz="0146-lru-cache/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[11,12,13,14],"miss":[25,26,27],"hit":[28,29,30],"update":[33,34,35,36],"evict":[37,38,39,40,41],"insert":[42,43,44]}'>
+                    class Node(object):
+                        __slots__ = ("key", "val", "prev", "next")
+
+                        def __init__(self, key=0, val=0):
+                            self.key, self.val = key, val
+                            self.prev = self.next = None
+
+
+                    class LRUCache(object):
+                        def __init__(self, capacity):
+                            self.cap = capacity
+                            self.map = {}  # key -> its node
+                            self.head, self.tail = Node(), Node()  # sentinels: no empty-list special cases
+                            self.head.next, self.tail.prev = self.tail, self.head  # most recent after head, least recent before tail
+
+                        def _unlink(self, node):
+                            node.prev.next, node.next.prev = node.next, node.prev
+
+                        def _push_front(self, node):
+                            node.prev, node.next = self.head, self.head.next
+                            self.head.next.prev = node
+                            self.head.next = node
+
+                        def get(self, key):
+                            node = self.map.get(key)  # O(1): the map finds the node
+                            if node is None:
+                                return -1
+                            self._unlink(node)  # O(1): move it to the front
+                            self._push_front(node)
+                            return node.val
+
+                        def put(self, key, value):
+                            node = self.map.get(key)
+                            if node:
+                                node.val = value
+                                self._unlink(node)
+                            else:
+                                if len(self.map) == self.cap:  # full: evict the node just before the tail
+                                    lru = self.tail.prev
+                                    self._unlink(lru)
+                                    del self.map[lru.key]  # that's why each node keeps its key
+                                node = Node(key, value)
+                                self.map[key] = node
+                            self._push_front(node)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[11,12,13,50,51],"miss":[21,22],"hit":[23,24,25],"update":[29,31,32,33,34],"evict":[35,36,37,38,39,40],"insert":[42,43,45]}'>
+                    #include <unordered_map>
+                    class LRUCache {
+                        struct Node {
+                            int key, val;
+                            Node* prev = nullptr;
+                            Node* next = nullptr;
+                            Node(int k = 0, int v = 0) : key(k), val(v) {}
+                        };
+
+                    public:
+                        LRUCache(int capacity) : cap(capacity) {
+                            head.next = &tail; // sentinels: most recent after head, least recent before tail
+                            tail.prev = &head;
+                        }
+
+                        ~LRUCache() {
+                            for (auto& [k, node] : map) delete node;
+                        }
+
+                        int get(int key) {
+                            auto it = map.find(key); // O(1): the map finds the node
+                            if (it == map.end()) return -1;
+                            unlink(it->second); // O(1): move it to the front
+                            pushFront(it->second);
+                            return it->second->val;
+                        }
+
+                        void put(int key, int value) {
+                            auto it = map.find(key);
+                            Node* node;
+                            if (it != map.end()) {
+                                node = it->second;
+                                node->val = value;
+                                unlink(node);
+                            } else {
+                                if (static_cast<int>(map.size()) == cap) { // full: evict the node just before the tail
+                                    Node* lru = tail.prev;
+                                    unlink(lru);
+                                    map.erase(lru->key); // that's why each node keeps its key
+                                    delete lru;
+                                }
+                                node = new Node(key, value);
+                                map[key] = node;
+                            }
+                            pushFront(node);
+                        }
+
+                    private:
+                        int cap;
+                        Node head, tail;
+                        std::unordered_map<int, Node*> map; // key -> its node
+
+                        static void unlink(Node* n) {
+                            n->prev->next = n->next;
+                            n->next->prev = n->prev;
+                        }
+                        void pushFront(Node* n) {
+                            n->prev = &head;
+                            n->next = head.next;
+                            head.next->prev = n;
+                            head.next = n;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[11,12,15,16,17],"miss":[33,34],"hit":[35,36,37],"update":[41,42,43,44],"evict":[45,46,47,48,49],"insert":[51,52,54]}'>
+                    import java.util.*;
+
+                    class LRUCache {
+                        private static class Node {
+                            int key, val;
+                            Node prev, next;
+                            Node(int k, int v) { key = k; val = v; }
+                        }
+
+                        private final int cap;
+                        private final Map<Integer, Node> map = new HashMap<>(); // key -> its node
+                        private final Node head = new Node(0, 0), tail = new Node(0, 0); // sentinels
+
+                        public LRUCache(int capacity) {
+                            cap = capacity;
+                            head.next = tail; // most recent after head, least recent before tail
+                            tail.prev = head;
+                        }
+
+                        private void unlink(Node n) {
+                            n.prev.next = n.next;
+                            n.next.prev = n.prev;
+                        }
+
+                        private void pushFront(Node n) {
+                            n.prev = head;
+                            n.next = head.next;
+                            head.next.prev = n;
+                            head.next = n;
+                        }
+
+                        public int get(int key) {
+                            Node node = map.get(key); // O(1): the map finds the node
+                            if (node == null) return -1;
+                            unlink(node); // O(1): move it to the front
+                            pushFront(node);
+                            return node.val;
+                        }
+
+                        public void put(int key, int value) {
+                            Node node = map.get(key);
+                            if (node != null) {
+                                node.val = value;
+                                unlink(node);
+                            } else {
+                                if (map.size() == cap) { // full: evict the node just before the tail
+                                    Node lru = tail.prev;
+                                    unlink(lru);
+                                    map.remove(lru.key); // that's why each node keeps its key
+                                }
+                                node = new Node(key, value);
+                                map.put(key, node);
+                            }
+                            pushFront(node);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  Python's <code>OrderedDict</code> has <code>move_to_end</code> and
+                  <code>popitem(last=False)</code>. Java's <code>LinkedHashMap</code>
+                  with <code>accessOrder = true</code> and
+                  <code>removeEldestEntry</code> is an LRU cache already. C++'s
+                  <code>std::list</code> is a doubly linked list, and
+                  <code>splice</code> moves a node in O(1).
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    from collections import OrderedDict
+                    class LRUCache(object):
+                        def __init__(self, capacity):
+                            self.cap = capacity
+                            self.d = OrderedDict()  # remembers order; oldest first
+
+                        def get(self, key):
+                            if key not in self.d:
+                                return -1
+                            self.d.move_to_end(key)  # used now: make it the newest
+                            return self.d[key]
+
+                        def put(self, key, value):
+                            self.d[key] = value
+                            self.d.move_to_end(key)
+                            if len(self.d) > self.cap:
+                                self.d.popitem(last=False)  # drop the oldest
+                  </script>
+                  <script type="text/plain" data-lang="C++">
+                    #include <list>
+                    #include <unordered_map>
+                    #include <utility>
+                    class LRUCache {
+                    public:
+                        LRUCache(int capacity) : cap(capacity) {}
+
+                        int get(int key) {
+                            auto it = pos.find(key);
+                            if (it == pos.end()) return -1;
+                            order.splice(order.begin(), order, it->second); // O(1): move the node to the front
+                            return it->second->second;
+                        }
+
+                        void put(int key, int value) {
+                            auto it = pos.find(key);
+                            if (it != pos.end()) {
+                                it->second->second = value;
+                                order.splice(order.begin(), order, it->second);
+                                return;
+                            }
+                            if (static_cast<int>(order.size()) == cap) {
+                                pos.erase(order.back().first); // the least recent is at the back
+                                order.pop_back();
+                            }
+                            order.emplace_front(key, value);
+                            pos[key] = order.begin();
+                        }
+
+                    private:
+                        int cap;
+                        std::list<std::pair<int, int>> order; // std::list is a doubly linked list
+                        std::unordered_map<int, std::list<std::pair<int, int>>::iterator> pos;
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java">
+                    import java.util.LinkedHashMap;
+                    import java.util.Map;
+
+                    class LRUCache {
+                        private final LinkedHashMap<Integer, Integer> map;
+
+                        public LRUCache(int capacity) {
+                            // accessOrder = true: get and put move the entry to the end
+                            map = new LinkedHashMap<>(16, 0.75f, true) {
+                                @Override
+                                protected boolean removeEldestEntry(Map.Entry<Integer, Integer> eldest) {
+                                    return size() > capacity; // checked after each put
+                                }
+                            };
+                        }
+
+                        public int get(int key) {
+                            return map.getOrDefault(key, -1);
+                        }
+
+                        public void put(int key, int value) {
+                            map.put(key, value);
+                        }
+                    }
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(1) per call</span>
+                  <span><strong>Space</strong> O(capacity)</span>
+                </div>
+                <p class="note">
+                  Python 50 ms (the fastest Python version here), Java 34 ms, C++
+                  25–33 ms. What you'd use in real code; in an interview, expect to
+                  build Approach 3 yourself. (Python's <code>functools.lru_cache</code>
+                  caches a function's results, not a key–value store.)
+                </p>
+              </section>
+
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time per call</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">List in Order of Use</th>
+                        <td>Scan, remove, append</td>
+                        <td>O(capacity)</td>
+                        <td>O(capacity)</td>
+                        <td>15.7 s in Python at full size</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Timestamps and a Lazy Heap</th>
+                        <td>Skip out-of-date heap entries</td>
+                        <td>O(log n)</td>
+                        <td>O(calls) worst</td>
+                        <td>Heap keeps old entries</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Hash Map + Doubly Linked List</th>
+                        <td>Map to nodes; move and evict in O(1)</td>
+                        <td>O(1)</td>
+                        <td>O(capacity)</td>
+                        <td>Expected answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -50182,6 +50931,246 @@
           return steps;
         },
       });
+    </script>
+    <!-- problems/0146-lru-cache/approach1.visual.js -->
+    <script>
+      // A list of [key, value] in order of use, least recent first. Every call scans it: O(capacity).
+      (function () {
+      DSAViz.register("0146-lru-cache/approach1", {
+        inputs: [
+          { name: "capacity", type: "int", value: "2", min: 1, max: 4 },
+          { name: "ops", label: "operations (comma-separated)", type: "string", value: "put 1 1, put 2 2, get 1, put 3 3, get 2, put 4 4, get 1, get 3, get 4", maxLength: 140, raw: true },
+        ],
+        trace({ capacity, ops: text }) {
+          const ops = parseOps(text);
+          const steps = [];
+          const items = [];
+          const results = [];
+          let scanned = 0;
+          const view = (o = {}) => [
+            { type: "array", label: `items (least recent → most recent; capacity ${capacity})`, values: items.map(([k, v]) => `${k}:${v}`), wide: true, marks: o.marks || {} },
+            { type: "array", label: "get results so far", values: results.map(String), compact: true, marks: o.res ? { [results.length - 1]: "new" } : {} },
+            { type: "vars", items: [{ name: "entries scanned so far", value: scanned, mark: o.counted ? "new" : "" }] },
+          ];
+          steps.push({ line: "init", note: `An empty cache with room for ${capacity}. Entries are kept in order of use: the front is the next to be evicted.`, view: view() });
+          for (const op of ops) {
+            const key = op[1];
+            const i = items.findIndex(([k]) => k === key);
+            scanned += i === -1 ? items.length : i + 1;
+            if (op[0] === "get") {
+              if (i === -1) {
+                results.push(-1);
+                steps.push({ line: ["get", "miss"], note: `get(${key}): scanned all ${items.length} entries, ${key} isn't there. Return -1.`, view: view({ res: true, counted: true }) });
+              } else {
+                const it = items.splice(i, 1)[0];
+                items.push(it);
+                results.push(it[1]);
+                steps.push({ line: ["get", "miss", "hit"], note: `get(${key}): found it after scanning ${i + 1}. Move it to the back (most recent) and return ${it[1]}.`, view: view({ res: true, counted: true, marks: { [items.length - 1]: "match" } }) });
+              }
+              continue;
+            }
+            const value = op[2];
+            let note;
+            let line;
+            if (i !== -1) {
+              items.splice(i, 1);
+              line = ["put", "update", "insert"];
+              note = `put(${key}, ${value}): ${key} is already cached. Remove the old entry, then add ${key}:${value} at the back.`;
+            } else if (items.length === capacity) {
+              const [ek, ev] = items.shift();
+              line = ["put", "update", "evict", "insert"];
+              note = `put(${key}, ${value}): the cache is full. Evict the front, ${ek}:${ev} (least recently used), then add ${key}:${value} at the back.`;
+            } else {
+              line = ["put", "update", "evict", "insert"];
+              note = `put(${key}, ${value}): new key and there's room. Add it at the back.`;
+            }
+            items.push([key, value]);
+            steps.push({ line, note, view: view({ counted: true, marks: { [items.length - 1]: "new" } }) });
+          }
+          steps.push({ line: "insert", note: `Done: [${results.join(", ")}]. ${scanned} entries scanned for ${ops.length} calls: each call is O(capacity).`, view: view() });
+          return steps;
+        },
+      });
+
+      // Read "put 1 1, get 1, ..." into [["put", 1, 1], ["get", 1], ...].
+      function parseOps(text) {
+        const parts = text.split(",").map((p) => p.trim()).filter(Boolean);
+        if (!parts.length) throw new DSAViz.InputError("Type operations separated by commas, like put 1 1, get 1.");
+        if (parts.length > 12) throw new DSAViz.InputError("Up to 12 operations here, so the steps stay readable.");
+        return parts.map((p) => {
+          const m = p.match(/^(get)\s+(\d{1,2})$|^(put)\s+(\d{1,2})\s+(\d{1,3})$/i);
+          if (!m) throw new DSAViz.InputError(`"${p}": use get KEY or put KEY VALUE (keys 0-99, values 0-999).`);
+          return m[1] ? ["get", +m[2]] : ["put", +m[4], +m[5]];
+        });
+      }
+      })();
+    </script>
+    <!-- problems/0146-lru-cache/approach2.visual.js -->
+    <script>
+      // A hash map with "last used" times, plus a min-heap of (time, key). Old heap entries are skipped when popped.
+      (function () {
+      DSAViz.register("0146-lru-cache/approach2", {
+        inputs: [
+          { name: "capacity", type: "int", value: "2", min: 1, max: 4 },
+          { name: "ops", label: "operations (comma-separated)", type: "string", value: "put 1 1, put 2 2, get 1, put 3 3, get 2, put 4 4, get 1, get 3, get 4", maxLength: 140, raw: true },
+        ],
+        trace({ capacity, ops: text }) {
+          const ops = parseOps(text);
+          const steps = [];
+          const data = new Map();
+          const heap = [];
+          const results = [];
+          let clock = 0;
+          const touch = (k) => {
+            clock++;
+            data.get(k)[1] = clock;
+            heap.push([clock, k]);
+            heap.sort((a, b) => a[0] - b[0]);
+          };
+          const view = (o = {}) => {
+            const hmarks = {};
+            heap.forEach(([t, k], idx) => { if (!data.has(k) || data.get(k)[1] !== t) hmarks[idx] = "ghost"; });
+            (o.popped || []).forEach((idx) => (hmarks[idx] = "cut"));
+            return [
+              { type: "map", label: `data (key → value, time of last use; capacity ${capacity})`, columns: ["key", "value, time"], entries: [...data].map(([k, [v, t]]) => [String(k), `${v}, t=${t}`]), marks: o.key !== undefined ? { [String(o.key)]: o.km || "new" } : {} },
+              { type: "array", label: "heap of (time, key), smallest time first (dashed = old entry, the key was used again)", values: heap.map(([t, k]) => `t${t}:${k}`), wide: true, marks: hmarks },
+              { type: "array", label: "get results so far", values: results.map(String), compact: true, marks: o.res ? { [results.length - 1]: "new" } : {} },
+              { type: "vars", items: [{ name: "clock", value: clock }] },
+            ];
+          };
+          steps.push({ line: "init", note: "Every use gets a new time from the clock. The least recently used key has the smallest current time; the heap finds it.", view: view() });
+          for (const op of ops) {
+            const key = op[1];
+            if (op[0] === "get") {
+              if (!data.has(key)) {
+                results.push(-1);
+                steps.push({ line: "miss", note: `get(${key}): not in data. Return -1.`, view: view({ res: true }) });
+              } else {
+                touch(key);
+                results.push(data.get(key)[0]);
+                steps.push({ line: ["miss", "hit"], note: `get(${key}): found. Its time becomes ${clock}, and (t${clock}, ${key}) goes on the heap. The old heap entry stays, now out of date. Return ${data.get(key)[0]}.`, view: view({ res: true, key, km: "match" }) });
+              }
+              continue;
+            }
+            const value = op[2];
+            if (data.has(key)) {
+              data.get(key)[0] = value;
+              touch(key);
+              steps.push({ line: ["update", "insert"], note: `put(${key}, ${value}): already cached. Update the value; its time becomes ${clock}.`, view: view({ key }) });
+              continue;
+            }
+            if (data.size === capacity) {
+              const skipped = [];
+              let evicted;
+              while (true) {
+                const [t, k] = heap.shift();
+                if (data.get(k)[1] === t) { evicted = [k, t]; break; }
+                skipped.push(`(t${t}, ${k})`);
+              }
+              data.delete(evicted[0]);
+              steps.push({
+                line: ["update", "evict"],
+                note: `put(${key}, ${value}): full. Pop the heap${skipped.length ? `, skipping out-of-date ${skipped.join(", ")}` : ""}, until (t${evicted[1]}, ${evicted[0]}), which matches ${evicted[0]}'s current time. Evict ${evicted[0]}.`,
+                view: view(),
+              });
+            }
+            data.set(key, [value, 0]);
+            touch(key);
+            steps.push({ line: ["update", "evict", "insert"], note: `Add ${key} with value ${value} and time ${clock}.`, view: view({ key }) });
+          }
+          steps.push({ line: "insert", note: `Done: [${results.join(", ")}]. Each call is O(log n), but the heap keeps old entries until they're popped: ${heap.length} entries for ${data.size} keys here.`, view: view() });
+          return steps;
+        },
+      });
+
+      // Read "put 1 1, get 1, ..." into [["put", 1, 1], ["get", 1], ...].
+      function parseOps(text) {
+        const parts = text.split(",").map((p) => p.trim()).filter(Boolean);
+        if (!parts.length) throw new DSAViz.InputError("Type operations separated by commas, like put 1 1, get 1.");
+        if (parts.length > 12) throw new DSAViz.InputError("Up to 12 operations here, so the steps stay readable.");
+        return parts.map((p) => {
+          const m = p.match(/^(get)\s+(\d{1,2})$|^(put)\s+(\d{1,2})\s+(\d{1,3})$/i);
+          if (!m) throw new DSAViz.InputError(`"${p}": use get KEY or put KEY VALUE (keys 0-99, values 0-999).`);
+          return m[1] ? ["get", +m[2]] : ["put", +m[4], +m[5]];
+        });
+      }
+      })();
+    </script>
+    <!-- problems/0146-lru-cache/approach3.visual.js -->
+    <script>
+      // A hash map from key to node, plus a doubly linked list in order of use: every call is O(1).
+      (function () {
+      DSAViz.register("0146-lru-cache/approach3", {
+        inputs: [
+          { name: "capacity", type: "int", value: "2", min: 1, max: 4 },
+          { name: "ops", label: "operations (comma-separated)", type: "string", value: "put 1 1, put 2 2, get 1, put 3 3, get 2, put 4 4, get 1, get 3, get 4", maxLength: 140, raw: true },
+        ],
+        trace({ capacity, ops: text }) {
+          const ops = parseOps(text);
+          const steps = [];
+          const order = []; // keys, most recent first (the nodes between head and tail)
+          const vals = new Map();
+          const results = [];
+          const view = (o = {}) => [
+            {
+              type: "list",
+              label: `head ⇄ … ⇄ tail (most recent → least recent; capacity ${capacity})`,
+              nodes: [{ value: "head", caption: "sentinel", mark: "ghost" }, ...order.map((k) => ({ value: `${k}:${vals.get(k)}`, caption: `key ${k}`, mark: o.key === k ? o.km || "new" : "" })), { value: "tail", caption: "sentinel", mark: "ghost" }],
+            },
+            { type: "set", label: "map keys (each points straight at its node)", items: order.map(String).sort((a, b) => a - b), marks: o.key !== undefined && order.includes(o.key) ? { [String(o.key)]: "match" } : {} },
+            { type: "array", label: "get results so far", values: results.map(String), compact: true, marks: o.res ? { [results.length - 1]: "new" } : {} },
+          ];
+          steps.push({ line: "init", note: "Two sentinel nodes, head and tail, so adding and removing never needs a special case. The map gives each key's node in O(1).", view: view() });
+          for (const op of ops) {
+            const key = op[1];
+            if (op[0] === "get") {
+              if (!vals.has(key)) {
+                results.push(-1);
+                steps.push({ line: "miss", note: `get(${key}): not in the map. Return -1.`, view: view({ res: true }) });
+              } else {
+                order.splice(order.indexOf(key), 1);
+                order.unshift(key);
+                results.push(vals.get(key));
+                steps.push({ line: ["miss", "hit"], note: `get(${key}): the map gives its node. Unlink it and put it right after head (most recent), four pointer changes. Return ${vals.get(key)}.`, view: view({ res: true, key, km: "match" }) });
+              }
+              continue;
+            }
+            const value = op[2];
+            if (vals.has(key)) {
+              vals.set(key, value);
+              order.splice(order.indexOf(key), 1);
+              order.unshift(key);
+              steps.push({ line: ["update", "insert"], note: `put(${key}, ${value}): already cached. Update the value and move the node right after head.`, view: view({ key }) });
+              continue;
+            }
+            let note = "";
+            const line = ["update", "evict", "insert"];
+            if (order.length === capacity) {
+              const lru = order.pop();
+              note = `full, so evict tail.prev, key ${lru} (least recently used), and remove ${lru} from the map: that's why each node stores its key. Then `;
+              vals.delete(lru);
+            }
+            vals.set(key, value);
+            order.unshift(key);
+            steps.push({ line, note: `put(${key}, ${value}): ${note}${note ? "a" : "A"}dd a new node right after head.`, view: view({ key }) });
+          }
+          steps.push({ line: "insert", note: `Done: [${results.join(", ")}]. Every call was O(1): one map lookup and a few pointer changes.`, view: view() });
+          return steps;
+        },
+      });
+
+      // Read "put 1 1, get 1, ..." into [["put", 1, 1], ["get", 1], ...].
+      function parseOps(text) {
+        const parts = text.split(",").map((p) => p.trim()).filter(Boolean);
+        if (!parts.length) throw new DSAViz.InputError("Type operations separated by commas, like put 1 1, get 1.");
+        if (parts.length > 12) throw new DSAViz.InputError("Up to 12 operations here, so the steps stay readable.");
+        return parts.map((p) => {
+          const m = p.match(/^(get)\s+(\d{1,2})$|^(put)\s+(\d{1,2})\s+(\d{1,3})$/i);
+          if (!m) throw new DSAViz.InputError(`"${p}": use get KEY or put KEY VALUE (keys 0-99, values 0-999).`);
+          return m[1] ? ["get", +m[2]] : ["put", +m[4], +m[5]];
+        });
+      }
+      })();
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->
     <script>

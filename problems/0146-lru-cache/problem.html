@@ -1,0 +1,259 @@
+<details class="question" data-group="linked-list" data-tags="design hash-table linked-list doubly-linked list lru cache eviction ordered dict">
+  <summary>
+    <span class="q-title">146. LRU Cache</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Design</span>
+      <span class="tag">Hash Table</span>
+      <span class="tag">Linked List</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> A hash map finds a key's entry in O(1); a
+      doubly linked list keeps entries in order of use and moves or removes
+      any of them in O(1). Store <strong>nodes</strong> in the map, keep the
+      most recent right after a <code>head</code> sentinel, and evict the
+      node just before <code>tail</code>. Each node stores its key so the
+      evicted one can be removed from the map.
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/lru-cache/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Design a cache that holds at most <code>capacity</code> keys.
+        <code>get(key)</code> returns the value, or <code>-1</code> if it's
+        missing. <code>put(key, value)</code> adds or updates a key; if that
+        makes the cache too big, it removes the <strong>least recently
+        used</strong> key. Both count as a use. Both must run in O(1) on
+        average.
+      </p>
+      <ul>
+        <li><code>1 &lt;= capacity &lt;= 3000</code></li>
+        <li><code>0 &lt;= key &lt;= 10⁴</code>, <code>0 &lt;= value &lt;= 10⁵</code></li>
+        <li>At most 2 × 10⁵ calls to <code>get</code> and <code>put</code></li>
+      </ul>
+      <p class="note">
+        Example, capacity 2: put(1,1), put(2,2), get(1) → 1, put(3,3) evicts
+        2, get(2) → -1, put(4,4) evicts 1, get(1) → -1, get(3) → 3, get(4) →
+        4.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>The example above</td>
+              <td><code>1, -1, -1, 3, 4</code></td>
+              <td>A <code>get</code> is a use too. Not moving the key on <code>get</code> evicted 1 instead of 2: said <code>1, 2, -1, 3, 4</code>.</td>
+            </tr>
+            <tr>
+              <td>capacity 2: put(1,1), put(2,2), put(2,20), get(1), get(2)</td>
+              <td><code>1, 20</code></td>
+              <td>Updating a key that's already there never evicts. Checking "full?" before "already there?" evicted 1: said <code>-1, 20</code>.</td>
+            </tr>
+            <tr>
+              <td>capacity 1: put(2,1), get(2), put(3,2), get(2), get(3)</td>
+              <td><code>1, -1, 2</code></td>
+              <td>Capacity 1: every new key evicts the old one.</td>
+            </tr>
+            <tr>
+              <td>get(5) on an empty cache</td>
+              <td><code>-1</code></td>
+              <td>A miss changes nothing.</td>
+            </tr>
+            <tr>
+              <td>capacity 3000, 2 × 10⁵ calls</td>
+              <td>-</td>
+              <td>The largest input. Scanning a list on each call took 15.7 s in Python here; the linked-list version took 75 ms.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: List in Order of Use</h2>
+      <p class="intuition">
+        Keep <code>[key, value]</code> pairs in a list, least recently used
+        first. To use a key, find it, remove it and append it at the back. To
+        evict, remove the front.
+      </p>
+      <ul>
+        <li>Easy to see that it's right.</li>
+        <li>
+          Finding a key and removing from the middle both scan the list:
+          O(capacity) per call.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(capacity) per call</span>
+        <span><strong>Space</strong> O(capacity)</span>
+      </div>
+      <p class="note">
+        2 × 10⁵ calls with capacity 3000 here: Python 11–16 s, Java 0.4–0.7
+        s, C++ 0.17–0.22 s. Fails the O(1) requirement.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Timestamps and a Lazy Heap</h2>
+      <p class="intuition">
+        Each use gets a new time from a counter. A hash map holds each key's
+        value and latest time; a min-heap holds <code>(time, key)</code>. To
+        evict, pop from the heap until an entry's time matches its key's
+        current time: older entries are skipped.
+      </p>
+      <ul>
+        <li>
+          A key's older entries always have smaller times, so they're popped
+          and skipped before its current one. An evicted key never leaves an
+          entry behind.
+        </li>
+        <li>
+          Old entries are only cleared on eviction. With one key and 199,999
+          <code>get</code> calls, the heap held 200,000 entries.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log n) per call (amortized)</span>
+        <span><strong>Space</strong> O(number of calls) worst case</span>
+      </div>
+      <p class="note">
+        n = heap size. Fast in practice: Python 140–180 ms, Java 64–74 ms,
+        C++ 40–43 ms on the 2 × 10⁵-call tests. Not O(1), and its memory isn't
+        bounded by the capacity.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Hash Map + Doubly Linked List
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        The map gives a key's node. The list is ordered by use, most recent
+        right after <code>head</code>. <code>get</code>: unlink the node and
+        put it after <code>head</code>. <code>put</code>: update and move an
+        existing node; otherwise, if full, remove <code>tail.prev</code> from
+        the list and the map, then add a new node after <code>head</code>.
+      </p>
+      <ul>
+        <li>
+          Doubly linked: removing a node needs its <code>prev</code>, and the
+          map can't give that.
+        </li>
+        <li>
+          Sentinel <code>head</code> and <code>tail</code> nodes mean the list
+          is never empty, so there are no null checks.
+        </li>
+        <li>
+          Check "already there?" before "full?": an update never evicts.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(1) per call</span>
+        <span><strong>Space</strong> O(capacity)</span>
+      </div>
+      <p class="note">
+        Python 73–75 ms, Java 34–39 ms, C++ 25–32 ms on the 2 × 10⁵-call tests.
+        The expected answer, and the classic "design" interview question.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Python's <code>OrderedDict</code> has <code>move_to_end</code> and
+        <code>popitem(last=False)</code>. Java's <code>LinkedHashMap</code>
+        with <code>accessOrder = true</code> and
+        <code>removeEldestEntry</code> is an LRU cache already. C++'s
+        <code>std::list</code> is a doubly linked list, and
+        <code>splice</code> moves a node in O(1).
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(1) per call</span>
+        <span><strong>Space</strong> O(capacity)</span>
+      </div>
+      <p class="note">
+        Python 50 ms (the fastest Python version here), Java 34 ms, C++
+        25–33 ms. What you'd use in real code; in an interview, expect to
+        build Approach 3 yourself. (Python's <code>functools.lru_cache</code>
+        caches a function's results, not a key–value store.)
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time per call</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">List in Order of Use</th>
+              <td>Scan, remove, append</td>
+              <td>O(capacity)</td>
+              <td>O(capacity)</td>
+              <td>15.7 s in Python at full size</td>
+            </tr>
+            <tr>
+              <th scope="row">Timestamps and a Lazy Heap</th>
+              <td>Skip out-of-date heap entries</td>
+              <td>O(log n)</td>
+              <td>O(calls) worst</td>
+              <td>Heap keeps old entries</td>
+            </tr>
+            <tr>
+              <th scope="row">Hash Map + Doubly Linked List</th>
+              <td>Map to nodes; move and evict in O(1)</td>
+              <td>O(1)</td>
+              <td>O(capacity)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
