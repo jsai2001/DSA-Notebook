@@ -53911,7 +53911,7 @@
       <details class="pattern-group" id="g-intervals">
         <summary>
           <span class="g-name">Intervals</span>
-          <span class="g-count"><span class="g-total">2 problems</span></span>
+          <span class="g-count"><span class="g-total">3 problems</span></span>
           <span class="g-hint">Sort by start, then merge</span>
         </summary>
         <div class="g-body">
@@ -54855,6 +54855,348 @@
                         <td>O(n)</td>
                         <td>O(n)</td>
                         <td>O(log n) comparisons; copying dominates</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0435-non-overlapping-intervals ===== -->
+          <details class="question" data-group="intervals" data-tags="intervals greedy sorting activity selection interval scheduling">
+            <summary>
+              <span class="q-title">435. Non-overlapping Intervals</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Intervals</span>
+                <span class="tag">Greedy</span>
+                <span class="tag">Sorting</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Removing the fewest means keeping the most.
+                Sort by <strong>end</strong> and keep every interval that starts at or
+                after the last kept end. The one that ends first always leaves the most
+                room for the rest. O(n log n).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/non-overlapping-intervals/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Return the minimum number of intervals to remove so the rest don't
+                  overlap. Intervals that only touch, like <code>[1,2]</code> and
+                  <code>[2,3]</code>, don't overlap.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= intervals.length &lt;= 10⁵</code>, <code>-5·10⁴ &lt;= start &lt; end &lt;= 5·10⁴</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>[[1,2],[2,3],[3,4],[1,3]]</code> → <code>1</code>
+                  (remove <code>[1,3]</code>). <code>[[1,2],[1,2],[1,2]]</code> →
+                  <code>2</code>. <code>[[1,2],[2,3]]</code> → <code>0</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[[-815,51],[-709,-254],[-218,487]]</code></td>
+                        <td><code>1</code></td>
+                        <td>Sorted by start, always keeping the earlier interval keeps the long <code>[-815,51]</code> and removes both others (2). Keeping the one that ends first is the fix. That bug was wrong on 416 of 2,506 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[1,2],[2,3]]</code></td>
+                        <td><code>0</code></td>
+                        <td>Touching ends are fine: compare with <code>&gt;=</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[1,2],[1,2],[1,2]]</code></td>
+                        <td><code>2</code></td>
+                        <td>Equal intervals all overlap each other.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: DP Over Sorted Intervals</h2>
+                <p class="intuition">
+                  Sort by start. <code>keep[i]</code> is the most intervals that fit
+                  together, ending with interval <code>i</code>: 1 plus the best
+                  <code>keep[j]</code> among earlier intervals that end by
+                  <code>i</code>'s start. Remove everything else.
+                </p>
+                <ul>
+                  <li>Like 300. Longest Increasing Subsequence, with "ends before it starts" as the order.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n²)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  5,000 random intervals: Python 1.2 s, Java 44 ms, C++ 32 ms. LeetCode
+                  allows 10⁵.
+                </p>
+                <div class="code-tabs" data-viz="0435-non-overlapping-intervals/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"dp":[6,7,8,9],"return":[10]}'>
+                    class Solution(object):
+                        def eraseOverlapIntervals(self, intervals):
+                            iv = sorted(intervals)  # by start
+                            n = len(iv)
+                            keep = [1] * n  # keep[i]: most intervals kept from iv[:i + 1], ending with iv[i]
+                            for i in range(n):
+                                for j in range(i):
+                                    if iv[j][1] <= iv[i][0]:  # iv[j] ends before iv[i] starts: they fit together
+                                        keep[i] = max(keep[i], keep[j] + 1)
+                            return n - max(keep)  # remove everything else
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8,9],"dp":[10,11,12],"return":[13]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int eraseOverlapIntervals(std::vector<std::vector<int>>& intervals) {
+                            auto iv = intervals;
+                            std::sort(iv.begin(), iv.end()); // by start
+                            int n = iv.size();
+                            std::vector<int> keep(n, 1); // keep[i]: most intervals kept from iv[0..i], ending with iv[i]
+                            for (int i = 0; i < n; ++i)
+                                for (int j = 0; j < i; ++j)
+                                    if (iv[j][1] <= iv[i][0]) keep[i] = std::max(keep[i], keep[j] + 1); // iv[j] ends before iv[i] starts
+                            return n - *std::max_element(keep.begin(), keep.end()); // remove everything else
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5,6,7],"dp":[8,9,10,11,12],"return":[14]}'>
+                    import java.util.*;
+                    class Solution {
+                        public int eraseOverlapIntervals(int[][] intervals) {
+                            int[][] iv = intervals.clone();
+                            Arrays.sort(iv, (x, y) -> x[0] != y[0] ? Integer.compare(x[0], y[0]) : Integer.compare(x[1], y[1])); // by start
+                            int n = iv.length, best = 0;
+                            int[] keep = new int[n]; // keep[i]: most intervals kept from iv[0..i], ending with iv[i]
+                            for (int i = 0; i < n; i++) {
+                                keep[i] = 1;
+                                for (int j = 0; j < i; j++)
+                                    if (iv[j][1] <= iv[i][0]) keep[i] = Math.max(keep[i], keep[j] + 1); // iv[j] ends before iv[i] starts
+                                best = Math.max(best, keep[i]);
+                            }
+                            return n - best; // remove everything else
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Sort by Start, Drop the Later End</h2>
+                <p class="intuition">
+                  Sort by start and remember the end of the last interval kept. When the
+                  next one overlaps it, one of them has to go: drop the one that ends
+                  later, since it blocks more of what's to come.
+                </p>
+                <ul>
+                  <li>Correct, but the reason is less direct than Approach 3's.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n)</span>
+                  <span><strong>Space</strong> O(n) for the sort</span>
+                </div>
+                <p class="note">
+                  10⁵ random intervals, average of 15 runs: Python 33 ms, Java 13 ms,
+                  C++ 6.0 ms. In Python, sort with <code>key=lambda x: x[0]</code>:
+                  plain <code>sorted</code> compares whole lists and took 73 ms.
+                </p>
+                <div class="code-tabs" data-viz="0435-non-overlapping-intervals/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"scan":[5],"keep":[6,7],"drop":[8,9,10],"return":[11]}'>
+                    class Solution(object):
+                        def eraseOverlapIntervals(self, intervals):
+                            intervals = sorted(intervals, key=lambda x: x[0])  # by start
+                            removed, end = 0, intervals[0][1]  # end of the last interval kept
+                            for s, e in intervals[1:]:
+                                if s >= end:  # no overlap: keep it
+                                    end = e
+                                else:  # overlap: one of the two must go; drop the one that ends later
+                                    removed += 1
+                                    end = min(end, e)
+                            return removed
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7],"scan":[8],"keep":[9],"drop":[10,11,12],"return":[15]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int eraseOverlapIntervals(std::vector<std::vector<int>>& intervals) {
+                            std::sort(intervals.begin(), intervals.end(), [](const auto& x, const auto& y) { return x[0] < y[0]; }); // by start
+                            int removed = 0, end = intervals[0][1]; // end of the last interval kept
+                            for (size_t i = 1; i < intervals.size(); ++i) {
+                                if (intervals[i][0] >= end) end = intervals[i][1]; // no overlap: keep it
+                                else { // overlap: one of the two must go; drop the one that ends later
+                                    ++removed;
+                                    end = std::min(end, intervals[i][1]);
+                                }
+                            }
+                            return removed;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5],"scan":[6],"keep":[7],"drop":[8,9,10],"return":[13]}'>
+                    import java.util.*;
+                    class Solution {
+                        public int eraseOverlapIntervals(int[][] intervals) {
+                            Arrays.sort(intervals, (x, y) -> Integer.compare(x[0], y[0])); // by start
+                            int removed = 0, end = intervals[0][1]; // end of the last interval kept
+                            for (int i = 1; i < intervals.length; i++) {
+                                if (intervals[i][0] >= end) end = intervals[i][1]; // no overlap: keep it
+                                else { // overlap: one of the two must go; drop the one that ends later
+                                    removed++;
+                                    end = Math.min(end, intervals[i][1]);
+                                }
+                            }
+                            return removed;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Sort by End, Keep What Fits
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Sort by end. Walk through and keep an interval whenever it starts at
+                  or after the end of the last one kept. The kept interval always ends
+                  as early as possible, which leaves the most room. Answer:
+                  <code>n − kept</code>.
+                </p>
+                <ul>
+                  <li>The classic activity selection (interval scheduling) greedy.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n)</span>
+                  <span><strong>Space</strong> O(n) for the sort</span>
+                </div>
+                <p class="note">
+                  Same input: Python 24 ms, Java 13 ms, C++ 5.8 ms. The sort is most of
+                  the time, so Approaches 2 and 3 are close; this one is a little
+                  faster in Python.
+                </p>
+                <div class="code-tabs" data-viz="0435-non-overlapping-intervals/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"scan":[5],"keep":[6,7,8],"return":[9]}'>
+                    class Solution(object):
+                        def eraseOverlapIntervals(self, intervals):
+                            intervals = sorted(intervals, key=lambda x: x[1])  # by end
+                            kept, end = 0, float("-inf")  # end of the last interval kept
+                            for s, e in intervals:
+                                if s >= end:  # it fits after the last one kept: keep it; it ends the earliest of what's left
+                                    kept += 1
+                                    end = e
+                            return len(intervals) - kept
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8],"scan":[9],"keep":[10,11,12],"return":[15]}'>
+                    #include <algorithm>
+                    #include <climits>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int eraseOverlapIntervals(std::vector<std::vector<int>>& intervals) {
+                            std::sort(intervals.begin(), intervals.end(), [](const auto& x, const auto& y) { return x[1] < y[1]; }); // by end
+                            int kept = 0, end = INT_MIN; // end of the last interval kept
+                            for (auto& iv : intervals) {
+                                if (iv[0] >= end) { // it fits after the last one kept: keep it; it ends the earliest of what's left
+                                    ++kept;
+                                    end = iv[1];
+                                }
+                            }
+                            return intervals.size() - kept;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5,6],"scan":[7],"keep":[8,9,10],"return":[13]}'>
+                    import java.util.*;
+                    class Solution {
+                        public int eraseOverlapIntervals(int[][] intervals) {
+                            Arrays.sort(intervals, (x, y) -> Integer.compare(x[1], y[1])); // by end
+                            int kept = 0;
+                            long end = Long.MIN_VALUE; // end of the last interval kept
+                            for (int[] iv : intervals) {
+                                if (iv[0] >= end) { // it fits after the last one kept: keep it; it ends the earliest of what's left
+                                    kept++;
+                                    end = iv[1];
+                                }
+                            }
+                            return intervals.length - kept;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>Nothing built in beyond the sort. Approach 3 is what you'd write.</p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">DP</th>
+                        <td>Longest chain that fits</td>
+                        <td>O(n²)</td>
+                        <td>O(n)</td>
+                        <td>1.2 s at 5,000 in Python</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Sort by Start</th>
+                        <td>On overlap, drop the later end</td>
+                        <td>O(n log n)</td>
+                        <td>O(n)</td>
+                        <td>Also correct</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Sort by End</th>
+                        <td>Keep whatever fits next</td>
+                        <td>O(n log n)</td>
+                        <td>O(n)</td>
+                        <td>Expected answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -80254,6 +80596,99 @@
             } else steps.push({ line: "grow", note: `Add ${s[hi]}: length ${len} − top ${top} = ${len - top} ≤ ${k}. The window grows to ${len}.`, view: [sv(s, lo, hi, { [hi]: "new" }), cv(), { type: "vars", items: [{ name: "top", value: top }, { name: "size", value: len, mark: "new" }] }] });
           }
           steps.push({ line: "return", note: `Return ${s.length - lo}: the window's final size. It only grows when a bigger top allows it, so top never needs to go down. O(n).`, view: [sv(s, lo, s.length - 1), { type: "vars", items: [{ name: "size", value: s.length - lo, mark: "match" }] }] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0435-non-overlapping-intervals/approach1.visual.js -->
+    <script>
+      // DP: keep[i] = most intervals you can keep ending with interval i (sorted by start). Remove the rest.
+      (function () {
+      const INPUT = [{ name: "intervals", type: "int[][]", value: "[[1, 2], [2, 3], [3, 4], [1, 3]]", maxRows: 8, maxCols: 2, minValue: -100, maxValue: 100 }];
+      function check(iv) {
+        if (!iv.length) throw new DSAViz.InputError("Give at least one interval.");
+        if (iv.some((x) => x.length !== 2)) throw new DSAViz.InputError("Each interval is [start, end], like [[1, 2], [2, 3]].");
+        if (iv.some(([s, e]) => s >= e)) throw new DSAViz.InputError("Each interval needs start < end.");
+      }
+      const ivv = (iv, label, marks = {}, sub) => ({ type: "array", label, values: iv.map(([s, e]) => `[${s}, ${e}]`), wide: true, marks, sub });
+      DSAViz.register("0435-non-overlapping-intervals/approach1", {
+        inputs: INPUT,
+        trace({ intervals }) {
+          check(intervals);
+          const iv = [...intervals].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+          const n = iv.length, keep = Array(n).fill(1);
+          const steps = [{ line: "init", note: "Sort by start. keep[i] will be the most intervals that fit together, ending with interval i.", view: [ivv(iv, "sorted by start; caption = keep[i]", {}, keep.map(() => "·"))] }];
+          for (let i = 0; i < n; i++) {
+            const fits = [];
+            for (let j = 0; j < i; j++) if (iv[j][1] <= iv[i][0]) { fits.push(j); keep[i] = Math.max(keep[i], keep[j] + 1); }
+            steps.push({ line: "dp", note: fits.length ? `[${iv[i]}]: intervals ${fits.map((j) => `[${iv[j]}]`).join(", ")} end by ${iv[i][0]}. keep[${i}] = 1 + the best of them = ${keep[i]}.` : `[${iv[i]}]: nothing before it ends by ${iv[i][0]}. keep[${i}] = 1.`, view: [ivv(iv, "sorted by start; caption = keep[i]", { [i]: "active", ...Object.fromEntries(fits.map((j) => [j, "compare"])) }, keep.map((v, k) => (k <= i ? String(v) : "·")))] });
+          }
+          const best = Math.max(...keep);
+          steps.push({ line: "return", note: `Return ${n - best}. At most ${best} fit together, so remove ${n} − ${best}. Every pair is compared: O(n²).`, view: [ivv(iv, "sorted by start; caption = keep[i]", {}, keep.map(String))] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0435-non-overlapping-intervals/approach2.visual.js -->
+    <script>
+      // Sort by start. On an overlap one interval must go: drop the one that ends later, since it blocks more.
+      (function () {
+      const INPUT = [{ name: "intervals", type: "int[][]", value: "[[1, 2], [2, 3], [3, 4], [1, 3]]", maxRows: 8, maxCols: 2, minValue: -100, maxValue: 100 }];
+      function check(iv) {
+        if (!iv.length) throw new DSAViz.InputError("Give at least one interval.");
+        if (iv.some((x) => x.length !== 2)) throw new DSAViz.InputError("Each interval is [start, end], like [[1, 2], [2, 3]].");
+        if (iv.some(([s, e]) => s >= e)) throw new DSAViz.InputError("Each interval needs start < end.");
+      }
+      const ivv = (iv, label, marks = {}, sub) => ({ type: "array", label, values: iv.map(([s, e]) => `[${s}, ${e}]`), wide: true, marks, sub });
+      DSAViz.register("0435-non-overlapping-intervals/approach2", {
+        inputs: INPUT,
+        trace({ intervals }) {
+          check(intervals);
+          const iv = [...intervals].sort((a, b) => a[0] - b[0]);
+          let removed = 0, end = iv[0][1], last = 0;
+          const marks = { 0: "match" };
+          const vars = (mark) => ({ type: "vars", items: [{ name: "end", value: end, mark }, { name: "removed", value: removed }] });
+          const steps = [{ line: "init", note: `Sort by start. Keep [${iv[0]}] for now: end = ${end}.`, view: [ivv(iv, "sorted by start; green = kept, red = removed", { ...marks }), vars()] }];
+          for (let i = 1; i < iv.length; i++) {
+            const [s, e] = iv[i];
+            if (s >= end) { const was = end; end = e; marks[i] = "match"; last = i; steps.push({ line: ["scan", "keep"], note: `[${s}, ${e}] starts at ${s} ≥ ${was}: no overlap. Keep it; end = ${e}.`, view: [ivv(iv, "sorted by start; green = kept, red = removed", { ...marks, [i]: "new" }), vars("new")] }); continue; }
+            removed++;
+            if (e < end) { marks[last] = "cut"; marks[i] = "match"; steps.push({ line: ["scan", "drop"], note: `[${s}, ${e}] overlaps [${iv[last]}]. Remove [${iv[last]}]: it ends later (${end} > ${e}). end = ${e}.`, view: [ivv(iv, "sorted by start; green = kept, red = removed", { ...marks, [i]: "new" }), vars("new")] }); end = e; last = i; }
+            else { marks[i] = "cut"; steps.push({ line: ["scan", "drop"], note: `[${s}, ${e}] overlaps [${iv[last]}] and ends no sooner (${e} ≥ ${end}). Remove it.`, view: [ivv(iv, "sorted by start; green = kept, red = removed", { ...marks }), vars()] }); }
+          }
+          steps.push({ line: "return", note: `Return ${removed}. One pass after the sort: O(n log n).`, view: [ivv(iv, "sorted by start; green = kept, red = removed", { ...marks }), vars()] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0435-non-overlapping-intervals/approach3.visual.js -->
+    <script>
+      // Sort by end. Keep every interval that starts after the last kept one ends: the earliest end leaves the most room.
+      (function () {
+      const INPUT = [{ name: "intervals", type: "int[][]", value: "[[1, 2], [2, 3], [3, 4], [1, 3]]", maxRows: 8, maxCols: 2, minValue: -100, maxValue: 100 }];
+      function check(iv) {
+        if (!iv.length) throw new DSAViz.InputError("Give at least one interval.");
+        if (iv.some((x) => x.length !== 2)) throw new DSAViz.InputError("Each interval is [start, end], like [[1, 2], [2, 3]].");
+        if (iv.some(([s, e]) => s >= e)) throw new DSAViz.InputError("Each interval needs start < end.");
+      }
+      const ivv = (iv, label, marks = {}, sub) => ({ type: "array", label, values: iv.map(([s, e]) => `[${s}, ${e}]`), wide: true, marks, sub });
+      DSAViz.register("0435-non-overlapping-intervals/approach3", {
+        inputs: INPUT,
+        trace({ intervals }) {
+          check(intervals);
+          const iv = [...intervals].sort((a, b) => a[1] - b[1]);
+          let kept = 0, end = -Infinity;
+          const marks = {};
+          const vars = (mark) => ({ type: "vars", items: [{ name: "end", value: end === -Infinity ? "−∞" : end, mark }, { name: "kept", value: kept, mark }] });
+          const steps = [{ line: "init", note: "Sort by end. Nothing kept yet: end = −∞.", view: [ivv(iv, "sorted by end; green = kept, grey = removed"), vars()] }];
+          iv.forEach(([s, e], i) => {
+            if (s >= end) { kept++; marks[i] = "match"; const was = end; end = e; steps.push({ line: ["scan", "keep"], note: `[${s}, ${e}] starts at ${s} ≥ ${was === -Infinity ? "−∞" : was}: keep it. Of what's left, it ends first, so it leaves the most room. end = ${e}.`, view: [ivv(iv, "sorted by end; green = kept, grey = removed", { ...marks, [i]: "new" }), vars("new")] }); }
+            else { marks[i] = "visited"; steps.push({ line: "scan", note: `[${s}, ${e}] starts before ${end}: it overlaps the last kept one. Skip it (removed).`, view: [ivv(iv, "sorted by end; green = kept, grey = removed", { ...marks, [i]: "cut" }), vars()] }); }
+          });
+          steps.push({ line: "return", note: `Return ${iv.length - kept}: ${iv.length} intervals, ${kept} kept. O(n log n) for the sort.`, view: [ivv(iv, "sorted by end; green = kept, grey = removed", marks), vars()] });
           return steps;
         },
       });

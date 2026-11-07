@@ -1,0 +1,194 @@
+<details class="question" data-group="intervals" data-tags="intervals greedy sorting activity selection interval scheduling">
+  <summary>
+    <span class="q-title">435. Non-overlapping Intervals</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Intervals</span>
+      <span class="tag">Greedy</span>
+      <span class="tag">Sorting</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Removing the fewest means keeping the most.
+      Sort by <strong>end</strong> and keep every interval that starts at or
+      after the last kept end. The one that ends first always leaves the most
+      room for the rest. O(n log n).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/non-overlapping-intervals/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Return the minimum number of intervals to remove so the rest don't
+        overlap. Intervals that only touch, like <code>[1,2]</code> and
+        <code>[2,3]</code>, don't overlap.
+      </p>
+      <ul>
+        <li><code>1 &lt;= intervals.length &lt;= 10⁵</code>, <code>-5·10⁴ &lt;= start &lt; end &lt;= 5·10⁴</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[[1,2],[2,3],[3,4],[1,3]]</code> → <code>1</code>
+        (remove <code>[1,3]</code>). <code>[[1,2],[1,2],[1,2]]</code> →
+        <code>2</code>. <code>[[1,2],[2,3]]</code> → <code>0</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[[-815,51],[-709,-254],[-218,487]]</code></td>
+              <td><code>1</code></td>
+              <td>Sorted by start, always keeping the earlier interval keeps the long <code>[-815,51]</code> and removes both others (2). Keeping the one that ends first is the fix. That bug was wrong on 416 of 2,506 tests.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,2],[2,3]]</code></td>
+              <td><code>0</code></td>
+              <td>Touching ends are fine: compare with <code>&gt;=</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,2],[1,2],[1,2]]</code></td>
+              <td><code>2</code></td>
+              <td>Equal intervals all overlap each other.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: DP Over Sorted Intervals</h2>
+      <p class="intuition">
+        Sort by start. <code>keep[i]</code> is the most intervals that fit
+        together, ending with interval <code>i</code>: 1 plus the best
+        <code>keep[j]</code> among earlier intervals that end by
+        <code>i</code>'s start. Remove everything else.
+      </p>
+      <ul>
+        <li>Like 300. Longest Increasing Subsequence, with "ends before it starts" as the order.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        5,000 random intervals: Python 1.2 s, Java 44 ms, C++ 32 ms. LeetCode
+        allows 10⁵.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Sort by Start, Drop the Later End</h2>
+      <p class="intuition">
+        Sort by start and remember the end of the last interval kept. When the
+        next one overlaps it, one of them has to go: drop the one that ends
+        later, since it blocks more of what's to come.
+      </p>
+      <ul>
+        <li>Correct, but the reason is less direct than Approach 3's.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(n) for the sort</span>
+      </div>
+      <p class="note">
+        10⁵ random intervals, average of 15 runs: Python 33 ms, Java 13 ms,
+        C++ 6.0 ms. In Python, sort with <code>key=lambda x: x[0]</code>:
+        plain <code>sorted</code> compares whole lists and took 73 ms.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Sort by End, Keep What Fits
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Sort by end. Walk through and keep an interval whenever it starts at
+        or after the end of the last one kept. The kept interval always ends
+        as early as possible, which leaves the most room. Answer:
+        <code>n − kept</code>.
+      </p>
+      <ul>
+        <li>The classic activity selection (interval scheduling) greedy.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(n) for the sort</span>
+      </div>
+      <p class="note">
+        Same input: Python 24 ms, Java 13 ms, C++ 5.8 ms. The sort is most of
+        the time, so Approaches 2 and 3 are close; this one is a little
+        faster in Python.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>Nothing built in beyond the sort. Approach 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">DP</th>
+              <td>Longest chain that fits</td>
+              <td>O(n²)</td>
+              <td>O(n)</td>
+              <td>1.2 s at 5,000 in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">Sort by Start</th>
+              <td>On overlap, drop the later end</td>
+              <td>O(n log n)</td>
+              <td>O(n)</td>
+              <td>Also correct</td>
+            </tr>
+            <tr>
+              <th scope="row">Sort by End</th>
+              <td>Keep whatever fits next</td>
+              <td>O(n log n)</td>
+              <td>O(n)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
