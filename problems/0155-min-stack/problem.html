@@ -1,0 +1,222 @@
+<details class="question" data-group="stack" data-tags="stack design min stack getmin auxiliary stack">
+  <summary>
+    <span class="q-title">155. Min Stack</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Stack</span>
+      <span class="tag">Design</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> The minimum only changes when a value is
+      pushed or popped at the top, so remember it per level. Either store
+      <code>(value, minimum at or below)</code> in each entry, or keep a
+      second stack of minimums and push to it when a value is
+      <strong>≤</strong> its top. Everything is O(1).
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/min-stack/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Design a stack with <code>push(val)</code>, <code>pop()</code>,
+        <code>top()</code> and <code>getMin()</code>, which returns the
+        smallest value on the stack. Each must run in O(1).
+      </p>
+      <ul>
+        <li><code>-2³¹ &lt;= val &lt;= 2³¹ - 1</code></li>
+        <li><code>pop</code>, <code>top</code> and <code>getMin</code> are only called on a non-empty stack</li>
+        <li>At most 3 × 10⁴ calls</li>
+      </ul>
+      <p class="note">
+        Example: push(-2), push(0), push(-3), getMin() → -3, pop(), top() →
+        0, getMin() → -2.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>push 0, push 1, push 0, getMin, pop, getMin</td>
+              <td><code>0, 0</code></td>
+              <td>The minimum is pushed twice. Adding to the min stack only on a <strong>strictly</strong> smaller value lost it after one pop: <code>IndexError</code> on the second getMin.</td>
+            </tr>
+            <tr>
+              <td>push 1000, push 500, pop, getMin</td>
+              <td><code>1000</code></td>
+              <td>Java: comparing two <code>Integer</code>s with <code>==</code> compares objects. It said <code>500</code> here, but gave the right answer for small values like 50 and 100, so it passes easy tests. Use <code>.equals</code>.</td>
+            </tr>
+            <tr>
+              <td>push 2³¹ − 1, push −2³¹, getMin, pop, getMin</td>
+              <td><code>-2147483648, 2147483647</code></td>
+              <td>The full int range. Tricks that store "value minus minimum" overflow here.</td>
+            </tr>
+            <tr>
+              <td>15,000 pushes, then 15,000 getMin</td>
+              <td>-</td>
+              <td>Scanning on each getMin is 2.25 × 10⁸ reads: 4.8 s in Python here.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Scan on getMin</h2>
+      <p class="intuition">
+        A plain stack. <code>getMin</code> looks at every value and returns the
+        smallest.
+      </p>
+      <ul>
+        <li>push, pop and top are O(1); only getMin is slow.</li>
+        <li>Fails the O(1) requirement.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> getMin O(n), the rest O(1)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        15,000 pushes then 15,000 getMin: Python 4.8 s, Java 0.19 s, C++
+        12 ms.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Store the Minimum With Each Entry</h2>
+      <p class="intuition">
+        Push <code>(val, min(val, minimum of the entry below))</code>. The
+        top entry's second number is always the current minimum. Popping
+        reveals an entry that already knows its own minimum.
+      </p>
+      <ul>
+        <li>The simplest O(1) design: nothing to keep in sync.</li>
+        <li>Always stores two numbers per value.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(1) per call</span>
+        <span><strong>Space</strong> O(n), 2 numbers per entry</span>
+      </div>
+      <p class="note">
+        Same big run: Python 6 ms, Java 13 ms, C++ 2.3 ms, about 800× faster
+        than Approach 1 in Python.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: A Second Stack of Minimums
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Keep all values on <code>stack</code>. On push, also push onto
+        <code>mins</code> if the value is ≤ the top of <code>mins</code>. On
+        pop, if the popped value equals the top of <code>mins</code>, pop
+        that too. <code>getMin</code> is the top of <code>mins</code>.
+      </p>
+      <ul>
+        <li>
+          <code>≤</code> keeps a copy for every repeat of the minimum, so
+          popping one copy leaves the others.
+        </li>
+        <li>
+          <code>mins</code> is usually small: 13 entries for 15,000 random
+          pushes here. Its worst case is a decreasing sequence, where it holds
+          every value (15,000 of 15,000).
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(1) per call</span>
+        <span><strong>Space</strong> O(n) worst, usually much less</span>
+      </div>
+      <p class="note">
+        Same big run: Python 5 ms, Java 10 ms, C++ 2.3 ms. The usual answer,
+        with the <code>≤</code> and (in Java) the <code>.equals</code> as the
+        two details to get right.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No standard stack tracks its minimum. A heap gives the minimum, but
+        it can't remove the most recently pushed value, so it doesn't fit.
+      </p>
+      <p class="note">
+        Approach 2 or 3 is what you'd write. Approach 2 is harder to get
+        wrong; Approach 3 saves memory when minimums change rarely.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">getMin</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Scan on getMin</th>
+              <td>Plain stack</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>4.8 s in Python on the big run</td>
+            </tr>
+            <tr>
+              <th scope="row">Store the Minimum With Each Entry</th>
+              <td>(value, min below) pairs</td>
+              <td>O(1)</td>
+              <td>2 per entry</td>
+              <td>Simplest O(1)</td>
+            </tr>
+            <tr>
+              <th scope="row">A Second Stack of Minimums</th>
+              <td>Push to mins when ≤ its top</td>
+              <td>O(1)</td>
+              <td>Usually less</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

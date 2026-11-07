@@ -12480,7 +12480,7 @@
       <details class="pattern-group" id="g-stack">
         <summary>
           <span class="g-name">Stack</span>
-          <span class="g-count"><span class="g-total">3 problems</span></span>
+          <span class="g-count"><span class="g-total">4 problems</span></span>
           <span class="g-hint">Last in, first out</span>
         </summary>
         <div class="g-body">
@@ -13706,6 +13706,432 @@
                         <td>Push numbers; pop two on an operator</td>
                         <td>O(n)</td>
                         <td>O(n)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0155-min-stack ===== -->
+          <details class="question" data-group="stack" data-tags="stack design min stack getmin auxiliary stack">
+            <summary>
+              <span class="q-title">155. Min Stack</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Stack</span>
+                <span class="tag">Design</span>
+              </span>
+            </summary>
+
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> The minimum only changes when a value is
+                pushed or popped at the top, so remember it per level. Either store
+                <code>(value, minimum at or below)</code> in each entry, or keep a
+                second stack of minimums and push to it when a value is
+                <strong>≤</strong> its top. Everything is O(1).
+              </div>
+
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/min-stack/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Design a stack with <code>push(val)</code>, <code>pop()</code>,
+                  <code>top()</code> and <code>getMin()</code>, which returns the
+                  smallest value on the stack. Each must run in O(1).
+                </p>
+                <ul>
+                  <li><code>-2³¹ &lt;= val &lt;= 2³¹ - 1</code></li>
+                  <li><code>pop</code>, <code>top</code> and <code>getMin</code> are only called on a non-empty stack</li>
+                  <li>At most 3 × 10⁴ calls</li>
+                </ul>
+                <p class="note">
+                  Example: push(-2), push(0), push(-3), getMin() → -3, pop(), top() →
+                  0, getMin() → -2.
+                </p>
+              </section>
+
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>push 0, push 1, push 0, getMin, pop, getMin</td>
+                        <td><code>0, 0</code></td>
+                        <td>The minimum is pushed twice. Adding to the min stack only on a <strong>strictly</strong> smaller value lost it after one pop: <code>IndexError</code> on the second getMin.</td>
+                      </tr>
+                      <tr>
+                        <td>push 1000, push 500, pop, getMin</td>
+                        <td><code>1000</code></td>
+                        <td>Java: comparing two <code>Integer</code>s with <code>==</code> compares objects. It said <code>500</code> here, but gave the right answer for small values like 50 and 100, so it passes easy tests. Use <code>.equals</code>.</td>
+                      </tr>
+                      <tr>
+                        <td>push 2³¹ − 1, push −2³¹, getMin, pop, getMin</td>
+                        <td><code>-2147483648, 2147483647</code></td>
+                        <td>The full int range. Tricks that store "value minus minimum" overflow here.</td>
+                      </tr>
+                      <tr>
+                        <td>15,000 pushes, then 15,000 getMin</td>
+                        <td>-</td>
+                        <td>Scanning on each getMin is 2.25 × 10⁸ reads: 4.8 s in Python here.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Scan on getMin</h2>
+                <p class="intuition">
+                  A plain stack. <code>getMin</code> looks at every value and returns the
+                  smallest.
+                </p>
+                <ul>
+                  <li>push, pop and top are O(1); only getMin is slow.</li>
+                  <li>Fails the O(1) requirement.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> getMin O(n), the rest O(1)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  15,000 pushes then 15,000 getMin: Python 4.8 s, Java 0.19 s, C++
+                  12 ms.
+                </p>
+                <div class="code-tabs" data-viz="0155-min-stack/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"push":[6],"pop":[9],"top":[12],"min":[15,16,17,18,19]}'>
+                    class MinStack(object):
+                        def __init__(self):
+                            self.stack = []
+
+                        def push(self, val):
+                            self.stack.append(val)
+
+                        def pop(self):
+                            self.stack.pop()
+
+                        def top(self):
+                            return self.stack[-1]
+
+                        def getMin(self):
+                            best = self.stack[0]
+                            for x in self.stack:  # look at everything: O(n)
+                                if x < best:
+                                    best = x
+                            return best
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[4,21],"push":[6],"pop":[8],"top":[10],"min":[13,14,15,17]}'>
+                    #include <vector>
+                    class MinStack {
+                    public:
+                        MinStack() {}
+
+                        void push(int val) { stack.push_back(val); }
+
+                        void pop() { stack.pop_back(); }
+
+                        int top() { return stack.back(); }
+
+                        int getMin() {
+                            int best = stack[0];
+                            for (int x : stack) { // look at everything: O(n)
+                                if (x < best) best = x;
+                            }
+                            return best;
+                        }
+
+                    private:
+                        std::vector<int> stack;
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,6],"push":[8],"pop":[10],"top":[12],"min":[15,16,17,19]}'>
+                    import java.util.*;
+
+                    class MinStack {
+                        private final ArrayList<Integer> stack = new ArrayList<>();
+
+                        public MinStack() {}
+
+                        public void push(int val) { stack.add(val); }
+
+                        public void pop() { stack.remove(stack.size() - 1); }
+
+                        public int top() { return stack.get(stack.size() - 1); }
+
+                        public int getMin() {
+                            int best = stack.get(0);
+                            for (int x : stack) { // look at everything: O(n)
+                                if (x < best) best = x;
+                            }
+                            return best;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Store the Minimum With Each Entry</h2>
+                <p class="intuition">
+                  Push <code>(val, min(val, minimum of the entry below))</code>. The
+                  top entry's second number is always the current minimum. Popping
+                  reveals an entry that already knows its own minimum.
+                </p>
+                <ul>
+                  <li>The simplest O(1) design: nothing to keep in sync.</li>
+                  <li>Always stores two numbers per value.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(1) per call</span>
+                  <span><strong>Space</strong> O(n), 2 numbers per entry</span>
+                </div>
+                <p class="note">
+                  Same big run: Python 6 ms, Java 13 ms, C++ 2.3 ms, about 800× faster
+                  than Approach 1 in Python.
+                </p>
+                <div class="code-tabs" data-viz="0155-min-stack/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"push":[6,7],"pop":[10],"top":[13],"min":[16]}'>
+                    class MinStack(object):
+                        def __init__(self):
+                            self.stack = []  # (value, smallest value at or below it)
+
+                        def push(self, val):
+                            low = val if not self.stack else min(val, self.stack[-1][1])
+                            self.stack.append((val, low))  # each entry remembers the minimum under it
+
+                        def pop(self):
+                            self.stack.pop()  # the entries below still have the right minimum
+
+                        def top(self):
+                            return self.stack[-1][0]
+
+                        def getMin(self):
+                            return self.stack[-1][1]  # O(1)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,20],"push":[9,10],"pop":[13],"top":[15],"min":[17]}'>
+                    #include <algorithm>
+                    #include <utility>
+                    #include <vector>
+                    class MinStack {
+                    public:
+                        MinStack() {}
+
+                        void push(int val) {
+                            int low = stack.empty() ? val : std::min(val, stack.back().second);
+                            stack.push_back({val, low}); // each entry remembers the minimum under it
+                        }
+
+                        void pop() { stack.pop_back(); } // the entries below still have the right minimum
+
+                        int top() { return stack.back().first; }
+
+                        int getMin() { return stack.back().second; } // O(1)
+
+                    private:
+                        std::vector<std::pair<int, int>> stack; // (value, smallest value at or below it)
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,6],"push":[9,10],"pop":[13],"top":[15],"min":[17]}'>
+                    import java.util.*;
+
+                    class MinStack {
+                        private final ArrayDeque<int[]> stack = new ArrayDeque<>(); // {value, smallest value at or below it}
+
+                        public MinStack() {}
+
+                        public void push(int val) {
+                            int low = stack.isEmpty() ? val : Math.min(val, stack.peek()[1]);
+                            stack.push(new int[] {val, low}); // each entry remembers the minimum under it
+                        }
+
+                        public void pop() { stack.pop(); } // the entries below still have the right minimum
+
+                        public int top() { return stack.peek()[0]; }
+
+                        public int getMin() { return stack.peek()[1]; } // O(1)
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: A Second Stack of Minimums
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Keep all values on <code>stack</code>. On push, also push onto
+                  <code>mins</code> if the value is ≤ the top of <code>mins</code>. On
+                  pop, if the popped value equals the top of <code>mins</code>, pop
+                  that too. <code>getMin</code> is the top of <code>mins</code>.
+                </p>
+                <ul>
+                  <li>
+                    <code>≤</code> keeps a copy for every repeat of the minimum, so
+                    popping one copy leaves the others.
+                  </li>
+                  <li>
+                    <code>mins</code> is usually small: 13 entries for 15,000 random
+                    pushes here. Its worst case is a decreasing sequence, where it holds
+                    every value (15,000 of 15,000).
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(1) per call</span>
+                  <span><strong>Space</strong> O(n) worst, usually much less</span>
+                </div>
+                <p class="note">
+                  Same big run: Python 5 ms, Java 10 ms, C++ 2.3 ms. The usual answer,
+                  with the <code>≤</code> and (in Java) the <code>.equals</code> as the
+                  two details to get right.
+                </p>
+                <div class="code-tabs" data-viz="0155-min-stack/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"push":[7,8,9],"pop":[12,13],"top":[16],"min":[19]}'>
+                    class MinStack(object):
+                        def __init__(self):
+                            self.stack = []
+                            self.mins = []  # the minimum so far, pushed only when it changes (or repeats)
+
+                        def push(self, val):
+                            self.stack.append(val)
+                            if not self.mins or val <= self.mins[-1]:  # <=, not <: a repeated minimum is pushed again
+                                self.mins.append(val)
+
+                        def pop(self):
+                            if self.stack.pop() == self.mins[-1]:  # removing the current minimum
+                                self.mins.pop()
+
+                        def top(self):
+                            return self.stack[-1]
+
+                        def getMin(self):
+                            return self.mins[-1]  # O(1)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[4,21,22],"push":[7,8],"pop":[12,13],"top":[16],"min":[18]}'>
+                    #include <vector>
+                    class MinStack {
+                    public:
+                        MinStack() {}
+
+                        void push(int val) {
+                            stack.push_back(val);
+                            if (mins.empty() || val <= mins.back()) mins.push_back(val); // <=, not <: a repeated minimum is pushed again
+                        }
+
+                        void pop() {
+                            if (stack.back() == mins.back()) mins.pop_back(); // removing the current minimum
+                            stack.pop_back();
+                        }
+
+                        int top() { return stack.back(); }
+
+                        int getMin() { return mins.back(); } // O(1)
+
+                    private:
+                        std::vector<int> stack;
+                        std::vector<int> mins; // the minimum so far, pushed only when it changes (or repeats)
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5,7],"push":[10,11],"pop":[16],"top":[19],"min":[21]}'>
+                    import java.util.*;
+
+                    class MinStack {
+                        private final ArrayDeque<Integer> stack = new ArrayDeque<>();
+                        private final ArrayDeque<Integer> mins = new ArrayDeque<>(); // the minimum so far, pushed only when it changes (or repeats)
+
+                        public MinStack() {}
+
+                        public void push(int val) {
+                            stack.push(val);
+                            if (mins.isEmpty() || val <= mins.peek()) mins.push(val); // <=, not <: a repeated minimum is pushed again
+                        }
+
+                        public void pop() {
+                            // equals, not ==: these are Integer objects, and == compares identity outside -128..127
+                            if (stack.pop().equals(mins.peek())) mins.pop(); // removing the current minimum
+                        }
+
+                        public int top() { return stack.peek(); }
+
+                        public int getMin() { return mins.peek(); } // O(1)
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  No standard stack tracks its minimum. A heap gives the minimum, but
+                  it can't remove the most recently pushed value, so it doesn't fit.
+                </p>
+                <p class="note">
+                  Approach 2 or 3 is what you'd write. Approach 2 is harder to get
+                  wrong; Approach 3 saves memory when minimums change rarely.
+                </p>
+              </section>
+
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">getMin</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Scan on getMin</th>
+                        <td>Plain stack</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>4.8 s in Python on the big run</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Store the Minimum With Each Entry</th>
+                        <td>(value, min below) pairs</td>
+                        <td>O(1)</td>
+                        <td>2 per entry</td>
+                        <td>Simplest O(1)</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">A Second Stack of Minimums</th>
+                        <td>Push to mins when ≤ its top</td>
+                        <td>O(1)</td>
+                        <td>Usually less</td>
                         <td>Expected answer</td>
                       </tr>
                     </tbody>
@@ -52872,6 +53298,175 @@
         let drops = 0;
         for (let i = 0; i < n; i++) if (nums[i] > nums[(i + 1) % n]) drops++;
         if (n > 1 && drops !== 1) throw new DSAViz.InputError("Use a sorted list that was rotated, like [4, 5, 6, 7, 0, 1, 2].");
+      }
+      })();
+    </script>
+    <!-- problems/0155-min-stack/approach1.visual.js -->
+    <script>
+      // A plain stack; getMin looks at every value.
+      (function () {
+      DSAViz.register("0155-min-stack/approach1", {
+        inputs: [{ name: "ops", label: "operations (comma-separated)", type: "string", value: "push -2, push 0, push -3, getMin, pop, top, getMin", maxLength: 120, raw: true }],
+        trace({ ops: text }) {
+          const ops = parseOps(text);
+          const steps = [];
+          const stack = [];
+          const out = [];
+          let scanned = 0;
+          const view = (o = {}) => [{ type: "array", label: "stack (bottom → top)", values: stack.map(String), marks: o.marks || {} }, { type: "array", label: "returned so far (top, getMin)", values: out.map(String), compact: true, marks: o.res ? { [out.length - 1]: "new" } : {} }, { type: "vars", items: [{ name: "values scanned by getMin", value: scanned, mark: o.counted ? "new" : "" }] }];
+          steps.push({ line: "init", note: "One ordinary stack. push, pop and top are O(1); getMin has to look at everything.", view: view() });
+          for (const [op, v] of ops) {
+            if (op === "push") { stack.push(v); steps.push({ line: "push", note: `push(${v}).`, view: view({ marks: { [stack.length - 1]: "new" } }) }); }
+            else if (op === "pop") { const x = stack.pop(); steps.push({ line: "pop", note: `pop() removes ${x}.`, view: view() }); }
+            else if (op === "top") { out.push(stack[stack.length - 1]); steps.push({ line: "top", note: `top() = ${out[out.length - 1]}.`, view: view({ res: true, marks: { [stack.length - 1]: "active" } }) }); }
+            else {
+              const m = Math.min(...stack);
+              scanned += stack.length;
+              out.push(m);
+              const marks = {};
+              stack.forEach((x, k) => (marks[k] = x === m && stack.indexOf(m) === k ? "match" : "visited"));
+              steps.push({ line: "min", note: `getMin(): look at all ${stack.length} values. The smallest is ${m}.`, view: view({ res: true, counted: true, marks }) });
+            }
+          }
+          steps.push({ line: "min", note: `Done: [${out.join(", ")}]. getMin is O(n): with n values on the stack, every call scans all of them.`, view: view() });
+          return steps;
+        },
+      });
+
+      // Read "push -2, push 0, getMin, pop, top" and check pop/top/getMin never run on an empty stack.
+      function parseOps(text) {
+        const parts = text.split(",").map((p) => p.trim()).filter(Boolean);
+        if (!parts.length) throw new DSAViz.InputError("Type operations separated by commas, like push 3, push 1, getMin.");
+        if (parts.length > 12) throw new DSAViz.InputError("Up to 12 operations here, so the steps stay readable.");
+        let size = 0;
+        return parts.map((p) => {
+          const m = p.match(/^push\s+(-?\d{1,3})$/i);
+          if (m) { size++; return ["push", +m[1]]; }
+          const op = { pop: "pop", top: "top", getmin: "getMin" }[p.toLowerCase()];
+          if (!op) throw new DSAViz.InputError(`"${p}": use push N (-999 to 999), pop, top or getMin.`);
+          if (!size) throw new DSAViz.InputError(`"${p}" on an empty stack isn't allowed.`);
+          if (op === "pop") size--;
+          return [op];
+        });
+      }
+      })();
+    </script>
+    <!-- problems/0155-min-stack/approach2.visual.js -->
+    <script>
+      // Each entry stores its value and the smallest value at or below it, so getMin reads the top.
+      (function () {
+      DSAViz.register("0155-min-stack/approach2", {
+        inputs: [{ name: "ops", label: "operations (comma-separated)", type: "string", value: "push -2, push 0, push -3, getMin, pop, top, getMin", maxLength: 120, raw: true }],
+        trace({ ops: text }) {
+          const ops = parseOps(text);
+          const steps = [];
+          const stack = [];
+          const out = [];
+          const view = (o = {}) => [{ type: "array", label: "stack (bottom → top); each entry: value | min at or below", values: stack.map(([v, m]) => `${v} | ${m}`), wide: true, marks: o.marks || {} }, { type: "array", label: "returned so far (top, getMin)", values: out.map(String), compact: true, marks: o.res ? { [out.length - 1]: "new" } : {} }];
+          steps.push({ line: "init", note: "Each entry remembers the minimum of itself and everything below it. That never changes later, because only the top is ever removed.", view: view() });
+          for (const [op, v] of ops) {
+            const top = stack[stack.length - 1];
+            if (op === "push") {
+              const low = top ? Math.min(v, top[1]) : v;
+              stack.push([v, low]);
+              steps.push({ line: "push", note: top ? `push(${v}): min(${v}, ${top[1]}) = ${low}. Store ${v} | ${low}.` : `push(${v}): the first entry, so its own minimum: ${v} | ${v}.`, view: view({ marks: { [stack.length - 1]: "new" } }) });
+            } else if (op === "pop") {
+              stack.pop();
+              steps.push({ line: "pop", note: `pop() removes ${top[0]} | ${top[1]}. The entry below already knows its own minimum.`, view: view() });
+            } else if (op === "top") {
+              out.push(top[0]);
+              steps.push({ line: "top", note: `top() = ${top[0]}.`, view: view({ res: true, marks: { [stack.length - 1]: "active" } }) });
+            } else {
+              out.push(top[1]);
+              steps.push({ line: "min", note: `getMin() = ${top[1]}, read straight from the top entry. O(1).`, view: view({ res: true, marks: { [stack.length - 1]: "match" } }) });
+            }
+          }
+          steps.push({ line: "min", note: `Done: [${out.join(", ")}]. Every call is O(1); the cost is storing two numbers per entry.`, view: view() });
+          return steps;
+        },
+      });
+
+      // Read "push -2, push 0, getMin, pop, top" and check pop/top/getMin never run on an empty stack.
+      function parseOps(text) {
+        const parts = text.split(",").map((p) => p.trim()).filter(Boolean);
+        if (!parts.length) throw new DSAViz.InputError("Type operations separated by commas, like push 3, push 1, getMin.");
+        if (parts.length > 12) throw new DSAViz.InputError("Up to 12 operations here, so the steps stay readable.");
+        let size = 0;
+        return parts.map((p) => {
+          const m = p.match(/^push\s+(-?\d{1,3})$/i);
+          if (m) { size++; return ["push", +m[1]]; }
+          const op = { pop: "pop", top: "top", getmin: "getMin" }[p.toLowerCase()];
+          if (!op) throw new DSAViz.InputError(`"${p}": use push N (-999 to 999), pop, top or getMin.`);
+          if (!size) throw new DSAViz.InputError(`"${p}" on an empty stack isn't allowed.`);
+          if (op === "pop") size--;
+          return [op];
+        });
+      }
+      })();
+    </script>
+    <!-- problems/0155-min-stack/approach3.visual.js -->
+    <script>
+      // Two stacks: all values, and the minimums. Push to mins only when the value is <= its top.
+      (function () {
+      DSAViz.register("0155-min-stack/approach3", {
+        inputs: [{ name: "ops", label: "operations (comma-separated)", type: "string", value: "push 5, push 3, push 7, push 3, getMin, pop, getMin, pop, pop, getMin", maxLength: 120, raw: true }],
+        trace({ ops: text }) {
+          const ops = parseOps(text);
+          const steps = [];
+          const stack = [];
+          const mins = [];
+          const out = [];
+          const view = (o = {}) => [
+            { type: "array", label: "stack (bottom → top)", values: stack.map(String), marks: o.sm || {} },
+            { type: "array", label: "mins (bottom → top; the top is the current minimum)", values: mins.map(String), marks: o.mm || {} },
+            { type: "array", label: "returned so far (top, getMin)", values: out.map(String), compact: true, marks: o.res ? { [out.length - 1]: "new" } : {} },
+          ];
+          steps.push({ line: "init", note: "stack holds everything. mins holds a value only when it's a new minimum, or ties the current one.", view: view() });
+          for (const [op, v] of ops) {
+            if (op === "push") {
+              stack.push(v);
+              const goes = !mins.length || v <= mins[mins.length - 1];
+              const prev = mins[mins.length - 1];
+              if (goes) mins.push(v);
+              steps.push({
+                line: "push",
+                note: `push(${v}). ${prev === undefined ? `mins is empty, so ${v} goes there too.` : goes ? `${v} ≤ ${prev}, so it goes on mins too${v === prev ? ": a tie is pushed again, so popping one copy still leaves the other" : ""}.` : `${v} > ${prev}: mins stays the same.`}`,
+                view: view({ sm: { [stack.length - 1]: "new" }, mm: goes ? { [mins.length - 1]: "new" } : {} }),
+              });
+            } else if (op === "pop") {
+              const x = stack.pop();
+              const was = mins[mins.length - 1];
+              const also = x === was;
+              if (also) mins.pop();
+              steps.push({ line: "pop", note: `pop() removes ${x}.${also ? ` It equals the top of mins, so pop mins too. The minimum is now ${mins.length ? mins[mins.length - 1] : "(empty stack)"}.` : ` It's not the minimum (${was}), so mins stays.`}`, view: view() });
+            } else if (op === "top") {
+              out.push(stack[stack.length - 1]);
+              steps.push({ line: "top", note: `top() = ${out[out.length - 1]}.`, view: view({ res: true, sm: { [stack.length - 1]: "active" } }) });
+            } else {
+              out.push(mins[mins.length - 1]);
+              steps.push({ line: "min", note: `getMin() = ${out[out.length - 1]}, the top of mins. O(1).`, view: view({ res: true, mm: { [mins.length - 1]: "match" } }) });
+            }
+          }
+          steps.push({ line: "min", note: `Done: [${out.join(", ")}]. Every call is O(1). mins holds ${mins.length} value${mins.length === 1 ? "" : "s"} for ${stack.length} on the stack.`, view: view() });
+          return steps;
+        },
+      });
+
+      // Read "push -2, push 0, getMin, pop, top" and check pop/top/getMin never run on an empty stack.
+      function parseOps(text) {
+        const parts = text.split(",").map((p) => p.trim()).filter(Boolean);
+        if (!parts.length) throw new DSAViz.InputError("Type operations separated by commas, like push 3, push 1, getMin.");
+        if (parts.length > 12) throw new DSAViz.InputError("Up to 12 operations here, so the steps stay readable.");
+        let size = 0;
+        return parts.map((p) => {
+          const m = p.match(/^push\s+(-?\d{1,3})$/i);
+          if (m) { size++; return ["push", +m[1]]; }
+          const op = { pop: "pop", top: "top", getmin: "getMin" }[p.toLowerCase()];
+          if (!op) throw new DSAViz.InputError(`"${p}": use push N (-999 to 999), pop, top or getMin.`);
+          if (!size) throw new DSAViz.InputError(`"${p}" on an empty stack isn't allowed.`);
+          if (op === "pop") size--;
+          return [op];
+        });
       }
       })();
     </script>
