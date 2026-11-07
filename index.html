@@ -15285,7 +15285,7 @@
       <details class="pattern-group" id="g-stack">
         <summary>
           <span class="g-name">Stack</span>
-          <span class="g-count"><span class="g-total">5 problems</span></span>
+          <span class="g-count"><span class="g-total">6 problems</span></span>
           <span class="g-hint">Last in, first out</span>
         </summary>
         <div class="g-body">
@@ -17279,6 +17279,365 @@
                         <th scope="row">Monotonic Stack</th>
                         <td>Pop the colder days</td>
                         <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0853-car-fleet ===== -->
+          <details class="question" data-group="stack" data-tags="stack monotonic stack sorting greedy arrival time fleet">
+            <summary>
+              <span class="q-title">853. Car Fleet</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Stack</span>
+                <span class="tag">Sorting</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Only cars ahead can slow a car down. Sort
+                the cars closest to the target first and work out each one's arrival
+                time alone. A car whose time is no later than the fleet ahead catches
+                it and joins; a later time starts a new fleet. Keep the times on a
+                stack, or just the slowest one. O(n log n) for the sort.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/car-fleet/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  <code>n</code> cars drive along one lane to <code>target</code>. Car
+                  <code>i</code> starts at <code>position[i]</code> with speed
+                  <code>speed[i]</code>. A car can't pass the one ahead: when it catches
+                  up, they drive on together at the slower speed as one fleet. Cars
+                  meeting exactly at the target count as one fleet. How many fleets
+                  arrive?
+                </p>
+                <ul>
+                  <li><code>1 &lt;= n &lt;= 10⁵</code>, <code>0 &lt; target &lt;= 10⁶</code>, <code>0 &lt;= position[i] &lt; target</code> (all different), <code>0 &lt; speed[i] &lt;= 10⁶</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>target = 12, position = [10,8,0,5,3], speed = [2,4,1,1,3]</code>
+                  → <code>3</code>. <code>target = 100, position = [0,2,4], speed = [4,2,1]</code>
+                  → <code>1</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>target = 5, position = [2,0], speed = [6,10]</code></td>
+                        <td><code>1</code></td>
+                        <td>Both arrive at time 0.5: they meet at the target, so one fleet. Comparing with <code>&lt;</code> instead of <code>&lt;=</code> was wrong on 144 of 3,006 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>target = 10, position = [3], speed = [3]</code></td>
+                        <td><code>1</code></td>
+                        <td>One car is one fleet.</td>
+                      </tr>
+                      <tr>
+                        <td>Equal times from different fractions, like 6/3 and 4/2</td>
+                        <td>one fleet</td>
+                        <td>Floating-point division is rounded correctly, so equal fractions give exactly equal doubles. Checked against exact fractions on all 3,006 tests.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Check Every Car Ahead</h2>
+                <p class="intuition">
+                  A car is the front of a fleet when no car ahead of it arrives later
+                  or at the same time. For each car, check all the others.
+                </p>
+                <ul>
+                  <li>No sorting. Slow when few cars merge: each one scans everything.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n²)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  10⁴ cars that never merge: Python 3.4 s, Java 57 ms, C++ 41 ms. At
+                  LeetCode's 10⁵, O(n²) means about 100 times the work.
+                </p>
+                <div class="code-tabs" data-viz="0853-car-fleet/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"car":[6,7],"check":[8,9,10,11],"lead":[12,13],"return":[14]}'>
+                    class Solution(object):
+                        def carFleet(self, target, position, speed):
+                            n = len(position)
+                            time = [float(target - position[i]) / speed[i] for i in range(n)]  # when each car would arrive alone
+                            fleets = 0
+                            for i in range(n):  # is car i the front of its fleet?
+                                caught = False
+                                for j in range(n):
+                                    if position[j] > position[i] and time[j] >= time[i]:  # a car ahead arrives no sooner: i catches it
+                                        caught = True
+                                        break
+                                if not caught:  # nothing ahead slows it down: a new fleet
+                                    fleets += 1
+                            return fleets
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,6,7,8],"car":[9,10],"check":[11,12],"lead":[13],"return":[15]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int carFleet(int target, std::vector<int>& position, std::vector<int>& speed) {
+                            int n = position.size();
+                            std::vector<double> time(n); // when each car would arrive alone
+                            for (int i = 0; i < n; ++i) time[i] = (double)(target - position[i]) / speed[i];
+                            int fleets = 0;
+                            for (int i = 0; i < n; ++i) { // is car i the front of its fleet?
+                                bool caught = false;
+                                for (int j = 0; j < n && !caught; ++j)
+                                    if (position[j] > position[i] && time[j] >= time[i]) caught = true; // a car ahead arrives no sooner: i catches it
+                                if (!caught) ++fleets; // nothing ahead slows it down: a new fleet
+                            }
+                            return fleets;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5,6],"car":[7,8],"check":[9,10],"lead":[11],"return":[13]}'>
+                    class Solution {
+                        public int carFleet(int target, int[] position, int[] speed) {
+                            int n = position.length;
+                            double[] time = new double[n]; // when each car would arrive alone
+                            for (int i = 0; i < n; i++) time[i] = (double) (target - position[i]) / speed[i];
+                            int fleets = 0;
+                            for (int i = 0; i < n; i++) { // is car i the front of its fleet?
+                                boolean caught = false;
+                                for (int j = 0; j < n && !caught; j++)
+                                    if (position[j] > position[i] && time[j] >= time[i]) caught = true; // a car ahead arrives no sooner: i catches it
+                                if (!caught) fleets++; // nothing ahead slows it down: a new fleet
+                            }
+                            return fleets;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Sort + Stack</h2>
+                <p class="intuition">
+                  Sort closest to the target first. Push each car's time. If it's no
+                  later than the time below it, the car catches that fleet: pop it.
+                  The stack ends with one time per fleet.
+                </p>
+                <ul>
+                  <li>The stack's times only go up from bottom to top.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  10⁵ random cars, average of 10 runs: Python 84 ms, Java 16 ms, C++ 4.8
+                  ms. The sort is most of it.
+                </p>
+                <div class="code-tabs" data-viz="0853-car-fleet/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"push":[5,6],"merge":[7,8],"return":[9]}'>
+                    class Solution(object):
+                        def carFleet(self, target, position, speed):
+                            cars = sorted(zip(position, speed), reverse=True)  # closest to the target first
+                            stack = []  # arrival time of each fleet's front car
+                            for p, s in cars:
+                                stack.append(float(target - p) / s)
+                                if len(stack) >= 2 and stack[-1] <= stack[-2]:  # it would arrive no later than the fleet ahead: it joins
+                                    stack.pop()
+                            return len(stack)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[8,9,10,11,12],"push":[13,14],"merge":[15,16],"return":[18]}'>
+                    #include <algorithm>
+                    #include <functional>
+                    #include <utility>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int carFleet(int target, std::vector<int>& position, std::vector<int>& speed) {
+                            int n = position.size();
+                            std::vector<std::pair<int, int>> cars(n);
+                            for (int i = 0; i < n; ++i) cars[i] = {position[i], speed[i]};
+                            std::sort(cars.begin(), cars.end(), std::greater<>()); // closest to the target first
+                            std::vector<double> stack; // arrival time of each fleet's front car
+                            for (auto& [p, s] : cars) {
+                                stack.push_back((double)(target - p) / s);
+                                if (stack.size() >= 2 && stack.back() <= stack[stack.size() - 2]) // it would arrive no later than the fleet ahead: it joins
+                                    stack.pop_back();
+                            }
+                            return stack.size();
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5,6,7,8,9],"push":[10,11],"merge":[12,13],"return":[15]}'>
+                    import java.util.*;
+                    class Solution {
+                        public int carFleet(int target, int[] position, int[] speed) {
+                            int n = position.length;
+                            Integer[] order = new Integer[n];
+                            for (int i = 0; i < n; i++) order[i] = i;
+                            Arrays.sort(order, (x, y) -> position[y] - position[x]); // closest to the target first
+                            double[] stack = new double[n]; // arrival time of each fleet's front car
+                            int top = 0;
+                            for (int i : order) {
+                                stack[top++] = (double) (target - position[i]) / speed[i];
+                                if (top >= 2 && stack[top - 1] <= stack[top - 2]) // it would arrive no later than the fleet ahead: it joins
+                                    top--;
+                            }
+                            return top;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Sort + Slowest Time
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Approach 2 only ever compares with the top of the stack, so keep just
+                  that one number: the slowest arrival time so far. A car with a later
+                  time is a new fleet and becomes the new slowest.
+                </p>
+                <ul>
+                  <li>No stack. Same sort.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n)</span>
+                  <span><strong>Space</strong> O(n) for the sorted cars</span>
+                </div>
+                <p class="note">
+                  Same input: Python 74 ms, Java 16 ms, C++ 4.8 ms. Faster than
+                  Approach 2 in Python; the same in Java and C++.
+                </p>
+                <div class="code-tabs" data-viz="0853-car-fleet/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"car":[5,6],"lead":[7,8,9],"return":[10]}'>
+                    class Solution(object):
+                        def carFleet(self, target, position, speed):
+                            cars = sorted(zip(position, speed), reverse=True)  # closest to the target first
+                            fleets, slowest = 0, 0.0  # slowest: arrival time of the fleet just ahead
+                            for p, s in cars:
+                                t = float(target - p) / s
+                                if t > slowest:  # it can't catch the fleet ahead: a new fleet
+                                    fleets += 1
+                                    slowest = t
+                            return fleets
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[8,9,10,11,12,13],"car":[14,15],"lead":[16,17,18],"return":[21]}'>
+                    #include <algorithm>
+                    #include <functional>
+                    #include <utility>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int carFleet(int target, std::vector<int>& position, std::vector<int>& speed) {
+                            int n = position.size();
+                            std::vector<std::pair<int, int>> cars(n);
+                            for (int i = 0; i < n; ++i) cars[i] = {position[i], speed[i]};
+                            std::sort(cars.begin(), cars.end(), std::greater<>()); // closest to the target first
+                            int fleets = 0;
+                            double slowest = 0; // arrival time of the fleet just ahead
+                            for (auto& [p, s] : cars) {
+                                double t = (double)(target - p) / s;
+                                if (t > slowest) { // it can't catch the fleet ahead: a new fleet
+                                    ++fleets;
+                                    slowest = t;
+                                }
+                            }
+                            return fleets;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5,6,7,8,9],"car":[10,11],"lead":[12,13,14],"return":[17]}'>
+                    import java.util.*;
+                    class Solution {
+                        public int carFleet(int target, int[] position, int[] speed) {
+                            int n = position.length;
+                            Integer[] order = new Integer[n];
+                            for (int i = 0; i < n; i++) order[i] = i;
+                            Arrays.sort(order, (x, y) -> position[y] - position[x]); // closest to the target first
+                            int fleets = 0;
+                            double slowest = 0; // arrival time of the fleet just ahead
+                            for (int i : order) {
+                                double t = (double) (target - position[i]) / speed[i];
+                                if (t > slowest) { // it can't catch the fleet ahead: a new fleet
+                                    fleets++;
+                                    slowest = t;
+                                }
+                            }
+                            return fleets;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>Nothing built in beyond the sort. Approach 3 is what you'd write.</p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Check Every Car Ahead</th>
+                        <td>Is anything ahead slower?</td>
+                        <td>O(n²)</td>
+                        <td>O(n)</td>
+                        <td>3.4 s at 10⁴ in Python</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Sort + Stack</th>
+                        <td>Pop cars that catch up</td>
+                        <td>O(n log n)</td>
+                        <td>O(n)</td>
+                        <td>Classic stack answer</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Sort + Slowest Time</th>
+                        <td>Keep only the stack's top</td>
+                        <td>O(n log n)</td>
                         <td>O(n)</td>
                         <td>Expected answer</td>
                       </tr>
@@ -80988,6 +81347,119 @@
             steps.push({ line: ["group", "take"], note: `${x} had ${c} cop${c > 1 ? "ies" : "y"} left: start ${c} group${c > 1 ? "s" : ""} ${x}…${x + g - 1} at once. Take ${c} of each card from ${x} to ${x + g - 1}.`, view: [kview(marks, i)] });
           }
           steps.push({ line: "return", note: `Return true. Every card is used. O(n log n) for sorting the different cards; the rest is O(n) hash lookups.`, view: [kview(Object.fromEntries(keys.map((_, i) => [i, "match"])))] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0853-car-fleet/approach1.visual.js -->
+    <script>
+      // For each car, look at every car ahead: if one arrives no sooner, this car catches it and isn't a fleet's front.
+      (function () {
+      const INPUTS = [
+        { name: "target", type: "int", value: "12", min: 1, max: 1000 },
+        { name: "position", type: "int[]", value: "[10, 8, 0, 5, 3]", minLength: 1, maxLength: 10, minValue: 0, maxValue: 999 },
+        { name: "speed", type: "int[]", value: "[2, 4, 1, 1, 3]", minLength: 1, maxLength: 10, minValue: 1, maxValue: 100 },
+      ];
+      function check(target, position, speed) {
+        if (position.length !== speed.length) throw new DSAViz.InputError("position and speed need the same length: one speed per car.");
+        if (position.some((p) => p >= target)) throw new DSAViz.InputError(`Every car starts before the target: position < ${target}.`);
+        if (new Set(position).size !== position.length) throw new DSAViz.InputError("Positions are unique: two cars can't start at the same place.");
+      }
+      const fmt = (t) => (Number.isInteger(t) ? String(t) : t.toFixed(2).replace(/0$/, ""));
+      DSAViz.register("0853-car-fleet/approach1", {
+        inputs: INPUTS,
+        trace({ target, position, speed }) {
+          check(target, position, speed);
+          const n = position.length;
+          const time = position.map((p, i) => (target - p) / speed[i]);
+          const view = (marks = {}) => [{ type: "array", label: "position; caption = time to the target alone", values: position, sub: time.map(fmt), marks }];
+          const steps = [{ line: "init", note: `Time for each car to reach ${target} alone: (target − position) / speed.`, view: view() }];
+          let fleets = 0;
+          for (let i = 0; i < n; i++) {
+            let by = -1;
+            for (let j = 0; j < n; j++) if (position[j] > position[i] && time[j] >= time[i]) { by = j; break; }
+            if (by >= 0) steps.push({ line: ["car", "check"], note: `Car at ${position[i]} (time ${fmt(time[i])}): the car at ${position[by]} is ahead and takes ${fmt(time[by])} ≥ ${fmt(time[i])}. It catches up, so it's not a fleet's front.`, view: view({ [i]: "active", [by]: "compare" }) });
+            else {
+              fleets++;
+              steps.push({ line: ["car", "check", "lead"], note: `Car at ${position[i]} (time ${fmt(time[i])}): every car ahead arrives sooner, so nothing slows it. Fleet ${fleets}.`, view: view({ [i]: "match" }) });
+            }
+          }
+          steps.push({ line: "return", note: `Return ${fleets}. Each car checks every other car: O(n²).`, view: view() });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0853-car-fleet/approach2.visual.js -->
+    <script>
+      // Sort closest to the target first; push each car's time; if it's no later than the fleet ahead, it joins (pop).
+      (function () {
+      const INPUTS = [
+        { name: "target", type: "int", value: "12", min: 1, max: 1000 },
+        { name: "position", type: "int[]", value: "[10, 8, 0, 5, 3]", minLength: 1, maxLength: 10, minValue: 0, maxValue: 999 },
+        { name: "speed", type: "int[]", value: "[2, 4, 1, 1, 3]", minLength: 1, maxLength: 10, minValue: 1, maxValue: 100 },
+      ];
+      function check(target, position, speed) {
+        if (position.length !== speed.length) throw new DSAViz.InputError("position and speed need the same length: one speed per car.");
+        if (position.some((p) => p >= target)) throw new DSAViz.InputError(`Every car starts before the target: position < ${target}.`);
+        if (new Set(position).size !== position.length) throw new DSAViz.InputError("Positions are unique: two cars can't start at the same place.");
+      }
+      const fmt = (t) => (Number.isInteger(t) ? String(t) : t.toFixed(2).replace(/0$/, ""));
+      DSAViz.register("0853-car-fleet/approach2", {
+        inputs: INPUTS,
+        trace({ target, position, speed }) {
+          check(target, position, speed);
+          const cars = position.map((p, i) => [p, speed[i]]).sort((a, b) => b[0] - a[0]);
+          const stack = [];
+          const cview = (marks = {}) => ({ type: "array", label: "cars, closest to the target first; caption = time alone", values: cars.map(([p]) => p), sub: cars.map(([p, s]) => fmt((target - p) / s)), marks });
+          const sview = (marks = {}) => ({ type: "array", label: "stack: time of each fleet's front car", values: stack.length ? stack.map(fmt) : ["—"], marks: stack.length ? marks : { 0: "ghost" } });
+          const steps = [{ line: "init", note: "Sort the cars, closest to the target first. A car can only be slowed by cars ahead of it.", view: [cview(), sview()] }];
+          cars.forEach(([p, s], k) => {
+            const t = (target - p) / s;
+            stack.push(t);
+            if (stack.length >= 2 && stack[stack.length - 1] <= stack[stack.length - 2]) {
+              steps.push({ line: ["push", "merge"], note: `Car at ${p}: time ${fmt(t)} ≤ ${fmt(stack[stack.length - 2])}, the fleet ahead. It catches up and joins that fleet: pop it.`, view: [cview({ [k]: "active" }), sview({ [stack.length - 1]: "cut", [stack.length - 2]: "compare" })] });
+              stack.pop();
+            } else steps.push({ line: "push", note: `Car at ${p}: time ${fmt(t)}${stack.length > 1 ? ` > ${fmt(stack[stack.length - 2])}, so it never catches the fleet ahead` : ", the first car"}. A new fleet.`, view: [cview({ [k]: "active" }), sview({ [stack.length - 1]: "new" })] });
+          });
+          steps.push({ line: "return", note: `Return ${stack.length}. One time per fleet is left on the stack. O(n log n) for the sort.`, view: [sview(Object.fromEntries(stack.map((_, i) => [i, "match"])))] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0853-car-fleet/approach3.visual.js -->
+    <script>
+      // Sort closest to the target first; only the slowest time so far matters. A later time means a new fleet.
+      (function () {
+      const INPUTS = [
+        { name: "target", type: "int", value: "12", min: 1, max: 1000 },
+        { name: "position", type: "int[]", value: "[10, 8, 0, 5, 3]", minLength: 1, maxLength: 10, minValue: 0, maxValue: 999 },
+        { name: "speed", type: "int[]", value: "[2, 4, 1, 1, 3]", minLength: 1, maxLength: 10, minValue: 1, maxValue: 100 },
+      ];
+      function check(target, position, speed) {
+        if (position.length !== speed.length) throw new DSAViz.InputError("position and speed need the same length: one speed per car.");
+        if (position.some((p) => p >= target)) throw new DSAViz.InputError(`Every car starts before the target: position < ${target}.`);
+        if (new Set(position).size !== position.length) throw new DSAViz.InputError("Positions are unique: two cars can't start at the same place.");
+      }
+      const fmt = (t) => (Number.isInteger(t) ? String(t) : t.toFixed(2).replace(/0$/, ""));
+      DSAViz.register("0853-car-fleet/approach3", {
+        inputs: INPUTS,
+        trace({ target, position, speed }) {
+          check(target, position, speed);
+          const cars = position.map((p, i) => [p, speed[i]]).sort((a, b) => b[0] - a[0]);
+          let fleets = 0, slowest = 0;
+          const view = (marks = {}, mark) => [{ type: "array", label: "cars, closest to the target first; caption = time alone", values: cars.map(([p]) => p), sub: cars.map(([p, s]) => fmt((target - p) / s)), marks }, { type: "vars", items: [{ name: "fleets", value: fleets, mark }, { name: "slowest", value: fmt(slowest), mark }] }];
+          const steps = [{ line: "init", note: "Sort the cars, closest to the target first. slowest = arrival time of the fleet just ahead.", view: view() }];
+          cars.forEach(([p, s], k) => {
+            const t = (target - p) / s;
+            if (t > slowest) {
+              fleets++; slowest = t;
+              steps.push({ line: ["car", "lead"], note: `Car at ${p}: time ${fmt(t)} is later than every fleet ahead. A new fleet; slowest = ${fmt(t)}.`, view: view({ [k]: "match" }, "new") });
+            } else steps.push({ line: "car", note: `Car at ${p}: time ${fmt(t)} ≤ ${fmt(slowest)}. It catches the fleet ahead and moves at its speed.`, view: view({ [k]: "visited" }) });
+          });
+          steps.push({ line: "return", note: `Return ${fleets}. One number instead of a stack. O(n log n) for the sort.`, view: view() });
           return steps;
         },
       });

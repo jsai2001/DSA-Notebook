@@ -1,0 +1,192 @@
+<details class="question" data-group="stack" data-tags="stack monotonic stack sorting greedy arrival time fleet">
+  <summary>
+    <span class="q-title">853. Car Fleet</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Stack</span>
+      <span class="tag">Sorting</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Only cars ahead can slow a car down. Sort
+      the cars closest to the target first and work out each one's arrival
+      time alone. A car whose time is no later than the fleet ahead catches
+      it and joins; a later time starts a new fleet. Keep the times on a
+      stack, or just the slowest one. O(n log n) for the sort.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/car-fleet/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>n</code> cars drive along one lane to <code>target</code>. Car
+        <code>i</code> starts at <code>position[i]</code> with speed
+        <code>speed[i]</code>. A car can't pass the one ahead: when it catches
+        up, they drive on together at the slower speed as one fleet. Cars
+        meeting exactly at the target count as one fleet. How many fleets
+        arrive?
+      </p>
+      <ul>
+        <li><code>1 &lt;= n &lt;= 10⁵</code>, <code>0 &lt; target &lt;= 10⁶</code>, <code>0 &lt;= position[i] &lt; target</code> (all different), <code>0 &lt; speed[i] &lt;= 10⁶</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>target = 12, position = [10,8,0,5,3], speed = [2,4,1,1,3]</code>
+        → <code>3</code>. <code>target = 100, position = [0,2,4], speed = [4,2,1]</code>
+        → <code>1</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>target = 5, position = [2,0], speed = [6,10]</code></td>
+              <td><code>1</code></td>
+              <td>Both arrive at time 0.5: they meet at the target, so one fleet. Comparing with <code>&lt;</code> instead of <code>&lt;=</code> was wrong on 144 of 3,006 tests.</td>
+            </tr>
+            <tr>
+              <td><code>target = 10, position = [3], speed = [3]</code></td>
+              <td><code>1</code></td>
+              <td>One car is one fleet.</td>
+            </tr>
+            <tr>
+              <td>Equal times from different fractions, like 6/3 and 4/2</td>
+              <td>one fleet</td>
+              <td>Floating-point division is rounded correctly, so equal fractions give exactly equal doubles. Checked against exact fractions on all 3,006 tests.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Check Every Car Ahead</h2>
+      <p class="intuition">
+        A car is the front of a fleet when no car ahead of it arrives later
+        or at the same time. For each car, check all the others.
+      </p>
+      <ul>
+        <li>No sorting. Slow when few cars merge: each one scans everything.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        10⁴ cars that never merge: Python 3.4 s, Java 57 ms, C++ 41 ms. At
+        LeetCode's 10⁵, O(n²) means about 100 times the work.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Sort + Stack</h2>
+      <p class="intuition">
+        Sort closest to the target first. Push each car's time. If it's no
+        later than the time below it, the car catches that fleet: pop it.
+        The stack ends with one time per fleet.
+      </p>
+      <ul>
+        <li>The stack's times only go up from bottom to top.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        10⁵ random cars, average of 10 runs: Python 84 ms, Java 16 ms, C++ 4.8
+        ms. The sort is most of it.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Sort + Slowest Time
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Approach 2 only ever compares with the top of the stack, so keep just
+        that one number: the slowest arrival time so far. A car with a later
+        time is a new fleet and becomes the new slowest.
+      </p>
+      <ul>
+        <li>No stack. Same sort.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(n) for the sorted cars</span>
+      </div>
+      <p class="note">
+        Same input: Python 74 ms, Java 16 ms, C++ 4.8 ms. Faster than
+        Approach 2 in Python; the same in Java and C++.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>Nothing built in beyond the sort. Approach 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Check Every Car Ahead</th>
+              <td>Is anything ahead slower?</td>
+              <td>O(n²)</td>
+              <td>O(n)</td>
+              <td>3.4 s at 10⁴ in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">Sort + Stack</th>
+              <td>Pop cars that catch up</td>
+              <td>O(n log n)</td>
+              <td>O(n)</td>
+              <td>Classic stack answer</td>
+            </tr>
+            <tr>
+              <th scope="row">Sort + Slowest Time</th>
+              <td>Keep only the stack's top</td>
+              <td>O(n log n)</td>
+              <td>O(n)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
