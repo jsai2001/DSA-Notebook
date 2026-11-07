@@ -24325,7 +24325,7 @@
       <details class="pattern-group" id="g-heap">
         <summary>
           <span class="g-name">Heap / Priority Queue</span>
-          <span class="g-count"><span class="g-total">2 problems</span></span>
+          <span class="g-count"><span class="g-total">3 problems</span></span>
           <span class="g-hint">Always pop the smallest (or biggest) first</span>
         </summary>
         <div class="g-body">
@@ -24694,6 +24694,359 @@
                         <td>O(n) average</td>
                         <td>O(1)</td>
                         <td>Fastest in C++ and Java</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0295-find-median-from-data-stream ===== -->
+          <details class="question" data-group="heap" data-tags="heap priority queue two heaps median data stream design sorted">
+            <summary>
+              <span class="q-title">295. Find Median from Data Stream</span>
+              <span class="q-meta">
+                <span class="badge hard">Hard</span>
+                <span class="tag">Heap (Priority Queue)</span>
+                <span class="tag">Design</span>
+                <span class="tag">Data Stream</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Split the values into two halves:
+                <code>low</code>, a <strong>max-heap</strong> of the smaller half, and
+                <code>high</code>, a <strong>min-heap</strong> of the bigger half.
+                Keep every value in low ≤ every value in high, and low's size equal to
+                high's or one more. The median is low's top, or the mean of both tops.
+                O(log n) per add, O(1) per find.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/find-median-from-data-stream/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Build <code>MedianFinder</code> with <code>addNum(num)</code> and
+                  <code>findMedian()</code>, which returns the median of all values so
+                  far: the middle value, or the mean of the two middle values when the
+                  count is even.
+                </p>
+                <ul>
+                  <li><code>-10⁵ &lt;= num &lt;= 10⁵</code>; at most 5 × 10⁴ calls in total</li>
+                  <li><code>findMedian</code> is only called after at least one <code>addNum</code></li>
+                </ul>
+                <p class="note">
+                  Example: add 1, add 2, find → <code>1.5</code>; add 3, find →
+                  <code>2.0</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>add 95423, −53162, −46989, find</td>
+                        <td><code>-46989.0</code></td>
+                        <td>Putting each value into whichever heap is smaller, without passing it through the other, breaks "low ≤ high": it said <code>95423.0</code>. Wrong on 1482 of 2004 tests.</td>
+                      </tr>
+                      <tr>
+                        <td>add 12633, −62910, find</td>
+                        <td><code>-25138.5</code></td>
+                        <td>Integer division for the mean rounds down: it said <code>-25139.0</code>. Wrong on 1213 tests.</td>
+                      </tr>
+                      <tr>
+                        <td>add −100000, 100000, find</td>
+                        <td><code>0.0</code></td>
+                        <td>The two middles cancel out.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Sort on Every Find</h2>
+                <p class="intuition">
+                  <code>addNum</code> appends. <code>findMedian</code> sorts a copy of
+                  everything and reads the middle.
+                </p>
+                <ul>
+                  <li>Fine if you add a lot and ask rarely.</li>
+                  <li>Terrible if you ask after every add.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(1) add, O(n log n) find</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  25,000 adds, each followed by a find: C++ 5.3 s, Java 28 s (Python
+                  wasn't even tried). But 5 × 10⁴ adds and one find: C++ 1.1 ms, Python
+                  10 ms, the fastest here.
+                </p>
+                <div class="code-tabs" data-viz="0295-find-median-from-data-stream/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"add":[5],"sort":[7,8],"median":[9]}'>
+                    class MedianFinder(object):
+                        def __init__(self):
+                            self.nums = []  # every value, in arrival order
+                        def addNum(self, num):
+                            self.nums.append(num)  # O(1)
+                        def findMedian(self):
+                            s = sorted(self.nums)  # sort a copy every time
+                            n = len(s)
+                            return float(s[n // 2]) if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2.0  # the middle, or the mean of the two middles
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"add":[7],"sort":[10,11,12],"median":[13]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class MedianFinder {
+                    public:
+                        MedianFinder() {}
+                        void addNum(int num) {
+                            nums.push_back(num); // O(1)
+                        }
+                        double findMedian() {
+                            std::vector<int> s = nums; // sort a copy every time
+                            std::sort(s.begin(), s.end());
+                            size_t n = s.size();
+                            return n % 2 ? s[n / 2] : (s[n / 2 - 1] + (double)s[n / 2]) / 2; // the middle, or the mean of the two middles
+                        }
+                    private:
+                        std::vector<int> nums; // every value, in arrival order
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"add":[6],"sort":[9,10,11],"median":[12]}'>
+                    import java.util.*;
+                    class MedianFinder {
+                        private final List<Integer> nums = new ArrayList<>(); // every value, in arrival order
+                        public MedianFinder() {}
+                        public void addNum(int num) {
+                            nums.add(num); // O(1)
+                        }
+                        public double findMedian() {
+                            List<Integer> s = new ArrayList<>(nums); // sort a copy every time
+                            Collections.sort(s);
+                            int n = s.size();
+                            return n % 2 == 1 ? s.get(n / 2) : (s.get(n / 2 - 1) + (double) s.get(n / 2)) / 2; // the middle, or the mean of the two middles
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Sorted List, Binary Insert</h2>
+                <p class="intuition">
+                  Keep the list sorted: binary search for the spot and insert there.
+                  <code>findMedian</code> just reads the middle.
+                </p>
+                <ul>
+                  <li>The search is O(log n), but inserting shifts everything after it.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n) add, O(1) find</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  5 × 10⁴ adds and one find: Python 321 ms, Java 62 ms, C++ 43 ms.
+                  Find after every add (25,000 each): Python 93 ms, C++ 13 ms.
+                </p>
+                <div class="code-tabs" data-viz="0295-find-median-from-data-stream/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4],"add":[6],"median":[8,9]}'>
+                    import bisect
+                    class MedianFinder(object):
+                        def __init__(self):
+                            self.nums = []  # kept sorted
+                        def addNum(self, num):
+                            bisect.insort(self.nums, num)  # binary search for the spot, then shift: O(n)
+                        def findMedian(self):
+                            s, n = self.nums, len(self.nums)  # already sorted: just read the middle
+                            return float(s[n // 2]) if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2.0
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"add":[7],"median":[10,11]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class MedianFinder {
+                    public:
+                        MedianFinder() {}
+                        void addNum(int num) {
+                            nums.insert(std::upper_bound(nums.begin(), nums.end(), num), num); // binary search for the spot, then shift: O(n)
+                        }
+                        double findMedian() {
+                            size_t n = nums.size(); // already sorted: just read the middle
+                            return n % 2 ? nums[n / 2] : (nums[n / 2 - 1] + (double)nums[n / 2]) / 2;
+                        }
+                    private:
+                        std::vector<int> nums; // kept sorted
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"add":[6,7],"median":[10,11]}'>
+                    import java.util.*;
+                    class MedianFinder {
+                        private final List<Integer> nums = new ArrayList<>(); // kept sorted
+                        public MedianFinder() {}
+                        public void addNum(int num) {
+                            int i = Collections.binarySearch(nums, num); // binary search for the spot
+                            nums.add(i < 0 ? -i - 1 : i, num); // then shift: O(n)
+                        }
+                        public double findMedian() {
+                            int n = nums.size(); // already sorted: just read the middle
+                            return n % 2 == 1 ? nums.get(n / 2) : (nums.get(n / 2 - 1) + (double) nums.get(n / 2)) / 2;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Two Heaps
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  To add: push into <code>low</code>, then move low's biggest into
+                  <code>high</code>. That keeps every low value ≤ every high value. If
+                  high now has more, move its smallest back to low. To find: low's top
+                  if low is bigger, else the mean of both tops.
+                </p>
+                <ul>
+                  <li>Python's <code>heapq</code> is only a min-heap, so low stores negated values.</li>
+                  <li>Use floating-point division for the mean.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(log n) add, O(1) find</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  Find after every add (25,000 each): Python 26 ms, Java 13 ms, C++
+                  2.4 ms, the fastest in every language for that pattern.
+                </p>
+                <div class="code-tabs" data-viz="0295-find-median-from-data-stream/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5],"add":[7,8],"balance":[9,10],"median":[12,13,14]}'>
+                    import heapq
+                    class MedianFinder(object):
+                        def __init__(self):
+                            self.low = []  # the smaller half, as a max-heap (values stored negated)
+                            self.high = []  # the bigger half, as a min-heap
+                        def addNum(self, num):
+                            heapq.heappush(self.low, -num)  # go through low first...
+                            heapq.heappush(self.high, -heapq.heappop(self.low))  # ...so low's biggest moves up: every low <= every high
+                            if len(self.high) > len(self.low):  # keep low the same size as high, or one bigger
+                                heapq.heappush(self.low, -heapq.heappop(self.high))
+                        def findMedian(self):
+                            if len(self.low) > len(self.high):  # odd count: the middle is low's top
+                                return float(-self.low[0])
+                            return (-self.low[0] + self.high[0]) / 2.0  # even: the mean of the two tops
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,21,22],"add":[8,9,10],"balance":[11,12,13],"median":[17,18]}'>
+                    #include <functional>
+                    #include <queue>
+                    #include <vector>
+                    class MedianFinder {
+                    public:
+                        MedianFinder() {}
+                        void addNum(int num) {
+                            low.push(num); // go through low first...
+                            high.push(low.top()); // ...so low's biggest moves up: every low <= every high
+                            low.pop();
+                            if (high.size() > low.size()) { // keep low the same size as high, or one bigger
+                                low.push(high.top());
+                                high.pop();
+                            }
+                        }
+                        double findMedian() {
+                            if (low.size() > high.size()) return low.top(); // odd count: the middle is low's top
+                            return (low.top() + (double)high.top()) / 2; // even: the mean of the two tops
+                        }
+                    private:
+                        std::priority_queue<int> low; // the smaller half, max-heap
+                        std::priority_queue<int, std::vector<int>, std::greater<int>> high; // the bigger half, min-heap
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4],"add":[7,8],"balance":[9],"median":[12,13]}'>
+                    import java.util.*;
+                    class MedianFinder {
+                        private final PriorityQueue<Integer> low = new PriorityQueue<>(Collections.reverseOrder()); // the smaller half, max-heap
+                        private final PriorityQueue<Integer> high = new PriorityQueue<>(); // the bigger half, min-heap
+                        public MedianFinder() {}
+                        public void addNum(int num) {
+                            low.add(num); // go through low first...
+                            high.add(low.poll()); // ...so low's biggest moves up: every low <= every high
+                            if (high.size() > low.size()) low.add(high.poll()); // keep low the same size as high, or one bigger
+                        }
+                        public double findMedian() {
+                            if (low.size() > high.size()) return low.peek(); // odd count: the middle is low's top
+                            return (low.peek() + (double) high.peek()) / 2; // even: the mean of the two tops
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  Python's <code>statistics.median</code> sorts the whole list each
+                  call, like Approach 1. Outside LeetCode, the
+                  <code>sortedcontainers</code> package's <code>SortedList</code> makes
+                  Approach 2 O(log n) per add.
+                </p>
+                <p class="note">On LeetCode, Approach 3 is what you'd write.</p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Sort on Every Find</th>
+                        <td>Append; sort when asked</td>
+                        <td>O(1) / O(n log n)</td>
+                        <td>O(n)</td>
+                        <td>28 s in Java when asked often</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Sorted List, Binary Insert</th>
+                        <td>Insert at the right spot</td>
+                        <td>O(n) / O(1)</td>
+                        <td>O(n)</td>
+                        <td>Shifting is the cost</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Two Heaps</th>
+                        <td>Max-heap low, min-heap high</td>
+                        <td>O(log n) / O(1)</td>
+                        <td>O(n)</td>
+                        <td>Expected answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -71438,6 +71791,132 @@
           return steps;
         },
       });
+    </script>
+    <!-- problems/0295-find-median-from-data-stream/approach1.visual.js -->
+    <script>
+      // Store every value; each findMedian sorts a copy and reads the middle.
+      (function () {
+      DSAViz.register("0295-find-median-from-data-stream/approach1", {
+        inputs: [{ name: "ops", label: "operations (comma-separated)", type: "string", value: "add 1, add 2, find, add 3, find, add -5, find", maxLength: 140, raw: true }],
+        trace({ ops: text }) {
+          const ops = parseOps(text);
+          const nums = [], res = [];
+          const steps = [{ line: "init", note: "Start with an empty list.", view: [{ type: "array", label: "nums (arrival order)", values: [] }] }];
+          for (const [op, x] of ops) {
+            if (op === "add") { nums.push(x); steps.push({ line: "add", note: `addNum(${x}): append it. O(1).`, view: [{ type: "array", label: "nums (arrival order)", values: nums.slice(), marks: { [nums.length - 1]: "new" } }, { type: "array", label: "medians returned", values: res.map(show) }] }); continue; }
+            const s = nums.slice().sort((a, b) => a - b), n = s.length, m = median(s);
+            res.push(m);
+            steps.push({ line: ["sort", "median"], note: `findMedian(): sort a copy of all ${n} values. ${n % 2 ? `The middle one is ${s[(n - 1) / 2]}` : `The two middles are ${s[n / 2 - 1]} and ${s[n / 2]}, mean ${show(m)}`}.`, view: [{ type: "array", label: "sorted copy (green = middle)", values: s, marks: n % 2 ? { [(n - 1) / 2]: "match" } : { [n / 2 - 1]: "match", [n / 2]: "match" } }, { type: "array", label: "medians returned", values: res.map(show), marks: { [res.length - 1]: "new" } }] });
+          }
+          steps.push({ line: ops[ops.length - 1][0] === "add" ? "add" : "median", note: `Return [${res.map(show).join(", ")}]. Each find sorts everything: O(n log n) per find.`, view: [{ type: "array", label: "medians returned", values: res.map(show) }] });
+          return steps;
+        },
+      });
+
+      function parseOps(text) {
+        const parts = text.split(",").map((s) => s.trim()).filter(Boolean);
+        if (!parts.length) throw new DSAViz.InputError("Give operations like: add 1, add 2, find");
+        if (parts.length > 12) throw new DSAViz.InputError("At most 12 operations here, so the steps stay readable.");
+        let added = 0;
+        return parts.map((p) => {
+          let m = p.match(/^add\s+(-?\d+)$/);
+          if (m) { const x = Number(m[1]); if (Math.abs(x) > 100000) throw new DSAViz.InputError("Values are -100000 to 100000."); added++; return ["add", x]; }
+          if (/^find$/.test(p)) { if (!added) throw new DSAViz.InputError("find needs at least one add before it."); return ["find", 0]; }
+          throw new DSAViz.InputError(`"${p}": use "add 5" or "find".`);
+        });
+      }
+      const median = (s) => { const n = s.length; return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2; };
+      const show = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));
+      })();
+    </script>
+    <!-- problems/0295-find-median-from-data-stream/approach2.visual.js -->
+    <script>
+      // Keep the values sorted: each add inserts at the right spot (binary search, then shift). find just reads the middle.
+      (function () {
+      DSAViz.register("0295-find-median-from-data-stream/approach2", {
+        inputs: [{ name: "ops", label: "operations (comma-separated)", type: "string", value: "add 1, add 2, find, add 3, find, add -5, find", maxLength: 140, raw: true }],
+        trace({ ops: text }) {
+          const ops = parseOps(text);
+          const s = [], res = [];
+          const steps = [{ line: "init", note: "Start with an empty sorted list.", view: [{ type: "array", label: "nums (sorted)", values: [] }] }];
+          for (const [op, x] of ops) {
+            if (op === "add") {
+              let lo = 0, hi = s.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (s[mid] <= x) lo = mid + 1; else hi = mid; }
+              s.splice(lo, 0, x);
+              steps.push({ line: "add", note: `addNum(${x}): binary search says index ${lo}; insert there and shift the ${s.length - 1 - lo} value${s.length - 1 - lo === 1 ? "" : "s"} after it.`, view: [{ type: "array", label: "nums (sorted; yellow = inserted)", values: s.slice(), marks: { [lo]: "new" } }, { type: "array", label: "medians returned", values: res.map(show) }] });
+              continue;
+            }
+            const n = s.length, m = median(s);
+            res.push(m);
+            steps.push({ line: "median", note: `findMedian(): already sorted, so read the middle: ${show(m)}. O(1).`, view: [{ type: "array", label: "nums (sorted; green = middle)", values: s.slice(), marks: n % 2 ? { [(n - 1) / 2]: "match" } : { [n / 2 - 1]: "match", [n / 2]: "match" } }, { type: "array", label: "medians returned", values: res.map(show), marks: { [res.length - 1]: "new" } }] });
+          }
+          steps.push({ line: ops[ops.length - 1][0] === "add" ? "add" : "median", note: `Return [${res.map(show).join(", ")}]. Each add is O(n) because of the shifting; each find is O(1).`, view: [{ type: "array", label: "medians returned", values: res.map(show) }] });
+          return steps;
+        },
+      });
+
+      function parseOps(text) {
+        const parts = text.split(",").map((s) => s.trim()).filter(Boolean);
+        if (!parts.length) throw new DSAViz.InputError("Give operations like: add 1, add 2, find");
+        if (parts.length > 12) throw new DSAViz.InputError("At most 12 operations here, so the steps stay readable.");
+        let added = 0;
+        return parts.map((p) => {
+          let m = p.match(/^add\s+(-?\d+)$/);
+          if (m) { const x = Number(m[1]); if (Math.abs(x) > 100000) throw new DSAViz.InputError("Values are -100000 to 100000."); added++; return ["add", x]; }
+          if (/^find$/.test(p)) { if (!added) throw new DSAViz.InputError("find needs at least one add before it."); return ["find", 0]; }
+          throw new DSAViz.InputError(`"${p}": use "add 5" or "find".`);
+        });
+      }
+      const median = (s) => { const n = s.length; return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2; };
+      const show = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));
+      })();
+    </script>
+    <!-- problems/0295-find-median-from-data-stream/approach3.visual.js -->
+    <script>
+      // Two heaps: low (a max-heap of the smaller half) and high (a min-heap of the bigger half). The median is at their tops.
+      (function () {
+      DSAViz.register("0295-find-median-from-data-stream/approach3", {
+        inputs: [{ name: "ops", label: "operations (comma-separated)", type: "string", value: "add 1, add 2, find, add 3, find, add -5, find", maxLength: 140, raw: true }],
+        trace({ ops: text }) {
+          const ops = parseOps(text);
+          const low = [], high = [], res = [];
+          const view = (o = {}) => [{ type: "array", label: "low: the smaller half, max-heap (biggest first; green = top)", values: low.slice().sort((a, b) => b - a), marks: low.length && o.tops ? { 0: "match" } : o.lm || {} }, { type: "array", label: "high: the bigger half, min-heap (smallest first; green = top)", values: high.slice().sort((a, b) => a - b), marks: high.length && o.tops && low.length === high.length ? { 0: "match" } : o.hm || {} }, { type: "array", label: "medians returned", values: res.map(show), marks: o.rec ? { [res.length - 1]: "new" } : {} }];
+          const steps = [{ line: "init", note: "Two empty heaps. low keeps the same size as high, or one more.", view: view() }];
+          const top = (h, max) => (max ? Math.max(...h) : Math.min(...h));
+          const take = (h, v) => h.splice(h.indexOf(v), 1);
+          for (const [op, x] of ops) {
+            if (op === "add") {
+              low.push(x);
+              const up = top(low, true); take(low, up); high.push(up);
+              let note = `addNum(${x}): push it into low, then move low's biggest (${up}) to high. Now every value in low ≤ every value in high.`;
+              if (high.length > low.length) { const down = top(high, false); take(high, down); low.push(down); note += ` high is bigger, so move its smallest (${down}) back to low.`; }
+              steps.push({ line: ["add", "balance"], note, view: view() });
+              continue;
+            }
+            const m = low.length > high.length ? top(low, true) : (top(low, true) + top(high, false)) / 2;
+            res.push(m);
+            steps.push({ line: "median", note: low.length > high.length ? `findMedian(): odd count, so it's low's top: ${show(m)}.` : `findMedian(): even count, so it's the mean of the tops: (${top(low, true)} + ${top(high, false)}) / 2 = ${show(m)}.`, view: view({ tops: true, rec: true }) });
+          }
+          steps.push({ line: ops[ops.length - 1][0] === "add" ? "balance" : "median", note: `Return [${res.map(show).join(", ")}]. Each add is O(log n) (a few heap pushes and pops); each find is O(1).`, view: view() });
+          return steps;
+        },
+      });
+
+      function parseOps(text) {
+        const parts = text.split(",").map((s) => s.trim()).filter(Boolean);
+        if (!parts.length) throw new DSAViz.InputError("Give operations like: add 1, add 2, find");
+        if (parts.length > 12) throw new DSAViz.InputError("At most 12 operations here, so the steps stay readable.");
+        let added = 0;
+        return parts.map((p) => {
+          let m = p.match(/^add\s+(-?\d+)$/);
+          if (m) { const x = Number(m[1]); if (Math.abs(x) > 100000) throw new DSAViz.InputError("Values are -100000 to 100000."); added++; return ["add", x]; }
+          if (/^find$/.test(p)) { if (!added) throw new DSAViz.InputError("find needs at least one add before it."); return ["find", 0]; }
+          throw new DSAViz.InputError(`"${p}": use "add 5" or "find".`);
+        });
+      }
+      const median = (s) => { const n = s.length; return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2; };
+      const show = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));
+      })();
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->
     <script>

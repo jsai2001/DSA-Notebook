@@ -1,0 +1,201 @@
+<details class="question" data-group="heap" data-tags="heap priority queue two heaps median data stream design sorted">
+  <summary>
+    <span class="q-title">295. Find Median from Data Stream</span>
+    <span class="q-meta">
+      <span class="badge hard">Hard</span>
+      <span class="tag">Heap (Priority Queue)</span>
+      <span class="tag">Design</span>
+      <span class="tag">Data Stream</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Split the values into two halves:
+      <code>low</code>, a <strong>max-heap</strong> of the smaller half, and
+      <code>high</code>, a <strong>min-heap</strong> of the bigger half.
+      Keep every value in low ≤ every value in high, and low's size equal to
+      high's or one more. The median is low's top, or the mean of both tops.
+      O(log n) per add, O(1) per find.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/find-median-from-data-stream/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Build <code>MedianFinder</code> with <code>addNum(num)</code> and
+        <code>findMedian()</code>, which returns the median of all values so
+        far: the middle value, or the mean of the two middle values when the
+        count is even.
+      </p>
+      <ul>
+        <li><code>-10⁵ &lt;= num &lt;= 10⁵</code>; at most 5 × 10⁴ calls in total</li>
+        <li><code>findMedian</code> is only called after at least one <code>addNum</code></li>
+      </ul>
+      <p class="note">
+        Example: add 1, add 2, find → <code>1.5</code>; add 3, find →
+        <code>2.0</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>add 95423, −53162, −46989, find</td>
+              <td><code>-46989.0</code></td>
+              <td>Putting each value into whichever heap is smaller, without passing it through the other, breaks "low ≤ high": it said <code>95423.0</code>. Wrong on 1482 of 2004 tests.</td>
+            </tr>
+            <tr>
+              <td>add 12633, −62910, find</td>
+              <td><code>-25138.5</code></td>
+              <td>Integer division for the mean rounds down: it said <code>-25139.0</code>. Wrong on 1213 tests.</td>
+            </tr>
+            <tr>
+              <td>add −100000, 100000, find</td>
+              <td><code>0.0</code></td>
+              <td>The two middles cancel out.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Sort on Every Find</h2>
+      <p class="intuition">
+        <code>addNum</code> appends. <code>findMedian</code> sorts a copy of
+        everything and reads the middle.
+      </p>
+      <ul>
+        <li>Fine if you add a lot and ask rarely.</li>
+        <li>Terrible if you ask after every add.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(1) add, O(n log n) find</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        25,000 adds, each followed by a find: C++ 5.3 s, Java 28 s (Python
+        wasn't even tried). But 5 × 10⁴ adds and one find: C++ 1.1 ms, Python
+        10 ms, the fastest here.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Sorted List, Binary Insert</h2>
+      <p class="intuition">
+        Keep the list sorted: binary search for the spot and insert there.
+        <code>findMedian</code> just reads the middle.
+      </p>
+      <ul>
+        <li>The search is O(log n), but inserting shifts everything after it.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n) add, O(1) find</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        5 × 10⁴ adds and one find: Python 321 ms, Java 62 ms, C++ 43 ms.
+        Find after every add (25,000 each): Python 93 ms, C++ 13 ms.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Two Heaps
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        To add: push into <code>low</code>, then move low's biggest into
+        <code>high</code>. That keeps every low value ≤ every high value. If
+        high now has more, move its smallest back to low. To find: low's top
+        if low is bigger, else the mean of both tops.
+      </p>
+      <ul>
+        <li>Python's <code>heapq</code> is only a min-heap, so low stores negated values.</li>
+        <li>Use floating-point division for the mean.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log n) add, O(1) find</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Find after every add (25,000 each): Python 26 ms, Java 13 ms, C++
+        2.4 ms, the fastest in every language for that pattern.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        Python's <code>statistics.median</code> sorts the whole list each
+        call, like Approach 1. Outside LeetCode, the
+        <code>sortedcontainers</code> package's <code>SortedList</code> makes
+        Approach 2 O(log n) per add.
+      </p>
+      <p class="note">On LeetCode, Approach 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Sort on Every Find</th>
+              <td>Append; sort when asked</td>
+              <td>O(1) / O(n log n)</td>
+              <td>O(n)</td>
+              <td>28 s in Java when asked often</td>
+            </tr>
+            <tr>
+              <th scope="row">Sorted List, Binary Insert</th>
+              <td>Insert at the right spot</td>
+              <td>O(n) / O(1)</td>
+              <td>O(n)</td>
+              <td>Shifting is the cost</td>
+            </tr>
+            <tr>
+              <th scope="row">Two Heaps</th>
+              <td>Max-heap low, min-heap high</td>
+              <td>O(log n) / O(1)</td>
+              <td>O(n)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
