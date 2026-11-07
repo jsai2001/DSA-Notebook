@@ -1,0 +1,203 @@
+<details class="question" data-group="linked-list" data-tags="linked list reverse pointers recursion iterative three pointers">
+  <summary>
+    <span class="q-title">206. Reverse Linked List</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Linked List</span>
+      <span class="tag">Recursion</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Walk the list once with
+      <code>prev</code> and <code>cur</code>. For each node:
+      <strong>save</strong> <code>cur.next</code>, point
+      <code>cur.next</code> back at <code>prev</code>, then step both
+      forward. At the end <code>prev</code> is the new head. O(n) time, O(1)
+      space.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/reverse-linked-list/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>Reverse a singly linked list and return the new head.</p>
+      <ul>
+        <li>The number of nodes is in <code>[0, 5000]</code></li>
+        <li><code>-5000 &lt;= Node.val &lt;= 5000</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[1,2,3,4,5]</code> → <code>[5,4,3,2,1]</code>.
+        <code>[1,2]</code> → <code>[2,1]</code>. <code>[]</code> →
+        <code>[]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[1,2,3,4,5]</code></td>
+              <td><code>[5,4,3,2,1]</code></td>
+              <td>Setting <code>cur.next = prev</code> before saving <code>cur.next</code> loses the rest of the list: it returned <code>[1]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3,4,5]</code></td>
+              <td><code>[5,4,3,2,1]</code></td>
+              <td>The recursive version without <code>head.next = None</code> leaves 1 and 2 pointing at each other: the list read <code>5,4,3,2,1,2,1,2,…</code> forever.</td>
+            </tr>
+            <tr>
+              <td><code>[]</code></td>
+              <td><code>[]</code></td>
+              <td><code>head</code> is <code>None</code>: return it as is, don't read <code>head.next</code>.</td>
+            </tr>
+            <tr>
+              <td>5000 nodes</td>
+              <td>reversed</td>
+              <td>The recursion goes 5000 calls deep, past Python's default limit of 1000.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Copy the Values, Write Them Back</h2>
+      <p class="intuition">
+        Walk the list and copy every value into an array. Walk it again and
+        write the values back from the end of the array. The links never
+        change; the values move.
+      </p>
+      <ul>
+        <li>Easy to get right, but it's not what "reverse the list" usually means: nodes keep their place.</li>
+        <li>Needs O(n) extra space for the values.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        At 5000 nodes: Python 0.45 ms, C++ 39 µs. Fine here, but an
+        interviewer will ask you to move the links.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Recursion</h2>
+      <p class="intuition">
+        Reverse everything after <code>head</code> first. Now
+        <code>head.next</code> is the tail of that reversed part, so set
+        <code>head.next.next = head</code> and <code>head.next = None</code>.
+        The last node, found at the bottom, is passed back up as the new head.
+      </p>
+      <ul>
+        <li>Short, and a good way to think about lists recursively.</li>
+        <li>One call per node: Python needs <code>sys.setrecursionlimit</code> for 5000 nodes.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n) call stack</span>
+      </div>
+      <p class="note">
+        At 5000 nodes: Python 0.61 ms, C++ 64 µs, the slowest here because of
+        the calls. Java handled 5000 deep without trouble.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Three Pointers
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        <code>prev</code> holds the reversed part, <code>cur</code> the rest.
+        Each step: <code>nxt = cur.next</code>, <code>cur.next = prev</code>,
+        <code>prev = cur</code>, <code>cur = nxt</code>. When
+        <code>cur</code> is <code>None</code>, <code>prev</code> is the new head.
+      </p>
+      <ul>
+        <li>The order matters: save first, flip second, step last.</li>
+        <li>Empty and one-node lists need no special case.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        At 5000 nodes: Python 0.36 ms, C++ 8 µs, the fastest in both.
+        Correct on all 3105 tests in every language.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        LeetCode's <code>ListNode</code> has no methods. With real lists you'd
+        call <code>list.reverse()</code>, <code>std::reverse</code> or
+        <code>Collections.reverse</code>; C++'s <code>std::forward_list</code>
+        even has <code>reverse()</code>. Here, Approach 3 is what you'd write.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Copy the Values</th>
+              <td>Values out, then back in reverse</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Links never move</td>
+            </tr>
+            <tr>
+              <th scope="row">Recursion</th>
+              <td>Reverse the rest, hang head at the end</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Don't forget <code>head.next = None</code></td>
+            </tr>
+            <tr>
+              <th scope="row">Three Pointers</th>
+              <td>Save, flip, step</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

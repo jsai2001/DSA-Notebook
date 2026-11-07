@@ -7851,7 +7851,7 @@
       <details class="pattern-group" id="g-linked-list">
         <summary>
           <span class="g-name">Linked List</span>
-          <span class="g-count"><span class="g-total">9 problems</span></span>
+          <span class="g-count"><span class="g-total">10 problems</span></span>
           <span class="g-hint">Pointer rewiring and dummy heads</span>
         </summary>
         <div class="g-body">
@@ -12836,6 +12836,403 @@
                         <td>Map to nodes; move and evict in O(1)</td>
                         <td>O(1)</td>
                         <td>O(capacity)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0206-reverse-linked-list ===== -->
+          <details class="question" data-group="linked-list" data-tags="linked list reverse pointers recursion iterative three pointers">
+            <summary>
+              <span class="q-title">206. Reverse Linked List</span>
+              <span class="q-meta">
+                <span class="badge easy">Easy</span>
+                <span class="tag">Linked List</span>
+                <span class="tag">Recursion</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Walk the list once with
+                <code>prev</code> and <code>cur</code>. For each node:
+                <strong>save</strong> <code>cur.next</code>, point
+                <code>cur.next</code> back at <code>prev</code>, then step both
+                forward. At the end <code>prev</code> is the new head. O(n) time, O(1)
+                space.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/reverse-linked-list/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>Reverse a singly linked list and return the new head.</p>
+                <ul>
+                  <li>The number of nodes is in <code>[0, 5000]</code></li>
+                  <li><code>-5000 &lt;= Node.val &lt;= 5000</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>[1,2,3,4,5]</code> → <code>[5,4,3,2,1]</code>.
+                  <code>[1,2]</code> → <code>[2,1]</code>. <code>[]</code> →
+                  <code>[]</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[1,2,3,4,5]</code></td>
+                        <td><code>[5,4,3,2,1]</code></td>
+                        <td>Setting <code>cur.next = prev</code> before saving <code>cur.next</code> loses the rest of the list: it returned <code>[1]</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2,3,4,5]</code></td>
+                        <td><code>[5,4,3,2,1]</code></td>
+                        <td>The recursive version without <code>head.next = None</code> leaves 1 and 2 pointing at each other: the list read <code>5,4,3,2,1,2,1,2,…</code> forever.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[]</code></td>
+                        <td><code>[]</code></td>
+                        <td><code>head</code> is <code>None</code>: return it as is, don't read <code>head.next</code>.</td>
+                      </tr>
+                      <tr>
+                        <td>5000 nodes</td>
+                        <td>reversed</td>
+                        <td>The recursion goes 5000 calls deep, past Python's default limit of 1000.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Copy the Values, Write Them Back</h2>
+                <p class="intuition">
+                  Walk the list and copy every value into an array. Walk it again and
+                  write the values back from the end of the array. The links never
+                  change; the values move.
+                </p>
+                <ul>
+                  <li>Easy to get right, but it's not what "reverse the list" usually means: nodes keep their place.</li>
+                  <li>Needs O(n) extra space for the values.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  At 5000 nodes: Python 0.45 ms, C++ 39 µs. Fine here, but an
+                  interviewer will ask you to move the links.
+                </p>
+                <div class="code-tabs" data-viz="0206-reverse-linked-list/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"copy":[8,9,10,11,12],"write":[13,14,15,16],"return":[17]}'>
+                    # Definition for singly-linked list.
+                    # class ListNode(object):
+                    #     def __init__(self, val=0, next=None):
+                    #         self.val = val
+                    #         self.next = next
+                    class Solution(object):
+                        def reverseList(self, head):
+                            vals = []
+                            node = head
+                            while node:  # copy the values out, front to back
+                                vals.append(node.val)
+                                node = node.next
+                            node = head
+                            while node:  # write them back, back to front
+                                node.val = vals.pop()
+                                node = node.next
+                            return head  # same nodes, values in reverse order
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"copy":[15,16],"write":[17,18,19],"return":[21]}'>
+                    /**
+                     * Definition for singly-linked list.
+                     * struct ListNode {
+                     *     int val;
+                     *     ListNode *next;
+                     *     ListNode() : val(0), next(nullptr) {}
+                     *     ListNode(int x) : val(x), next(nullptr) {}
+                     *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+                     * };
+                     */
+                    #include <vector>
+                    class Solution {
+                    public:
+                        ListNode* reverseList(ListNode* head) {
+                            std::vector<int> vals;
+                            for (ListNode* node = head; node; node = node->next) vals.push_back(node->val); // copy the values out, front to back
+                            for (ListNode* node = head; node; node = node->next) { // write them back, back to front
+                                node->val = vals.back();
+                                vals.pop_back();
+                            }
+                            return head; // same nodes, values in reverse order
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"copy":[14,15],"write":[16],"return":[17]}'>
+                    import java.util.*;
+                    /**
+                     * Definition for singly-linked list.
+                     * public class ListNode {
+                     *     int val;
+                     *     ListNode next;
+                     *     ListNode() {}
+                     *     ListNode(int val) { this.val = val; }
+                     *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+                     * }
+                     */
+                    class Solution {
+                        public ListNode reverseList(ListNode head) {
+                            ArrayDeque<Integer> vals = new ArrayDeque<>();
+                            for (ListNode node = head; node != null; node = node.next) vals.push(node.val); // copy the values out, front to back
+                            for (ListNode node = head; node != null; node = node.next) node.val = vals.pop(); // write them back, back to front
+                            return head; // same nodes, values in reverse order
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Recursion</h2>
+                <p class="intuition">
+                  Reverse everything after <code>head</code> first. Now
+                  <code>head.next</code> is the tail of that reversed part, so set
+                  <code>head.next.next = head</code> and <code>head.next = None</code>.
+                  The last node, found at the bottom, is passed back up as the new head.
+                </p>
+                <ul>
+                  <li>Short, and a good way to think about lists recursively.</li>
+                  <li>One call per node: Python needs <code>sys.setrecursionlimit</code> for 5000 nodes.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n) call stack</span>
+                </div>
+                <p class="note">
+                  At 5000 nodes: Python 0.61 ms, C++ 64 µs, the slowest here because of
+                  the calls. Java handled 5000 deep without trouble.
+                </p>
+                <div class="code-tabs" data-viz="0206-reverse-linked-list/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"base":[10,11],"call":[12],"link":[13,14],"return":[15]}'>
+                    import sys
+                    sys.setrecursionlimit(10000)  # one call per node: up to 5000 deep
+                    # Definition for singly-linked list.
+                    # class ListNode(object):
+                    #     def __init__(self, val=0, next=None):
+                    #         self.val = val
+                    #         self.next = next
+                    class Solution(object):
+                        def reverseList(self, head):
+                            if not head or not head.next:  # 0 or 1 node: already reversed
+                                return head
+                            new_head = self.reverseList(head.next)  # reverse everything after head
+                            head.next.next = head  # head's old next is now the tail: hang head after it
+                            head.next = None  # head is the new tail
+                            return new_head  # the old last node, passed all the way up
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"base":[14],"call":[15],"link":[16,17],"return":[18]}'>
+                    /**
+                     * Definition for singly-linked list.
+                     * struct ListNode {
+                     *     int val;
+                     *     ListNode *next;
+                     *     ListNode() : val(0), next(nullptr) {}
+                     *     ListNode(int x) : val(x), next(nullptr) {}
+                     *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+                     * };
+                     */
+                    class Solution {
+                    public:
+                        ListNode* reverseList(ListNode* head) {
+                            if (!head || !head->next) return head; // 0 or 1 node: already reversed
+                            ListNode* newHead = reverseList(head->next); // reverse everything after head
+                            head->next->next = head; // head's old next is now the tail: hang head after it
+                            head->next = nullptr; // head is the new tail
+                            return newHead; // the old last node, passed all the way up
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"base":[13],"call":[14],"link":[15,16],"return":[17]}'>
+                    /**
+                     * Definition for singly-linked list.
+                     * public class ListNode {
+                     *     int val;
+                     *     ListNode next;
+                     *     ListNode() {}
+                     *     ListNode(int val) { this.val = val; }
+                     *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+                     * }
+                     */
+                    class Solution {
+                        public ListNode reverseList(ListNode head) {
+                            if (head == null || head.next == null) return head; // 0 or 1 node: already reversed
+                            ListNode newHead = reverseList(head.next); // reverse everything after head
+                            head.next.next = head; // head's old next is now the tail: hang head after it
+                            head.next = null; // head is the new tail
+                            return newHead; // the old last node, passed all the way up
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Three Pointers
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  <code>prev</code> holds the reversed part, <code>cur</code> the rest.
+                  Each step: <code>nxt = cur.next</code>, <code>cur.next = prev</code>,
+                  <code>prev = cur</code>, <code>cur = nxt</code>. When
+                  <code>cur</code> is <code>None</code>, <code>prev</code> is the new head.
+                </p>
+                <ul>
+                  <li>The order matters: save first, flip second, step last.</li>
+                  <li>Empty and one-node lists need no special case.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  At 5000 nodes: Python 0.36 ms, C++ 8 µs, the fastest in both.
+                  Correct on all 3105 tests in every language.
+                </p>
+                <div class="code-tabs" data-viz="0206-reverse-linked-list/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[8],"loop":[9],"save":[10],"flip":[11],"step":[12],"return":[13]}'>
+                    # Definition for singly-linked list.
+                    # class ListNode(object):
+                    #     def __init__(self, val=0, next=None):
+                    #         self.val = val
+                    #         self.next = next
+                    class Solution(object):
+                        def reverseList(self, head):
+                            prev, cur = None, head  # prev: the reversed part so far; cur: the rest
+                            while cur:
+                                nxt = cur.next  # save the rest before cutting the link
+                                cur.next = prev  # turn this link around
+                                prev, cur = cur, nxt  # step forward
+                            return prev  # the old last node
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[14],"loop":[15],"save":[16],"flip":[17],"step":[18,19],"return":[21]}'>
+                    /**
+                     * Definition for singly-linked list.
+                     * struct ListNode {
+                     *     int val;
+                     *     ListNode *next;
+                     *     ListNode() : val(0), next(nullptr) {}
+                     *     ListNode(int x) : val(x), next(nullptr) {}
+                     *     ListNode(int x, ListNode *next) : val(x), next(next) {}
+                     * };
+                     */
+                    class Solution {
+                    public:
+                        ListNode* reverseList(ListNode* head) {
+                            ListNode *prev = nullptr, *cur = head; // prev: the reversed part so far; cur: the rest
+                            while (cur) {
+                                ListNode* next = cur->next; // save the rest before cutting the link
+                                cur->next = prev; // turn this link around
+                                prev = cur; // step forward
+                                cur = next;
+                            }
+                            return prev; // the old last node
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[13],"loop":[14],"save":[15],"flip":[16],"step":[17,18],"return":[20]}'>
+                    /**
+                     * Definition for singly-linked list.
+                     * public class ListNode {
+                     *     int val;
+                     *     ListNode next;
+                     *     ListNode() {}
+                     *     ListNode(int val) { this.val = val; }
+                     *     ListNode(int val, ListNode next) { this.val = val; this.next = next; }
+                     * }
+                     */
+                    class Solution {
+                        public ListNode reverseList(ListNode head) {
+                            ListNode prev = null, cur = head; // prev: the reversed part so far; cur: the rest
+                            while (cur != null) {
+                                ListNode next = cur.next; // save the rest before cutting the link
+                                cur.next = prev; // turn this link around
+                                prev = cur; // step forward
+                                cur = next;
+                            }
+                            return prev; // the old last node
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  LeetCode's <code>ListNode</code> has no methods. With real lists you'd
+                  call <code>list.reverse()</code>, <code>std::reverse</code> or
+                  <code>Collections.reverse</code>; C++'s <code>std::forward_list</code>
+                  even has <code>reverse()</code>. Here, Approach 3 is what you'd write.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Copy the Values</th>
+                        <td>Values out, then back in reverse</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Links never move</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Recursion</th>
+                        <td>Reverse the rest, hang head at the end</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Don't forget <code>head.next = None</code></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Three Pointers</th>
+                        <td>Save, flip, step</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
                         <td>Expected answer</td>
                       </tr>
                     </tbody>
@@ -58908,6 +59305,113 @@
       const next = (x) => String(x).split("").reduce((s, d) => s + d * d, 0);
       const sumText = (x) => `${String(x).split("").map((d) => `${d}²`).join(" + ")} = ${next(x)}`;
       })();
+    </script>
+    <!-- problems/0206-reverse-linked-list/approach1.visual.js -->
+    <script>
+      // Copy the values into a list, then write them back into the same nodes in reverse order.
+      DSAViz.register("0206-reverse-linked-list/approach1", {
+        inputs: [{ name: "head", type: "int[]", value: "[1, 2, 3, 4, 5]", minLength: 0, maxLength: 8, minValue: -5000, maxValue: 5000 }],
+        trace({ head }) {
+          const n = head.length;
+          const vals = head.slice();
+          const steps = [];
+          const stack = [];
+          const list = (o = {}) => ({ type: "list", label: "the list (the same nodes the whole time; caption = node)", nodes: vals.map((v, i) => ({ value: String(v), caption: `node ${i}`, mark: o.marks && o.marks[i] ? o.marks[i] : "" })), pointers: o.at !== undefined ? { node: o.at } : {} });
+          const view = (o = {}) => [list(o), { type: "array", label: "vals (copied values; the end is popped first)", values: stack.slice(), compact: true, marks: o.sm || {} }];
+          if (!n) {
+            steps.push({ line: ["copy", "write", "return"], note: "Return []. The list is empty: nothing to copy.", view: view() });
+            return steps;
+          }
+          for (let i = 0; i < n; i++) {
+            stack.push(vals[i]);
+            steps.push({ line: "copy", note: `Copy node ${i}'s value ${vals[i]} into vals.`, view: view({ at: i, marks: { [i]: "active" }, sm: { [stack.length - 1]: "new" } }) });
+          }
+          const written = {};
+          for (let i = 0; i < n; i++) {
+            const v = stack.pop();
+            vals[i] = v;
+            written[i] = "match";
+            steps.push({ line: "write", note: `Pop ${v} from the end of vals and write it into node ${i}.`, view: view({ at: i, marks: { ...written, [i]: "new" } }) });
+          }
+          steps.push({ line: "return", note: `Return [${vals.join(", ")}]. The links never moved; only the values did. O(n) time and O(n) extra space.`, view: view({ marks: written }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0206-reverse-linked-list/approach2.visual.js -->
+    <script>
+      // Recursion: reverse everything after head, then hang head after its old next, and make head the tail.
+      DSAViz.register("0206-reverse-linked-list/approach2", {
+        inputs: [{ name: "head", type: "int[]", value: "[1, 2, 3, 4, 5]", minLength: 0, maxLength: 8, minValue: -5000, maxValue: 5000 }],
+        trace({ head: vals }) {
+          const n = vals.length;
+          const nxt = vals.map((_, i) => (i + 1 < n ? i + 1 : -1)); // the real links, by node index
+          const steps = [];
+          const open = [];
+          const walk = (s) => { const out = []; for (let p = s; p !== -1 && out.length <= n; p = nxt[p]) out.push(p); return out; };
+          const chain = (label, s, marks = {}) => ({ type: "list", label, nodes: s === -1 ? [] : walk(s).map((i) => ({ value: String(vals[i]), caption: `node ${i}`, mark: marks[i] || "" })) });
+          const view = (o = {}) => [
+            chain("from the old head (node 0), following the links", n ? 0 : -1, o.marks),
+            ...(o.newHead !== undefined ? [chain("from the new head, following the links", o.newHead, o.marks)] : []),
+            { type: "array", label: "open calls reverseList(node), outermost first", values: open.map((i) => `node ${i}`), wide: true },
+          ];
+          if (!n) {
+            steps.push({ line: "base", note: "Return []. head is None: nothing to reverse.", view: view() });
+            return steps;
+          }
+          const rev = (h) => {
+            open.push(h);
+            if (nxt[h] === -1) {
+              steps.push({ line: "base", note: `reverseList(node ${h}): one node left, already reversed. It's the new head; return it.`, view: view({ marks: { [h]: "match" }, newHead: h }) });
+              open.pop();
+              return h;
+            }
+            steps.push({ line: "call", note: `reverseList(node ${h}): first reverse everything after it, starting at node ${nxt[h]}.`, view: view({ marks: { [h]: "active" } }) });
+            const nh = rev(nxt[h]);
+            const after = nxt[h];
+            nxt[after] = h;
+            nxt[h] = -1;
+            steps.push({ line: "link", note: `Back in reverseList(node ${h}): node ${after} is now the tail of the reversed part. Set node ${after}.next = node ${h}, and node ${h}.next = None.`, view: view({ marks: { [h]: "new", [after]: "active" }, newHead: nh }) });
+            open.pop();
+            return nh;
+          };
+          const nh = rev(0);
+          steps.push({ line: "return", note: `Return [${walk(nh).map((i) => vals[i]).join(", ")}]. Every call passes the same new head up. O(n) time, O(n) call stack.`, view: view({ newHead: nh }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0206-reverse-linked-list/approach3.visual.js -->
+    <script>
+      // Walk the list once, turning each link around. prev is the reversed part, cur is the rest.
+      DSAViz.register("0206-reverse-linked-list/approach3", {
+        inputs: [{ name: "head", type: "int[]", value: "[1, 2, 3, 4, 5]", minLength: 0, maxLength: 8, minValue: -5000, maxValue: 5000 }],
+        trace({ head: vals }) {
+          const n = vals.length;
+          const nxt = vals.map((_, i) => (i + 1 < n ? i + 1 : -1));
+          const steps = [];
+          let prev = -1;
+          let cur = n ? 0 : -1;
+          const walk = (s) => { const out = []; for (let p = s; p !== -1 && out.length <= n; p = nxt[p]) out.push(p); return out; };
+          const chain = (label, s, mark, extra = {}) => ({ type: "list", label, nodes: s === -1 ? [] : walk(s).map((i) => ({ value: String(vals[i]), caption: `node ${i}`, mark: extra[i] || mark })) });
+          const view = (o = {}) => [
+            chain("prev: the reversed part so far (yellow = just flipped)", prev, "match", o.pm || {}),
+            chain("cur: the rest, not reversed yet (dark = cur)", cur, "", o.cm || {}),
+            { type: "vars", items: [{ name: "nxt", value: o.nxt === undefined ? "-" : o.nxt === -1 ? "None" : `node ${o.nxt}` }] },
+          ];
+          steps.push({ line: "init", note: "prev = None (nothing reversed yet), cur = head.", view: view() });
+          while (cur !== -1) {
+            const save = nxt[cur];
+            steps.push({ line: ["loop", "save"], note: `Save nxt = cur.next${save === -1 ? " (None)" : ` (node ${save})`} before the link is changed.`, view: view({ nxt: save, cm: { [cur]: "active" } }) });
+            nxt[cur] = prev;
+            const was = cur;
+            [prev, cur] = [cur, save];
+            steps.push({ line: ["flip", "step"], note: `node ${was}.next = prev: its link now points back. Move on: prev = node ${was}, cur = ${cur === -1 ? "None" : `node ${cur}`}.`, view: view({ nxt: save, pm: { [was]: "new" } }) });
+          }
+          steps.push({ line: "return", note: `Return [${walk(prev).map((i) => vals[i]).join(", ")}]. One pass, three pointers: O(n) time, O(1) space.`, view: view() });
+          return steps;
+        },
+      });
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->
     <script>
