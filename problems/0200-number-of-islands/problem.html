@@ -1,0 +1,208 @@
+<details class="question" data-group="graphs" data-tags="graph grid matrix island dfs bfs union-find flood fill connected components count">
+  <summary>
+    <span class="q-title">200. Number of Islands</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Matrix</span>
+      <span class="tag">Breadth-First Search</span>
+      <span class="tag">Union Find</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Scan the grid. Every <code>"1"</code> that's
+      still land is a new island: add 1, then flood the whole island and
+      <strong>sink</strong> it (set it to <code>"0"</code>) so it's never
+      counted again. A BFS queue does the flood without deep recursion.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/number-of-islands/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>grid</code> is a map of <code>"1"</code> (land) and
+        <code>"0"</code> (water). An island is land joined up, down, left or
+        right. Count the islands.
+      </p>
+      <ul>
+        <li><code>1 &lt;= m, n &lt;= 300</code></li>
+        <li>Cells are the characters <code>'0'</code> and <code>'1'</code>, not numbers</li>
+      </ul>
+      <p class="note">
+        Example: <code>["11110","11010","11000","00000"]</code> →
+        <code>1</code>. <code>["11000","11000","00100","00011"]</code> →
+        <code>3</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>["01","11"]</code></td>
+              <td><code>1</code></td>
+              <td>Counting land cells with no land above or to the left said <code>2</code>: an island can be reached from below. Wrong on 939 of 3038 tests.</td>
+            </tr>
+            <tr>
+              <td>300 × 300, all land</td>
+              <td><code>1</code></td>
+              <td>The recursive DFS goes up to 90,000 calls deep. In Java, with the default stack here, it threw <code>StackOverflowError</code>.</td>
+            </tr>
+            <tr>
+              <td>300 × 300, all land</td>
+              <td><code>1</code></td>
+              <td>A BFS that sinks cells when they're popped (not when queued) still counts right, but queued 179,401 cells instead of 90,000.</td>
+            </tr>
+            <tr>
+              <td>300 × 300 checkerboard</td>
+              <td><code>45000</code></td>
+              <td>The most islands possible: every land cell is alone.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Recursive DFS</h2>
+      <p class="intuition">
+        <code>sink(r, c)</code> stops on off-grid cells and water. Otherwise
+        it sets the cell to <code>"0"</code> and calls itself on the four
+        neighbours. Each land cell the scan finds adds one island and sinks
+        it.
+      </p>
+      <ul>
+        <li>The shortest code, and usually the first answer people give.</li>
+        <li>One call per cell can nest m·n deep: 90,000 calls here.</li>
+        <li>Python needs <code>sys.setrecursionlimit</code>; it ran fine with that on Python 3.14.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n)</span>
+        <span><strong>Space</strong> O(m·n) call stack</span>
+      </div>
+      <p class="note">
+        300 × 300 of land: Python 57 ms, C++ 2.8 ms. Java crashed with
+        <code>StackOverflowError</code> on that grid and on a 300 × 300 snake,
+        and passed the other 3036 tests.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Union-Find</h2>
+      <p class="intuition">
+        Start with <code>count</code> = number of land cells, each its own
+        group. For every land cell, look at the cell below and to the right.
+        If it's land in a different group, join the groups and subtract 1.
+        What's left is the number of islands.
+      </p>
+      <ul>
+        <li>Down and right are enough: every touching pair is met exactly once.</li>
+        <li>It doesn't change <code>grid</code>, and it suits the follow-up where land is added over time (Number of Islands II).</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n·log(m·n)) at worst, near O(m·n)</span>
+        <span><strong>Space</strong> O(m·n)</span>
+      </div>
+      <p class="note">
+        300 × 300 of land: Python 81 ms, Java 2.6 ms, C++ 2.1 ms. The slowest
+        in Python, but no recursion anywhere.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: BFS
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Same scan as Approach 1, but flood with a queue. Sink each cell the
+        moment it's queued; pop cells and queue their land neighbours until
+        the queue is empty.
+      </p>
+      <ul>
+        <li>Sink on queue, not on pop, so a cell is never queued twice.</li>
+        <li>No recursion, so no stack limit in any language.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n)</span>
+        <span><strong>Space</strong> O(m·n) at worst, usually far less</span>
+      </div>
+      <p class="note">
+        300 × 300 of land: Python 52 ms, Java 1.4 ms, C++ 0.6 ms, the fastest
+        in every language on that grid.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        The standard libraries have no flood fill. Outside LeetCode,
+        <code>scipy.ndimage.label</code> returns the number of islands
+        directly, with 4-way joins by default.
+      </p>
+      <p class="note">On LeetCode, Approach 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Recursive DFS</th>
+              <td>Sink the island with recursion</td>
+              <td>O(m·n)</td>
+              <td>O(m·n)</td>
+              <td>Java stack overflowed at 300 × 300</td>
+            </tr>
+            <tr>
+              <th scope="row">Union-Find</th>
+              <td>Join touching land, count joins</td>
+              <td>~O(m·n)</td>
+              <td>O(m·n)</td>
+              <td>Keeps the grid unchanged</td>
+            </tr>
+            <tr>
+              <th scope="row">BFS</th>
+              <td>Sink on queue, flood with a queue</td>
+              <td>O(m·n)</td>
+              <td>O(m·n)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

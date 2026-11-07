@@ -20193,7 +20193,7 @@
       <details class="pattern-group" id="g-graphs">
         <summary>
           <span class="g-name">Graphs</span>
-          <span class="g-count"><span class="g-total">7 problems</span></span>
+          <span class="g-count"><span class="g-total">8 problems</span></span>
           <span class="g-hint">BFS, level by level</span>
         </summary>
         <div class="g-body">
@@ -21960,6 +21960,470 @@
                         <td>O(V + E)</td>
                         <td>O(V)</td>
                         <td>Needs unique small values</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0200-number-of-islands ===== -->
+          <details class="question" data-group="graphs" data-tags="graph grid matrix island dfs bfs union-find flood fill connected components count">
+            <summary>
+              <span class="q-title">200. Number of Islands</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Matrix</span>
+                <span class="tag">Breadth-First Search</span>
+                <span class="tag">Union Find</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Scan the grid. Every <code>"1"</code> that's
+                still land is a new island: add 1, then flood the whole island and
+                <strong>sink</strong> it (set it to <code>"0"</code>) so it's never
+                counted again. A BFS queue does the flood without deep recursion.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/number-of-islands/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  <code>grid</code> is a map of <code>"1"</code> (land) and
+                  <code>"0"</code> (water). An island is land joined up, down, left or
+                  right. Count the islands.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= m, n &lt;= 300</code></li>
+                  <li>Cells are the characters <code>'0'</code> and <code>'1'</code>, not numbers</li>
+                </ul>
+                <p class="note">
+                  Example: <code>["11110","11010","11000","00000"]</code> →
+                  <code>1</code>. <code>["11000","11000","00100","00011"]</code> →
+                  <code>3</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>["01","11"]</code></td>
+                        <td><code>1</code></td>
+                        <td>Counting land cells with no land above or to the left said <code>2</code>: an island can be reached from below. Wrong on 939 of 3038 tests.</td>
+                      </tr>
+                      <tr>
+                        <td>300 × 300, all land</td>
+                        <td><code>1</code></td>
+                        <td>The recursive DFS goes up to 90,000 calls deep. In Java, with the default stack here, it threw <code>StackOverflowError</code>.</td>
+                      </tr>
+                      <tr>
+                        <td>300 × 300, all land</td>
+                        <td><code>1</code></td>
+                        <td>A BFS that sinks cells when they're popped (not when queued) still counts right, but queued 179,401 cells instead of 90,000.</td>
+                      </tr>
+                      <tr>
+                        <td>300 × 300 checkerboard</td>
+                        <td><code>45000</code></td>
+                        <td>The most islands possible: every land cell is alone.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Recursive DFS</h2>
+                <p class="intuition">
+                  <code>sink(r, c)</code> stops on off-grid cells and water. Otherwise
+                  it sets the cell to <code>"0"</code> and calls itself on the four
+                  neighbours. Each land cell the scan finds adds one island and sinks
+                  it.
+                </p>
+                <ul>
+                  <li>The shortest code, and usually the first answer people give.</li>
+                  <li>One call per cell can nest m·n deep: 90,000 calls here.</li>
+                  <li>Python needs <code>sys.setrecursionlimit</code>; it ran fine with that on Python 3.14.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(m·n)</span>
+                  <span><strong>Space</strong> O(m·n) call stack</span>
+                </div>
+                <p class="note">
+                  300 × 300 of land: Python 57 ms, C++ 2.8 ms. Java crashed with
+                  <code>StackOverflowError</code> on that grid and on a 300 × 300 snake,
+                  and passed the other 3036 tests.
+                </p>
+                <div class="code-tabs" data-viz="0200-number-of-islands/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[5,14],"visit":[6],"stop":[7,8],"sink":[9,10,11,12,13],"cell":[15,16,17],"count":[18,19],"return":[20]}'>
+                    import sys
+                    sys.setrecursionlimit(200000)  # one call per cell: a 300 x 300 island is 90,000 calls deep
+                    class Solution(object):
+                        def numIslands(self, grid):
+                            R, C = len(grid), len(grid[0])
+                            def sink(r, c):  # turn the whole island into water
+                                if r < 0 or r >= R or c < 0 or c >= C or grid[r][c] != "1":  # off the grid, water, or already sunk
+                                    return
+                                grid[r][c] = "0"
+                                sink(r + 1, c)
+                                sink(r - 1, c)
+                                sink(r, c + 1)
+                                sink(r, c - 1)
+                            count = 0
+                            for r in range(R):
+                                for c in range(C):
+                                    if grid[r][c] == "1":  # land not sunk yet: a new island
+                                        count += 1
+                                        sink(r, c)
+                            return count
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"cell":[6,7,8],"count":[9,10],"return":[12],"visit":[15],"stop":[16],"sink":[17,18,19,20,21]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int numIslands(std::vector<std::vector<char>>& grid) {
+                            int count = 0;
+                            for (int r = 0; r < (int)grid.size(); ++r)
+                                for (int c = 0; c < (int)grid[0].size(); ++c)
+                                    if (grid[r][c] == '1') { // land not sunk yet: a new island
+                                        ++count;
+                                        sink(grid, r, c);
+                                    }
+                            return count;
+                        }
+                    private:
+                        void sink(std::vector<std::vector<char>>& grid, int r, int c) { // turn the whole island into water
+                            if (r < 0 || r >= (int)grid.size() || c < 0 || c >= (int)grid[0].size() || grid[r][c] != '1') return; // off the grid, water, or already sunk
+                            grid[r][c] = '0';
+                            sink(grid, r + 1, c);
+                            sink(grid, r - 1, c);
+                            sink(grid, r, c + 1);
+                            sink(grid, r, c - 1);
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"cell":[4,5,6],"count":[7,8],"return":[10],"visit":[12],"stop":[13],"sink":[14,15,16,17,18]}'>
+                    class Solution {
+                        public int numIslands(char[][] grid) {
+                            int count = 0;
+                            for (int r = 0; r < grid.length; r++)
+                                for (int c = 0; c < grid[0].length; c++)
+                                    if (grid[r][c] == '1') { // land not sunk yet: a new island
+                                        count++;
+                                        sink(grid, r, c);
+                                    }
+                            return count;
+                        }
+                        private void sink(char[][] grid, int r, int c) { // turn the whole island into water
+                            if (r < 0 || r >= grid.length || c < 0 || c >= grid[0].length || grid[r][c] != '1') return; // off the grid, water, or already sunk
+                            grid[r][c] = '0';
+                            sink(grid, r + 1, c);
+                            sink(grid, r - 1, c);
+                            sink(grid, r, c + 1);
+                            sink(grid, r, c - 1);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Union-Find</h2>
+                <p class="intuition">
+                  Start with <code>count</code> = number of land cells, each its own
+                  group. For every land cell, look at the cell below and to the right.
+                  If it's land in a different group, join the groups and subtract 1.
+                  What's left is the number of islands.
+                </p>
+                <ul>
+                  <li>Down and right are enough: every touching pair is met exactly once.</li>
+                  <li>It doesn't change <code>grid</code>, and it suits the follow-up where land is added over time (Number of Islands II).</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(m·n·log(m·n)) at worst, near O(m·n)</span>
+                  <span><strong>Space</strong> O(m·n)</span>
+                </div>
+                <p class="note">
+                  300 × 300 of land: Python 81 ms, Java 2.6 ms, C++ 2.1 ms. The slowest
+                  in Python, but no recursion anywhere.
+                </p>
+                <div class="code-tabs" data-viz="0200-number-of-islands/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,10],"cell":[11,12,13,14],"pair":[15,16,17],"join":[18,19,20],"return":[21]}'>
+                    class Solution(object):
+                        def numIslands(self, grid):
+                            R, C = len(grid), len(grid[0])
+                            parent = list(range(R * C))  # cell r * C + c starts as its own group
+                            def find(x):
+                                while parent[x] != x:
+                                    parent[x] = parent[parent[x]]  # path halving
+                                    x = parent[x]
+                                return x
+                            count = sum(row.count("1") for row in grid)  # every land cell starts as its own island
+                            for r in range(R):
+                                for c in range(C):
+                                    if grid[r][c] != "1":
+                                        continue
+                                    for x, y in ((r + 1, c), (r, c + 1)):  # down and right are enough: each pair is met once
+                                        if x < R and y < C and grid[x][y] == "1":
+                                            a, b = find(r * C + c), find(x * C + y)
+                                            if a != b:  # two separate islands touch: they are one
+                                                parent[a] = b
+                                                count -= 1
+                            return count
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8,9,10],"cell":[11,12,13],"pair":[14,15,16,17],"join":[18,19,20],"return":[26]}'>
+                    #include <numeric>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int numIslands(std::vector<std::vector<char>>& grid) {
+                            const int R = grid.size(), C = grid[0].size();
+                            parent.resize(R * C);
+                            std::iota(parent.begin(), parent.end(), 0); // cell r * C + c starts as its own group
+                            int count = 0;
+                            for (auto& row : grid) for (char ch : row) count += ch == '1'; // every land cell starts as its own island
+                            for (int r = 0; r < R; ++r) {
+                                for (int c = 0; c < C; ++c) {
+                                    if (grid[r][c] != '1') continue;
+                                    const int nb[2][2] = {{r + 1, c}, {r, c + 1}}; // down and right are enough: each pair is met once
+                                    for (auto& p : nb) {
+                                        if (p[0] < R && p[1] < C && grid[p[0]][p[1]] == '1') {
+                                            int a = find(r * C + c), b = find(p[0] * C + p[1]);
+                                            if (a != b) { // two separate islands touch: they are one
+                                                parent[a] = b;
+                                                --count;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            return count;
+                        }
+                    private:
+                        std::vector<int> parent;
+                        int find(int x) {
+                            while (parent[x] != x) {
+                                parent[x] = parent[parent[x]]; // path halving
+                                x = parent[x];
+                            }
+                            return x;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[11,12,13,14,15],"cell":[16,17,18],"pair":[19,20,21,22],"join":[23,24,25],"return":[31]}'>
+                    class Solution {
+                        private int[] parent;
+                        private int find(int x) {
+                            while (parent[x] != x) {
+                                parent[x] = parent[parent[x]]; // path halving
+                                x = parent[x];
+                            }
+                            return x;
+                        }
+                        public int numIslands(char[][] grid) {
+                            int R = grid.length, C = grid[0].length;
+                            parent = new int[R * C];
+                            for (int i = 0; i < R * C; i++) parent[i] = i; // cell r * C + c starts as its own group
+                            int count = 0;
+                            for (char[] row : grid) for (char ch : row) if (ch == '1') count++; // every land cell starts as its own island
+                            for (int r = 0; r < R; r++) {
+                                for (int c = 0; c < C; c++) {
+                                    if (grid[r][c] != '1') continue;
+                                    int[][] nb = {{r + 1, c}, {r, c + 1}}; // down and right are enough: each pair is met once
+                                    for (int[] p : nb) {
+                                        if (p[0] < R && p[1] < C && grid[p[0]][p[1]] == '1') {
+                                            int a = find(r * C + c), b = find(p[0] * C + p[1]);
+                                            if (a != b) { // two separate islands touch: they are one
+                                                parent[a] = b;
+                                                count--;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            return count;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: BFS
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Same scan as Approach 1, but flood with a queue. Sink each cell the
+                  moment it's queued; pop cells and queue their land neighbours until
+                  the queue is empty.
+                </p>
+                <ul>
+                  <li>Sink on queue, not on pop, so a cell is never queued twice.</li>
+                  <li>No recursion, so no stack limit in any language.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(m·n)</span>
+                  <span><strong>Space</strong> O(m·n) at worst, usually far less</span>
+                </div>
+                <p class="note">
+                  300 × 300 of land: Python 52 ms, Java 1.4 ms, C++ 0.6 ms, the fastest
+                  in every language on that grid.
+                </p>
+                <div class="code-tabs" data-viz="0200-number-of-islands/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5],"cell":[6,7,8,9],"start":[10,11,12],"pop":[13,14],"push":[15,16,17,18],"return":[19]}'>
+                    from collections import deque
+                    class Solution(object):
+                        def numIslands(self, grid):
+                            R, C = len(grid), len(grid[0])
+                            count = 0
+                            for r in range(R):
+                                for c in range(C):
+                                    if grid[r][c] != "1":
+                                        continue
+                                    count += 1  # land not sunk yet: a new island
+                                    grid[r][c] = "0"  # sink a cell when it's queued, so it's never queued twice
+                                    queue = deque([(r, c)])
+                                    while queue:
+                                        i, j = queue.popleft()
+                                        for x, y in ((i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)):
+                                            if 0 <= x < R and 0 <= y < C and grid[x][y] == "1":
+                                                grid[x][y] = "0"
+                                                queue.append((x, y))
+                            return count
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8,9,10],"cell":[11,12,13],"start":[14,15,16],"pop":[17,18,19],"push":[20,21,22,23,24],"return":[30]}'>
+                    #include <queue>
+                    #include <utility>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int numIslands(std::vector<std::vector<char>>& grid) {
+                            const int R = grid.size(), C = grid[0].size();
+                            const int dr[] = {1, -1, 0, 0}, dc[] = {0, 0, 1, -1};
+                            int count = 0;
+                            std::queue<std::pair<int, int>> queue;
+                            for (int r = 0; r < R; ++r) {
+                                for (int c = 0; c < C; ++c) {
+                                    if (grid[r][c] != '1') continue;
+                                    ++count; // land not sunk yet: a new island
+                                    grid[r][c] = '0'; // sink a cell when it's queued, so it's never queued twice
+                                    queue.push({r, c});
+                                    while (!queue.empty()) {
+                                        auto [i, j] = queue.front();
+                                        queue.pop();
+                                        for (int d = 0; d < 4; ++d) {
+                                            int x = i + dr[d], y = j + dc[d];
+                                            if (x >= 0 && x < R && y >= 0 && y < C && grid[x][y] == '1') {
+                                                grid[x][y] = '0';
+                                                queue.push({x, y});
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            return count;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5,6,7],"cell":[8,9,10],"start":[11,12,13],"pop":[14,15],"push":[16,17,18,19,20],"return":[26]}'>
+                    import java.util.*;
+                    class Solution {
+                        public int numIslands(char[][] grid) {
+                            int R = grid.length, C = grid[0].length;
+                            int[] dr = {1, -1, 0, 0}, dc = {0, 0, 1, -1};
+                            int count = 0;
+                            ArrayDeque<int[]> queue = new ArrayDeque<>();
+                            for (int r = 0; r < R; r++) {
+                                for (int c = 0; c < C; c++) {
+                                    if (grid[r][c] != '1') continue;
+                                    count++; // land not sunk yet: a new island
+                                    grid[r][c] = '0'; // sink a cell when it's queued, so it's never queued twice
+                                    queue.add(new int[] {r, c});
+                                    while (!queue.isEmpty()) {
+                                        int[] cur = queue.poll();
+                                        for (int d = 0; d < 4; d++) {
+                                            int x = cur[0] + dr[d], y = cur[1] + dc[d];
+                                            if (x >= 0 && x < R && y >= 0 && y < C && grid[x][y] == '1') {
+                                                grid[x][y] = '0';
+                                                queue.add(new int[] {x, y});
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            return count;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  The standard libraries have no flood fill. Outside LeetCode,
+                  <code>scipy.ndimage.label</code> returns the number of islands
+                  directly, with 4-way joins by default.
+                </p>
+                <p class="note">On LeetCode, Approach 3 is what you'd write.</p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Recursive DFS</th>
+                        <td>Sink the island with recursion</td>
+                        <td>O(m·n)</td>
+                        <td>O(m·n)</td>
+                        <td>Java stack overflowed at 300 × 300</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Union-Find</th>
+                        <td>Join touching land, count joins</td>
+                        <td>~O(m·n)</td>
+                        <td>O(m·n)</td>
+                        <td>Keeps the grid unchanged</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">BFS</th>
+                        <td>Sink on queue, flood with a queue</td>
+                        <td>O(m·n)</td>
+                        <td>O(m·n)</td>
+                        <td>Expected answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -57813,6 +58277,185 @@
           return steps;
         },
       });
+    </script>
+    <!-- problems/0200-number-of-islands/approach1.visual.js -->
+    <script>
+      // Scan the grid; each unsunk "1" is a new island. A recursive DFS sinks the whole island so it's never counted again.
+      (function () {
+      DSAViz.register("0200-number-of-islands/approach1", {
+        inputs: [{ name: "grid", type: "string", value: "11000 11000 00100 00011", maxLength: 41 }],
+        trace({ grid: text }) {
+          const input = parse(text);
+          const grid = input.map((r) => r.slice());
+          const R = grid.length;
+          const C = grid[0].length;
+          const steps = [];
+          let count = 0;
+          let depth = 0;
+          const island = [];
+          const view = (o = {}) => {
+            const marks = {};
+            for (let i = 0; i < R; i++) for (let j = 0; j < C; j++) if (input[i][j] === "1" && grid[i][j] === "0") marks[`${i},${j}`] = "visited";
+            island.forEach(([i, j]) => (marks[`${i},${j}`] = "new"));
+            if (o.at) marks[`${o.at[0]},${o.at[1]}`] = "active";
+            return [gridView(grid, marks, "grid (dark = this cell, yellow = sunk in this island, grey = sunk earlier)"), { type: "vars", items: [{ name: "count", value: count, mark: o.counted ? "new" : "" }, { name: "calls deep", value: depth }] }];
+          };
+          steps.push({ line: "init", note: "Scan every cell. A \"1\" that's still land starts a new island.", view: view() });
+          const sink = (r, c) => {
+            if (r < 0 || r >= R || c < 0 || c >= C || grid[r][c] !== "1") return;
+            depth++;
+            grid[r][c] = "0";
+            island.push([r, c]);
+            steps.push({ line: ["visit", "sink"], note: `sink(${r}, ${c}): land. Set it to "0" and call sink on its 4 neighbours.`, view: view({ at: [r, c] }) });
+            sink(r + 1, c); sink(r - 1, c); sink(r, c + 1); sink(r, c - 1);
+            depth--;
+          };
+          for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+            if (grid[r][c] !== "1") continue;
+            count++;
+            island.length = 0;
+            steps.push({ line: ["cell", "count"], note: `(${r}, ${c}) is land: island number ${count}. Sink all of it.`, view: view({ at: [r, c], counted: true }) });
+            sink(r, c);
+            island.length = 0;
+          }
+          steps.push({ line: "return", note: `Return ${count}. Each cell is sunk at most once: O(m·n) time, but the calls can go m·n deep.`, view: view() });
+          return steps;
+        },
+      });
+
+      // "11000 11000 00100" -> [["1","1","0","0","0"], ...]
+      function parse(text) {
+        const rows = text.trim().split(/[\s,]+/).filter(Boolean);
+        if (!rows.length || rows.some((r) => !/^[01]+$/.test(r))) throw new DSAViz.InputError('grid: rows of 1s and 0s separated by spaces, like "11000 11000 00100".');
+        if (rows.some((r) => r.length !== rows[0].length)) throw new DSAViz.InputError("grid: every row needs the same number of cells.");
+        if (rows.length > 6 || rows[0].length > 6) throw new DSAViz.InputError("grid: at most 6 rows of 6 cells here, so the steps stay readable.");
+        return rows.map((r) => [...r]);
+      }
+      function gridView(grid, marks, label) {
+        return { type: "grid", label, rows: grid.map((_, k) => k), cols: grid[0].map((_, k) => k), corner: "r \\ c", cells: grid.map((row) => row.slice()), marks };
+      }
+      })();
+    </script>
+    <!-- problems/0200-number-of-islands/approach2.visual.js -->
+    <script>
+      // Union-find: start with one island per land cell, and join every pair of touching land cells. Each real join removes one island.
+      (function () {
+      DSAViz.register("0200-number-of-islands/approach2", {
+        inputs: [{ name: "grid", type: "string", value: "11000 11000 00100 00011", maxLength: 41 }],
+        trace({ grid: text }) {
+          const grid = parse(text);
+          const R = grid.length;
+          const C = grid[0].length;
+          const steps = [];
+          const parent = [...Array(R * C).keys()];
+          const find = (x) => { while (parent[x] !== x) { parent[x] = parent[parent[x]]; x = parent[x]; } return x; };
+          let count = grid.flat().filter((ch) => ch === "1").length;
+          const view = (o = {}) => {
+            const marks = {};
+            (o.pair || []).forEach(([i, j]) => (marks[`${i},${j}`] = o.joined ? "match" : "compare"));
+            const cells = grid.map((row, i) => row.map((ch, j) => (ch === "1" ? `g${find(i * C + j)}` : "·")));
+            return [
+              { type: "grid", label: "group of each land cell (gK = its root is cell K = r·C + c; yellow = same group already, green = just joined)", rows: grid.map((_, k) => k), cols: grid[0].map((_, k) => k), corner: "r \\ c", cells, marks },
+              { type: "vars", items: [{ name: "count", value: count, mark: o.joined ? "new" : o.done ? "match" : "" }] },
+            ];
+          };
+          steps.push({ line: "init", note: `Every land cell starts as its own island: count = ${count}. Cell (r, c) is number r·${C} + c.`, view: view() });
+          for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+            if (grid[r][c] !== "1") continue;
+            for (const [x, y] of [[r + 1, c], [r, c + 1]]) {
+              if (x >= R || y >= C || grid[x][y] !== "1") continue;
+              const a = find(r * C + c);
+              const b = find(x * C + y);
+              if (a === b) {
+                steps.push({ line: ["cell", "pair"], note: `(${r}, ${c}) and (${x}, ${y}) touch, but both already have root ${a}: same island. Nothing to do.`, view: view({ pair: [[r, c], [x, y]] }) });
+                continue;
+              }
+              parent[a] = b;
+              count--;
+              steps.push({ line: ["cell", "pair", "join"], note: `(${r}, ${c}) and (${x}, ${y}) touch and have roots ${a} and ${b}: two islands become one. parent[${a}] = ${b}, count = ${count}.`, view: view({ pair: [[r, c], [x, y]], joined: true }) });
+            }
+          }
+          steps.push({ line: "return", note: `Return ${count}. Each cell checks only down and right, so every touching pair is seen once: O(m·n) finds, O(m·n) space for parent.`, view: view({ done: true }) });
+          return steps;
+        },
+      });
+
+      // "11000 11000 00100" -> [["1","1","0","0","0"], ...]
+      function parse(text) {
+        const rows = text.trim().split(/[\s,]+/).filter(Boolean);
+        if (!rows.length || rows.some((r) => !/^[01]+$/.test(r))) throw new DSAViz.InputError('grid: rows of 1s and 0s separated by spaces, like "11000 11000 00100".');
+        if (rows.some((r) => r.length !== rows[0].length)) throw new DSAViz.InputError("grid: every row needs the same number of cells.");
+        if (rows.length > 6 || rows[0].length > 6) throw new DSAViz.InputError("grid: at most 6 rows of 6 cells here, so the steps stay readable.");
+        return rows.map((r) => [...r]);
+      }
+      function gridView(grid, marks, label) {
+        return { type: "grid", label, rows: grid.map((_, k) => k), cols: grid[0].map((_, k) => k), corner: "r \\ c", cells: grid.map((row) => row.slice()), marks };
+      }
+      })();
+    </script>
+    <!-- problems/0200-number-of-islands/approach3.visual.js -->
+    <script>
+      // Scan the grid; each unsunk "1" starts a BFS. Sink cells as they're queued, so each cell is queued once.
+      (function () {
+      DSAViz.register("0200-number-of-islands/approach3", {
+        inputs: [{ name: "grid", type: "string", value: "11000 11000 00100 00011", maxLength: 41 }],
+        trace({ grid: text }) {
+          const input = parse(text);
+          const grid = input.map((r) => r.slice());
+          const R = grid.length;
+          const C = grid[0].length;
+          const steps = [];
+          let count = 0;
+          const queue = [];
+          const done = [];
+          const view = (o = {}) => {
+            const marks = {};
+            for (let i = 0; i < R; i++) for (let j = 0; j < C; j++) if (input[i][j] === "1" && grid[i][j] === "0") marks[`${i},${j}`] = "visited";
+            done.forEach(([i, j]) => (marks[`${i},${j}`] = "match"));
+            (o.pushed || []).forEach(([i, j]) => (marks[`${i},${j}`] = "new"));
+            if (o.at) marks[`${o.at[0]},${o.at[1]}`] = "active";
+            return [
+              gridView(grid, marks, "grid (dark = popped now, yellow = just queued, green = done in this island, grey = sunk)"),
+              { type: "array", label: "queue (front on the left)", values: queue.map(([i, j]) => `(${i},${j})`), compact: true },
+              { type: "vars", items: [{ name: "count", value: count, mark: o.counted ? "new" : "" }] },
+            ];
+          };
+          steps.push({ line: "init", note: "Scan every cell. A \"1\" that's still land starts a new island.", view: view() });
+          for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+            if (grid[r][c] !== "1") continue;
+            count++;
+            grid[r][c] = "0";
+            queue.push([r, c]);
+            done.length = 0;
+            steps.push({ line: ["cell", "start"], note: `(${r}, ${c}) is land: island number ${count}. Sink it and queue it.`, view: view({ pushed: [[r, c]], counted: true }) });
+            while (queue.length) {
+              const [i, j] = queue.shift();
+              const pushed = [];
+              for (const [x, y] of [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]]) {
+                if (x >= 0 && x < R && y >= 0 && y < C && grid[x][y] === "1") { grid[x][y] = "0"; queue.push([x, y]); pushed.push([x, y]); }
+              }
+              done.push([i, j]);
+              steps.push({ line: ["pop", "push"], note: `Pop (${i}, ${j}). ${pushed.length ? `Land next to it: ${pushed.map(([x, y]) => `(${x}, ${y})`).join(", ")}. Sink and queue ${pushed.length > 1 ? "them" : "it"}.` : "No land left next to it."}${queue.length ? "" : " The queue is empty: this island is done."}`, view: view({ at: [i, j], pushed }) });
+            }
+            done.length = 0;
+          }
+          steps.push({ line: "return", note: `Return ${count}. Each cell is queued at most once: O(m·n) time, no recursion.`, view: view() });
+          return steps;
+        },
+      });
+
+      // "11000 11000 00100" -> [["1","1","0","0","0"], ...]
+      function parse(text) {
+        const rows = text.trim().split(/[\s,]+/).filter(Boolean);
+        if (!rows.length || rows.some((r) => !/^[01]+$/.test(r))) throw new DSAViz.InputError('grid: rows of 1s and 0s separated by spaces, like "11000 11000 00100".');
+        if (rows.some((r) => r.length !== rows[0].length)) throw new DSAViz.InputError("grid: every row needs the same number of cells.");
+        if (rows.length > 6 || rows[0].length > 6) throw new DSAViz.InputError("grid: at most 6 rows of 6 cells here, so the steps stay readable.");
+        return rows.map((r) => [...r]);
+      }
+      function gridView(grid, marks, label) {
+        return { type: "grid", label, rows: grid.map((_, k) => k), cols: grid[0].map((_, k) => k), corner: "r \\ c", cells: grid.map((row) => row.slice()), marks };
+      }
+      })();
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->
     <script>
