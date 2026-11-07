@@ -13582,7 +13582,7 @@
       <details class="pattern-group" id="g-stack">
         <summary>
           <span class="g-name">Stack</span>
-          <span class="g-count"><span class="g-total">4 problems</span></span>
+          <span class="g-count"><span class="g-total">5 problems</span></span>
           <span class="g-hint">Last in, first out</span>
         </summary>
         <div class="g-body">
@@ -15234,6 +15234,349 @@
                         <td>Push to mins when ≤ its top</td>
                         <td>O(1)</td>
                         <td>Usually less</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0739-daily-temperatures ===== -->
+          <details class="question" data-group="stack" data-tags="stack monotonic stack next greater element array temperatures">
+            <summary>
+              <span class="q-title">739. Daily Temperatures</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Stack</span>
+                <span class="tag">Monotonic Stack</span>
+                <span class="tag">Array</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> This is "next greater element". Keep a
+                <strong>stack of days still waiting</strong> for a warmer day; their
+                temperatures only go down toward the top. Each new day pops every
+                waiting day that's colder (their answer is the gap in days), then waits
+                itself. Every day is pushed and popped once: O(n).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/daily-temperatures/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  For each day, return how many days you have to wait for a
+                  <strong>warmer</strong> temperature. If no later day is warmer, the
+                  answer for that day is <code>0</code>.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= temperatures.length &lt;= 10⁵</code></li>
+                  <li><code>30 &lt;= temperatures[i] &lt;= 100</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>[73,74,75,71,69,72,76,73]</code> →
+                  <code>[1,1,4,2,1,1,0,0]</code>. <code>[30,40,50,60]</code> →
+                  <code>[1,1,1,0]</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[40,40]</code></td>
+                        <td><code>[0,0]</code></td>
+                        <td>The same temperature isn't warmer. Popping with <code>&lt;=</code> instead of <code>&lt;</code> said <code>[1,0]</code>; wrong on 1102 of 3006 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[90,80,70]</code></td>
+                        <td><code>[0,0,0]</code></td>
+                        <td>Nothing is ever warmer: every day stays on the stack, and stays 0.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[50]</code></td>
+                        <td><code>[0]</code></td>
+                        <td>One day.</td>
+                      </tr>
+                      <tr>
+                        <td>10⁴ falling temperatures</td>
+                        <td>all 0</td>
+                        <td>Looking ahead day by day checks every pair: 1.3 s in Python for just 10⁴ days.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Look Ahead From Each Day</h2>
+                <p class="intuition">
+                  For each day <code>i</code>, walk <code>j = i + 1, i + 2, …</code>
+                  until <code>temperatures[j]</code> is higher. The answer is
+                  <code>j − i</code>, or 0 if you run off the end.
+                </p>
+                <ul>
+                  <li>Quick when warmer days come soon; quadratic when temperatures keep falling.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n²)</span>
+                  <span><strong>Space</strong> O(1) besides the answer</span>
+                </div>
+                <p class="note">
+                  10⁴ falling temperatures: Python 1.3 s, Java 17 ms, C++ 17 ms. At 10⁵
+                  that's 100 times the work: too slow.
+                </p>
+                <div class="code-tabs" data-viz="0739-daily-temperatures/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"day":[5],"look":[6],"found":[7,8,9],"return":[10]}'>
+                    class Solution(object):
+                        def dailyTemperatures(self, temperatures):
+                            n = len(temperatures)
+                            ans = [0] * n  # 0 when no warmer day comes
+                            for i in range(n):
+                                for j in range(i + 1, n):  # look ahead, day by day
+                                    if temperatures[j] > temperatures[i]:  # the first warmer day
+                                        ans[i] = j - i
+                                        break
+                            return ans
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,6],"day":[7],"look":[8],"found":[9,10,11],"return":[13]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> dailyTemperatures(std::vector<int>& temperatures) {
+                            const int n = temperatures.size();
+                            std::vector<int> ans(n, 0); // 0 when no warmer day comes
+                            for (int i = 0; i < n; ++i)
+                                for (int j = i + 1; j < n; ++j) // look ahead, day by day
+                                    if (temperatures[j] > temperatures[i]) { // the first warmer day
+                                        ans[i] = j - i;
+                                        break;
+                                    }
+                            return ans;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4],"day":[5],"look":[6],"found":[7,8,9],"return":[11]}'>
+                    class Solution {
+                        public int[] dailyTemperatures(int[] temperatures) {
+                            int n = temperatures.length;
+                            int[] ans = new int[n]; // 0 when no warmer day comes
+                            for (int i = 0; i < n; i++)
+                                for (int j = i + 1; j < n; j++) // look ahead, day by day
+                                    if (temperatures[j] > temperatures[i]) { // the first warmer day
+                                        ans[i] = j - i;
+                                        break;
+                                    }
+                            return ans;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Right to Left, Jumping</h2>
+                <p class="intuition">
+                  Fill <code>ans</code> from the right. For day <code>i</code>, start at
+                  <code>j = i + 1</code>. If day <code>j</code> isn't warmer, no day
+                  before day <code>j</code>'s own warmer day can be either, so jump
+                  straight to <code>j + ans[j]</code>. If <code>ans[j]</code> is 0,
+                  nothing to the right is warmer: stop.
+                </p>
+                <ul>
+                  <li>No extra structure: <code>ans</code> itself holds the jumps.</li>
+                  <li>Each day is jumped over at most once more, so the total is O(n).</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1) besides the answer</span>
+                </div>
+                <p class="note">
+                  10⁵ random days: Python 13.3 ms, Java 0.78 ms, C++ 0.68 ms, slightly
+                  ahead of the stack in C++ and Java.
+                </p>
+                <div class="code-tabs" data-viz="0739-daily-temperatures/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"day":[5],"look":[6],"jump":[7,8],"found":[9,10],"return":[11]}'>
+                    class Solution(object):
+                        def dailyTemperatures(self, temperatures):
+                            n = len(temperatures)
+                            ans = [0] * n
+                            for i in range(n - 2, -1, -1):  # right to left: the days after i are already solved
+                                j = i + 1
+                                while j < n and temperatures[j] <= temperatures[i]:  # day j isn't warmer...
+                                    j = j + ans[j] if ans[j] else n  # ...so jump straight to day j's own warmer day (or give up)
+                                if j < n:
+                                    ans[i] = j - i
+                            return ans
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,6],"day":[7],"look":[8],"jump":[9,10],"found":[11],"return":[13]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> dailyTemperatures(std::vector<int>& temperatures) {
+                            const int n = temperatures.size();
+                            std::vector<int> ans(n, 0);
+                            for (int i = n - 2; i >= 0; --i) { // right to left: the days after i are already solved
+                                int j = i + 1;
+                                while (j < n && temperatures[j] <= temperatures[i]) // day j isn't warmer...
+                                    j = ans[j] ? j + ans[j] : n; // ...so jump straight to day j's own warmer day (or give up)
+                                if (j < n) ans[i] = j - i;
+                            }
+                            return ans;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4],"day":[5],"look":[6],"jump":[7,8],"found":[9],"return":[11]}'>
+                    class Solution {
+                        public int[] dailyTemperatures(int[] temperatures) {
+                            int n = temperatures.length;
+                            int[] ans = new int[n];
+                            for (int i = n - 2; i >= 0; i--) { // right to left: the days after i are already solved
+                                int j = i + 1;
+                                while (j < n && temperatures[j] <= temperatures[i]) // day j isn't warmer...
+                                    j = ans[j] != 0 ? j + ans[j] : n; // ...so jump straight to day j's own warmer day (or give up)
+                                if (j < n) ans[i] = j - i;
+                            }
+                            return ans;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Monotonic Stack
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Go left to right with a stack of day indexes still waiting. While
+                  today is warmer than the day on top, pop it and set its answer to
+                  <code>i − j</code>. Then push today. Days left at the end keep 0.
+                </p>
+                <ul>
+                  <li>Store indexes, not temperatures: you need the day to compute the wait.</li>
+                  <li>The same pattern solves "next greater element" problems in general.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n) for the stack</span>
+                </div>
+                <p class="note">
+                  10⁵ random days: Python 13.2 ms, Java 0.90 ms, C++ 0.80 ms. About the
+                  same as Approach 2, and the one most people know.
+                </p>
+                <div class="code-tabs" data-viz="0739-daily-temperatures/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"day":[5],"pop":[6,7,8],"push":[9],"return":[10]}'>
+                    class Solution(object):
+                        def dailyTemperatures(self, temperatures):
+                            ans = [0] * len(temperatures)
+                            stack = []  # days still waiting for a warmer day; their temperatures go down from bottom to top
+                            for i, t in enumerate(temperatures):
+                                while stack and temperatures[stack[-1]] < t:  # today is warmer than the day on top
+                                    j = stack.pop()
+                                    ans[j] = i - j  # its wait is over
+                                stack.append(i)  # today waits too
+                            return ans  # days left on the stack never get a warmer day: 0
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5,6],"day":[7],"pop":[8,9,10],"push":[12],"return":[14]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> dailyTemperatures(std::vector<int>& temperatures) {
+                            const int n = temperatures.size();
+                            std::vector<int> ans(n, 0), stack; // stack: days still waiting for a warmer day
+                            for (int i = 0; i < n; ++i) {
+                                while (!stack.empty() && temperatures[stack.back()] < temperatures[i]) { // today is warmer than the day on top
+                                    ans[stack.back()] = i - stack.back(); // its wait is over
+                                    stack.pop_back();
+                                }
+                                stack.push_back(i); // today waits too
+                            }
+                            return ans; // days left on the stack never get a warmer day: 0
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5,6],"day":[7],"pop":[8,9,10],"push":[12],"return":[14]}'>
+                    class Solution {
+                        public int[] dailyTemperatures(int[] temperatures) {
+                            int n = temperatures.length;
+                            int[] ans = new int[n];
+                            int[] stack = new int[n]; // days still waiting for a warmer day (an array is faster than a Deque)
+                            int top = 0;
+                            for (int i = 0; i < n; i++) {
+                                while (top > 0 && temperatures[stack[top - 1]] < temperatures[i]) { // today is warmer than the day on top
+                                    int j = stack[--top];
+                                    ans[j] = i - j; // its wait is over
+                                }
+                                stack[top++] = i; // today waits too
+                            }
+                            return ans; // days left on the stack never get a warmer day: 0
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>No library finds the next greater element. Approach 3 is what you'd write.</p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Look Ahead From Each Day</th>
+                        <td>Scan forward from every day</td>
+                        <td>O(n²)</td>
+                        <td>O(1)</td>
+                        <td>1.3 s in Python at 10⁴</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Right to Left, Jumping</th>
+                        <td>Reuse answers as jumps</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>No extra memory</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Monotonic Stack</th>
+                        <td>Pop the colder days</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
                         <td>Expected answer</td>
                       </tr>
                     </tbody>
@@ -66740,6 +67083,76 @@
         return { type: "grid", label, rows: grid.map((_, k) => k), cols: grid[0].map((_, k) => k), corner: "r \\ c", cells: grid.map((row) => row.map(String)), marks };
       }
       })();
+    </script>
+    <!-- problems/0739-daily-temperatures/approach1.visual.js -->
+    <script>
+      // For each day, look ahead one day at a time until a warmer one.
+      DSAViz.register("0739-daily-temperatures/approach1", {
+        inputs: [{ name: "temperatures", type: "int[]", value: "[73, 74, 75, 71, 69, 72, 76, 73]", minLength: 1, maxLength: 10, minValue: 30, maxValue: 100 }],
+        trace({ temperatures: t }) {
+          const n = t.length;
+          const ans = Array(n).fill(0);
+          const steps = [];
+          let looks = 0;
+          const view = (i, j, hit) => [{ type: "array", label: "temperatures (dark = day i, yellow = days looked at, green = the first warmer day)", values: t, marks: i === undefined ? {} : { ...Object.fromEntries(Array.from({ length: j - i - 1 }, (_, k) => [i + 1 + k, "compare"])), [i]: "active", ...(hit ? { [j]: "match" } : j < n ? { [j]: "compare" } : {}) }, pointers: i === undefined ? {} : j < n ? { i, j } : { i } }, { type: "array", label: "ans", values: ans.slice(), marks: i !== undefined && hit ? { [i]: "new" } : {} }, { type: "vars", items: [{ name: "days looked at", value: looks }] }];
+          steps.push({ line: "init", note: "ans starts as all 0s: a day with no warmer day later keeps 0.", view: view() });
+          for (let i = 0; i < n; i++) {
+            let j = i + 1;
+            while (j < n && t[j] <= t[i]) { j++; looks++; }
+            if (j < n) { looks++; ans[i] = j - i; }
+            steps.push({ line: j < n ? ["day", "look", "found"] : ["day", "look"], note: j < n ? `Day ${i} (${t[i]}): look ahead. Day ${j} (${t[j]}) is the first warmer one: wait ${j - i}.` : `Day ${i} (${t[i]}): no later day is warmer. ans stays 0.`, view: view(i, j, j < n) });
+          }
+          steps.push({ line: "return", note: `Return [${ans.join(", ")}]. ${looks} days looked at in total: O(n²) at worst, when the temperatures keep falling.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0739-daily-temperatures/approach2.visual.js -->
+    <script>
+      // Right to left: when day j isn't warmer, jump to day j's own answer instead of checking each day in between.
+      DSAViz.register("0739-daily-temperatures/approach2", {
+        inputs: [{ name: "temperatures", type: "int[]", value: "[73, 74, 75, 71, 69, 72, 76, 73]", minLength: 1, maxLength: 10, minValue: 30, maxValue: 100 }],
+        trace({ temperatures: t }) {
+          const n = t.length;
+          const ans = Array(n).fill(0);
+          const steps = [];
+          const view = (i, path, end) => [{ type: "array", label: "temperatures (dark = day i, yellow = days jumped through, green = the warmer day)", values: t, marks: i === undefined ? {} : { ...Object.fromEntries(path.map((j) => [j, "compare"])), [i]: "active", ...(end < n ? { [end]: "match" } : {}) }, pointers: i === undefined ? {} : { i } }, { type: "array", label: "ans (already solved to the right of i)", values: ans.slice(), marks: i !== undefined && end < n ? { [i]: "new" } : {} }];
+          steps.push({ line: "init", note: n === 1 ? "One day: no later day, so its answer is 0." : `The last day always gets 0. Work from day ${n - 2} down to day 0.`, view: view() });
+          for (let i = n - 2; i >= 0; i--) {
+            let j = i + 1;
+            const path = [];
+            while (j < n && t[j] <= t[i]) { path.push(j); j = ans[j] ? j + ans[j] : n; }
+            if (j < n) ans[i] = j - i;
+            const hops = path.map((p) => `${p} (${t[p]}) → ${ans[p] ? `jump ${ans[p]} to day ${p + ans[p]}` : "no warmer day, give up"}`).join("; ");
+            steps.push({ line: j < n ? ["day", "look", "jump", "found"] : ["day", "look", "jump"], note: `Day ${i} (${t[i]}): ${path.length ? `day ${hops}.` : ""} ${j < n ? `Day ${j} (${t[j]}) is warmer: wait ${j - i}.` : "No warmer day: 0."}`.trim(), view: view(i, path, j) });
+          }
+          steps.push({ line: "return", note: `Return [${ans.join(", ")}]. Each jump skips days already known to be no warmer: O(n) overall.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0739-daily-temperatures/approach3.visual.js -->
+    <script>
+      // Monotonic stack: keep the days still waiting, coldest on top. A warmer day pops every colder day it beats.
+      DSAViz.register("0739-daily-temperatures/approach3", {
+        inputs: [{ name: "temperatures", type: "int[]", value: "[73, 74, 75, 71, 69, 72, 76, 73]", minLength: 1, maxLength: 10, minValue: 30, maxValue: 100 }],
+        trace({ temperatures: t }) {
+          const n = t.length;
+          const ans = Array(n).fill(0);
+          const stack = [];
+          const steps = [];
+          const view = (i, popped = []) => [{ type: "array", label: "temperatures (dark = today)", values: t, marks: i === undefined ? {} : { [i]: "active" }, pointers: i === undefined ? {} : { i } }, { type: "array", label: "stack: days still waiting (day: temperature; top on the right, yellow = just pushed)", values: stack.map((d) => `${d}: ${t[d]}`), wide: true, marks: stack.length && i !== undefined ? { [stack.length - 1]: "new" } : {} }, { type: "array", label: "ans (green = just set)", values: ans.slice(), marks: Object.fromEntries(popped.map((d) => [d, "match"])) }];
+          steps.push({ line: "init", note: "An empty stack of days waiting for a warmer day.", view: view() });
+          for (let i = 0; i < n; i++) {
+            const popped = [];
+            while (stack.length && t[stack[stack.length - 1]] < t[i]) { const j = stack.pop(); ans[j] = i - j; popped.push(j); }
+            stack.push(i);
+            steps.push({ line: ["day", "pop", "push"], note: `Day ${i} (${t[i]}).${popped.length ? ` It's warmer than ${popped.map((j) => `day ${j} (${t[j]})`).join(", ")}: pop ${popped.length > 1 ? "them" : "it"} and set the wait${popped.length > 1 ? "s" : ""}.` : stack.length > 1 ? ` Not warmer than day ${stack[stack.length - 2]} (${t[stack[stack.length - 2]]}) on top.` : ""} Push day ${i}.`, view: view(i, popped) });
+          }
+          steps.push({ line: "return", note: `Return [${ans.join(", ")}]. Days left on the stack (${stack.join(", ")}) never get a warmer day. Each day is pushed and popped once: O(n).`, view: view() });
+          return steps;
+        },
+      });
     </script>
     <!-- problems/0994-rotting-oranges/approach1.visual.js -->
     <script>
