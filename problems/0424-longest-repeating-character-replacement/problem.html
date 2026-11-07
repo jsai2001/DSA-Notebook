@@ -1,0 +1,198 @@
+<details class="question" data-group="sliding-window" data-tags="sliding window two pointers counting string hash map">
+  <summary>
+    <span class="q-title">424. Longest Repeating Character Replacement</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Sliding Window</span>
+      <span class="tag">String</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> A window works when
+      <code>length − (count of its most common letter) &lt;= k</code>. Slide
+      one window and keep <code>top</code>, the biggest letter count seen.
+      When the window breaks the rule, slide it one step instead of growing.
+      The window never shrinks, so <code>top</code> never needs to go down,
+      and the final size is the answer. O(n).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/longest-repeating-character-replacement/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        You may change at most <code>k</code> letters of <code>s</code> into
+        any other uppercase letter. Return the length of the longest substring
+        of one repeated letter you can get.
+      </p>
+      <ul>
+        <li><code>1 &lt;= s.length &lt;= 10⁵</code>, uppercase English letters, <code>0 &lt;= k &lt;= s.length</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>s = "ABAB", k = 2</code> → <code>4</code>.
+        <code>s = "AABABBA", k = 1</code> → <code>4</code> (<code>"AABA"</code>
+        → <code>"AAAA"</code>).
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>s = "A", k = 0</code></td>
+              <td><code>1</code></td>
+              <td>Zero changes needed is allowed. Sliding when <code>changes &gt;= k</code> instead of <code>&gt; k</code> gave 0, and was wrong on 1,754 of 3,008 tests.</td>
+            </tr>
+            <tr>
+              <td><code>s = "ABCDE", k = 5</code></td>
+              <td><code>5</code></td>
+              <td><code>k</code> can cover the whole string.</td>
+            </tr>
+            <tr>
+              <td>10⁴ <code>"A"</code>s, <code>k = 0</code></td>
+              <td><code>10000</code></td>
+              <td>The window never breaks, so "every start, grow until it breaks" checks all n²/2 windows.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Every Start, Grow Until It Breaks</h2>
+      <p class="intuition">
+        For each start <code>i</code>, extend the end <code>j</code>, keeping
+        letter counts and the biggest count. Once more than <code>k</code>
+        letters would need changing, longer windows from <code>i</code> only
+        need more, so move to the next start.
+      </p>
+      <ul>
+        <li>Correct, but nothing carries over from one start to the next.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(26)</span>
+      </div>
+      <p class="note">
+        10⁴ <code>"A"</code>s, <code>k = 0</code>: Python 9.5 s, Java 106 ms,
+        C++ 108 ms.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: One Window per Letter</h2>
+      <p class="intuition">
+        Guess the letter <code>c</code> the run is made of. Then it's a plain
+        sliding window: allow at most <code>k</code> letters that aren't
+        <code>c</code>, shrinking from the left when there are more. Try each
+        letter that appears in <code>s</code>.
+      </p>
+      <ul>
+        <li>Each window keeps one counter instead of 26.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(26 · n)</span>
+        <span><strong>Space</strong> O(26)</span>
+      </div>
+      <p class="note">
+        10⁵ random letters, <code>k = 100</code>: Python 358 ms, Java 8.2 ms,
+        C++ 5.5 ms. With only one letter in <code>s</code> it's a single pass
+        (Python 9.8 ms on 10⁵ <code>"A"</code>s, faster than Approach 3).
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: One Window, Never Shrinking
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Add <code>s[hi]</code> and update <code>top</code>. If
+        <code>length − top &gt; k</code>, drop <code>s[lo]</code> and move
+        <code>lo</code> once, so the size stays the same. A bigger answer
+        needs a bigger <code>top</code>, so a <code>top</code> that's too big
+        for the current window never causes a wrong answer: it only holds
+        the size.
+      </p>
+      <ul>
+        <li>No need to recount the most common letter after a slide.</li>
+        <li>The answer is <code>n − lo</code>, the window's final size.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(26)</span>
+      </div>
+      <p class="note">
+        10⁵ random letters, <code>k = 100</code>: Python 18 ms, Java 1.6 ms,
+        C++ 0.20 ms: 5 (Java) to 28 (C++) times faster than Approach 2.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>Nothing built in. Approach 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Every Start</th>
+              <td>Grow from each i until it breaks</td>
+              <td>O(n²)</td>
+              <td>O(26)</td>
+              <td>9.5 s at 10⁴ in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">Window per Letter</th>
+              <td>Guess the letter, then slide</td>
+              <td>O(26 · n)</td>
+              <td>O(26)</td>
+              <td>Simple to prove</td>
+            </tr>
+            <tr>
+              <th scope="row">Never-Shrinking Window</th>
+              <td>Slide when it breaks; keep top</td>
+              <td>O(n)</td>
+              <td>O(26)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

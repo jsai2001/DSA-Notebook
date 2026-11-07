@@ -5102,7 +5102,7 @@
       <details class="pattern-group" id="g-sliding-window">
         <summary>
           <span class="g-name">Sliding Window</span>
-          <span class="g-count"><span class="g-total">5 problems</span></span>
+          <span class="g-count"><span class="g-total">6 problems</span></span>
           <span class="g-hint">A window that grows and shrinks over a string</span>
         </summary>
         <div class="g-body">
@@ -6793,6 +6793,357 @@
                         <td>Values falling front to back</td>
                         <td>O(n)</td>
                         <td>O(k)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0424-longest-repeating-character-replacement ===== -->
+          <details class="question" data-group="sliding-window" data-tags="sliding window two pointers counting string hash map">
+            <summary>
+              <span class="q-title">424. Longest Repeating Character Replacement</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Sliding Window</span>
+                <span class="tag">String</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> A window works when
+                <code>length − (count of its most common letter) &lt;= k</code>. Slide
+                one window and keep <code>top</code>, the biggest letter count seen.
+                When the window breaks the rule, slide it one step instead of growing.
+                The window never shrinks, so <code>top</code> never needs to go down,
+                and the final size is the answer. O(n).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/longest-repeating-character-replacement/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  You may change at most <code>k</code> letters of <code>s</code> into
+                  any other uppercase letter. Return the length of the longest substring
+                  of one repeated letter you can get.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= s.length &lt;= 10⁵</code>, uppercase English letters, <code>0 &lt;= k &lt;= s.length</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>s = "ABAB", k = 2</code> → <code>4</code>.
+                  <code>s = "AABABBA", k = 1</code> → <code>4</code> (<code>"AABA"</code>
+                  → <code>"AAAA"</code>).
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>s = "A", k = 0</code></td>
+                        <td><code>1</code></td>
+                        <td>Zero changes needed is allowed. Sliding when <code>changes &gt;= k</code> instead of <code>&gt; k</code> gave 0, and was wrong on 1,754 of 3,008 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>s = "ABCDE", k = 5</code></td>
+                        <td><code>5</code></td>
+                        <td><code>k</code> can cover the whole string.</td>
+                      </tr>
+                      <tr>
+                        <td>10⁴ <code>"A"</code>s, <code>k = 0</code></td>
+                        <td><code>10000</code></td>
+                        <td>The window never breaks, so "every start, grow until it breaks" checks all n²/2 windows.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Every Start, Grow Until It Breaks</h2>
+                <p class="intuition">
+                  For each start <code>i</code>, extend the end <code>j</code>, keeping
+                  letter counts and the biggest count. Once more than <code>k</code>
+                  letters would need changing, longer windows from <code>i</code> only
+                  need more, so move to the next start.
+                </p>
+                <ul>
+                  <li>Correct, but nothing carries over from one start to the next.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n²)</span>
+                  <span><strong>Space</strong> O(26)</span>
+                </div>
+                <p class="note">
+                  10⁴ <code>"A"</code>s, <code>k = 0</code>: Python 9.5 s, Java 106 ms,
+                  C++ 108 ms.
+                </p>
+                <div class="code-tabs" data-viz="0424-longest-repeating-character-replacement/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"start":[4,5,6],"grow":[7,8,9],"stop":[10,11],"best":[12],"return":[13]}'>
+                    class Solution(object):
+                        def characterReplacement(self, s, k):
+                            best = 0
+                            for i in range(len(s)):  # every start
+                                count = [0] * 26
+                                top = 0  # count of the most common letter in s[i:j + 1]
+                                for j in range(i, len(s)):  # every end
+                                    count[ord(s[j]) - 65] += 1
+                                    top = max(top, count[ord(s[j]) - 65])
+                                    if j - i + 1 - top > k:  # more than k letters to change: longer ends won't work either
+                                        break
+                                    best = max(best, j - i + 1)
+                            return best
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"start":[7,8],"grow":[9,10],"stop":[11],"best":[12],"return":[15]}'>
+                    #include <algorithm>
+                    #include <string>
+                    class Solution {
+                    public:
+                        int characterReplacement(std::string s, int k) {
+                            int best = 0, n = s.size();
+                            for (int i = 0; i < n; ++i) { // every start
+                                int count[26] = {}, top = 0; // top: count of the most common letter in s[i..j]
+                                for (int j = i; j < n; ++j) { // every end
+                                    top = std::max(top, ++count[s[j] - 'A']);
+                                    if (j - i + 1 - top > k) break; // more than k letters to change: longer ends won't work either
+                                    best = std::max(best, j - i + 1);
+                                }
+                            }
+                            return best;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"start":[4,5,6],"grow":[7,8],"stop":[9],"best":[10],"return":[13]}'>
+                    class Solution {
+                        public int characterReplacement(String s, int k) {
+                            int best = 0, n = s.length();
+                            for (int i = 0; i < n; i++) { // every start
+                                int[] count = new int[26];
+                                int top = 0; // count of the most common letter in s[i..j]
+                                for (int j = i; j < n; j++) { // every end
+                                    top = Math.max(top, ++count[s.charAt(j) - 'A']);
+                                    if (j - i + 1 - top > k) break; // more than k letters to change: longer ends won't work either
+                                    best = Math.max(best, j - i + 1);
+                                }
+                            }
+                            return best;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: One Window per Letter</h2>
+                <p class="intuition">
+                  Guess the letter <code>c</code> the run is made of. Then it's a plain
+                  sliding window: allow at most <code>k</code> letters that aren't
+                  <code>c</code>, shrinking from the left when there are more. Try each
+                  letter that appears in <code>s</code>.
+                </p>
+                <ul>
+                  <li>Each window keeps one counter instead of 26.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(26 · n)</span>
+                  <span><strong>Space</strong> O(26)</span>
+                </div>
+                <p class="note">
+                  10⁵ random letters, <code>k = 100</code>: Python 358 ms, Java 8.2 ms,
+                  C++ 5.5 ms. With only one letter in <code>s</code> it's a single pass
+                  (Python 9.8 ms on 10⁵ <code>"A"</code>s, faster than Approach 3).
+                </p>
+                <div class="code-tabs" data-viz="0424-longest-repeating-character-replacement/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"letter":[4,5],"grow":[6,7],"shrink":[8,9,10],"best":[11],"return":[12]}'>
+                    class Solution(object):
+                        def characterReplacement(self, s, k):
+                            best = 0
+                            for c in set(s):  # guess which letter the run is made of
+                                lo = other = 0  # other: letters in the window that aren't c
+                                for hi in range(len(s)):
+                                    other += s[hi] != c
+                                    while other > k:  # too many to change: shrink from the left
+                                        other -= s[lo] != c
+                                        lo += 1
+                                    best = max(best, hi - lo + 1)
+                            return best
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8],"letter":[9,10,11],"grow":[12,13],"shrink":[14],"best":[15],"return":[18]}'>
+                    #include <algorithm>
+                    #include <string>
+                    class Solution {
+                    public:
+                        int characterReplacement(std::string s, int k) {
+                            int best = 0, n = s.size();
+                            bool present[26] = {};
+                            for (char ch : s) present[ch - 'A'] = true;
+                            for (int c = 0; c < 26; ++c) { // guess which letter the run is made of
+                                if (!present[c]) continue;
+                                int lo = 0, other = 0; // other: letters in the window that aren't c
+                                for (int hi = 0; hi < n; ++hi) {
+                                    other += s[hi] - 'A' != c;
+                                    while (other > k) other -= s[lo++] - 'A' != c; // too many to change: shrink from the left
+                                    best = std::max(best, hi - lo + 1);
+                                }
+                            }
+                            return best;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5],"letter":[6,7,8],"grow":[9,10],"shrink":[11],"best":[12],"return":[15]}'>
+                    class Solution {
+                        public int characterReplacement(String s, int k) {
+                            int best = 0, n = s.length();
+                            boolean[] present = new boolean[26];
+                            for (int i = 0; i < n; i++) present[s.charAt(i) - 'A'] = true;
+                            for (int c = 0; c < 26; c++) { // guess which letter the run is made of
+                                if (!present[c]) continue;
+                                int lo = 0, other = 0; // other: letters in the window that aren't c
+                                for (int hi = 0; hi < n; hi++) {
+                                    if (s.charAt(hi) - 'A' != c) other++;
+                                    while (other > k) if (s.charAt(lo++) - 'A' != c) other--; // too many to change: shrink from the left
+                                    best = Math.max(best, hi - lo + 1);
+                                }
+                            }
+                            return best;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: One Window, Never Shrinking
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Add <code>s[hi]</code> and update <code>top</code>. If
+                  <code>length − top &gt; k</code>, drop <code>s[lo]</code> and move
+                  <code>lo</code> once, so the size stays the same. A bigger answer
+                  needs a bigger <code>top</code>, so a <code>top</code> that's too big
+                  for the current window never causes a wrong answer: it only holds
+                  the size.
+                </p>
+                <ul>
+                  <li>No need to recount the most common letter after a slide.</li>
+                  <li>The answer is <code>n − lo</code>, the window's final size.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(26)</span>
+                </div>
+                <p class="note">
+                  10⁵ random letters, <code>k = 100</code>: Python 18 ms, Java 1.6 ms,
+                  C++ 0.20 ms: 5 (Java) to 28 (C++) times faster than Approach 2.
+                </p>
+                <div class="code-tabs" data-viz="0424-longest-repeating-character-replacement/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"grow":[5,6,7],"slide":[8,9,10],"return":[11]}'>
+                    class Solution(object):
+                        def characterReplacement(self, s, k):
+                            count = [0] * 26  # letters in the window
+                            lo = top = 0  # top: the biggest count any letter has reached in a window
+                            for hi in range(len(s)):
+                                count[ord(s[hi]) - 65] += 1
+                                top = max(top, count[ord(s[hi]) - 65])
+                                if hi - lo + 1 - top > k:  # too many to change: slide the window instead of growing it
+                                    count[ord(s[lo]) - 65] -= 1
+                                    lo += 1
+                            return len(s) - lo  # the window never shrinks, so its final size is the best size
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7],"grow":[8,9],"slide":[10],"return":[12]}'>
+                    #include <algorithm>
+                    #include <string>
+                    class Solution {
+                    public:
+                        int characterReplacement(std::string s, int k) {
+                            int count[26] = {}; // letters in the window
+                            int lo = 0, top = 0, n = s.size(); // top: the biggest count any letter has reached in a window
+                            for (int hi = 0; hi < n; ++hi) {
+                                top = std::max(top, ++count[s[hi] - 'A']);
+                                if (hi - lo + 1 - top > k) --count[s[lo++] - 'A']; // too many to change: slide the window instead of growing it
+                            }
+                            return n - lo; // the window never shrinks, so its final size is the best size
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4],"grow":[5,6],"slide":[7],"return":[9]}'>
+                    class Solution {
+                        public int characterReplacement(String s, int k) {
+                            int[] count = new int[26]; // letters in the window
+                            int lo = 0, top = 0, n = s.length(); // top: the biggest count any letter has reached in a window
+                            for (int hi = 0; hi < n; hi++) {
+                                top = Math.max(top, ++count[s.charAt(hi) - 'A']);
+                                if (hi - lo + 1 - top > k) count[s.charAt(lo++) - 'A']--; // too many to change: slide the window instead of growing it
+                            }
+                            return n - lo; // the window never shrinks, so its final size is the best size
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>Nothing built in. Approach 3 is what you'd write.</p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Every Start</th>
+                        <td>Grow from each i until it breaks</td>
+                        <td>O(n²)</td>
+                        <td>O(26)</td>
+                        <td>9.5 s at 10⁴ in Python</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Window per Letter</th>
+                        <td>Guess the letter, then slide</td>
+                        <td>O(26 · n)</td>
+                        <td>O(26)</td>
+                        <td>Simple to prove</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Never-Shrinking Window</th>
+                        <td>Slide when it breaks; keep top</td>
+                        <td>O(n)</td>
+                        <td>O(26)</td>
                         <td>Expected answer</td>
                       </tr>
                     </tbody>
@@ -79793,6 +80144,116 @@
           const ans = [];
           for (let r = 0; r < m; r++) for (let c = 0; c < n; c++) if (pac.has(`${r},${c}`) && atl.has(`${r},${c}`)) ans.push([r, c]);
           steps.push({ line: "return", note: `Return ${show(ans)}: the cells in both. Each BFS visits a cell once, no recursion: O(m·n).`, view: [gv(g, "heights; green = both oceans", Object.fromEntries(ans.map(([r, c]) => [`${r},${c}`, "match"])))] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0424-longest-repeating-character-replacement/approach1.visual.js -->
+    <script>
+      // Every start i; grow the end j while at most k letters differ from the most common one.
+      (function () {
+      const INPUTS = [
+        { name: "s", type: "string", value: "AABABBA", maxLength: 12 },
+        { name: "k", type: "int", value: "1", min: 0, max: 12 },
+      ];
+      function check(s) {
+        if (!s.length) throw new DSAViz.InputError("s needs at least one letter.");
+        if (!/^[A-Z]+$/.test(s)) throw new DSAViz.InputError("s is uppercase English letters only, like AABABBA.");
+      }
+      const sv = (s, lo, hi, marks = {}, label = "s") => ({ type: "array", label, values: [...s], marks: { ...Object.fromEntries([...s].map((_, i) => [i, i >= lo && i <= hi ? "window" : ""]).filter(([, m]) => m)), ...marks }, pointers: hi >= lo ? (lo === hi ? { "lo,hi": lo } : { lo, hi }) : {} });
+      DSAViz.register("0424-longest-repeating-character-replacement/approach1", {
+        inputs: INPUTS,
+        trace({ s, k }) {
+          check(s);
+          let best = 0;
+          const steps = [{ line: "init", note: `A window works when its length minus its most common letter's count is at most k = ${k}: that's how many letters you'd change.`, view: [sv(s, 0, -1), { type: "vars", items: [{ name: "best", value: 0 }] }] }];
+          for (let i = 0; i < s.length; i++) {
+            const count = {}; let top = 0;
+            for (let j = i; j < s.length; j++) {
+              count[s[j]] = (count[s[j]] || 0) + 1; top = Math.max(top, count[s[j]]);
+              const change = j - i + 1 - top;
+              if (change > k) { steps.push({ line: ["start", "grow", "stop"], note: `s[${i}..${j}]: ${change} letters to change, more than ${k}. Longer windows from ${i} only need more. Next start.`, view: [sv(s, i, j, { [j]: "cut" }), { type: "vars", items: [{ name: "best", value: best }] }] }); break; }
+              const nb = Math.max(best, j - i + 1);
+              steps.push({ line: ["start", "grow", "best"], note: `s[${i}..${j}] = ${s.slice(i, j + 1)}: most common appears ${top} times, change ${change} ≤ ${k}. Length ${j - i + 1}.`, view: [sv(s, i, j), { type: "vars", items: [{ name: "best", value: nb, mark: nb > best ? "new" : "" }] }] });
+              best = nb;
+            }
+          }
+          steps.push({ line: "return", note: `Return ${best}. Every start, grown until it breaks: O(n²).`, view: [sv(s, 0, -1), { type: "vars", items: [{ name: "best", value: best, mark: "match" }] }] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0424-longest-repeating-character-replacement/approach2.visual.js -->
+    <script>
+      // Guess the letter c of the run; slide a window holding at most k letters that aren't c. Try each letter in s.
+      (function () {
+      const INPUTS = [
+        { name: "s", type: "string", value: "AABABBA", maxLength: 12 },
+        { name: "k", type: "int", value: "1", min: 0, max: 12 },
+      ];
+      function check(s) {
+        if (!s.length) throw new DSAViz.InputError("s needs at least one letter.");
+        if (!/^[A-Z]+$/.test(s)) throw new DSAViz.InputError("s is uppercase English letters only, like AABABBA.");
+      }
+      const sv = (s, lo, hi, marks = {}, label = "s") => ({ type: "array", label, values: [...s], marks: { ...Object.fromEntries([...s].map((_, i) => [i, i >= lo && i <= hi ? "window" : ""]).filter(([, m]) => m)), ...marks }, pointers: hi >= lo ? (lo === hi ? { "lo,hi": lo } : { lo, hi }) : {} });
+      DSAViz.register("0424-longest-repeating-character-replacement/approach2", {
+        inputs: INPUTS,
+        trace({ s, k }) {
+          check(s);
+          let best = 0;
+          const steps = [{ line: "init", note: `For each letter c in s, find the longest window with at most ${k} letters that aren't c.`, view: [sv(s, 0, -1)] }];
+          for (const c of [...new Set(s)].sort()) {
+            let lo = 0, other = 0;
+            steps.push({ line: "letter", note: `Letter ${c}: grey letters would need changing.`, view: [sv(s, 0, -1, Object.fromEntries([...s].map((ch, i) => [i, ch === c ? "" : "visited"]).filter(([, m]) => m)))] });
+            for (let hi = 0; hi < s.length; hi++) {
+              other += s[hi] !== c;
+              let shrunk = 0;
+              while (other > k) { other -= s[lo] !== c; lo++; shrunk++; }
+              const nb = Math.max(best, hi - lo + 1);
+              steps.push({ line: shrunk ? ["grow", "shrink", "best"] : ["grow", "best"], note: `${c}: add s[${hi}] = ${s[hi]}.${shrunk ? ` Too many non-${c}: move lo right ${shrunk}.` : ""} Window ${s.slice(lo, hi + 1)} has ${other} to change. Length ${hi - lo + 1}${nb > best ? ", the best so far" : ""}.`, view: [sv(s, lo, hi, Object.fromEntries([...s].map((ch, i) => [i, ch !== c && i >= lo && i <= hi ? "compare" : ""]).filter(([, m]) => m))), { type: "vars", items: [{ name: "c", value: c }, { name: "other", value: other }, { name: "best", value: nb, mark: nb > best ? "new" : "" }] }] });
+              best = nb;
+            }
+          }
+          steps.push({ line: "return", note: `Return ${best}. One window pass per different letter: O(26 · n).`, view: [sv(s, 0, -1), { type: "vars", items: [{ name: "best", value: best, mark: "match" }] }] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0424-longest-repeating-character-replacement/approach3.visual.js -->
+    <script>
+      // One window; top = the biggest letter count seen. Grow; if more than k letters would change, slide instead (the window never shrinks).
+      (function () {
+      const INPUTS = [
+        { name: "s", type: "string", value: "AABABBA", maxLength: 12 },
+        { name: "k", type: "int", value: "1", min: 0, max: 12 },
+      ];
+      function check(s) {
+        if (!s.length) throw new DSAViz.InputError("s needs at least one letter.");
+        if (!/^[A-Z]+$/.test(s)) throw new DSAViz.InputError("s is uppercase English letters only, like AABABBA.");
+      }
+      const sv = (s, lo, hi, marks = {}, label = "s") => ({ type: "array", label, values: [...s], marks: { ...Object.fromEntries([...s].map((_, i) => [i, i >= lo && i <= hi ? "window" : ""]).filter(([, m]) => m)), ...marks }, pointers: hi >= lo ? (lo === hi ? { "lo,hi": lo } : { lo, hi }) : {} });
+      DSAViz.register("0424-longest-repeating-character-replacement/approach3", {
+        inputs: INPUTS,
+        trace({ s, k }) {
+          check(s);
+          const count = {};
+          let lo = 0, top = 0;
+          const cv = () => ({ type: "map", label: "count in the window", columns: ["letter", "count"], entries: Object.keys(count).sort().filter((c) => count[c]).map((c) => [c, count[c]]) });
+          const steps = [{ line: "init", note: "Empty window. top will be the biggest count any letter has reached.", view: [sv(s, 0, -1), cv()] }];
+          for (let hi = 0; hi < s.length; hi++) {
+            count[s[hi]] = (count[s[hi]] || 0) + 1;
+            top = Math.max(top, count[s[hi]]);
+            const len = hi - lo + 1;
+            if (len - top > k) {
+              const out = s[lo];
+              count[out]--; lo++;
+              steps.push({ line: ["grow", "slide"], note: `Add ${s[hi]}: length ${len} − top ${top} = ${len - top} > ${k}. Slide: drop s[${lo - 1}] = ${out}. The size stays ${len - 1}, the best seen so far.`, view: [sv(s, lo, hi, { [lo - 1]: "cut" }), cv(), { type: "vars", items: [{ name: "top", value: top }, { name: "size", value: hi - lo + 1 }] }] });
+            } else steps.push({ line: "grow", note: `Add ${s[hi]}: length ${len} − top ${top} = ${len - top} ≤ ${k}. The window grows to ${len}.`, view: [sv(s, lo, hi, { [hi]: "new" }), cv(), { type: "vars", items: [{ name: "top", value: top }, { name: "size", value: len, mark: "new" }] }] });
+          }
+          steps.push({ line: "return", note: `Return ${s.length - lo}: the window's final size. It only grows when a bigger top allows it, so top never needs to go down. O(n).`, view: [sv(s, lo, s.length - 1), { type: "vars", items: [{ name: "size", value: s.length - lo, mark: "match" }] }] });
           return steps;
         },
       });
