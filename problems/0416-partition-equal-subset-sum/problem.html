@@ -1,0 +1,204 @@
+<details class="question" data-group="dynamic-programming" data-tags="dynamic programming dp 0/1 knapsack subset sum bitset">
+  <summary>
+    <span class="q-title">416. Partition Equal Subset Sum</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Dynamic Programming</span>
+      <span class="tag">Knapsack</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Two equal halves means some subset adds up
+      to <code>total / 2</code>. That's 0/1 knapsack: <code>dp[s]</code> says
+      whether sum <code>s</code> is reachable, and each number updates it
+      with <code>dp[s] |= dp[s − x]</code>, going <strong>down</strong> from
+      the top so the number is used once. O(n · sum).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/partition-equal-subset-sum/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>Can <code>nums</code> be split into two groups with the same sum?</p>
+      <ul>
+        <li><code>1 &lt;= nums.length &lt;= 200</code>, <code>1 &lt;= nums[i] &lt;= 100</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[1,5,11,5]</code> → <code>true</code>
+        (<code>[1,5,5]</code> and <code>[11]</code>). <code>[1,2,3,5]</code> →
+        <code>false</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[9,1]</code></td>
+              <td><code>false</code></td>
+              <td>Filling <code>dp</code> upwards lets 1 be used again and again (1, 2, 3, 4, 5), so it said <code>true</code>. That was wrong on 642 of 3,007 tests.</td>
+            </tr>
+            <tr>
+              <td><code>[1]</code></td>
+              <td><code>false</code></td>
+              <td>An odd total can never split evenly: check it first.</td>
+            </tr>
+            <tr>
+              <td>200 even numbers whose half is odd</td>
+              <td><code>false</code></td>
+              <td>Even sums only, so the odd half is never reached and nothing stops early: the whole table gets filled.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Take or Skip, Recursively</h2>
+      <p class="intuition">
+        For each number, try taking it into the half and try skipping it,
+        until the half is filled exactly, overshot, or the numbers run out.
+      </p>
+      <ul>
+        <li>The same <code>(i, left)</code> question gets asked again and again: nothing is remembered.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(2ⁿ)</span>
+        <span><strong>Space</strong> O(n) call stack</span>
+      </div>
+      <p class="note">
+        <code>[2] * n</code> with n odd (the half is odd, so no answer): in
+        Python n = 21 took 0.25 s, 23 took 0.99 s, 25 took 3.9 s, 4 times
+        longer per two more numbers. At n = 21: Java 2.3 ms, C++ 4.1 ms.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Set of Reachable Sums</h2>
+      <p class="intuition">
+        Start with <code>{0}</code>. For each number <code>x</code>, add
+        <code>s + x</code> for every sum <code>s</code> already in the set
+        (up to the half). Stop as soon as the half shows up.
+      </p>
+      <ul>
+        <li>The set never holds more than <code>half + 1</code> sums.</li>
+        <li>Fast when few different sums appear, like many equal numbers.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · sum)</span>
+        <span><strong>Space</strong> O(sum)</span>
+      </div>
+      <p class="note">
+        200 even numbers with an odd half (5065), average of 10 runs: Python
+        23 ms, Java 5.9 ms, C++ 2.2 ms. Faster than Approach 3 in Python,
+        slower in Java and C++: hashing costs more than an array.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: 1-D Knapsack DP
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        <code>dp[s]</code>: some of the numbers so far add up to
+        <code>s</code>. For each <code>x</code>, for <code>s</code> from the
+        half down to <code>x</code>, <code>dp[s] |= dp[s − x]</code>. Going
+        down means <code>dp[s − x]</code> still describes the numbers before
+        <code>x</code>.
+      </p>
+      <ul>
+        <li>The 2-D table <code>dp[i][s]</code> folded into one row.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · sum)</span>
+        <span><strong>Space</strong> O(sum)</span>
+      </div>
+      <p class="note">
+        Same input: Python 32 ms, Java 0.81 ms, C++ 0.56 ms.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Store the whole <code>dp</code> row as bits of one number:
+        <code>bits |= bits &lt;&lt; x</code> adds <code>x</code> to every
+        reachable sum at once. Python's big ints (30 bits per
+        digit in CPython) and C++'s <code>std::bitset</code> (64 bits per
+        word) shift many sums per step.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · sum / w), w = bits per word</span>
+        <span><strong>Space</strong> O(sum) bits</span>
+      </div>
+      <p class="note">
+        Should pass on LeetCode. Same input: Python 0.063 ms, 500 times faster
+        than Approach 3. C++ 0.068 ms, 8 times faster.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Take or Skip</th>
+              <td>Plain recursion</td>
+              <td>O(2ⁿ)</td>
+              <td>O(n)</td>
+              <td>3.9 s at n = 25</td>
+            </tr>
+            <tr>
+              <th scope="row">Set of Sums</th>
+              <td>Grow the reachable set</td>
+              <td>O(n · sum)</td>
+              <td>O(sum)</td>
+              <td>Hashing overhead</td>
+            </tr>
+            <tr>
+              <th scope="row">1-D Knapsack</th>
+              <td><code>dp[s] |= dp[s − x]</code>, downwards</td>
+              <td>O(n · sum)</td>
+              <td>O(sum)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
