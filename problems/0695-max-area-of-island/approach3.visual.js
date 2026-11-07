@@ -19,7 +19,7 @@ DSAViz.register("0695-max-area-of-island/approach3", {
       (o.pushed || []).forEach(([i, j]) => (marks[`${i},${j}`] = "new"));
       if (o.at) marks[`${o.at[0]},${o.at[1]}`] = "active";
       return [
-        gridView(grid, marks, "grid (dark = popped now, yellow = just pushed, green = counted, dashed = sunk)"),
+        gridView(grid, marks, "grid (dark = popped now, yellow = just pushed, green = counted, grey = sunk)"),
         { type: "array", label: "stack (top on the right)", values: stack.map(([i, j]) => `(${i},${j})`), compact: true, marks: Object.fromEntries((o.pushed || []).map((_, k) => [stack.length - 1 - k, "new"])) },
         { type: "vars", items: [{ name: "size", value: size }, { name: "best", value: best, mark: o.better ? "new" : "" }] },
       ];

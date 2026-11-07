@@ -17,7 +17,7 @@ DSAViz.register("0695-max-area-of-island/approach2", {
       island.forEach(([i, j]) => (marks[`${i},${j}`] = "new"));
       if (o.at) marks[`${o.at[0]},${o.at[1]}`] = "active";
       return [
-        gridView(grid, marks, "grid (dark = this call's cell, yellow = sunk in this island, dashed = sunk earlier)"),
+        gridView(grid, marks, "grid (dark = this call's cell, yellow = sunk in this island, grey = sunk earlier)"),
         { type: "array", label: "open calls: area(r, c), outermost first", values: path.map(([i, j]) => `(${i},${j})`), compact: true },
         { type: "vars", items: [{ name: "this island", value: island.length }, { name: "best", value: best, mark: o.better ? "new" : "" }] },
       ];
