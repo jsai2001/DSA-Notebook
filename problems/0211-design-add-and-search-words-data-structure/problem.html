@@ -1,0 +1,213 @@
+<details class="question" data-group="tries" data-tags="trie design dfs wildcard dot pattern search add word dictionary">
+  <summary>
+    <span class="q-title">211. Design Add and Search Words Data Structure</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Trie</span>
+      <span class="tag">Design</span>
+      <span class="tag">Depth-First Search</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Store the words in a trie. Search with a DFS
+      over the pattern: a letter follows its one child, a
+      <code>"."</code> tries <strong>every</strong> child, and a match must
+      end on a node marked as a word end. Words that don't share the
+      pattern's letters are never looked at.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/design-add-and-search-words-data-structure/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Build <code>WordDictionary</code> with <code>addWord(word)</code> and
+        <code>search(word)</code>. In <code>search</code>, each
+        <code>"."</code> matches any one letter. Return whether some added
+        word matches.
+      </p>
+      <ul>
+        <li><code>1 &lt;= word.length &lt;= 25</code>; added words are lowercase letters</li>
+        <li>A search has at most 2 dots; at most 10⁴ calls in total</li>
+      </ul>
+      <p class="note">
+        Example: add <code>bad</code>, <code>dad</code>, <code>mad</code>.
+        <code>search("pad")</code> → <code>false</code>,
+        <code>search("bad")</code> → <code>true</code>,
+        <code>search(".ad")</code> → <code>true</code>,
+        <code>search("b..")</code> → <code>true</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>add <code>ab</code>, <code>cd</code>; <code>search(".d")</code></td>
+              <td><code>true</code></td>
+              <td>A <code>"."</code> must try every child. Returning the result of the first child only said <code>false</code>; wrong on 414 of 2001 tests.</td>
+            </tr>
+            <tr>
+              <td>add <code>bad</code>; <code>search("ba")</code></td>
+              <td><code>false</code></td>
+              <td>The letters match but "ba" isn't a word: check the end flag.</td>
+            </tr>
+            <tr>
+              <td>add <code>a</code>; <code>search(".")</code></td>
+              <td><code>true</code></td>
+              <td>A pattern that's only a dot.</td>
+            </tr>
+            <tr>
+              <td>5000 words of length 25, then 5000 searches starting with <code>".."</code></td>
+              <td>all <code>false</code></td>
+              <td>The list and the length groups compare every word: 11 s+ in Python. The trie takes 0.94 s.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: List of Words</h2>
+      <p class="intuition">
+        Keep every word in a list. To search, compare the pattern with each
+        word of the same length, letter by letter, letting
+        <code>"."</code> match anything.
+      </p>
+      <ul>
+        <li>The simplest to write, and <code>addWord</code> is O(1).</li>
+        <li>Every search can touch every word.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(N·L) per search</span>
+        <span><strong>Space</strong> O(total letters)</span>
+      </div>
+      <p class="note">
+        5000 words of length 25, then 5000 <code>".."</code> searches: Python
+        11.3 s, Java 93 ms, C++ 87 ms. Even exact searches took 1.2 s in
+        Python.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Group by Length</h2>
+      <p class="intuition">
+        Only words of the same length can match, so keep a set per length. A
+        search without <code>"."</code> is one hash lookup. A search with dots
+        scans just its length group.
+      </p>
+      <ul>
+        <li>The fastest for exact searches: 2.8 ms for 5000 in Python.</li>
+        <li>But if all words have the same length, a dotted search still checks them all.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(L) exact, O(N·L) with dots</span>
+        <span><strong>Space</strong> O(total letters)</span>
+      </div>
+      <p class="note">
+        The <code>".."</code> test above: Python 11.8 s, Java 226 ms, C++
+        120 ms, no better than Approach 1, because every word has length 25.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Trie With DFS
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        <code>addWord</code> is a normal trie insert.
+        <code>dfs(node, i)</code> asks whether <code>word[i:]</code> can be
+        spelled from <code>node</code>: at the end, check the end flag; on a
+        letter, follow that one child; on <code>"."</code>, try every child
+        and stop at the first success.
+      </p>
+      <ul>
+        <li>Shared prefixes are walked once, and wrong letters cut whole branches.</li>
+        <li>With at most 2 dots, a search visits at most 26² branches.</li>
+        <li>The Python version uses dict children: in Implement Trie, dicts were faster than 26-slot lists in Python.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(L) letters, up to O(26ᵈ·L) with d dots</span>
+        <span><strong>Space</strong> O(total letters)</span>
+      </div>
+      <p class="note">
+        The <code>".."</code> test: Python 0.94 s, Java 37 ms, C++ 27 ms,
+        12 times faster than Approach 1 in Python. For exact searches,
+        Approach 2 was faster (2.8 ms vs 15 ms in Python).
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        <code>re.fullmatch(pattern, word)</code> treats <code>"."</code> the
+        same way, but it still has to be run on every word. No standard
+        library has a trie.
+      </p>
+      <p class="note">Approach 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">List of Words</th>
+              <td>Compare with every word</td>
+              <td>O(N·L)</td>
+              <td>O(total letters)</td>
+              <td>11.3 s in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">Group by Length</th>
+              <td>Set per length</td>
+              <td>O(L) exact, O(N·L) dots</td>
+              <td>O(total letters)</td>
+              <td>Best for exact searches</td>
+            </tr>
+            <tr>
+              <th scope="row">Trie With DFS</th>
+              <td>"." tries every child</td>
+              <td>O(26ᵈ·L)</td>
+              <td>O(total letters)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

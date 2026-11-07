@@ -20590,7 +20590,7 @@
       <details class="pattern-group" id="g-tries">
         <summary>
           <span class="g-name">Tries</span>
-          <span class="g-count"><span class="g-total">1 problem</span></span>
+          <span class="g-count"><span class="g-total">2 problems</span></span>
           <span class="g-hint">A tree of letters, one child per next letter</span>
         </summary>
         <div class="g-body">
@@ -21046,6 +21046,429 @@
                         <td>O(L)</td>
                         <td>O(26 · nodes)</td>
                         <td>Fastest in C++ and Java</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0211-design-add-and-search-words-data-structure ===== -->
+          <details class="question" data-group="tries" data-tags="trie design dfs wildcard dot pattern search add word dictionary">
+            <summary>
+              <span class="q-title">211. Design Add and Search Words Data Structure</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Trie</span>
+                <span class="tag">Design</span>
+                <span class="tag">Depth-First Search</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Store the words in a trie. Search with a DFS
+                over the pattern: a letter follows its one child, a
+                <code>"."</code> tries <strong>every</strong> child, and a match must
+                end on a node marked as a word end. Words that don't share the
+                pattern's letters are never looked at.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/design-add-and-search-words-data-structure/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Build <code>WordDictionary</code> with <code>addWord(word)</code> and
+                  <code>search(word)</code>. In <code>search</code>, each
+                  <code>"."</code> matches any one letter. Return whether some added
+                  word matches.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= word.length &lt;= 25</code>; added words are lowercase letters</li>
+                  <li>A search has at most 2 dots; at most 10⁴ calls in total</li>
+                </ul>
+                <p class="note">
+                  Example: add <code>bad</code>, <code>dad</code>, <code>mad</code>.
+                  <code>search("pad")</code> → <code>false</code>,
+                  <code>search("bad")</code> → <code>true</code>,
+                  <code>search(".ad")</code> → <code>true</code>,
+                  <code>search("b..")</code> → <code>true</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>add <code>ab</code>, <code>cd</code>; <code>search(".d")</code></td>
+                        <td><code>true</code></td>
+                        <td>A <code>"."</code> must try every child. Returning the result of the first child only said <code>false</code>; wrong on 414 of 2001 tests.</td>
+                      </tr>
+                      <tr>
+                        <td>add <code>bad</code>; <code>search("ba")</code></td>
+                        <td><code>false</code></td>
+                        <td>The letters match but "ba" isn't a word: check the end flag.</td>
+                      </tr>
+                      <tr>
+                        <td>add <code>a</code>; <code>search(".")</code></td>
+                        <td><code>true</code></td>
+                        <td>A pattern that's only a dot.</td>
+                      </tr>
+                      <tr>
+                        <td>5000 words of length 25, then 5000 searches starting with <code>".."</code></td>
+                        <td>all <code>false</code></td>
+                        <td>The list and the length groups compare every word: 11 s+ in Python. The trie takes 0.94 s.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: List of Words</h2>
+                <p class="intuition">
+                  Keep every word in a list. To search, compare the pattern with each
+                  word of the same length, letter by letter, letting
+                  <code>"."</code> match anything.
+                </p>
+                <ul>
+                  <li>The simplest to write, and <code>addWord</code> is O(1).</li>
+                  <li>Every search can touch every word.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(N·L) per search</span>
+                  <span><strong>Space</strong> O(total letters)</span>
+                </div>
+                <p class="note">
+                  5000 words of length 25, then 5000 <code>".."</code> searches: Python
+                  11.3 s, Java 93 ms, C++ 87 ms. Even exact searches took 1.2 s in
+                  Python.
+                </p>
+                <div class="code-tabs" data-viz="0211-design-add-and-search-words-data-structure/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"add":[5],"scan":[7,8],"found":[9],"none":[10]}'>
+                    class WordDictionary(object):
+                        def __init__(self):
+                            self.words = []
+                        def addWord(self, word):
+                            self.words.append(word)
+                        def search(self, word):
+                            for w in self.words:  # try every word
+                                if len(w) == len(word) and all(p == "." or p == c for p, c in zip(word, w)):  # "." matches any letter
+                                    return True
+                            return False
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"add":[7],"scan":[10,11,12,13],"found":[14],"none":[16]}'>
+                    #include <string>
+                    #include <vector>
+                    class WordDictionary {
+                    public:
+                        WordDictionary() {}
+                        void addWord(std::string word) {
+                            words.push_back(word);
+                        }
+                        bool search(std::string word) {
+                            for (const std::string& w : words) { // try every word
+                                if (w.size() != word.size()) continue;
+                                size_t i = 0;
+                                while (i < w.size() && (word[i] == '.' || word[i] == w[i])) ++i; // "." matches any letter
+                                if (i == w.size()) return true;
+                            }
+                            return false;
+                        }
+                    private:
+                        std::vector<std::string> words;
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"add":[6],"scan":[9,10,11,12],"found":[13],"none":[15]}'>
+                    import java.util.*;
+                    class WordDictionary {
+                        private final List<String> words = new ArrayList<>();
+                        public WordDictionary() {}
+                        public void addWord(String word) {
+                            words.add(word);
+                        }
+                        public boolean search(String word) {
+                            for (String w : words) { // try every word
+                                if (w.length() != word.length()) continue;
+                                int i = 0;
+                                while (i < w.length() && (word.charAt(i) == '.' || word.charAt(i) == w.charAt(i))) i++; // "." matches any letter
+                                if (i == w.length()) return true;
+                            }
+                            return false;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Group by Length</h2>
+                <p class="intuition">
+                  Only words of the same length can match, so keep a set per length. A
+                  search without <code>"."</code> is one hash lookup. A search with dots
+                  scans just its length group.
+                </p>
+                <ul>
+                  <li>The fastest for exact searches: 2.8 ms for 5000 in Python.</li>
+                  <li>But if all words have the same length, a dotted search still checks them all.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(L) exact, O(N·L) with dots</span>
+                  <span><strong>Space</strong> O(total letters)</span>
+                </div>
+                <p class="note">
+                  The <code>".."</code> test above: Python 11.8 s, Java 226 ms, C++
+                  120 ms, no better than Approach 1, because every word has length 25.
+                </p>
+                <div class="code-tabs" data-viz="0211-design-add-and-search-words-data-structure/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"add":[5],"group":[7],"exact":[8,9],"scan":[10]}'>
+                    class WordDictionary(object):
+                        def __init__(self):
+                            self.by_len = {}  # length -> the set of words with that length
+                        def addWord(self, word):
+                            self.by_len.setdefault(len(word), set()).add(word)
+                        def search(self, word):
+                            words = self.by_len.get(len(word), set())  # only words of the same length can match
+                            if "." not in word:  # no wildcard: one hash lookup
+                                return word in words
+                            return any(all(p == "." or p == c for p, c in zip(word, w)) for w in words)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"add":[8],"group":[11,12],"exact":[13],"scan":[14,15,16,17,19]}'>
+                    #include <string>
+                    #include <unordered_map>
+                    #include <unordered_set>
+                    class WordDictionary {
+                    public:
+                        WordDictionary() {} // length -> the set of words with that length
+                        void addWord(std::string word) {
+                            byLen[word.size()].insert(word);
+                        }
+                        bool search(std::string word) {
+                            auto it = byLen.find(word.size()); // only words of the same length can match
+                            if (it == byLen.end()) return false;
+                            if (word.find('.') == std::string::npos) return it->second.count(word) > 0; // no wildcard: one hash lookup
+                            for (const std::string& w : it->second) {
+                                size_t i = 0;
+                                while (i < w.size() && (word[i] == '.' || word[i] == w[i])) ++i;
+                                if (i == w.size()) return true;
+                            }
+                            return false;
+                        }
+                    private:
+                        std::unordered_map<size_t, std::unordered_set<std::string>> byLen;
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"add":[6],"group":[9,10],"exact":[11],"scan":[12,13,14,15,17]}'>
+                    import java.util.*;
+                    class WordDictionary {
+                        private final Map<Integer, Set<String>> byLen = new HashMap<>(); // length -> the set of words with that length
+                        public WordDictionary() {}
+                        public void addWord(String word) {
+                            byLen.computeIfAbsent(word.length(), k -> new HashSet<>()).add(word);
+                        }
+                        public boolean search(String word) {
+                            Set<String> words = byLen.get(word.length()); // only words of the same length can match
+                            if (words == null) return false;
+                            if (word.indexOf('.') < 0) return words.contains(word); // no wildcard: one hash lookup
+                            for (String w : words) {
+                                int i = 0;
+                                while (i < w.length() && (word.charAt(i) == '.' || word.charAt(i) == w.charAt(i))) i++;
+                                if (i == w.length()) return true;
+                            }
+                            return false;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Trie With DFS
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  <code>addWord</code> is a normal trie insert.
+                  <code>dfs(node, i)</code> asks whether <code>word[i:]</code> can be
+                  spelled from <code>node</code>: at the end, check the end flag; on a
+                  letter, follow that one child; on <code>"."</code>, try every child
+                  and stop at the first success.
+                </p>
+                <ul>
+                  <li>Shared prefixes are walked once, and wrong letters cut whole branches.</li>
+                  <li>With at most 2 dots, a search visits at most 26² branches.</li>
+                  <li>The Python version uses dict children: in Implement Trie, dicts were faster than 26-slot lists in Python.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(L) letters, up to O(26ᵈ·L) with d dots</span>
+                  <span><strong>Space</strong> O(total letters)</span>
+                </div>
+                <p class="note">
+                  The <code>".."</code> test: Python 0.94 s, Java 37 ms, C++ 27 ms,
+                  12 times faster than Approach 1 in Python. For exact searches,
+                  Approach 2 was faster (2.8 ms vs 15 ms in Python).
+                </p>
+                <div class="code-tabs" data-viz="0211-design-add-and-search-words-data-structure/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[8],"add":[10,11,12,13,14,15],"dfs":[17],"done":[18,19],"dot":[20,21],"letter":[22,23],"search":[24]}'>
+                    class Node(object):
+                        __slots__ = ("child", "end")
+                        def __init__(self):
+                            self.child = {}  # letter -> child node (a dict was faster than 26 slots in Python)
+                            self.end = False
+                    class WordDictionary(object):
+                        def __init__(self):
+                            self.root = Node()
+                        def addWord(self, word):
+                            node = self.root
+                            for ch in word:
+                                if ch not in node.child:
+                                    node.child[ch] = Node()
+                                node = node.child[ch]
+                            node.end = True  # a word ends here
+                        def search(self, word):
+                            def dfs(node, i):  # can word[i:] be spelled from node?
+                                if i == len(word):  # every letter matched
+                                    return node.end
+                                if word[i] == ".":  # any child will do: try each one
+                                    return any(dfs(c, i + 1) for c in node.child.values())
+                                nxt = node.child.get(word[i])  # a letter: only one child to follow
+                                return nxt is not None and dfs(nxt, i + 1)
+                            return dfs(self.root, 0)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[4],"add":[6,7,8,9,10,12],"search":[15],"dfs":[23],"done":[24],"dot":[25,26,27,28],"letter":[30,31]}'>
+                    #include <string>
+                    class WordDictionary {
+                    public:
+                        WordDictionary() : root(new Node()) {}
+                        void addWord(std::string word) {
+                            Node* node = root;
+                            for (char ch : word) {
+                                int k = ch - 'a';
+                                if (!node->child[k]) node->child[k] = new Node();
+                                node = node->child[k];
+                            }
+                            node->end = true; // a word ends here
+                        }
+                        bool search(std::string word) {
+                            return dfs(root, word, 0);
+                        }
+                    private:
+                        struct Node {
+                            Node* child[26] = {};
+                            bool end = false;
+                        };
+                        Node* root;
+                        bool dfs(Node* node, const std::string& word, size_t i) { // can word[i:] be spelled from node?
+                            if (i == word.size()) return node->end; // every letter matched
+                            if (word[i] == '.') { // any child will do: try each one
+                                for (Node* c : node->child)
+                                    if (c && dfs(c, word, i + 1)) return true;
+                                return false;
+                            }
+                            Node* next = node->child[word[i] - 'a']; // a letter: only one child to follow
+                            return next && dfs(next, word, i + 1);
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[6],"add":[9,10,11,12,13,15],"search":[18],"dfs":[20,22],"done":[21],"dot":[23,24,25,26],"letter":[28,29]}'>
+                    class WordDictionary {
+                        private static class Node {
+                            Node[] child = new Node[26];
+                            boolean end;
+                        }
+                        private final Node root = new Node();
+                        public WordDictionary() {}
+                        public void addWord(String word) {
+                            Node node = root;
+                            for (int i = 0; i < word.length(); i++) {
+                                int k = word.charAt(i) - 'a';
+                                if (node.child[k] == null) node.child[k] = new Node();
+                                node = node.child[k];
+                            }
+                            node.end = true; // a word ends here
+                        }
+                        public boolean search(String word) {
+                            return dfs(root, word, 0);
+                        }
+                        private boolean dfs(Node node, String word, int i) { // can word[i:] be spelled from node?
+                            if (i == word.length()) return node.end; // every letter matched
+                            char ch = word.charAt(i);
+                            if (ch == '.') { // any child will do: try each one
+                                for (Node c : node.child)
+                                    if (c != null && dfs(c, word, i + 1)) return true;
+                                return false;
+                            }
+                            Node next = node.child[ch - 'a']; // a letter: only one child to follow
+                            return next != null && dfs(next, word, i + 1);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  <code>re.fullmatch(pattern, word)</code> treats <code>"."</code> the
+                  same way, but it still has to be run on every word. No standard
+                  library has a trie.
+                </p>
+                <p class="note">Approach 3 is what you'd write.</p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">List of Words</th>
+                        <td>Compare with every word</td>
+                        <td>O(N·L)</td>
+                        <td>O(total letters)</td>
+                        <td>11.3 s in Python</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Group by Length</th>
+                        <td>Set per length</td>
+                        <td>O(L) exact, O(N·L) dots</td>
+                        <td>O(total letters)</td>
+                        <td>Best for exact searches</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Trie With DFS</th>
+                        <td>"." tries every child</td>
+                        <td>O(26ᵈ·L)</td>
+                        <td>O(total letters)</td>
+                        <td>Expected answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -61376,6 +61799,201 @@
         pre.forEach(([a, b]) => after[b].push(a));
         return { type: "map", label: "after[b]: the courses that need b first", columns: ["course", "then"], entries: after.map((l, c) => [String(c), l.join(", ") || "none"]), marks };
       };
+      })();
+    </script>
+    <!-- problems/0211-design-add-and-search-words-data-structure/approach1.visual.js -->
+    <script>
+      // A list of words: search compares the pattern with every word, letter by letter ("." matches anything).
+      (function () {
+      DSAViz.register("0211-design-add-and-search-words-data-structure/approach1", {
+        inputs: [{ name: "ops", label: "operations (comma-separated)", type: "string", value: "addWord bad, addWord dad, addWord mad, search pad, search bad, search .ad, search b..", maxLength: 120, raw: true }],
+        trace({ ops: text }) {
+          const ops = parseOps(text);
+          const words = [];
+          const results = [];
+          const steps = [];
+          const view = (o = {}) => [
+            { type: "array", label: "words (green = matches, red = checked and doesn't)", values: words.slice(), wide: true, marks: o.wm || {} },
+            { type: "array", label: "results (null for addWord)", values: results.slice(), wide: true, marks: o.res ? { [results.length - 1]: o.res } : {} },
+          ];
+          steps.push({ line: "init", note: "Start with an empty list.", view: view() });
+          for (const [op, w] of ops) {
+            if (op === "addWord") {
+              words.push(w);
+              results.push("null");
+              steps.push({ line: "add", note: `addWord("${w}"): append it.`, view: view({ wm: { [words.length - 1]: "new" } }) });
+              continue;
+            }
+            const wm = {};
+            let hit = -1;
+            for (let k = 0; k < words.length; k++) { if (fits(w, words[k])) { hit = k; wm[k] = "match"; break; } wm[k] = "cut"; }
+            results.push(String(hit >= 0));
+            steps.push({ line: hit >= 0 ? ["scan", "found"] : ["scan", "none"], note: `search("${w}"): ${hit >= 0 ? `"${words[hit]}" matches after ${hit + 1} check${hit ? "s" : ""}. Return true.` : `checked all ${words.length} words, none fits. Return false.`}`, view: view({ wm, res: hit >= 0 ? "match" : "cut" }) });
+          }
+          steps.push({ line: lastLine(ops, { addWord: "add", search: results[results.length - 1] === "true" ? "found" : "none" }), note: `Return [${results.join(", ")}]. Each search can check every word: O(N·L).`, view: view() });
+          return steps;
+        },
+      });
+
+      // "addWord bad, search .ad" -> [["addWord", "bad"], ["search", ".ad"]]
+      function parseOps(text) {
+        const parts = text.split(",").map((s) => s.trim()).filter(Boolean);
+        if (!parts.length) throw new DSAViz.InputError("Give operations like: addWord bad, search .ad");
+        if (parts.length > 8) throw new DSAViz.InputError("At most 8 operations here, so the steps stay readable.");
+        return parts.map((p) => {
+          const m = p.match(/^(addWord|search)\s+(\S+)$/);
+          if (!m) throw new DSAViz.InputError(`"${p}": use addWord or search, then a word, like "addWord bad".`);
+          if (m[1] === "addWord" && !/^[a-z]+$/.test(m[2])) throw new DSAViz.InputError(`"${m[2]}": addWord takes lowercase letters only.`);
+          if (m[1] === "search" && !/^[a-z.]+$/.test(m[2])) throw new DSAViz.InputError(`"${m[2]}": search takes lowercase letters and "." only.`);
+          if (m[2].length > 5) throw new DSAViz.InputError(`"${m[2]}": at most 5 letters here.`);
+          return [m[1], m[2]];
+        });
+      }
+      const fits = (pat, w) => pat.length === w.length && [...pat].every((p, i) => p === "." || p === w[i]);
+      const lastLine = (ops, lines) => lines[ops[ops.length - 1][0]];
+      })();
+    </script>
+    <!-- problems/0211-design-add-and-search-words-data-structure/approach2.visual.js -->
+    <script>
+      // Words grouped by length: a search without "." is one hash lookup; with "." it scans only same-length words.
+      (function () {
+      DSAViz.register("0211-design-add-and-search-words-data-structure/approach2", {
+        inputs: [{ name: "ops", label: "operations (comma-separated)", type: "string", value: "addWord bad, addWord dad, addWord mad, search pad, search bad, search .ad, search b..", maxLength: 120, raw: true }],
+        trace({ ops: text }) {
+          const ops = parseOps(text);
+          const by = new Map();
+          const results = [];
+          const steps = [];
+          const view = (o = {}) => [
+            { type: "map", label: "by_len: length → words (yellow = the group searched)", columns: ["length", "words"], entries: [...by.keys()].sort((a, b) => a - b).map((k) => [String(k), [...by.get(k)].join(", ")]), marks: o.len !== undefined && by.has(o.len) ? { [String(o.len)]: o.lm || "new" } : {} },
+            { type: "array", label: "results (null for addWord)", values: results.slice(), wide: true, marks: o.res ? { [results.length - 1]: o.res } : {} },
+          ];
+          steps.push({ line: "init", note: "Start with no groups.", view: view() });
+          for (const [op, w] of ops) {
+            if (op === "addWord") {
+              if (!by.has(w.length)) by.set(w.length, new Set());
+              by.get(w.length).add(w);
+              results.push("null");
+              steps.push({ line: "add", note: `addWord("${w}"): put it in the group for length ${w.length}.`, view: view({ len: w.length }) });
+              continue;
+            }
+            const group = [...(by.get(w.length) || [])];
+            let ans;
+            let note;
+            let line;
+            if (!w.includes(".")) { ans = group.includes(w); line = ["group", "exact"]; note = `no ".", so one hash lookup in the length-${w.length} group: ${ans ? "found" : "not there"}.`; }
+            else { const hit = group.find((x) => fits(w, x)); ans = hit !== undefined; line = ["group", "scan"]; note = group.length ? `has ".", so compare it with the ${group.length} word${group.length > 1 ? "s" : ""} of length ${w.length}: ${ans ? `"${hit}" fits` : "none fits"}.` : `no words of length ${w.length}.`; }
+            results.push(String(ans));
+            steps.push({ line, note: `search("${w}"): ${note} Return ${ans}.`, view: view({ len: w.length, lm: ans ? "match" : "cut", res: ans ? "match" : "cut" }) });
+          }
+          steps.push({ line: lastLine(ops, { addWord: "add", search: ops[ops.length - 1][1].includes(".") ? "scan" : "exact" }), note: `Return [${results.join(", ")}]. Exact words cost O(L); patterns still scan their whole length group.`, view: view() });
+          return steps;
+        },
+      });
+
+      // "addWord bad, search .ad" -> [["addWord", "bad"], ["search", ".ad"]]
+      function parseOps(text) {
+        const parts = text.split(",").map((s) => s.trim()).filter(Boolean);
+        if (!parts.length) throw new DSAViz.InputError("Give operations like: addWord bad, search .ad");
+        if (parts.length > 8) throw new DSAViz.InputError("At most 8 operations here, so the steps stay readable.");
+        return parts.map((p) => {
+          const m = p.match(/^(addWord|search)\s+(\S+)$/);
+          if (!m) throw new DSAViz.InputError(`"${p}": use addWord or search, then a word, like "addWord bad".`);
+          if (m[1] === "addWord" && !/^[a-z]+$/.test(m[2])) throw new DSAViz.InputError(`"${m[2]}": addWord takes lowercase letters only.`);
+          if (m[1] === "search" && !/^[a-z.]+$/.test(m[2])) throw new DSAViz.InputError(`"${m[2]}": search takes lowercase letters and "." only.`);
+          if (m[2].length > 5) throw new DSAViz.InputError(`"${m[2]}": at most 5 letters here.`);
+          return [m[1], m[2]];
+        });
+      }
+      const fits = (pat, w) => pat.length === w.length && [...pat].every((p, i) => p === "." || p === w[i]);
+      const lastLine = (ops, lines) => lines[ops[ops.length - 1][0]];
+      })();
+    </script>
+    <!-- problems/0211-design-add-and-search-words-data-structure/approach3.visual.js -->
+    <script>
+      // A trie: a letter follows one child, a "." tries every child (DFS). A match must end on a word-end node.
+      (function () {
+      DSAViz.register("0211-design-add-and-search-words-data-structure/approach3", {
+        inputs: [{ name: "ops", label: "operations (comma-separated)", type: "string", value: "addWord bad, addWord dad, addWord mad, search pad, search bad, search .ad, search b..", maxLength: 120, raw: true }],
+        trace({ ops: text }) {
+          const ops = parseOps(text);
+          const nodes = new Map([["", { kids: new Set(), end: false }]]);
+          const results = [];
+          const steps = [];
+          const key = (k) => (k === "" ? "(root)" : `"${k}"`);
+          const view = (o = {}) => {
+            const keys = [...nodes.keys()].sort((a, b) => a.length - b.length || (a < b ? -1 : 1));
+            return [
+              { type: "map", label: "trie nodes (✓ end = a word ends here; dark = this call, grey = tried, yellow = new, green = match, red = dead end)", columns: ["node (letters to reach it)", "children"], entries: keys.map((k) => [key(k), `${[...nodes.get(k).kids].sort().join(", ") || "none"}${nodes.get(k).end ? "  ✓ end" : ""}`]), marks: o.marks || {} },
+              { type: "array", label: "results (null for addWord)", values: results.slice(), wide: true, marks: o.res ? { [results.length - 1]: o.res } : {} },
+            ];
+          };
+          steps.push({ line: "init", note: "Start with just the root node.", view: view() });
+          for (const [op, w] of ops) {
+            if (op === "addWord") {
+              const marks = {};
+              for (let i = 1; i <= w.length; i++) {
+                const p = w.slice(0, i);
+                if (!nodes.has(p)) { nodes.set(p, { kids: new Set(), end: false }); nodes.get(w.slice(0, i - 1)).kids.add(w[i - 1]); marks[key(p)] = "new"; }
+              }
+              nodes.get(w).end = true;
+              results.push("null");
+              steps.push({ line: "add", note: `addWord("${w}"): follow its letters, adding missing nodes (yellow), and mark "${w}" as a word end.`, view: view({ marks }) });
+              continue;
+            }
+            const marks = {};
+            let calls = 0;
+            const dfs = (p, i) => {
+              calls++;
+              marks[key(p)] = "active";
+              if (i === w.length) {
+                const ok = nodes.get(p).end;
+                marks[key(p)] = ok ? "match" : "cut";
+                steps.push({ line: ["dfs", "done"], note: `All of "${w}" is matched at ${key(p)}. ${ok ? "A word ends here: found." : "No word ends here: dead end."}`, view: view({ marks: { ...marks } }) });
+                return ok;
+              }
+              const ch = w[i];
+              if (ch === ".") {
+                const kids = [...nodes.get(p).kids].sort();
+                steps.push({ line: ["dfs", "dot"], note: `At ${key(p)}, "${w}"[${i}] is ".": try ${kids.length ? `each child: ${kids.join(", ")}` : "each child, but there are none"}.`, view: view({ marks: { ...marks } }) });
+                marks[key(p)] = "visited";
+                for (const k of kids) if (dfs(p + k, i + 1)) return true;
+                if (!kids.length) marks[key(p)] = "cut";
+                return false;
+              }
+              const has = nodes.get(p).kids.has(ch);
+              if (!has) marks[key(p)] = "cut";
+              steps.push({ line: ["dfs", "letter"], note: `At ${key(p)}, "${w}"[${i}] is '${ch}': ${has ? `follow it to ${key(p + ch)}.` : "no such child: dead end."}`, view: view({ marks: { ...marks } }) });
+              if (!has) return false;
+              marks[key(p)] = "visited";
+              return dfs(p + ch, i + 1);
+            };
+            steps.push({ line: "search", note: `search("${w}"): start the DFS at the root.`, view: view() });
+            const ans = dfs("", 0);
+            results.push(String(ans));
+            steps.push({ line: "search", note: `search("${w}") returns ${ans} after ${calls} DFS call${calls > 1 ? "s" : ""}.`, view: view({ marks, res: ans ? "match" : "cut" }) });
+          }
+          steps.push({ line: lastLine(ops, { addWord: "add", search: "search" }), note: `Return [${results.join(", ")}]. Letters follow one path: O(L). Each "." can branch into up to 26 children.`, view: view() });
+          return steps;
+        },
+      });
+
+      // "addWord bad, search .ad" -> [["addWord", "bad"], ["search", ".ad"]]
+      function parseOps(text) {
+        const parts = text.split(",").map((s) => s.trim()).filter(Boolean);
+        if (!parts.length) throw new DSAViz.InputError("Give operations like: addWord bad, search .ad");
+        if (parts.length > 8) throw new DSAViz.InputError("At most 8 operations here, so the steps stay readable.");
+        return parts.map((p) => {
+          const m = p.match(/^(addWord|search)\s+(\S+)$/);
+          if (!m) throw new DSAViz.InputError(`"${p}": use addWord or search, then a word, like "addWord bad".`);
+          if (m[1] === "addWord" && !/^[a-z]+$/.test(m[2])) throw new DSAViz.InputError(`"${m[2]}": addWord takes lowercase letters only.`);
+          if (m[1] === "search" && !/^[a-z.]+$/.test(m[2])) throw new DSAViz.InputError(`"${m[2]}": search takes lowercase letters and "." only.`);
+          if (m[2].length > 5) throw new DSAViz.InputError(`"${m[2]}": at most 5 letters here.`);
+          return [m[1], m[2]];
+        });
+      }
+      const fits = (pat, w) => pat.length === w.length && [...pat].every((p, i) => p === "." || p === w[i]);
+      const lastLine = (ops, lines) => lines[ops[ops.length - 1][0]];
       })();
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->
