@@ -1,0 +1,242 @@
+<details class="question" data-group="stack" data-tags="array stack math reverse polish notation postfix expression evaluate">
+  <summary>
+    <span class="q-title">150. Evaluate Reverse Polish Notation</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Stack</span>
+      <span class="tag">Math</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> One stack. Push every number. On an
+      operator, pop two: the <strong>top</strong> is the right operand, the
+      one under it the left. Push the result. At the end the stack holds the
+      answer. Division rounds toward zero, so in Python use
+      <code>int(a / b)</code>, not <code>a // b</code>.
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/evaluate-reverse-polish-notation/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Evaluate an expression written in Reverse Polish Notation: each
+        operator comes <strong>after</strong> its two operands, so
+        <code>["2","1","+","3","*"]</code> means (2 + 1) × 3. Operators are
+        <code>+ - * /</code>; division truncates toward zero.
+      </p>
+      <ul>
+        <li><code>1 &lt;= tokens.length &lt;= 10⁴</code></li>
+        <li>Numbers are in <code>[-200, 200]</code>; the expression is valid, never divides by zero, and every result fits in 32 bits</li>
+      </ul>
+      <p class="note">
+        Example: <code>["4","13","5","/","+"]</code> → <code>6</code>
+        (4 + 13 / 5). <code>["10","6","9","3","+","-11","*","/","*","17","+","5","+"]</code>
+        → <code>22</code>.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>["-7","2","/"]</code></td>
+              <td><code>-3</code></td>
+              <td>Rounds toward zero. Python's <code>//</code> floors: it said <code>-4</code>. Same for <code>["7","-2","/"]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>["4","13","5","/","+"]</code></td>
+              <td><code>6</code></td>
+              <td>The first pop is the <strong>right</strong> operand. Popping in the wrong order computed 5 / 13 = 0: said <code>4</code>.</td>
+            </tr>
+            <tr>
+              <td><code>["3","-4","-"]</code></td>
+              <td><code>7</code></td>
+              <td>"-4" is a number, not an operator. Testing numbers with <code>isdigit()</code> treated it as "minus" and popped an empty stack.</td>
+            </tr>
+            <tr>
+              <td><code>["5"]</code></td>
+              <td><code>5</code></td>
+              <td>No operator at all.</td>
+            </tr>
+            <tr>
+              <td><code>["0","3","/"]</code></td>
+              <td><code>0</code></td>
+              <td>Zero divided by something is fine.</td>
+            </tr>
+            <tr>
+              <td>9,999 tokens: <code>1 1 + 1 + …</code></td>
+              <td><code>5000</code></td>
+              <td>A recursive solution nests about 5,000 calls deep; Python's limit is 1,000. Without raising it, Python failed already at 1,999 tokens.</td>
+            </tr>
+            <tr>
+              <td>9,999 tokens: all numbers, then all <code>+</code></td>
+              <td><code>5000</code></td>
+              <td>Rewriting the list from the start each time scans half of it per operator: 651 ms in Python here.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Rewrite the List</h2>
+      <p class="intuition">
+        Find the first operator. The two items right before it are numbers,
+        its operands. Replace the three items with the result, and repeat
+        until one number is left.
+      </p>
+      <ul>
+        <li>Mirrors doing it by hand.</li>
+        <li>Each operator rescans from the start and shifts the rest of the list.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        On 9,999 tokens with every operator at the end: Python 651 ms, Java
+        37 ms, C++ 6.4 ms. On the alternating chain the operators are found
+        early, so it's fast (Python 5 ms).
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Recursion From the End</h2>
+      <p class="intuition">
+        The last token is the final operation. Reading backwards, a number
+        is just itself; an operator first evaluates its right operand (the
+        tokens just before it), then its left, then combines them.
+      </p>
+      <ul>
+        <li>The expression is a tree, and this walks it from the root.</li>
+        <li>
+          The calls nest as deep as the tree: about n / 2 on a long chain.
+          The Python code raises the recursion limit for that.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n) call stack</span>
+      </div>
+      <p class="note">
+        Python 2.4 ms, Java 2–2.4 ms, C++ 0.2 ms on 9,999 tokens. Works, but
+        the deep recursion is a risk the stack version doesn't have.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: One Stack
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Go left to right. Push numbers. On an operator, pop
+        <code>b</code> (top) then <code>a</code>, and push
+        <code>a op b</code>. Return the one number left.
+      </p>
+      <ul>
+        <li>A number is anything that isn't exactly <code>+ - * /</code>: "-4" has length 2.</li>
+        <li>
+          C++ and Java <code>/</code> already truncates toward zero; Python
+          needs <code>int(a / b)</code> (safe here, since values fit in 32
+          bits).
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Python 1.7–1.9 ms, Java 3–3.5 ms, C++ 0.13–0.15 ms on 9,999 tokens.
+        The expected answer, and the reason RPN exists: it needs no
+        parentheses and no precedence rules.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No standard library evaluates RPN. In Python, a dict from operator to
+        function (<code>operator.add</code>, <code>operator.sub</code>, …)
+        shortens Approach 3, but division still needs a truncating lambda,
+        since <code>operator.floordiv</code> floors.
+      </p>
+      <p class="note">
+        Approach 3 is what you'd write. Don't build a string for
+        <code>eval</code>: it's slow and unsafe on untrusted input.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Rewrite the List</th>
+              <td>Collapse the first operator, repeat</td>
+              <td>O(n²)</td>
+              <td>O(n)</td>
+              <td>651 ms in Python at 10⁴ tokens</td>
+            </tr>
+            <tr>
+              <th scope="row">Recursion From the End</th>
+              <td>Right operand, then left</td>
+              <td>O(n)</td>
+              <td>O(n) stack</td>
+              <td>About n / 2 calls deep</td>
+            </tr>
+            <tr>
+              <th scope="row">One Stack</th>
+              <td>Push numbers; pop two on an operator</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
