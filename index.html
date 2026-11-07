@@ -50676,7 +50676,7 @@
       <details class="pattern-group" id="g-greedy">
         <summary>
           <span class="g-name">Greedy</span>
-          <span class="g-count"><span class="g-total">8 problems</span></span>
+          <span class="g-count"><span class="g-total">9 problems</span></span>
           <span class="g-hint">Take the best step you can see</span>
         </summary>
         <div class="g-body">
@@ -53897,6 +53897,331 @@
                         <td>O(n log n)</td>
                         <td>O(n)</td>
                         <td>The usual answer; scales</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/1899-merge-triplets-to-form-target-triplet ===== -->
+          <details class="question" data-group="greedy" data-tags="greedy array triplets merge max">
+            <summary>
+              <span class="q-title">1899. Merge Triplets to Form Target Triplet</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Greedy</span>
+                <span class="tag">Array</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Merging takes the max per position, so a
+                value can only go up. Any triplet with a value above the target's can
+                never be used. Every other triplet is safe to merge, so the answer is
+                yes exactly when, for each of the 3 positions, some safe triplet hits
+                the target value there. One pass, O(n).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/merge-triplets-to-form-target-triplet/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  You may pick two triplets <code>i</code> and <code>j</code> and set
+                  <code>triplets[j]</code> to <code>[max(a<sub>i</sub>, a<sub>j</sub>),
+                  max(b<sub>i</sub>, b<sub>j</sub>), max(c<sub>i</sub>, c<sub>j</sub>)]</code>,
+                  as often as you like. Can some triplet become exactly
+                  <code>target</code>?
+                </p>
+                <ul>
+                  <li><code>1 &lt;= triplets.length &lt;= 10⁵</code>, every value between 1 and 1000</li>
+                </ul>
+                <p class="note">
+                  Example: <code>triplets = [[2,5,3],[1,8,4],[1,7,5]], target = [2,7,5]</code>
+                  → <code>true</code> (merge the first and last). <code>[[3,4,5],[4,5,6]]</code>
+                  with target <code>[3,2,5]</code> → <code>false</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[[1,3,1],[1,2,1]]</code>, target <code>[1,2,1]</code></td>
+                        <td><code>true</code></td>
+                        <td>Merging everything, including <code>[1,3,1]</code>, gives <code>[1,3,1]</code>. Skip triplets that go over the target. Without that filter it was wrong on 441 of 3,005 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[1,2,2],[1,1,1]]</code>, target <code>[1,1,2]</code></td>
+                        <td><code>false</code></td>
+                        <td><code>[1,2,2]</code> hits the 2 in the last spot, but its middle 2 is too big. Counting hits without the safe check said <code>true</code>: wrong on 457 of 3,005 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[1,1,1]]</code>, target <code>[1,1,1]</code></td>
+                        <td><code>true</code></td>
+                        <td>No merge needed.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Every Reachable Triplet</h2>
+                <p class="intuition">
+                  Keep a set of every triplet some merges can make. Each new triplet
+                  adds itself and its merge with everything already in the set.
+                </p>
+                <ul>
+                  <li>Each position of a merge is one of the n values, so the set can hold up to n³ triplets.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n⁴) at worst</span>
+                  <span><strong>Space</strong> O(n³)</span>
+                </div>
+                <p class="note">
+                  Random triplets in Python: 100 of them made 34,022 triplets (0.33 s),
+                  200 made 300,076 (9.6 s).
+                </p>
+                <div class="code-tabs" data-viz="1899-merge-triplets-to-form-target-triplet/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"add":[5,6,7],"found":[8,9],"return":[10]}'>
+                    class Solution(object):
+                        def mergeTriplets(self, triplets, target):
+                            target = tuple(target)
+                            seen = set()  # every triplet you can make by merging some of them
+                            for t in triplets:
+                                t = tuple(t)
+                                seen |= {tuple(map(max, s, t)) for s in seen} | {t}  # merge t into each one so far, or use t alone
+                                if target in seen:
+                                    return True
+                            return False
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7],"add":[8,9,10,11,12],"found":[13],"return":[15]}'>
+                    #include <algorithm>
+                    #include <set>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool mergeTriplets(std::vector<std::vector<int>>& triplets, std::vector<int>& target) {
+                            std::set<std::vector<int>> seen; // every triplet you can make by merging some of them
+                            for (auto& t : triplets) {
+                                std::set<std::vector<int>> next(seen);
+                                next.insert(t); // use t alone
+                                for (auto& s : seen) next.insert({std::max(s[0], t[0]), std::max(s[1], t[1]), std::max(s[2], t[2])}); // or merge it into one so far
+                                seen.swap(next);
+                                if (seen.count(target)) return true;
+                            }
+                            return false;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5],"add":[6,7,8,9,10],"found":[11],"return":[13]}'>
+                    import java.util.*;
+                    class Solution {
+                        public boolean mergeTriplets(int[][] triplets, int[] target) {
+                            Set<List<Integer>> seen = new HashSet<>(); // every triplet you can make by merging some of them
+                            List<Integer> want = List.of(target[0], target[1], target[2]);
+                            for (int[] t : triplets) {
+                                Set<List<Integer>> next = new HashSet<>(seen);
+                                next.add(List.of(t[0], t[1], t[2])); // use t alone
+                                for (List<Integer> s : seen) next.add(List.of(Math.max(s.get(0), t[0]), Math.max(s.get(1), t[1]), Math.max(s.get(2), t[2]))); // or merge it into one so far
+                                seen = next;
+                                if (seen.contains(want)) return true;
+                            }
+                            return false;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Merge Every Safe Triplet</h2>
+                <p class="intuition">
+                  A triplet is safe when none of its values is above the target's.
+                  Merging safe triplets never overshoots, and more merging only gets
+                  closer. So merge all of them and compare with the target.
+                </p>
+                <ul>
+                  <li>Skipping an unsafe triplet costs nothing: it could never be part of the answer.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  10⁵ triplets: Python 25 ms, Java 0.15 ms (1.4 ms on the first, cold
+                  run), C++ 0.14 ms.
+                </p>
+                <div class="code-tabs" data-viz="1899-merge-triplets-to-form-target-triplet/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"scan":[4],"merge":[5,6],"return":[7]}'>
+                    class Solution(object):
+                        def mergeTriplets(self, triplets, target):
+                            merged = [0, 0, 0]
+                            for t in triplets:
+                                if t[0] <= target[0] and t[1] <= target[1] and t[2] <= target[2]:  # safe: it can't push any value past the target
+                                    merged = [max(merged[0], t[0]), max(merged[1], t[1]), max(merged[2], t[2])]
+                            return merged == list(target)  # merging every safe triplet gets as close as possible
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"scan":[7],"merge":[8,9],"return":[10]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool mergeTriplets(std::vector<std::vector<int>>& triplets, std::vector<int>& target) {
+                            std::vector<int> merged(3, 0);
+                            for (auto& t : triplets)
+                                if (t[0] <= target[0] && t[1] <= target[1] && t[2] <= target[2]) // safe: it can't push any value past the target
+                                    for (int k = 0; k < 3; ++k) merged[k] = std::max(merged[k], t[k]);
+                            return merged == target; // merging every safe triplet gets as close as possible
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"scan":[4],"merge":[5,6],"return":[7]}'>
+                    class Solution {
+                        public boolean mergeTriplets(int[][] triplets, int[] target) {
+                            int[] merged = new int[3];
+                            for (int[] t : triplets)
+                                if (t[0] <= target[0] && t[1] <= target[1] && t[2] <= target[2]) // safe: it can't push any value past the target
+                                    for (int k = 0; k < 3; k++) merged[k] = Math.max(merged[k], t[k]);
+                            return merged[0] == target[0] && merged[1] == target[1] && merged[2] == target[2]; // merging every safe triplet gets as close as possible
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Three Flags, Stop Early
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Same idea without building the merge: for each safe triplet, set a
+                  flag for every position where it equals the target. Once all three
+                  flags are on, stop and return true.
+                </p>
+                <ul>
+                  <li>The merged value of a safe position can only reach the target if some safe triplet has it exactly.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  10⁵ triplets with no answer: Python 16 ms, Java 0.68 ms (cold run), C++ 0.14 ms.
+                  When the target is easy to hit it stops early: Python 0.18 ms, C++
+                  0.002 ms.
+                </p>
+                <div class="code-tabs" data-viz="1899-merge-triplets-to-form-target-triplet/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"scan":[5],"hit":[6,7],"return":[8,9,10]}'>
+                    class Solution(object):
+                        def mergeTriplets(self, triplets, target):
+                            x, y, z = target
+                            a = b = c = False  # found a safe triplet that hits target[0], [1], [2]
+                            for t in triplets:
+                                if t[0] <= x and t[1] <= y and t[2] <= z:  # safe to merge
+                                    a, b, c = a or t[0] == x, b or t[1] == y, c or t[2] == z
+                                    if a and b and c:  # all three hit: merging those gives the target
+                                        return True
+                            return False
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"scan":[6],"hit":[7,8,9,10],"return":[11,14]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool mergeTriplets(std::vector<std::vector<int>>& triplets, std::vector<int>& target) {
+                            bool a = false, b = false, c = false; // found a safe triplet that hits target[0], [1], [2]
+                            for (auto& t : triplets) {
+                                if (t[0] <= target[0] && t[1] <= target[1] && t[2] <= target[2]) { // safe to merge
+                                    a |= t[0] == target[0];
+                                    b |= t[1] == target[1];
+                                    c |= t[2] == target[2];
+                                    if (a && b && c) return true; // all three hit: merging those gives the target
+                                }
+                            }
+                            return false;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"scan":[4],"hit":[5,6,7,8],"return":[9,12]}'>
+                    class Solution {
+                        public boolean mergeTriplets(int[][] triplets, int[] target) {
+                            boolean a = false, b = false, c = false; // found a safe triplet that hits target[0], [1], [2]
+                            for (int[] t : triplets) {
+                                if (t[0] <= target[0] && t[1] <= target[1] && t[2] <= target[2]) { // safe to merge
+                                    a |= t[0] == target[0];
+                                    b |= t[1] == target[1];
+                                    c |= t[2] == target[2];
+                                    if (a && b && c) return true; // all three hit: merging those gives the target
+                                }
+                            }
+                            return false;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>Nothing built in. Approach 3 is what you'd write.</p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Every Reachable Triplet</th>
+                        <td>Set of all merges</td>
+                        <td>O(n⁴)</td>
+                        <td>O(n³)</td>
+                        <td>9.6 s at 200 in Python</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Merge Every Safe Triplet</th>
+                        <td>Filter, then max</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>Always reads everything</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Three Flags</th>
+                        <td>Hit each target value</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>Expected answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -85251,6 +85576,130 @@
           }
           const ans = queries.map((q) => at[q]);
           steps.push({ line: "return", note: `Return ${show(ans)}, in the queries' order. Each interval is pushed and popped once: O(n log n + q log q).`, view: [hv()] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/1899-merge-triplets-to-form-target-triplet/approach1.visual.js -->
+    <script>
+      // Keep every triplet that merging some of them can make; check whether the target shows up.
+      (function () {
+      const INPUTS = [
+        { name: "triplets", type: "int[][]", value: "[[2, 5, 3], [1, 8, 4], [1, 7, 5]]", maxRows: 6, maxCols: 3, minValue: 1, maxValue: 1000 },
+        { name: "target", type: "int[]", value: "[2, 7, 5]", minLength: 3, maxLength: 3, minValue: 1, maxValue: 1000 },
+      ];
+      function check(ts) {
+        if (!ts.length) throw new DSAViz.InputError("Give at least one triplet.");
+        if (ts.some((t) => t.length !== 3)) throw new DSAViz.InputError("Each triplet has 3 numbers, like [2, 5, 3].");
+      }
+      const tv = (ts, label, marks = {}) => ({ type: "array", label, values: ts.map((t) => `[${t.join(", ")}]`), wide: true, marks });
+      const safe = (t, g) => t[0] <= g[0] && t[1] <= g[1] && t[2] <= g[2];
+      DSAViz.register("1899-merge-triplets-to-form-target-triplet/approach1", {
+        inputs: INPUTS,
+        trace({ triplets, target }) {
+          check(triplets);
+          const key = (t) => t.join(", ");
+          const seen = new Map();
+          const want = key(target);
+          const sv = (fresh = []) => ({ type: "set", label: `reachable triplets (${seen.size})`, items: [...seen.keys()].map((k) => `[${k}]`), marks: Object.fromEntries(fresh.map((k) => [`[${k}]`, k === want ? "match" : "new"])) });
+          const steps = [{ line: "init", note: `Nothing merged yet. Target [${want}].`, view: [tv(triplets, "triplets"), sv()] }];
+          for (let i = 0; i < triplets.length; i++) {
+            const t = triplets[i];
+            const fresh = [];
+            const add = (x) => { const k = key(x); if (!seen.has(k)) { seen.set(k, x); fresh.push(k); } };
+            const old = [...seen.values()];
+            add(t);
+            for (const s of old) add(s.map((v, k) => Math.max(v, t[k])));
+            if (seen.has(want)) {
+              steps.push({ line: ["add", "found"], note: `Add [${key(t)}] alone and merged into each one so far. [${want}] is reachable. Return true.`, view: [tv(triplets, "triplets", { [i]: "active" }), sv(fresh)] });
+              steps.push({ line: "found", note: `Return true. The set can grow to n³ triplets: slow for big n.`, view: [sv([want])] });
+              return steps;
+            }
+            steps.push({ line: "add", note: `Add [${key(t)}] alone and merged into each one so far: ${fresh.length} new.`, view: [tv(triplets, "triplets", { [i]: "active" }), sv(fresh)] });
+          }
+          steps.push({ line: "return", note: `Return false. [${want}] never appeared. The set can grow to n³ triplets: slow for big n.`, view: [sv()] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/1899-merge-triplets-to-form-target-triplet/approach2.visual.js -->
+    <script>
+      // Merge every triplet that's safe (no value above the target). That gets as close as possible; compare with the target.
+      (function () {
+      const INPUTS = [
+        { name: "triplets", type: "int[][]", value: "[[2, 5, 3], [1, 8, 4], [1, 7, 5]]", maxRows: 6, maxCols: 3, minValue: 1, maxValue: 1000 },
+        { name: "target", type: "int[]", value: "[2, 7, 5]", minLength: 3, maxLength: 3, minValue: 1, maxValue: 1000 },
+      ];
+      function check(ts) {
+        if (!ts.length) throw new DSAViz.InputError("Give at least one triplet.");
+        if (ts.some((t) => t.length !== 3)) throw new DSAViz.InputError("Each triplet has 3 numbers, like [2, 5, 3].");
+      }
+      const tv = (ts, label, marks = {}) => ({ type: "array", label, values: ts.map((t) => `[${t.join(", ")}]`), wide: true, marks });
+      const safe = (t, g) => t[0] <= g[0] && t[1] <= g[1] && t[2] <= g[2];
+      DSAViz.register("1899-merge-triplets-to-form-target-triplet/approach2", {
+        inputs: INPUTS,
+        trace({ triplets, target }) {
+          check(triplets);
+          let merged = [0, 0, 0];
+          const marks = {};
+          const mv = (mark) => ({ type: "vars", items: [{ name: "merged", value: `[${merged.join(", ")}]`, mark }, { name: "target", value: `[${target.join(", ")}]` }] });
+          const steps = [{ line: "init", note: "Merging takes the max of each position. Start from [0, 0, 0].", view: [tv(triplets, "triplets"), mv()] }];
+          triplets.forEach((t, i) => {
+            if (safe(t, target)) {
+              merged = merged.map((v, k) => Math.max(v, t[k]));
+              marks[i] = "match";
+              steps.push({ line: ["scan", "merge"], note: `[${t.join(", ")}] is safe: every value ≤ the target's. Merge it in.`, view: [tv(triplets, "triplets; green = merged, red = skipped", { ...marks, [i]: "new" }), mv("new")] });
+            } else {
+              marks[i] = "cut";
+              const k = [0, 1, 2].find((p) => t[p] > target[p]);
+              steps.push({ line: "scan", note: `[${t.join(", ")}] has ${t[k]} > ${target[k]} at position ${k}. Merging it would overshoot for good. Skip.`, view: [tv(triplets, "triplets; green = merged, red = skipped", marks), mv()] });
+            }
+          });
+          const ok = merged.every((v, k) => v === target[k]);
+          steps.push({ line: "return", note: `Return ${ok}. [${merged.join(", ")}] ${ok ? "is" : "isn't"} the target. One pass: O(n).`, view: [mv(ok ? "match" : "cut")] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/1899-merge-triplets-to-form-target-triplet/approach3.visual.js -->
+    <script>
+      // Among safe triplets, note which target positions some triplet hits exactly. All three hit: true.
+      (function () {
+      const INPUTS = [
+        { name: "triplets", type: "int[][]", value: "[[2, 5, 3], [1, 8, 4], [1, 7, 5]]", maxRows: 6, maxCols: 3, minValue: 1, maxValue: 1000 },
+        { name: "target", type: "int[]", value: "[2, 7, 5]", minLength: 3, maxLength: 3, minValue: 1, maxValue: 1000 },
+      ];
+      function check(ts) {
+        if (!ts.length) throw new DSAViz.InputError("Give at least one triplet.");
+        if (ts.some((t) => t.length !== 3)) throw new DSAViz.InputError("Each triplet has 3 numbers, like [2, 5, 3].");
+      }
+      const tv = (ts, label, marks = {}) => ({ type: "array", label, values: ts.map((t) => `[${t.join(", ")}]`), wide: true, marks });
+      const safe = (t, g) => t[0] <= g[0] && t[1] <= g[1] && t[2] <= g[2];
+      DSAViz.register("1899-merge-triplets-to-form-target-triplet/approach3", {
+        inputs: INPUTS,
+        trace({ triplets, target }) {
+          check(triplets);
+          const hit = [false, false, false];
+          const marks = {};
+          const hv = () => ({ type: "array", label: "target; green = some safe triplet hits it", values: target, marks: Object.fromEntries(hit.map((h, k) => [k, h ? "match" : ""]).filter(([, m]) => m)) });
+          const steps = [{ line: "init", note: "No position of the target hit yet.", view: [tv(triplets, "triplets"), hv()] }];
+          for (let i = 0; i < triplets.length; i++) {
+            const t = triplets[i];
+            if (!safe(t, target)) { marks[i] = "cut"; steps.push({ line: "scan", note: `[${t.join(", ")}] goes over the target somewhere. Skip.`, view: [tv(triplets, "triplets", marks), hv()] }); continue; }
+            const now = [0, 1, 2].filter((k) => t[k] === target[k] && !hit[k]);
+            now.forEach((k) => (hit[k] = true));
+            marks[i] = "match";
+            if (hit.every(Boolean)) {
+              steps.push({ line: ["scan", "hit", "return"], note: `[${t.join(", ")}] is safe${now.length ? ` and hits position${now.length > 1 ? "s" : ""} ${now.join(", ")}` : ""}. All three are hit: merging those triplets gives the target. Return true.`, view: [tv(triplets, "triplets", { ...marks, [i]: "new" }), hv()] });
+              steps.push({ line: "return", note: "Return true. Stopped early; at most one pass: O(n).", view: [hv()] });
+              return steps;
+            }
+            steps.push({ line: ["scan", "hit"], note: `[${t.join(", ")}] is safe. ${now.length ? `It hits position${now.length > 1 ? "s" : ""} ${now.join(", ")}.` : "It hits nothing new."}`, view: [tv(triplets, "triplets", { ...marks, [i]: "new" }), hv()] });
+          }
+          steps.push({ line: "return", note: `Return false. Position${hit.filter((h) => !h).length > 1 ? "s" : ""} ${[0, 1, 2].filter((k) => !hit[k]).join(", ")} never hit. O(n).`, view: [hv()] });
           return steps;
         },
       });
