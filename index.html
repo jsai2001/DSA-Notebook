@@ -23635,7 +23635,7 @@
       <details class="pattern-group" id="g-heap">
         <summary>
           <span class="g-name">Heap / Priority Queue</span>
-          <span class="g-count"><span class="g-total">1 problem</span></span>
+          <span class="g-count"><span class="g-total">2 problems</span></span>
           <span class="g-hint">Always pop the smallest (or biggest) first</span>
         </summary>
         <div class="g-body">
@@ -24004,6 +24004,344 @@
                         <td>O(n) average</td>
                         <td>O(1)</td>
                         <td>Fastest in C++ and Java</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0703-kth-largest-element-in-a-stream ===== -->
+          <details class="question" data-group="heap" data-tags="heap priority queue design stream kth largest min-heap binary search">
+            <summary>
+              <span class="q-title">703. Kth Largest Element in a Stream</span>
+              <span class="q-meta">
+                <span class="badge easy">Easy</span>
+                <span class="tag">Heap (Priority Queue)</span>
+                <span class="tag">Design</span>
+                <span class="tag">Data Stream</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Only the k biggest values ever matter. Keep
+                them in a <strong>min-heap of size k</strong>: push each new value,
+                and if the heap has more than k, pop the smallest. The top is the k-th
+                biggest. O(log k) per <code>add</code>, O(k) memory.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/kth-largest-element-in-a-stream/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Build <code>KthLargest(k, nums)</code>. Each <code>add(val)</code>
+                  adds a value to the stream and returns the k-th largest value so far
+                  (counting repeats).
+                </p>
+                <ul>
+                  <li><code>0 &lt;= nums.length &lt;= 10⁴</code>, <code>1 &lt;= k &lt;= nums.length + 1</code></li>
+                  <li>At most 10⁴ calls to <code>add</code>; values are in <code>[-10⁴, 10⁴]</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>k = 3, nums = [4,5,8,2]</code>, then add
+                  <code>3, 5, 10, 9, 4</code> → <code>4, 5, 5, 8, 8</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>k = 1, nums = []</code>, add 8140, 2362</td>
+                        <td><code>8140, 8140</code></td>
+                        <td>A min-heap that never trims back to k returns the smallest value instead: <code>8140, 2362</code>. Wrong on 1944 of 2004 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>k = 1, nums = []</code></td>
+                        <td>-</td>
+                        <td>The stream starts empty; the first <code>add</code> brings it to k values.</td>
+                      </tr>
+                      <tr>
+                        <td><code>k = 4, nums = [7,7,7,7,8,3]</code>, add 2</td>
+                        <td><code>7</code></td>
+                        <td>Repeats count: the top four are 8, 7, 7, 7.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Sort on Every Add</h2>
+                <p class="intuition">
+                  Keep every value. On each <code>add</code>, append it, sort
+                  everything biggest first, and return position <code>k − 1</code>.
+                </p>
+                <ul>
+                  <li>Memory keeps growing with the stream.</li>
+                  <li>
+                    Python's sort (Timsort) finds the already-sorted run, so re-sorting
+                    after one append took 51 µs for 20,000 values, against 1.8 ms for a
+                    random list.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n) per add (less with Timsort)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  10⁴ starting values, then 10⁴ adds, k = 5000: Python 450 ms, Java
+                  197 ms, C++ 206 ms.
+                </p>
+                <div class="code-tabs" data-viz="0703-kth-largest-element-in-a-stream/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"add":[6],"sort":[7],"answer":[8]}'>
+                    class KthLargest(object):
+                        def __init__(self, k, nums):
+                            self.k = k
+                            self.nums = list(nums)  # every value seen
+                        def add(self, val):
+                            self.nums.append(val)
+                            self.nums.sort(reverse=True)  # sort everything again, biggest first
+                            return self.nums[self.k - 1]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"add":[8],"sort":[9],"answer":[10]}'>
+                    #include <algorithm>
+                    #include <functional>
+                    #include <vector>
+                    class KthLargest {
+                    public:
+                        KthLargest(int k, std::vector<int>& nums) : k(k), nums(nums) {} // every value seen
+                        int add(int val) {
+                            nums.push_back(val);
+                            std::sort(nums.begin(), nums.end(), std::greater<int>()); // sort everything again, biggest first
+                            return nums[k - 1];
+                        }
+                    private:
+                        int k;
+                        std::vector<int> nums;
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,6,7],"add":[10],"sort":[11],"answer":[12]}'>
+                    import java.util.*;
+                    class KthLargest {
+                        private final int k;
+                        private final List<Integer> nums = new ArrayList<>(); // every value seen
+                        public KthLargest(int k, int[] nums) {
+                            this.k = k;
+                            for (int x : nums) this.nums.add(x);
+                        }
+                        public int add(int val) {
+                            nums.add(val);
+                            nums.sort(Collections.reverseOrder()); // sort everything again, biggest first
+                            return nums.get(k - 1);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Sorted List, Binary Insert</h2>
+                <p class="intuition">
+                  Sort the starting values once. For each <code>add</code>, binary
+                  search for where the value goes and insert it there. The answer is
+                  the k-th value from the end.
+                </p>
+                <ul>
+                  <li>The search is O(log n), but inserting shifts everything after it: O(n).</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n) per add</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  Same test: Python 43 ms, Java 12 ms, C++ 9.4 ms.
+                </p>
+                <div class="code-tabs" data-viz="0703-kth-largest-element-in-a-stream/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5],"add":[7],"answer":[8]}'>
+                    import bisect
+                    class KthLargest(object):
+                        def __init__(self, k, nums):
+                            self.k = k
+                            self.nums = sorted(nums)  # kept sorted, smallest first
+                        def add(self, val):
+                            bisect.insort(self.nums, val)  # binary search for the spot, then shift the rest: O(n)
+                            return self.nums[-self.k]  # the k-th from the end
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"add":[9],"answer":[10]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class KthLargest {
+                    public:
+                        KthLargest(int k, std::vector<int>& nums) : k(k), nums(nums) {
+                            std::sort(this->nums.begin(), this->nums.end()); // kept sorted, smallest first
+                        }
+                        int add(int val) {
+                            nums.insert(std::upper_bound(nums.begin(), nums.end(), val), val); // binary search for the spot, then shift the rest: O(n)
+                            return nums[nums.size() - k]; // the k-th from the end
+                        }
+                    private:
+                        int k;
+                        std::vector<int> nums;
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,6,7,8],"add":[11,12],"answer":[13]}'>
+                    import java.util.*;
+                    class KthLargest {
+                        private final int k;
+                        private final List<Integer> nums = new ArrayList<>(); // kept sorted, smallest first
+                        public KthLargest(int k, int[] nums) {
+                            this.k = k;
+                            for (int x : nums) this.nums.add(x);
+                            Collections.sort(this.nums);
+                        }
+                        public int add(int val) {
+                            int i = Collections.binarySearch(nums, val); // binary search for the spot
+                            nums.add(i < 0 ? -i - 1 : i, val); // then shift the rest: O(n)
+                            return nums.get(nums.size() - k); // the k-th from the end
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Min-Heap of Size k
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Push each value (starting ones too) into a min-heap, and pop
+                  whenever it holds more than <code>k</code>. What stays is the k
+                  biggest; the top is the smallest of them, which is the answer.
+                </p>
+                <ul>
+                  <li>Values that are popped can never come back into the top k, so throwing them away is safe.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(log k) per add</span>
+                  <span><strong>Space</strong> O(k)</span>
+                </div>
+                <p class="note">
+                  Same test: Python 6.9 ms, Java 3.6 ms, C++ 1.8 ms, the fastest in
+                  every language. With k = 1: C++ 0.15 ms.
+                </p>
+                <div class="code-tabs" data-viz="0703-kth-largest-element-in-a-stream/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5,6,7],"add":[9],"pop":[10,11],"answer":[12]}'>
+                    import heapq
+                    class KthLargest(object):
+                        def __init__(self, k, nums):
+                            self.k = k
+                            self.heap = []  # min-heap of the k biggest values; its top is the k-th biggest
+                            for x in nums:
+                                self.add(x)
+                        def add(self, val):
+                            heapq.heappush(self.heap, val)
+                            if len(self.heap) > self.k:  # one too many: the smallest can't be in the top k
+                                heapq.heappop(self.heap)
+                            return self.heap[0]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7],"add":[10],"pop":[11],"answer":[12]}'>
+                    #include <functional>
+                    #include <queue>
+                    #include <vector>
+                    class KthLargest {
+                    public:
+                        KthLargest(int k, std::vector<int>& nums) : k(k) {
+                            for (int x : nums) add(x);
+                        }
+                        int add(int val) {
+                            heap.push(val);
+                            if ((int)heap.size() > k) heap.pop(); // one too many: the smallest can't be in the top k
+                            return heap.top();
+                        }
+                    private:
+                        int k;
+                        std::priority_queue<int, std::vector<int>, std::greater<int>> heap; // min-heap of the k biggest values; its top is the k-th biggest
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,6,7],"add":[10],"pop":[11],"answer":[12]}'>
+                    import java.util.*;
+                    class KthLargest {
+                        private final int k;
+                        private final PriorityQueue<Integer> heap = new PriorityQueue<>(); // min-heap of the k biggest values; its top is the k-th biggest
+                        public KthLargest(int k, int[] nums) {
+                            this.k = k;
+                            for (int x : nums) add(x);
+                        }
+                        public int add(int val) {
+                            heap.add(val);
+                            if (heap.size() > k) heap.poll(); // one too many: the smallest can't be in the top k
+                            return heap.peek();
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  Approach 3 already uses the built-in heaps (<code>heapq</code>,
+                  <code>priority_queue</code>, <code>PriorityQueue</code>). That's what
+                  you'd write.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Sort on Every Add</th>
+                        <td>Append and sort</td>
+                        <td>O(n log n) per add</td>
+                        <td>O(n)</td>
+                        <td>Memory keeps growing</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Sorted List, Binary Insert</th>
+                        <td>Insert at the right spot</td>
+                        <td>O(n) per add</td>
+                        <td>O(n)</td>
+                        <td>Shifting is the cost</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Min-Heap of Size k</th>
+                        <td>Keep the k biggest</td>
+                        <td>O(log k) per add</td>
+                        <td>O(k)</td>
+                        <td>Expected answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -71439,6 +71777,85 @@
         return { type: "grid", label, rows: grid.map((_, k) => k), cols: grid[0].map((_, k) => k), corner: "r \\ c", cells: grid.map((row) => row.map(String)), marks };
       }
       })();
+    </script>
+    <!-- problems/0703-kth-largest-element-in-a-stream/approach1.visual.js -->
+    <script>
+      // Keep every value; after each add, sort everything again and read position k - 1.
+      DSAViz.register("0703-kth-largest-element-in-a-stream/approach1", {
+        inputs: [
+          { name: "k", type: "int", value: "3", min: 1, max: 9 },
+          { name: "nums", type: "int[]", value: "[4, 5, 8, 2]", minLength: 0, maxLength: 8, minValue: -10000, maxValue: 10000 },
+          { name: "adds", label: "values passed to add, in order", type: "int[]", value: "[3, 5, 10, 9, 4]", minLength: 1, maxLength: 6, minValue: -10000, maxValue: 10000 },
+        ],
+        trace({ k, nums, adds }) {
+          if (k > nums.length + 1) throw new DSAViz.InputError(`k can be at most nums.length + 1 = ${nums.length + 1}: after the first add there must be k values.`);
+          const all = nums.slice();
+          const res = [];
+          const steps = [{ line: "init", note: `Store k = ${k} and all ${nums.length} starting values.`, view: [{ type: "array", label: "nums (all values)", values: all.slice() }] }];
+          adds.forEach((v) => {
+            all.push(v);
+            all.sort((a, b) => b - a);
+            res.push(all[k - 1]);
+            steps.push({ line: ["add", "sort", "answer"], note: `add(${v}): append it and sort all ${all.length} values again. Position k − 1 = ${k - 1} holds ${all[k - 1]}.`, view: [{ type: "array", label: "all values, biggest first (green = the k-th biggest)", values: all.slice(), marks: { [k - 1]: "match", [all.indexOf(v)]: all.indexOf(v) === k - 1 ? "match" : "new" } }, { type: "array", label: "answers", values: res.slice(), marks: { [res.length - 1]: "new" } }] });
+          });
+          steps.push({ line: "answer", note: `Return [${res.join(", ")}]. Each add sorts every value: O(n log n) per call, and memory grows forever.`, view: [{ type: "array", label: "answers", values: res }] });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0703-kth-largest-element-in-a-stream/approach2.visual.js -->
+    <script>
+      // Keep every value sorted; each add inserts at its place (found by binary search). The answer is k-th from the end.
+      DSAViz.register("0703-kth-largest-element-in-a-stream/approach2", {
+        inputs: [
+          { name: "k", type: "int", value: "3", min: 1, max: 9 },
+          { name: "nums", type: "int[]", value: "[4, 5, 8, 2]", minLength: 0, maxLength: 8, minValue: -10000, maxValue: 10000 },
+          { name: "adds", label: "values passed to add, in order", type: "int[]", value: "[3, 5, 10, 9, 4]", minLength: 1, maxLength: 6, minValue: -10000, maxValue: 10000 },
+        ],
+        trace({ k, nums, adds }) {
+          if (k > nums.length + 1) throw new DSAViz.InputError(`k can be at most nums.length + 1 = ${nums.length + 1}: after the first add there must be k values.`);
+          const all = nums.slice().sort((a, b) => a - b);
+          const res = [];
+          const steps = [{ line: "init", note: "Sort the starting values once, smallest first.", view: [{ type: "array", label: "nums, sorted", values: all.slice() }] }];
+          adds.forEach((v) => {
+            let lo = 0, hi = all.length;
+            while (lo < hi) { const m = (lo + hi) >> 1; if (all[m] <= v) lo = m + 1; else hi = m; }
+            all.splice(lo, 0, v);
+            res.push(all[all.length - k]);
+            steps.push({ line: ["add", "answer"], note: `add(${v}): binary search finds index ${lo}; insert there (the ${all.length - 1 - lo} value${all.length - 1 - lo === 1 ? "" : "s"} after it shift right). The k-th from the end is ${all[all.length - k]}.`, view: [{ type: "array", label: "all values, smallest first (yellow = inserted, green = k-th from the end)", values: all.slice(), marks: { [lo]: "new", [all.length - k]: "match" } }, { type: "array", label: "answers", values: res.slice(), marks: { [res.length - 1]: "new" } }] });
+          });
+          steps.push({ line: "answer", note: `Return [${res.join(", ")}]. The search is O(log n) but the shifting is O(n) per add.`, view: [{ type: "array", label: "answers", values: res }] });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0703-kth-largest-element-in-a-stream/approach3.visual.js -->
+    <script>
+      // A min-heap that never holds more than k values: the k biggest so far. Its top is the k-th biggest.
+      DSAViz.register("0703-kth-largest-element-in-a-stream/approach3", {
+        inputs: [
+          { name: "k", type: "int", value: "3", min: 1, max: 9 },
+          { name: "nums", type: "int[]", value: "[4, 5, 8, 2]", minLength: 0, maxLength: 8, minValue: -10000, maxValue: 10000 },
+          { name: "adds", label: "values passed to add, in order", type: "int[]", value: "[3, 5, 10, 9, 4]", minLength: 1, maxLength: 6, minValue: -10000, maxValue: 10000 },
+        ],
+        trace({ k, nums, adds }) {
+          if (k > nums.length + 1) throw new DSAViz.InputError(`k can be at most nums.length + 1 = ${nums.length + 1}: after the first add there must be k values.`);
+          const heap = [];
+          const res = [];
+          const steps = [];
+          const sorted = () => heap.slice().sort((a, b) => a - b);
+          const push = (v) => { heap.push(v); let drop = null; if (heap.length > k) { const s = sorted(); drop = s[0]; heap.splice(heap.indexOf(drop), 1); } return drop; };
+          nums.forEach(push);
+          steps.push({ line: ["init", "add", "pop"], note: `Add the ${nums.length} starting values one by one, keeping only the ${k} biggest: heap = [${sorted().join(", ")}].`, view: [{ type: "array", label: `heap, smallest first (at most k = ${k})`, values: sorted() }] });
+          adds.forEach((v) => {
+            const drop = push(v);
+            res.push(Math.min(...heap));
+            steps.push({ line: drop === null ? ["add", "answer"] : ["add", "pop", "answer"], note: `add(${v}): push it.${drop !== null ? ` That's ${k + 1} values: pop the smallest, ${drop}.` : ""} The top, ${res[res.length - 1]}, is the k-th biggest.`, view: [{ type: "array", label: `heap, smallest first (green = the top)`, values: sorted(), marks: { 0: "match" } }, { type: "array", label: "answers", values: res.slice(), marks: { [res.length - 1]: "new" } }] });
+          });
+          steps.push({ line: "answer", note: `Return [${res.join(", ")}]. Each add is O(log k), and memory stays at k values.`, view: [{ type: "array", label: "answers", values: res }] });
+          return steps;
+        },
+      });
     </script>
     <!-- problems/0739-daily-temperatures/approach1.visual.js -->
     <script>

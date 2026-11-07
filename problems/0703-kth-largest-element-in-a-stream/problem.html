@@ -1,0 +1,197 @@
+<details class="question" data-group="heap" data-tags="heap priority queue design stream kth largest min-heap binary search">
+  <summary>
+    <span class="q-title">703. Kth Largest Element in a Stream</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Heap (Priority Queue)</span>
+      <span class="tag">Design</span>
+      <span class="tag">Data Stream</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Only the k biggest values ever matter. Keep
+      them in a <strong>min-heap of size k</strong>: push each new value,
+      and if the heap has more than k, pop the smallest. The top is the k-th
+      biggest. O(log k) per <code>add</code>, O(k) memory.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/kth-largest-element-in-a-stream/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Build <code>KthLargest(k, nums)</code>. Each <code>add(val)</code>
+        adds a value to the stream and returns the k-th largest value so far
+        (counting repeats).
+      </p>
+      <ul>
+        <li><code>0 &lt;= nums.length &lt;= 10⁴</code>, <code>1 &lt;= k &lt;= nums.length + 1</code></li>
+        <li>At most 10⁴ calls to <code>add</code>; values are in <code>[-10⁴, 10⁴]</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>k = 3, nums = [4,5,8,2]</code>, then add
+        <code>3, 5, 10, 9, 4</code> → <code>4, 5, 5, 8, 8</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>k = 1, nums = []</code>, add 8140, 2362</td>
+              <td><code>8140, 8140</code></td>
+              <td>A min-heap that never trims back to k returns the smallest value instead: <code>8140, 2362</code>. Wrong on 1944 of 2004 tests.</td>
+            </tr>
+            <tr>
+              <td><code>k = 1, nums = []</code></td>
+              <td>-</td>
+              <td>The stream starts empty; the first <code>add</code> brings it to k values.</td>
+            </tr>
+            <tr>
+              <td><code>k = 4, nums = [7,7,7,7,8,3]</code>, add 2</td>
+              <td><code>7</code></td>
+              <td>Repeats count: the top four are 8, 7, 7, 7.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Sort on Every Add</h2>
+      <p class="intuition">
+        Keep every value. On each <code>add</code>, append it, sort
+        everything biggest first, and return position <code>k − 1</code>.
+      </p>
+      <ul>
+        <li>Memory keeps growing with the stream.</li>
+        <li>
+          Python's sort (Timsort) finds the already-sorted run, so re-sorting
+          after one append took 51 µs for 20,000 values, against 1.8 ms for a
+          random list.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n) per add (less with Timsort)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        10⁴ starting values, then 10⁴ adds, k = 5000: Python 450 ms, Java
+        197 ms, C++ 206 ms.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Sorted List, Binary Insert</h2>
+      <p class="intuition">
+        Sort the starting values once. For each <code>add</code>, binary
+        search for where the value goes and insert it there. The answer is
+        the k-th value from the end.
+      </p>
+      <ul>
+        <li>The search is O(log n), but inserting shifts everything after it: O(n).</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n) per add</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Same test: Python 43 ms, Java 12 ms, C++ 9.4 ms.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Min-Heap of Size k
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Push each value (starting ones too) into a min-heap, and pop
+        whenever it holds more than <code>k</code>. What stays is the k
+        biggest; the top is the smallest of them, which is the answer.
+      </p>
+      <ul>
+        <li>Values that are popped can never come back into the top k, so throwing them away is safe.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log k) per add</span>
+        <span><strong>Space</strong> O(k)</span>
+      </div>
+      <p class="note">
+        Same test: Python 6.9 ms, Java 3.6 ms, C++ 1.8 ms, the fastest in
+        every language. With k = 1: C++ 0.15 ms.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        Approach 3 already uses the built-in heaps (<code>heapq</code>,
+        <code>priority_queue</code>, <code>PriorityQueue</code>). That's what
+        you'd write.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Sort on Every Add</th>
+              <td>Append and sort</td>
+              <td>O(n log n) per add</td>
+              <td>O(n)</td>
+              <td>Memory keeps growing</td>
+            </tr>
+            <tr>
+              <th scope="row">Sorted List, Binary Insert</th>
+              <td>Insert at the right spot</td>
+              <td>O(n) per add</td>
+              <td>O(n)</td>
+              <td>Shifting is the cost</td>
+            </tr>
+            <tr>
+              <th scope="row">Min-Heap of Size k</th>
+              <td>Keep the k biggest</td>
+              <td>O(log k) per add</td>
+              <td>O(k)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
