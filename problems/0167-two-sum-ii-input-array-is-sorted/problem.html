@@ -1,0 +1,228 @@
+<details class="question" data-group="two-pointers" data-tags="array two-pointers binary-search sorted two sum pair target">
+  <summary>
+    <span class="q-title">167. Two Sum II - Input Array Is Sorted</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Two Pointers</span>
+      <span class="tag">Binary Search</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Start with the smallest and the largest
+      number. If their sum is too small, the smallest can't be in the answer
+      (it can't get bigger), so move left inward; if too big, move right
+      inward. Each step rules out one number: O(n) time, O(1) memory.
+      Return 1-indexed positions.
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>numbers</code> is sorted from small to large. Find the two
+        numbers that add up to <code>target</code> and return their
+        positions <code>[index1, index2]</code>, counting from
+        <strong>1</strong>, with <code>index1 &lt; index2</code>. There is
+        exactly one answer, the same element can't be used twice, and the
+        solution must use only O(1) extra memory.
+      </p>
+      <ul>
+        <li><code>2 &lt;= numbers.length &lt;= 3 × 10⁴</code></li>
+        <li><code>-1000 &lt;= numbers[i] &lt;= 1000</code>, <code>-1000 &lt;= target &lt;= 1000</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[2,7,11,15]</code>, target 9 → <code>[1,2]</code>.
+        <code>[2,3,4]</code>, target 6 → <code>[1,3]</code>.
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[2,7,11,15]</code>, target 9</td>
+              <td><code>[1,2]</code></td>
+              <td>Positions count from 1. Returning array indexes said <code>[0,1]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[0,0]</code>, target 0</td>
+              <td><code>[1,2]</code></td>
+              <td>The two numbers are equal. A binary search over the whole array found the first 0 itself: said <code>[1,1]</code>. Search only after <code>i</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[-1,0]</code>, target −1</td>
+              <td><code>[1,2]</code></td>
+              <td>Negative numbers: the two-pointer reasoning doesn't change.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3,4,4,9,56,90]</code>, target 8</td>
+              <td><code>[4,5]</code></td>
+              <td>Duplicates next to each other.</td>
+            </tr>
+            <tr>
+              <td>3 × 10⁴ numbers, the pair in the middle</td>
+              <td>the middle two</td>
+              <td>Checking every pair took 13.2 s in Python; the two pointers took 2.4 ms.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Every Pair</h2>
+      <p class="intuition">
+        Check every pair <code>i &lt; j</code> and return the one that adds
+        up to <code>target</code>.
+      </p>
+      <ul>
+        <li>Ignores that the array is sorted.</li>
+        <li>n(n − 1) / 2 pairs.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        At 3 × 10⁴ with the pair in the middle: Python 13.2 s, C++ 0.14 s,
+        Java 67 ms. Too slow in Python.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Binary Search for the Other Number</h2>
+      <p class="intuition">
+        For each <code>numbers[i]</code>, the other number must be
+        <code>target − numbers[i]</code>. The array is sorted, so binary
+        search for it, but only in the part <strong>after</strong>
+        <code>i</code>.
+      </p>
+      <ul>
+        <li>Uses the sorted order, and O(1) memory.</li>
+        <li>Searching after <code>i</code> also keeps <code>index1 &lt; index2</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        At 3 × 10⁴: Python 19 ms, Java 3.1 ms, C++ 0.4 ms. Fast, but not the
+        best possible.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Two Pointers From Both Ends
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        <code>lo</code> at the start, <code>hi</code> at the end. Sum too
+        small: <code>lo += 1</code>. Too big: <code>hi -= 1</code>. Equal:
+        return <code>[lo + 1, hi + 1]</code>.
+      </p>
+      <ul>
+        <li>
+          Why it's safe: if the sum is too small, <code>numbers[lo]</code>
+          plus anything still in range is at most this sum, so
+          <code>lo</code> can never be part of the answer.
+        </li>
+        <li>The pointers never cross the answer, so they meet it.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        At 3 × 10⁴: Python 2.4 ms, Java 1.2 ms, C++ 0.08 ms. The expected
+        answer. A hash map (as in Two Sum, problem 1) is also O(n), but breaks
+        the O(1)-memory rule.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No standard function finds a pair. Python's <code>bisect</code>,
+        C++'s <code>lower_bound</code> and Java's
+        <code>Arrays.binarySearch</code> can replace the hand-written search
+        in Approach 2 (search from <code>i + 1</code>).
+      </p>
+      <p class="note">
+        Approach 3 is what you'd write: shorter than either, and faster.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Every Pair</th>
+              <td>Two loops</td>
+              <td>O(n²)</td>
+              <td>O(1)</td>
+              <td>13.2 s in Python at full size</td>
+            </tr>
+            <tr>
+              <th scope="row">Binary Search for the Other Number</th>
+              <td>Search target − x after i</td>
+              <td>O(n log n)</td>
+              <td>O(1)</td>
+              <td>Search only after i</td>
+            </tr>
+            <tr>
+              <th scope="row">Two Pointers From Both Ends</th>
+              <td>Too small: lo up; too big: hi down</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

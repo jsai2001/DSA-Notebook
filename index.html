@@ -1784,7 +1784,7 @@
       <details class="pattern-group" id="g-two-pointers">
         <summary>
           <span class="g-name">Two Pointers</span>
-          <span class="g-count"><span class="g-total">4 problems</span></span>
+          <span class="g-count"><span class="g-total">5 problems</span></span>
           <span class="g-hint">Two indexes moving toward each other</span>
         </summary>
         <div class="g-body">
@@ -3715,6 +3715,377 @@
                         <td>O(n)</td>
                         <td>O(1)</td>
                         <td>Expected answer; mind <code>i &lt; j</code> while skipping</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0167-two-sum-ii-input-array-is-sorted ===== -->
+          <details class="question" data-group="two-pointers" data-tags="array two-pointers binary-search sorted two sum pair target">
+            <summary>
+              <span class="q-title">167. Two Sum II - Input Array Is Sorted</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Array</span>
+                <span class="tag">Two Pointers</span>
+                <span class="tag">Binary Search</span>
+              </span>
+            </summary>
+
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Start with the smallest and the largest
+                number. If their sum is too small, the smallest can't be in the answer
+                (it can't get bigger), so move left inward; if too big, move right
+                inward. Each step rules out one number: O(n) time, O(1) memory.
+                Return 1-indexed positions.
+              </div>
+
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  <code>numbers</code> is sorted from small to large. Find the two
+                  numbers that add up to <code>target</code> and return their
+                  positions <code>[index1, index2]</code>, counting from
+                  <strong>1</strong>, with <code>index1 &lt; index2</code>. There is
+                  exactly one answer, the same element can't be used twice, and the
+                  solution must use only O(1) extra memory.
+                </p>
+                <ul>
+                  <li><code>2 &lt;= numbers.length &lt;= 3 × 10⁴</code></li>
+                  <li><code>-1000 &lt;= numbers[i] &lt;= 1000</code>, <code>-1000 &lt;= target &lt;= 1000</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>[2,7,11,15]</code>, target 9 → <code>[1,2]</code>.
+                  <code>[2,3,4]</code>, target 6 → <code>[1,3]</code>.
+                </p>
+              </section>
+
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[2,7,11,15]</code>, target 9</td>
+                        <td><code>[1,2]</code></td>
+                        <td>Positions count from 1. Returning array indexes said <code>[0,1]</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[0,0]</code>, target 0</td>
+                        <td><code>[1,2]</code></td>
+                        <td>The two numbers are equal. A binary search over the whole array found the first 0 itself: said <code>[1,1]</code>. Search only after <code>i</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[-1,0]</code>, target −1</td>
+                        <td><code>[1,2]</code></td>
+                        <td>Negative numbers: the two-pointer reasoning doesn't change.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2,3,4,4,9,56,90]</code>, target 8</td>
+                        <td><code>[4,5]</code></td>
+                        <td>Duplicates next to each other.</td>
+                      </tr>
+                      <tr>
+                        <td>3 × 10⁴ numbers, the pair in the middle</td>
+                        <td>the middle two</td>
+                        <td>Checking every pair took 13.2 s in Python; the two pointers took 2.4 ms.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Every Pair</h2>
+                <p class="intuition">
+                  Check every pair <code>i &lt; j</code> and return the one that adds
+                  up to <code>target</code>.
+                </p>
+                <ul>
+                  <li>Ignores that the array is sorted.</li>
+                  <li>n(n − 1) / 2 pairs.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n²)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  At 3 × 10⁴ with the pair in the middle: Python 13.2 s, C++ 0.14 s,
+                  Java 67 ms. Too slow in Python.
+                </p>
+                <div class="code-tabs" data-viz="0167-two-sum-ii-input-array-is-sorted/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"pair":[4,5],"check":[6],"found":[7]}'>
+                    class Solution(object):
+                        def twoSum(self, numbers, target):
+                            n = len(numbers)
+                            for i in range(n):
+                                for j in range(i + 1, n):  # every pair i < j
+                                    if numbers[i] + numbers[j] == target:
+                                        return [i + 1, j + 1]  # the answer is 1-indexed
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"pair":[6,7],"check":[8],"found":[9]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> twoSum(std::vector<int>& numbers, int target) {
+                            const int n = numbers.size();
+                            for (int i = 0; i < n; ++i) {
+                                for (int j = i + 1; j < n; ++j) { // every pair i < j
+                                    if (numbers[i] + numbers[j] == target) {
+                                        return {i + 1, j + 1}; // the answer is 1-indexed
+                                    }
+                                }
+                            }
+                            return {}; // not reached: exactly one answer exists
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"pair":[4,5],"check":[6],"found":[7]}'>
+                    class Solution {
+                        public int[] twoSum(int[] numbers, int target) {
+                            int n = numbers.length;
+                            for (int i = 0; i < n; i++) {
+                                for (int j = i + 1; j < n; j++) { // every pair i < j
+                                    if (numbers[i] + numbers[j] == target) {
+                                        return new int[] {i + 1, j + 1}; // the answer is 1-indexed
+                                    }
+                                }
+                            }
+                            return new int[0]; // not reached: exactly one answer exists
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Binary Search for the Other Number</h2>
+                <p class="intuition">
+                  For each <code>numbers[i]</code>, the other number must be
+                  <code>target − numbers[i]</code>. The array is sorted, so binary
+                  search for it, but only in the part <strong>after</strong>
+                  <code>i</code>.
+                </p>
+                <ul>
+                  <li>Uses the sorted order, and O(1) memory.</li>
+                  <li>Searching after <code>i</code> also keeps <code>index1 &lt; index2</code>.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  At 3 × 10⁴: Python 19 ms, Java 3.1 ms, C++ 0.4 ms. Fast, but not the
+                  best possible.
+                </p>
+                <div class="code-tabs" data-viz="0167-two-sum-ii-input-array-is-sorted/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"pick":[4,5],"search":[6,7,8,11,12,13,14],"found":[9,10]}'>
+                    class Solution(object):
+                        def twoSum(self, numbers, target):
+                            n = len(numbers)
+                            for i in range(n):
+                                need = target - numbers[i]
+                                lo, hi = i + 1, n - 1  # search only AFTER i, so i isn't used twice
+                                while lo <= hi:
+                                    mid = (lo + hi) // 2
+                                    if numbers[mid] == need:
+                                        return [i + 1, mid + 1]
+                                    if numbers[mid] < need:
+                                        lo = mid + 1
+                                    else:
+                                        hi = mid - 1
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"pick":[6,7],"search":[8,9,10,12,13],"found":[11]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> twoSum(std::vector<int>& numbers, int target) {
+                            const int n = numbers.size();
+                            for (int i = 0; i < n; ++i) {
+                                int need = target - numbers[i];
+                                int lo = i + 1, hi = n - 1; // search only AFTER i, so i isn't used twice
+                                while (lo <= hi) {
+                                    int mid = lo + (hi - lo) / 2;
+                                    if (numbers[mid] == need) return {i + 1, mid + 1};
+                                    if (numbers[mid] < need) lo = mid + 1;
+                                    else hi = mid - 1;
+                                }
+                            }
+                            return {}; // not reached: exactly one answer exists
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"pick":[4,5],"search":[6,7,8,10,11],"found":[9]}'>
+                    class Solution {
+                        public int[] twoSum(int[] numbers, int target) {
+                            int n = numbers.length;
+                            for (int i = 0; i < n; i++) {
+                                int need = target - numbers[i];
+                                int lo = i + 1, hi = n - 1; // search only AFTER i, so i isn't used twice
+                                while (lo <= hi) {
+                                    int mid = lo + (hi - lo) / 2;
+                                    if (numbers[mid] == need) return new int[] {i + 1, mid + 1};
+                                    if (numbers[mid] < need) lo = mid + 1;
+                                    else hi = mid - 1;
+                                }
+                            }
+                            return new int[0]; // not reached: exactly one answer exists
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Two Pointers From Both Ends
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  <code>lo</code> at the start, <code>hi</code> at the end. Sum too
+                  small: <code>lo += 1</code>. Too big: <code>hi -= 1</code>. Equal:
+                  return <code>[lo + 1, hi + 1]</code>.
+                </p>
+                <ul>
+                  <li>
+                    Why it's safe: if the sum is too small, <code>numbers[lo]</code>
+                    plus anything still in range is at most this sum, so
+                    <code>lo</code> can never be part of the answer.
+                  </li>
+                  <li>The pointers never cross the answer, so they meet it.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  At 3 × 10⁴: Python 2.4 ms, Java 1.2 ms, C++ 0.08 ms. The expected
+                  answer. A hash map (as in Two Sum, problem 1) is also O(n), but breaks
+                  the O(1)-memory rule.
+                </p>
+                <div class="code-tabs" data-viz="0167-two-sum-ii-input-array-is-sorted/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"loop":[4,5],"found":[6,7],"up":[8,9],"down":[10,11]}'>
+                    class Solution(object):
+                        def twoSum(self, numbers, target):
+                            lo, hi = 0, len(numbers) - 1  # the smallest and the largest
+                            while lo < hi:
+                                s = numbers[lo] + numbers[hi]
+                                if s == target:
+                                    return [lo + 1, hi + 1]  # 1-indexed
+                                if s < target:  # too small: only a bigger left number can help
+                                    lo += 1
+                                else:  # too big: only a smaller right number can help
+                                    hi -= 1
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"loop":[6,7],"found":[8],"up":[9],"down":[10]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> twoSum(std::vector<int>& numbers, int target) {
+                            int lo = 0, hi = static_cast<int>(numbers.size()) - 1; // the smallest and the largest
+                            while (lo < hi) {
+                                int s = numbers[lo] + numbers[hi];
+                                if (s == target) return {lo + 1, hi + 1}; // 1-indexed
+                                if (s < target) ++lo; // too small: only a bigger left number can help
+                                else --hi; // too big: only a smaller right number can help
+                            }
+                            return {}; // not reached: exactly one answer exists
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"loop":[4,5],"found":[6],"up":[7],"down":[8]}'>
+                    class Solution {
+                        public int[] twoSum(int[] numbers, int target) {
+                            int lo = 0, hi = numbers.length - 1; // the smallest and the largest
+                            while (lo < hi) {
+                                int s = numbers[lo] + numbers[hi];
+                                if (s == target) return new int[] {lo + 1, hi + 1}; // 1-indexed
+                                if (s < target) lo++; // too small: only a bigger left number can help
+                                else hi--; // too big: only a smaller right number can help
+                            }
+                            return new int[0]; // not reached: exactly one answer exists
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  No standard function finds a pair. Python's <code>bisect</code>,
+                  C++'s <code>lower_bound</code> and Java's
+                  <code>Arrays.binarySearch</code> can replace the hand-written search
+                  in Approach 2 (search from <code>i + 1</code>).
+                </p>
+                <p class="note">
+                  Approach 3 is what you'd write: shorter than either, and faster.
+                </p>
+              </section>
+
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Every Pair</th>
+                        <td>Two loops</td>
+                        <td>O(n²)</td>
+                        <td>O(1)</td>
+                        <td>13.2 s in Python at full size</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Binary Search for the Other Number</th>
+                        <td>Search target − x after i</td>
+                        <td>O(n log n)</td>
+                        <td>O(1)</td>
+                        <td>Search only after i</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Two Pointers From Both Ends</th>
+                        <td>Too small: lo up; too big: hi down</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>Expected answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -53917,6 +54288,158 @@
           if (op === "pop") size--;
           return [op];
         });
+      }
+      })();
+    </script>
+    <!-- problems/0167-two-sum-ii-input-array-is-sorted/approach1.visual.js -->
+    <script>
+      // Check every pair i < j.
+      (function () {
+      DSAViz.register("0167-two-sum-ii-input-array-is-sorted/approach1", {
+        inputs: [
+          { name: "numbers", type: "int[]", value: "[1, 3, 4, 6, 8, 11]", minLength: 2, maxLength: 10, minValue: -99, maxValue: 99 },
+          { name: "target", type: "int", value: "10", min: -198, max: 198 },
+        ],
+        trace({ numbers, target }) {
+          checkInput(numbers, target);
+          const n = numbers.length;
+          const steps = [];
+          let checked = 0;
+          const view = (i, j, o = {}) => [
+            { type: "array", label: "numbers", values: numbers, marks: { [i]: o.ok ? "match" : "active", [j]: o.ok ? "match" : "compare" }, pointers: { i, j } },
+            { type: "vars", items: [{ name: "sum", value: numbers[i] + numbers[j], mark: o.ok ? "match" : "" }, { name: "target", value: target }, { name: "pairs checked", value: checked }] },
+          ];
+          steps.push({ line: "init", note: `Try every pair. ${n} numbers make ${(n * (n - 1)) / 2} pairs.`, view: [{ type: "array", label: "numbers", values: numbers }] });
+          for (let i = 0; i < n; i++) {
+            for (let j = i + 1; j < n; j++) {
+              checked++;
+              const s = numbers[i] + numbers[j];
+              if (s === target) {
+                steps.push({ line: ["pair", "check", "found"], note: `${numbers[i]} + ${numbers[j]} = ${target}. Return [${i + 1}, ${j + 1}]: 1-indexed. ${checked} pairs checked: O(n²).`, view: view(i, j, { ok: true }) });
+                return steps;
+              }
+              steps.push({ line: ["pair", "check"], note: `${numbers[i]} + ${numbers[j]} = ${s}, not ${target}.`, view: view(i, j) });
+            }
+          }
+          return steps;
+        },
+      });
+
+      // LeetCode's promises: sorted, and exactly one pair adds up to target.
+      function checkInput(numbers, target) {
+        if (numbers.some((x, k) => k && x < numbers[k - 1])) throw new DSAViz.InputError("numbers must be sorted from small to large.");
+        let pairs = 0;
+        for (let i = 0; i < numbers.length; i++) for (let j = i + 1; j < numbers.length; j++) if (numbers[i] + numbers[j] === target) pairs++;
+        if (pairs !== 1) throw new DSAViz.InputError(pairs ? `${pairs} pairs add up to ${target}; the problem promises exactly one.` : `No pair adds up to ${target}; the problem promises exactly one.`);
+      }
+      })();
+    </script>
+    <!-- problems/0167-two-sum-ii-input-array-is-sorted/approach2.visual.js -->
+    <script>
+      // For each number, binary search the part after it for target - number.
+      (function () {
+      DSAViz.register("0167-two-sum-ii-input-array-is-sorted/approach2", {
+        inputs: [
+          { name: "numbers", type: "int[]", value: "[1, 3, 4, 6, 8, 11]", minLength: 2, maxLength: 10, minValue: -99, maxValue: 99 },
+          { name: "target", type: "int", value: "10", min: -198, max: 198 },
+        ],
+        trace({ numbers, target }) {
+          checkInput(numbers, target);
+          const n = numbers.length;
+          const steps = [];
+          let probes = 0;
+          const view = (i, lo, hi, mid, o = {}) => {
+            const marks = {};
+            numbers.forEach((_, k) => (marks[k] = k <= i ? "ghost" : k >= lo && k <= hi ? "window" : "ghost"));
+            marks[i] = o.ok ? "match" : "active";
+            if (mid !== undefined) marks[mid] = o.ok ? "match" : "compare";
+            const pointers = { i };
+            if (mid !== undefined) pointers.mid = mid;
+            return [
+              { type: "array", label: "numbers (outlined = where the search looks: only after i)", values: numbers, marks, pointers },
+              { type: "vars", items: [{ name: "need", value: target - numbers[i] }, { name: "binary-search probes", value: probes }] },
+            ];
+          };
+          for (let i = 0; i < n; i++) {
+            const need = target - numbers[i];
+            let lo = i + 1;
+            let hi = n - 1;
+            steps.push({ line: ["pick", "search"], note: `numbers[${i}] = ${numbers[i]} needs ${target} − ${numbers[i]} = ${need}. Search only after index ${i}, so the same number isn't used twice.`, view: view(i, lo, hi) });
+            while (lo <= hi) {
+              const mid = Math.floor((lo + hi) / 2);
+              probes++;
+              if (numbers[mid] === need) {
+                steps.push({ line: ["search", "found"], note: `numbers[${mid}] = ${need}. Return [${i + 1}, ${mid + 1}]. ${probes} probes: O(log n) per number, O(n log n) in all.`, view: view(i, lo, hi, mid, { ok: true }) });
+                return steps;
+              }
+              const up = numbers[mid] < need;
+              steps.push({ line: "search", note: `numbers[${mid}] = ${numbers[mid]} is ${up ? "too small: look right" : "too big: look left"}.`, view: view(i, lo, hi, mid) });
+              if (up) lo = mid + 1; else hi = mid - 1;
+            }
+            steps.push({ line: "search", note: `${need} isn't after index ${i}. Next number.`, view: view(i, 1, 0) });
+          }
+          return steps;
+        },
+      });
+
+      // LeetCode's promises: sorted, and exactly one pair adds up to target.
+      function checkInput(numbers, target) {
+        if (numbers.some((x, k) => k && x < numbers[k - 1])) throw new DSAViz.InputError("numbers must be sorted from small to large.");
+        let pairs = 0;
+        for (let i = 0; i < numbers.length; i++) for (let j = i + 1; j < numbers.length; j++) if (numbers[i] + numbers[j] === target) pairs++;
+        if (pairs !== 1) throw new DSAViz.InputError(pairs ? `${pairs} pairs add up to ${target}; the problem promises exactly one.` : `No pair adds up to ${target}; the problem promises exactly one.`);
+      }
+      })();
+    </script>
+    <!-- problems/0167-two-sum-ii-input-array-is-sorted/approach3.visual.js -->
+    <script>
+      // Two pointers from both ends: too small moves the left one right, too big moves the right one left.
+      (function () {
+      DSAViz.register("0167-two-sum-ii-input-array-is-sorted/approach3", {
+        inputs: [
+          { name: "numbers", type: "int[]", value: "[1, 3, 4, 6, 8, 11]", minLength: 2, maxLength: 10, minValue: -99, maxValue: 99 },
+          { name: "target", type: "int", value: "10", min: -198, max: 198 },
+        ],
+        trace({ numbers, target }) {
+          checkInput(numbers, target);
+          const steps = [];
+          let lo = 0;
+          let hi = numbers.length - 1;
+          const view = (o = {}) => {
+            const marks = {};
+            numbers.forEach((_, k) => (marks[k] = k < lo || k > hi ? "ghost" : "window"));
+            marks[lo] = o.ok ? "match" : "active";
+            marks[hi] = o.ok ? "match" : "active";
+            return [
+              { type: "array", label: "numbers (dashed = ruled out)", values: numbers, marks, pointers: { lo, hi } },
+              { type: "vars", items: [{ name: "sum", value: numbers[lo] + numbers[hi], mark: o.ok ? "match" : "" }, { name: "target", value: target }] },
+            ];
+          };
+          steps.push({ line: "init", note: "Start with the smallest and the largest number.", view: view() });
+          while (lo < hi) {
+            const s = numbers[lo] + numbers[hi];
+            if (s === target) {
+              steps.push({ line: ["loop", "found"], note: `${numbers[lo]} + ${numbers[hi]} = ${target}. Return [${lo + 1}, ${hi + 1}]. Each step rules out one number: O(n), O(1) memory.`, view: view({ ok: true }) });
+              return steps;
+            }
+            if (s < target) {
+              steps.push({ line: ["loop", "found", "up"], note: `${numbers[lo]} + ${numbers[hi]} = ${s} < ${target}. ${numbers[lo]} plus anything is at most this, so it can't be in the answer: lo + 1.`, view: view() });
+              lo++;
+            } else {
+              steps.push({ line: ["loop", "found", "up", "down"], note: `${numbers[lo]} + ${numbers[hi]} = ${s} > ${target}. ${numbers[hi]} plus anything left is at least this, so it can't be in the answer: hi − 1.`, view: view() });
+              hi--;
+            }
+          }
+          return steps;
+        },
+      });
+
+      // LeetCode's promises: sorted, and exactly one pair adds up to target.
+      function checkInput(numbers, target) {
+        if (numbers.some((x, k) => k && x < numbers[k - 1])) throw new DSAViz.InputError("numbers must be sorted from small to large.");
+        let pairs = 0;
+        for (let i = 0; i < numbers.length; i++) for (let j = i + 1; j < numbers.length; j++) if (numbers[i] + numbers[j] === target) pairs++;
+        if (pairs !== 1) throw new DSAViz.InputError(pairs ? `${pairs} pairs add up to ${target}; the problem promises exactly one.` : `No pair adds up to ${target}; the problem promises exactly one.`);
       }
       })();
     </script>
