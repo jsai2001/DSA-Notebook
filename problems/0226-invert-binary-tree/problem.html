@@ -1,0 +1,198 @@
+<details class="question" data-group="trees" data-tags="tree binary tree invert mirror swap recursion bfs dfs">
+  <summary>
+    <span class="q-title">226. Invert Binary Tree</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Tree</span>
+      <span class="tag">Depth-First Search</span>
+      <span class="tag">Breadth-First Search</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Mirroring a tree means swapping the left and
+      right child of <strong>every</strong> node. Visit each node once (by
+      recursion or a queue) and swap its two children. O(n) time. With
+      recursion, read both subtrees before changing either one.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/invert-binary-tree/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>Invert a binary tree (mirror it left to right) and return its root.</p>
+      <ul>
+        <li>The number of nodes is in <code>[0, 100]</code></li>
+        <li><code>-100 &lt;= Node.val &lt;= 100</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[4,2,7,1,3,6,9]</code> → <code>[4,7,2,9,6,3,1]</code>.
+        <code>[2,1,3]</code> → <code>[2,3,1]</code>. <code>[]</code> →
+        <code>[]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[1,2]</code></td>
+              <td><code>[1,null,2]</code></td>
+              <td>
+                <code>root.left = invert(root.right)</code> then
+                <code>root.right = invert(root.left)</code> reads the left
+                side after it was overwritten: it said <code>[1]</code>. Wrong
+                on 2846 of 3205 tests.
+              </td>
+            </tr>
+            <tr>
+              <td><code>[4,2,7,1,3,6,9]</code></td>
+              <td><code>[4,7,2,9,6,3,1]</code></td>
+              <td>The same bug gives <code>[4,7,7,9,9,9,9]</code>: both children end up as the same node.</td>
+            </tr>
+            <tr>
+              <td><code>[73,22,null,2]</code></td>
+              <td><code>[73,null,22,null,2]</code></td>
+              <td>Swapping only the root's children isn't enough: 22's children must swap too.</td>
+            </tr>
+            <tr>
+              <td><code>[]</code></td>
+              <td><code>[]</code></td>
+              <td>An empty tree: return <code>None</code>, don't touch <code>root.left</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Build a Mirrored Copy</h2>
+      <p class="intuition">
+        <code>mirror(node)</code> makes a new node with the same value. Its
+        left child is <code>mirror(node.right)</code> and its right child is
+        <code>mirror(node.left)</code>. The input tree stays as it was.
+      </p>
+      <ul>
+        <li>Useful when the caller still needs the original.</li>
+        <li>Uses a second tree's worth of memory.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n) for the new tree</span>
+      </div>
+      <p class="note">
+        Average over 3206 trees: Python 2.6 µs, C++ 0.30 µs, Java 0.18 µs. The
+        slowest in Python and C++, because of the new nodes.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: BFS With a Queue</h2>
+      <p class="intuition">
+        Put the root in a queue. Pop a node, swap its children, and queue
+        them. When the queue is empty, every node has been swapped.
+      </p>
+      <ul>
+        <li>No recursion, so a very deep tree can't overflow the stack.</li>
+        <li>The order doesn't matter: any visit order that reaches every node works.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(width) for the queue</span>
+      </div>
+      <p class="note">
+        Average: Python 1.9 µs, C++ 0.23 µs, Java 0.43 µs.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Recursive Swap
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Invert both subtrees and put each on the other side, in place. In
+        Python, one tuple assignment reads both calls before assigning either
+        side; Java keeps them in variables; C++ swaps the children first and
+        then inverts each one.
+      </p>
+      <ul>
+        <li>The shortest code. With at most 100 nodes, the recursion depth is never a problem here.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(height) call stack</span>
+      </div>
+      <p class="note">
+        Average: Python 1.6 µs, C++ 0.12 µs, Java 0.14 µs, the fastest in
+        every language.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>No standard library has a binary tree to mirror. Approach 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Build a Mirrored Copy</th>
+              <td>New tree, sides crossed</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Leaves the input unchanged</td>
+            </tr>
+            <tr>
+              <th scope="row">BFS With a Queue</th>
+              <td>Pop, swap, queue the children</td>
+              <td>O(n)</td>
+              <td>O(width)</td>
+              <td>No recursion</td>
+            </tr>
+            <tr>
+              <th scope="row">Recursive Swap</th>
+              <td>Invert both sides, then cross them</td>
+              <td>O(n)</td>
+              <td>O(height)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
