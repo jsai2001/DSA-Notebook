@@ -1,0 +1,208 @@
+<details class="question" data-group="math" data-tags="math hash set cycle detection floyd tortoise hare digits happy number">
+  <summary>
+    <span class="q-title">202. Happy Number</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Math</span>
+      <span class="tag">Hash Table</span>
+      <span class="tag">Two Pointers</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Replacing a number by the sum of the squares
+      of its digits quickly gives small numbers, so the sequence must either
+      reach 1 or <strong>repeat</strong>. Detect the repeat like a cycle in a
+      linked list: <code>slow</code> takes one step, <code>fast</code> takes
+      two, and they meet inside any loop. O(1) memory.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/happy-number/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Start with <code>n</code> and keep replacing it with the sum of the
+        squares of its digits. <code>n</code> is happy if this reaches 1.
+        Return whether it's happy.
+      </p>
+      <ul>
+        <li><code>1 &lt;= n &lt;= 2³¹ − 1</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>19</code> → <code>true</code> (1² + 9² = 82 → 68 → 100 →
+        1). <code>2</code> → <code>false</code> (2 → 4 → 16 → … → 4 again).
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>2</code></td>
+              <td><code>false</code></td>
+              <td>A loop that only stops at 1 never ends: it goes 4, 16, 37, 58, 89, 145, 42, 20, 4, …</td>
+            </tr>
+            <tr>
+              <td><code>19</code></td>
+              <td><code>true</code></td>
+              <td>Floyd's check with <code>slow = fast = n</code> at the start stops before moving and says <code>false</code>. Wrong on 441 of n = 1 to 2999.</td>
+            </tr>
+            <tr>
+              <td><code>7</code></td>
+              <td><code>true</code></td>
+              <td>A one-digit number other than 1 can still be happy: 7 → 49 → 97 → 130 → 10 → 1. "Stop at one digit" was wrong for 7, 1112, 1121, …</td>
+            </tr>
+            <tr>
+              <td><code>1</code></td>
+              <td><code>true</code></td>
+              <td>Already 1, no steps needed.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Hash Set</h2>
+      <p class="intuition">
+        Remember every number you meet. If you reach 1, it's happy. If you
+        meet a number a second time, the sequence is in a loop that doesn't
+        contain 1.
+      </p>
+      <ul>
+        <li>
+          Why it always ends: a number with d ≥ 4 digits goes to at most 81·d,
+          which is smaller. So it soon drops below 1000, and then it has to
+          repeat or hit 1.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log n) per step, few steps</span>
+        <span><strong>Space</strong> O(number of steps)</span>
+      </div>
+      <p class="note">
+        Average over 23,007 inputs: Python 5.7 µs, C++ 0.80 µs, Java 0.32 µs.
+        In C++ the set costs more than the digit work.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Stop at 4</h2>
+      <p class="intuition">
+        There is only one loop:
+        4 → 16 → 37 → 58 → 89 → 145 → 42 → 20 → 4. Every unhappy number falls
+        into it, so loop until the number is 1 or 4.
+      </p>
+      <ul>
+        <li>
+          Checked here: every n from 1 to 999 ends at 1 or in that loop, and
+          bigger numbers always drop below 1000 first.
+        </li>
+        <li>Fastest, but you have to know (or prove) the fact.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log n) per step</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Average: Python 4.2 µs, C++ 0.10 µs, Java 0.15 µs, the fastest in
+        every language.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Slow and Fast Pointers
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Treat <code>next(x)</code> as a link, like a linked list. Start
+        <code>slow = n</code> and <code>fast = next(n)</code>. Each round,
+        slow moves one step and fast two. If fast reaches 1, it's happy. If
+        they meet, there's a loop without 1.
+      </p>
+      <ul>
+        <li>Start fast one step ahead (or move before checking), or the loop never runs.</li>
+        <li>No set and no special number: works without knowing the 4-loop fact.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log n) per step</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Average: Python 6.1 µs, C++ 0.17 µs, Java 0.20 µs. Three <code>next</code> calls per
+        round instead of one, and no memory.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        Nothing built in. Approach 1 is the easiest to explain; Approach 3 is
+        the one interviewers usually look for.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Hash Set</th>
+              <td>Stop on a repeat</td>
+              <td>O(log n) per step</td>
+              <td>O(steps)</td>
+              <td>Simplest to explain</td>
+            </tr>
+            <tr>
+              <th scope="row">Stop at 4</th>
+              <td>The only loop contains 4</td>
+              <td>O(log n) per step</td>
+              <td>O(1)</td>
+              <td>Fastest; needs the fact</td>
+            </tr>
+            <tr>
+              <th scope="row">Slow and Fast Pointers</th>
+              <td>Floyd's cycle check</td>
+              <td>O(log n) per step</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
