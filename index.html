@@ -23969,7 +23969,7 @@
       <details class="pattern-group" id="g-graphs">
         <summary>
           <span class="g-name">Graphs</span>
-          <span class="g-count"><span class="g-total">10 problems</span></span>
+          <span class="g-count"><span class="g-total">11 problems</span></span>
           <span class="g-hint">BFS, level by level</span>
         </summary>
         <div class="g-body">
@@ -27954,6 +27954,440 @@
                         <td>O(m·n)</td>
                         <td>O(m·n)</td>
                         <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0743-network-delay-time ===== -->
+          <details class="question" data-group="graphs" data-tags="graph shortest path dijkstra bellman-ford heap priority queue weighted directed network delay">
+            <summary>
+              <span class="q-title">743. Network Delay Time</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Graph</span>
+                <span class="tag">Shortest Path</span>
+                <span class="tag">Heap (Priority Queue)</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> The signal reaches each node along its
+                fastest path, so find the shortest time from <code>k</code> to every
+                node (<strong>Dijkstra</strong>, since no time is negative). The answer
+                is the largest of those times, or <code>-1</code> if some node is never
+                reached. With at most 100 nodes, the simple O(n²) Dijkstra with an array
+                is never slow here; a heap pays off when the graph is big and sparse.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/network-delay-time/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Nodes are <code>1..n</code>. <code>times[i] = [u, v, w]</code> means a
+                  signal sent from <code>u</code> reaches <code>v</code> after
+                  <code>w</code>. Send a signal from <code>k</code>. Return how long it
+                  takes for every node to receive it, or <code>-1</code> if some never
+                  do.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= k &lt;= n &lt;= 100</code>, <code>1 &lt;= times.length &lt;= 6000</code></li>
+                  <li><code>0 &lt;= w &lt;= 100</code>; edges are one-way and no (u, v) pair repeats</li>
+                </ul>
+                <p class="note">
+                  Example: <code>[[2,1,1],[2,3,1],[3,4,1]], n = 4, k = 2</code> →
+                  <code>2</code>. <code>[[1,2,1]], n = 2, k = 1</code> → <code>1</code>.
+                  <code>[[1,2,1]], n = 2, k = 2</code> → <code>-1</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[[1,2,1]], n = 2, k = 2</code></td>
+                        <td><code>-1</code></td>
+                        <td>Edges are one-way: node 1 is never reached. Returning the largest time found without checking that every node was reached said <code>0</code>. Wrong on 871 of 1758 small tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[1,2,1],[2,3,2],[1,3,4]], n = 3, k = 1</code></td>
+                        <td><code>3</code></td>
+                        <td>Dijkstra that fixes a node's time when it's first <em>pushed</em> keeps the direct edge 1→3 (4) instead of 1→2→3 (3). Wrong on 223 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[1,2,0]], n = 2, k = 1</code></td>
+                        <td><code>0</code></td>
+                        <td>A time of 0 is allowed; don't treat 0 as "not reached".</td>
+                      </tr>
+                      <tr>
+                        <td>a 100-node chain listed backwards, plus 5900 slow edges</td>
+                        <td><code>99</code></td>
+                        <td>Bellman-Ford can't stop early: each round moves the signal one node. 99 rounds × 6000 edges took 23 ms in Python.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Bellman-Ford</h2>
+                <p class="intuition">
+                  Start with <code>dist[k] = 0</code> and everyone else at ∞. In each
+                  round, try every edge: if <code>dist[u] + w &lt; dist[v]</code>, lower
+                  <code>dist[v]</code>. After n − 1 rounds every shortest path is found;
+                  stop sooner if a round changes nothing.
+                </p>
+                <ul>
+                  <li>The simplest to write, and it also works with negative times (this problem has none).</li>
+                  <li>On random graphs it usually stops after a few rounds.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n·E)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  The worst case above (99 full rounds): Python 23 ms, Java 1.1 ms, C++
+                  0.55 ms. A random 100-node graph with 6000 edges: Python 1.7 ms.
+                </p>
+                <div class="code-tabs" data-viz="0743-network-delay-time/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"round":[6,7],"relax":[8,9,10,11],"stop":[12,13],"return":[14,15]}'>
+                    class Solution(object):
+                        def networkDelayTime(self, times, n, k):
+                            INF = float("inf")
+                            dist = [INF] * (n + 1)  # dist[v] = the fastest time to v found so far
+                            dist[k] = 0
+                            for _ in range(n - 1):  # a shortest path has at most n - 1 edges
+                                changed = False
+                                for u, v, w in times:  # try every edge
+                                    if dist[u] + w < dist[v]:  # going through u is faster
+                                        dist[v] = dist[u] + w
+                                        changed = True
+                                if not changed:  # nothing improved: it's final
+                                    break
+                            best = max(dist[1:])  # the signal reaches everyone when the slowest node gets it
+                            return -1 if best == INF else best
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8,9],"round":[10,11],"relax":[12,13,14,15],"stop":[18],"return":[20,21]}'>
+                    #include <algorithm>
+                    #include <climits>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int networkDelayTime(std::vector<std::vector<int>>& times, int n, int k) {
+                            const int INF = INT_MAX / 2;
+                            std::vector<int> dist(n + 1, INF); // dist[v] = the fastest time to v found so far
+                            dist[k] = 0;
+                            for (int round = 0; round < n - 1; ++round) { // a shortest path has at most n - 1 edges
+                                bool changed = false;
+                                for (auto& e : times) { // try every edge
+                                    if (dist[e[0]] + e[2] < dist[e[1]]) { // going through e[0] is faster
+                                        dist[e[1]] = dist[e[0]] + e[2];
+                                        changed = true;
+                                    }
+                                }
+                                if (!changed) break; // nothing improved: it's final
+                            }
+                            int best = *std::max_element(dist.begin() + 1, dist.end()); // the signal reaches everyone when the slowest node gets it
+                            return best == INF ? -1 : best;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5,6,7],"round":[8,9],"relax":[10,11,12,13],"stop":[16],"return":[18,19,20]}'>
+                    import java.util.*;
+                    class Solution {
+                        public int networkDelayTime(int[][] times, int n, int k) {
+                            final int INF = Integer.MAX_VALUE / 2;
+                            int[] dist = new int[n + 1]; // dist[v] = the fastest time to v found so far
+                            Arrays.fill(dist, INF);
+                            dist[k] = 0;
+                            for (int round = 0; round < n - 1; round++) { // a shortest path has at most n - 1 edges
+                                boolean changed = false;
+                                for (int[] e : times) { // try every edge
+                                    if (dist[e[0]] + e[2] < dist[e[1]]) { // going through e[0] is faster
+                                        dist[e[1]] = dist[e[0]] + e[2];
+                                        changed = true;
+                                    }
+                                }
+                                if (!changed) break; // nothing improved: it's final
+                            }
+                            int best = 0;
+                            for (int v = 1; v <= n; v++) best = Math.max(best, dist[v]); // the signal reaches everyone when the slowest node gets it
+                            return best == INF ? -1 : best;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Dijkstra With a Heap</h2>
+                <p class="intuition">
+                  A heap holds <code>(time, node)</code> offers. Pop the earliest: if
+                  that node is already done, skip it; otherwise its time is final, and
+                  each edge out of it pushes a new offer.
+                </p>
+                <ul>
+                  <li>A node's time is only final when it's popped, not when it's pushed.</li>
+                  <li>The usual Dijkstra, and the right choice for large sparse graphs.</li>
+                  <li>Here the graph can be dense, so the heap gets up to E entries.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(E log E)</span>
+                  <span><strong>Space</strong> O(n + E)</span>
+                </div>
+                <p class="note">
+                  A random 100-node graph with 6000 edges: Python 2.0 ms, Java 0.6 ms,
+                  C++ 0.32 ms, the slowest of the three on that graph.
+                </p>
+                <div class="code-tabs" data-viz="0743-network-delay-time/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5,6,7,8],"pop":[9,10],"stale":[11,12],"done":[13],"push":[14,15,16],"return":[17]}'>
+                    import heapq
+                    class Solution(object):
+                        def networkDelayTime(self, times, n, k):
+                            graph = [[] for _ in range(n + 1)]  # graph[u] = (v, time) for each edge out of u
+                            for u, v, w in times:
+                                graph[u].append((v, w))
+                            dist = {}  # final times, filled in the order nodes are reached
+                            heap = [(0, k)]  # (time, node), earliest first
+                            while heap:
+                                d, u = heapq.heappop(heap)
+                                if u in dist:  # an older, slower entry for a node already done
+                                    continue
+                                dist[u] = d  # the earliest time u can get the signal
+                                for v, w in graph[u]:
+                                    if v not in dist:
+                                        heapq.heappush(heap, (d + w, v))
+                            return max(dist.values()) if len(dist) == n else -1  # someone unreached: -1
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[9,10,11,12,13,14],"pop":[15,16,17],"stale":[18],"done":[19,20,21],"push":[22,23],"return":[25]}'>
+                    #include <algorithm>
+                    #include <functional>
+                    #include <queue>
+                    #include <utility>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int networkDelayTime(std::vector<std::vector<int>>& times, int n, int k) {
+                            std::vector<std::vector<std::pair<int, int>>> graph(n + 1); // graph[u] = (v, time) for each edge out of u
+                            for (auto& e : times) graph[e[0]].push_back({e[1], e[2]});
+                            std::vector<int> dist(n + 1, -1); // final times; -1 = not reached yet
+                            std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<>> heap; // (time, node), earliest first
+                            heap.push({0, k});
+                            int reached = 0, best = 0;
+                            while (!heap.empty()) {
+                                auto [d, u] = heap.top();
+                                heap.pop();
+                                if (dist[u] >= 0) continue; // an older, slower entry for a node already done
+                                dist[u] = d; // the earliest time u can get the signal
+                                ++reached;
+                                best = std::max(best, d);
+                                for (auto [v, w] : graph[u])
+                                    if (dist[v] < 0) heap.push({d + w, v});
+                            }
+                            return reached == n ? best : -1; // someone unreached: -1
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5,6,7,8,9,10,11],"pop":[12,13,14],"stale":[15],"done":[16,17,18],"push":[19,20],"return":[22]}'>
+                    import java.util.*;
+                    class Solution {
+                        public int networkDelayTime(int[][] times, int n, int k) {
+                            List<List<int[]>> graph = new ArrayList<>(); // graph[u] = (v, time) for each edge out of u
+                            for (int i = 0; i <= n; i++) graph.add(new ArrayList<>());
+                            for (int[] e : times) graph.get(e[0]).add(new int[] {e[1], e[2]});
+                            int[] dist = new int[n + 1]; // final times; -1 = not reached yet
+                            Arrays.fill(dist, -1);
+                            PriorityQueue<int[]> heap = new PriorityQueue<>((a, b) -> a[0] - b[0]); // (time, node), earliest first
+                            heap.add(new int[] {0, k});
+                            int reached = 0, best = 0;
+                            while (!heap.isEmpty()) {
+                                int[] top = heap.poll();
+                                int d = top[0], u = top[1];
+                                if (dist[u] >= 0) continue; // an older, slower entry for a node already done
+                                dist[u] = d; // the earliest time u can get the signal
+                                reached++;
+                                best = Math.max(best, d);
+                                for (int[] e : graph.get(u))
+                                    if (dist[e[0]] < 0) heap.add(new int[] {d + e[1], e[0]});
+                            }
+                            return reached == n ? best : -1; // someone unreached: -1
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Dijkstra With an Array
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Store the edge times in an n × n table. n times: scan for the
+                  unfinished node with the smallest time, mark it final, and lower the
+                  time of every node it has an edge to. If the smallest is ∞, return
+                  <code>-1</code>.
+                </p>
+                <ul>
+                  <li>No heap: O(n²) = 10⁴ steps, less than the heap's E log E with up to 6000 edges.</li>
+                  <li>It also stops at once if the rest can't be reached.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n² + E)</span>
+                  <span><strong>Space</strong> O(n²)</span>
+                </div>
+                <p class="note">
+                  A random 100-node graph with 6000 edges: Python 1.4 ms, Java 0.10 ms,
+                  C++ 0.03 ms, the fastest in Python and C++ (Java's Bellman-Ford, which
+                  stopped early, was 0.06 ms). The worst case above: C++ 0.03 ms, against
+                  0.25 ms for the heap and 0.55 ms for Bellman-Ford.
+                </p>
+                <div class="code-tabs" data-viz="0743-network-delay-time/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5,6,7,8,9],"pick":[10,11,14],"stuck":[12,13],"relax":[15,16,17],"return":[18]}'>
+                    class Solution(object):
+                        def networkDelayTime(self, times, n, k):
+                            INF = float("inf")
+                            w = [[INF] * (n + 1) for _ in range(n + 1)]  # w[u][v] = the edge time, as a table
+                            for u, v, t in times:
+                                w[u][v] = t
+                            dist = [INF] * (n + 1)
+                            dist[k] = 0
+                            done = [False] * (n + 1)
+                            for _ in range(n):
+                                u = min((v for v in range(1, n + 1) if not done[v]), key=lambda v: dist[v])  # the closest node not finished yet
+                                if dist[u] == INF:  # the rest can't be reached
+                                    return -1
+                                done[u] = True  # its time is final
+                                for v in range(1, n + 1):  # update its neighbours
+                                    if dist[u] + w[u][v] < dist[v]:
+                                        dist[v] = dist[u] + w[u][v]
+                            return max(dist[1:])
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8,9,10,11,12],"pick":[13,14,15,16,18],"stuck":[17],"relax":[19,20],"return":[22]}'>
+                    #include <algorithm>
+                    #include <climits>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int networkDelayTime(std::vector<std::vector<int>>& times, int n, int k) {
+                            const int INF = INT_MAX / 2;
+                            std::vector<std::vector<int>> w(n + 1, std::vector<int>(n + 1, INF)); // w[u][v] = the edge time, as a table
+                            for (auto& e : times) w[e[0]][e[1]] = e[2];
+                            std::vector<int> dist(n + 1, INF);
+                            std::vector<char> done(n + 1, 0);
+                            dist[k] = 0;
+                            for (int round = 0; round < n; ++round) {
+                                int u = -1;
+                                for (int v = 1; v <= n; ++v) // the closest node not finished yet
+                                    if (!done[v] && (u < 0 || dist[v] < dist[u])) u = v;
+                                if (dist[u] == INF) return -1; // the rest can't be reached
+                                done[u] = 1; // its time is final
+                                for (int v = 1; v <= n; ++v) // update its neighbours
+                                    dist[v] = std::min(dist[v], dist[u] + w[u][v]);
+                            }
+                            return *std::max_element(dist.begin() + 1, dist.end());
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5,6,7,8,9,10,11],"pick":[12,13,14,15,17],"stuck":[16],"relax":[18,19],"return":[21,22,23]}'>
+                    import java.util.*;
+                    class Solution {
+                        public int networkDelayTime(int[][] times, int n, int k) {
+                            final int INF = Integer.MAX_VALUE / 2;
+                            int[][] w = new int[n + 1][n + 1]; // w[u][v] = the edge time, as a table
+                            for (int[] row : w) Arrays.fill(row, INF);
+                            for (int[] e : times) w[e[0]][e[1]] = e[2];
+                            int[] dist = new int[n + 1];
+                            Arrays.fill(dist, INF);
+                            boolean[] done = new boolean[n + 1];
+                            dist[k] = 0;
+                            for (int round = 0; round < n; round++) {
+                                int u = -1;
+                                for (int v = 1; v <= n; v++) // the closest node not finished yet
+                                    if (!done[v] && (u < 0 || dist[v] < dist[u])) u = v;
+                                if (dist[u] == INF) return -1; // the rest can't be reached
+                                done[u] = true; // its time is final
+                                for (int v = 1; v <= n; v++) // update its neighbours
+                                    dist[v] = Math.min(dist[v], dist[u] + w[u][v]);
+                            }
+                            int best = 0;
+                            for (int v = 1; v <= n; v++) best = Math.max(best, dist[v]);
+                            return best;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  The standard libraries have heaps but no shortest-path function.
+                  Outside LeetCode, <code>scipy.sparse.csgraph.dijkstra</code> or
+                  <code>networkx.single_source_dijkstra_path_length</code> do it.
+                </p>
+                <p class="note">
+                  On LeetCode, write Approach 2 or 3. Approach 2 is the one that carries
+                  over to bigger problems.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Bellman-Ford</th>
+                        <td>Relax every edge, n − 1 rounds</td>
+                        <td>O(n·E)</td>
+                        <td>O(n)</td>
+                        <td>Handles negative times</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Dijkstra With a Heap</th>
+                        <td>Pop the earliest offer</td>
+                        <td>O(E log E)</td>
+                        <td>O(n + E)</td>
+                        <td>Best for big sparse graphs</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Dijkstra With an Array</th>
+                        <td>Scan for the closest node</td>
+                        <td>O(n² + E)</td>
+                        <td>O(n²)</td>
+                        <td>Always O(n²): small at n ≤ 100</td>
                       </tr>
                     </tbody>
                   </table>
@@ -68132,6 +68566,162 @@
           return steps;
         },
       });
+    </script>
+    <!-- problems/0743-network-delay-time/approach1.visual.js -->
+    <script>
+      // Bellman-Ford: up to n - 1 rounds; each round tries every edge and keeps any faster time.
+      (function () {
+      DSAViz.register("0743-network-delay-time/approach1", {
+        inputs: [
+          { name: "times", type: "int[][]", value: "[[2, 1, 1], [2, 3, 1], [3, 4, 1], [2, 4, 5]]", maxRows: 10, maxCols: 3, minValue: 0, maxValue: 100 },
+          { name: "n", type: "int", value: "4", min: 1, max: 6 },
+          { name: "k", type: "int", value: "2", min: 1, max: 6 },
+        ],
+        trace({ times, n, k }) {
+          check(times, n, k);
+          const dist = Array(n + 1).fill(Infinity);
+          dist[k] = 0;
+          const steps = [];
+          steps.push({ line: "init", note: `Only node ${k} has the signal at time 0.`, view: [edgeView(times), distView(dist, n, { [k]: "match" })] });
+          let rounds = 0;
+          for (let r = 0; r < n - 1; r++) {
+            rounds++;
+            const em = {};
+            const dm = {};
+            const better = [];
+            times.forEach(([u, v, w], i) => { if (dist[u] + w < dist[v]) { better.push(`${v}: ${fmt(dist[v])} → ${dist[u] + w} via ${u}`); dist[v] = dist[u] + w; em[i] = "new"; dm[v] = "new"; } });
+            if (!better.length) {
+              steps.push({ line: ["round", "relax", "stop"], note: `Round ${r + 1}: try every edge again. Nothing gets faster, so every time is final. Stop early.`, view: [edgeView(times), distView(dist, n)] });
+              break;
+            }
+            steps.push({ line: ["round", "relax"], note: `Round ${r + 1}: try all ${times.length} edges. Faster: ${better.join("; ")}.`, view: [edgeView(times, em, "edges u→v (time); yellow = gave a faster time"), distView(dist, n, dm)] });
+          }
+          const a = answer(dist);
+          steps.push({ line: "return", note: a < 0 ? "Return -1. Some node is still at ∞: the signal never reaches it." : `Return ${a}. The last node gets the signal at time ${a}. ${rounds} round${rounds > 1 ? "s" : ""} over ${times.length} edge${times.length > 1 ? "s" : ""}: O(n·E) at worst.`, view: [edgeView(times), distView(dist, n, Object.fromEntries(dist.map((d, v) => [v, d === a ? "match" : d === Infinity ? "cut" : ""]).filter(([v, m]) => v > 0 && m)))] });
+          return steps;
+        },
+      });
+
+      function check(times, n, k) {
+        if (times.some((e) => e.length !== 3)) throw new DSAViz.InputError("Each edge is [u, v, time], like [[2, 1, 1], [2, 3, 1]].");
+        if (k < 1 || k > n) throw new DSAViz.InputError(`k must be a node, 1 to ${n}.`);
+        if (times.some(([u, v]) => u < 1 || v < 1 || u > n || v > n)) throw new DSAViz.InputError(`Nodes are numbered 1 to ${n}.`);
+        if (times.some(([u, v]) => u === v)) throw new DSAViz.InputError("An edge must go between two different nodes.");
+        if (times.some(([, , w]) => w < 0 || w > 100)) throw new DSAViz.InputError("Times are 0 to 100.");
+        if (new Set(times.map(([u, v]) => `${u},${v}`)).size !== times.length) throw new DSAViz.InputError("Each (u, v) pair appears once.");
+      }
+      const fmt = (d) => (d === Infinity ? "∞" : String(d));
+      const distView = (dist, n, marks = {}, label = "dist[v] (∞ = not reached yet)") => ({ type: "array", label: label + "; index = node, dashed 0 is unused", values: ["-", ...dist.slice(1).map(fmt)], marks: { 0: "ghost", ...marks } });
+      const edgeView = (times, marks = {}, label = "edges u→v (time)") => ({ type: "array", label, values: times.map(([u, v, w]) => `${u}→${v} (${w})`), wide: true, marks });
+      const answer = (dist) => { const b = Math.max(...dist.slice(1)); return b === Infinity ? -1 : b; };
+      })();
+    </script>
+    <!-- problems/0743-network-delay-time/approach2.visual.js -->
+    <script>
+      // Dijkstra with a heap: always take the earliest (time, node) entry; the first time a node is popped is final.
+      (function () {
+      DSAViz.register("0743-network-delay-time/approach2", {
+        inputs: [
+          { name: "times", type: "int[][]", value: "[[2, 1, 1], [2, 3, 1], [3, 4, 1], [2, 4, 5]]", maxRows: 10, maxCols: 3, minValue: 0, maxValue: 100 },
+          { name: "n", type: "int", value: "4", min: 1, max: 6 },
+          { name: "k", type: "int", value: "2", min: 1, max: 6 },
+        ],
+        trace({ times, n, k }) {
+          check(times, n, k);
+          const graph = Array.from({ length: n + 1 }, () => []);
+          times.forEach(([u, v, w]) => graph[u].push([v, w]));
+          const dist = Array(n + 1).fill(Infinity);
+          const fin = Array(n + 1).fill(false);
+          let heap = [[0, k]];
+          const steps = [];
+          const view = (o = {}) => [{ type: "array", label: "heap (time: node), earliest first; dashed = an old entry for a finished node", values: heap.map(([d, v]) => `${d}: ${v}`), wide: true, marks: Object.fromEntries(heap.map(([, v], i) => [i, fin[v] ? "ghost" : ""]).filter(([, m]) => m)) }, distView(dist, n, { ...Object.fromEntries(fin.map((f, v) => [v, f ? "match" : ""]).filter(([v, m]) => v > 0 && m)), ...(o.u ? { [o.u]: o.stale ? "cut" : "new" } : {}) }, "final times (green = done, yellow = just finished)")];
+          steps.push({ line: "init", note: `Push (0, ${k}): node ${k} has the signal at time 0.`, view: view() });
+          while (heap.length) {
+            const [d, u] = heap.shift();
+            if (fin[u]) {
+              steps.push({ line: ["pop", "stale"], note: `Pop (${d}, ${u}): node ${u} already finished earlier. Skip this old entry.`, view: view({ u, stale: true }) });
+              continue;
+            }
+            fin[u] = true;
+            dist[u] = d;
+            const pushed = [];
+            for (const [v, w] of graph[u]) if (!fin[v]) { heap.push([d + w, v]); pushed.push(`(${d + w}, ${v})`); }
+            heap.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+            steps.push({ line: ["pop", "stale", "done", "push"], note: `Pop (${d}, ${u}): the earliest entry, so node ${u} gets the signal at time ${d}, final.${pushed.length ? ` Push ${pushed.join(", ")}.` : ""}`, view: view({ u }) });
+          }
+          const reached = fin.filter(Boolean).length;
+          const a = reached === n ? Math.max(...dist.slice(1)) : -1;
+          steps.push({ line: "return", note: a < 0 ? `Return -1. Only ${reached} of ${n} nodes were reached.` : `Return ${a}. O(E log E) for the heap; best when edges are few.`, view: view() });
+          return steps;
+        },
+      });
+
+      function check(times, n, k) {
+        if (times.some((e) => e.length !== 3)) throw new DSAViz.InputError("Each edge is [u, v, time], like [[2, 1, 1], [2, 3, 1]].");
+        if (k < 1 || k > n) throw new DSAViz.InputError(`k must be a node, 1 to ${n}.`);
+        if (times.some(([u, v]) => u < 1 || v < 1 || u > n || v > n)) throw new DSAViz.InputError(`Nodes are numbered 1 to ${n}.`);
+        if (times.some(([u, v]) => u === v)) throw new DSAViz.InputError("An edge must go between two different nodes.");
+        if (times.some(([, , w]) => w < 0 || w > 100)) throw new DSAViz.InputError("Times are 0 to 100.");
+        if (new Set(times.map(([u, v]) => `${u},${v}`)).size !== times.length) throw new DSAViz.InputError("Each (u, v) pair appears once.");
+      }
+      const fmt = (d) => (d === Infinity ? "∞" : String(d));
+      const distView = (dist, n, marks = {}, label = "dist[v] (∞ = not reached yet)") => ({ type: "array", label: label + "; index = node, dashed 0 is unused", values: ["-", ...dist.slice(1).map(fmt)], marks: { 0: "ghost", ...marks } });
+      const edgeView = (times, marks = {}, label = "edges u→v (time)") => ({ type: "array", label, values: times.map(([u, v, w]) => `${u}→${v} (${w})`), wide: true, marks });
+      const answer = (dist) => { const b = Math.max(...dist.slice(1)); return b === Infinity ? -1 : b; };
+      })();
+    </script>
+    <!-- problems/0743-network-delay-time/approach3.visual.js -->
+    <script>
+      // Dijkstra with an array: n rounds, each takes the unfinished node with the smallest time and updates the others.
+      (function () {
+      DSAViz.register("0743-network-delay-time/approach3", {
+        inputs: [
+          { name: "times", type: "int[][]", value: "[[2, 1, 1], [2, 3, 1], [3, 4, 1], [2, 4, 5]]", maxRows: 10, maxCols: 3, minValue: 0, maxValue: 100 },
+          { name: "n", type: "int", value: "4", min: 1, max: 6 },
+          { name: "k", type: "int", value: "2", min: 1, max: 6 },
+        ],
+        trace({ times, n, k }) {
+          check(times, n, k);
+          const w = Array.from({ length: n + 1 }, () => Array(n + 1).fill(Infinity));
+          times.forEach(([u, v, t]) => (w[u][v] = t));
+          const dist = Array(n + 1).fill(Infinity);
+          const done = Array(n + 1).fill(false);
+          dist[k] = 0;
+          const steps = [];
+          const dm = (extra = {}) => ({ ...Object.fromEntries(done.map((f, v) => [v, f ? "match" : ""]).filter(([v, m]) => v > 0 && m)), ...extra });
+          const tableView = (u) => ({ type: "grid", label: "w[u][v], the edge times as a table (∞ = no edge; yellow = the row being used)", rows: [...Array(n).keys()].map((i) => i + 1), cols: [...Array(n).keys()].map((i) => i + 1), corner: "u \\ v", cells: w.slice(1).map((r) => r.slice(1).map(fmt)), marks: u ? Object.fromEntries([...Array(n).keys()].map((j) => [`${u - 1},${j}`, "compare"])) : {} });
+          steps.push({ line: "init", note: `Put the edge times in an n × n table. dist[${k}] = 0, everyone else ∞.`, view: [tableView(), distView(dist, n, { [k]: "new" })] });
+          for (let r = 0; r < n; r++) {
+            let u = -1;
+            for (let v = 1; v <= n; v++) if (!done[v] && (u < 0 || dist[v] < dist[u])) u = v;
+            if (dist[u] === Infinity) {
+              steps.push({ line: ["pick", "stuck"], note: `Return -1. The closest unfinished node, ${u}, is at ∞: the rest can't be reached.`, view: [tableView(), distView(dist, n, dm({ [u]: "cut" }))] });
+              return steps;
+            }
+            done[u] = true;
+            const better = [];
+            const nm = {};
+            for (let v = 1; v <= n; v++) if (dist[u] + w[u][v] < dist[v]) { better.push(`${v}: ${fmt(dist[v])} → ${dist[u] + w[u][v]}`); dist[v] = dist[u] + w[u][v]; nm[v] = "new"; }
+            steps.push({ line: ["pick", "relax"], note: `Node ${u} has the smallest time not yet final (${dist[u]}): it's final now. Scan its row.${better.length ? ` Faster: ${better.join("; ")}.` : " Nothing gets faster."}`, view: [tableView(u), distView(dist, n, dm({ [u]: "active", ...nm }), "dist[v] (green = final, dark = just finished, yellow = just improved)")] });
+          }
+          steps.push({ line: "return", note: `Return ${Math.max(...dist.slice(1))}. n rounds of n: O(n²), no heap. With n ≤ 100 that's at most 10⁴ steps.`, view: [tableView(), distView(dist, n, dm())] });
+          return steps;
+        },
+      });
+
+      function check(times, n, k) {
+        if (times.some((e) => e.length !== 3)) throw new DSAViz.InputError("Each edge is [u, v, time], like [[2, 1, 1], [2, 3, 1]].");
+        if (k < 1 || k > n) throw new DSAViz.InputError(`k must be a node, 1 to ${n}.`);
+        if (times.some(([u, v]) => u < 1 || v < 1 || u > n || v > n)) throw new DSAViz.InputError(`Nodes are numbered 1 to ${n}.`);
+        if (times.some(([u, v]) => u === v)) throw new DSAViz.InputError("An edge must go between two different nodes.");
+        if (times.some(([, , w]) => w < 0 || w > 100)) throw new DSAViz.InputError("Times are 0 to 100.");
+        if (new Set(times.map(([u, v]) => `${u},${v}`)).size !== times.length) throw new DSAViz.InputError("Each (u, v) pair appears once.");
+      }
+      const fmt = (d) => (d === Infinity ? "∞" : String(d));
+      const distView = (dist, n, marks = {}, label = "dist[v] (∞ = not reached yet)") => ({ type: "array", label: label + "; index = node, dashed 0 is unused", values: ["-", ...dist.slice(1).map(fmt)], marks: { 0: "ghost", ...marks } });
+      const edgeView = (times, marks = {}, label = "edges u→v (time)") => ({ type: "array", label, values: times.map(([u, v, w]) => `${u}→${v} (${w})`), wide: true, marks });
+      const answer = (dist) => { const b = Math.max(...dist.slice(1)); return b === Infinity ? -1 : b; };
+      })();
     </script>
     <!-- problems/0994-rotting-oranges/approach1.visual.js -->
     <script>
