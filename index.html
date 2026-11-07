@@ -50266,7 +50266,7 @@
       <details class="pattern-group" id="g-bit-manipulation">
         <summary>
           <span class="g-name">Bit Manipulation</span>
-          <span class="g-count"><span class="g-total">2 problems</span></span>
+          <span class="g-count"><span class="g-total">3 problems</span></span>
           <span class="g-hint">Shift, mask and count the bits</span>
         </summary>
         <div class="g-body">
@@ -50913,6 +50913,310 @@
                         <th scope="row">Clear the Lowest 1</th>
                         <td><code>n &amp;= n − 1</code></td>
                         <td>O(ones)</td>
+                        <td>O(1)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0268-missing-number ===== -->
+          <details class="question" data-group="bit-manipulation" data-tags="bit manipulation xor math sum missing number array">
+            <summary>
+              <span class="q-title">268. Missing Number</span>
+              <span class="q-meta">
+                <span class="badge easy">Easy</span>
+                <span class="tag">Bit Manipulation</span>
+                <span class="tag">Math</span>
+                <span class="tag">Array</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> XOR all the indexes <code>0..n</code> and
+                all the values together. Every number that's present shows up twice
+                (once as an index, once as a value) and cancels, since
+                <code>x ^ x = 0</code>. The missing number is what's left. O(n) time,
+                O(1) space. The sum <code>0 + 1 + … + n</code> minus the actual sum
+                works the same way.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/missing-number/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  <code>nums</code> holds <code>n</code> different numbers from the
+                  range <code>0..n</code>. Exactly one is missing. Return it.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= n &lt;= 10⁴</code>, all values different</li>
+                </ul>
+                <p class="note">
+                  Example: <code>[3,0,1]</code> → <code>2</code>. <code>[0,1]</code> →
+                  <code>2</code>. <code>[9,6,4,2,3,5,7,0,1]</code> → <code>8</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[0]</code></td>
+                        <td><code>1</code></td>
+                        <td>The missing number is n itself. The sorted scan without a final <code>return n</code> found no gap; wrong on 503 of 3007 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1]</code></td>
+                        <td><code>0</code></td>
+                        <td>0 is missing: check from 0, not 1.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[0,1]</code></td>
+                        <td><code>2</code></td>
+                        <td>The range is 0..n, so n = 2 counts.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Sort</h2>
+                <p class="intuition">
+                  After sorting, index <code>i</code> should hold <code>i</code>. The
+                  first index that doesn't is the answer; if every one does, the answer
+                  is <code>n</code>.
+                </p>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n)</span>
+                  <span><strong>Space</strong> O(1) in place (O(n) for Python's <code>sorted</code>)</span>
+                </div>
+                <p class="note">
+                  10⁴ values: Python 1.1 ms, Java 0.69 ms, C++ 0.17 ms, the slowest in
+                  every language.
+                </p>
+                <div class="code-tabs" data-viz="0268-missing-number/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"sort":[3],"scan":[4],"found":[5,6],"end":[7]}'>
+                    class Solution(object):
+                        def missingNumber(self, nums):
+                            nums = sorted(nums)
+                            for i, x in enumerate(nums):  # sorted, the value at index i should be i
+                                if x != i:  # the first gap
+                                    return i
+                            return len(nums)  # 0..n-1 are all there: n is missing
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"sort":[6],"scan":[7],"found":[8],"end":[9]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int missingNumber(std::vector<int>& nums) {
+                            std::sort(nums.begin(), nums.end());
+                            for (int i = 0; i < (int)nums.size(); ++i) // sorted, the value at index i should be i
+                                if (nums[i] != i) return i; // the first gap
+                            return nums.size(); // 0..n-1 are all there: n is missing
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"sort":[4],"scan":[5],"found":[6],"end":[7]}'>
+                    import java.util.*;
+                    class Solution {
+                        public int missingNumber(int[] nums) {
+                            Arrays.sort(nums);
+                            for (int i = 0; i < nums.length; i++) // sorted, the value at index i should be i
+                                if (nums[i] != i) return i; // the first gap
+                            return nums.length; // 0..n-1 are all there: n is missing
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Mark What's There</h2>
+                <p class="intuition">
+                  Mark every value as seen, then check 0, 1, …, n for the first one
+                  that isn't. The values are at most n, so C++ and Java use an array of
+                  n + 1 flags instead of a hash set.
+                </p>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  10⁴ values: Python 0.43 ms, Java 47 µs, C++ 8.7 µs.
+                </p>
+                <div class="code-tabs" data-viz="0268-missing-number/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"set":[3],"check":[4],"found":[5,6]}'>
+                    class Solution(object):
+                        def missingNumber(self, nums):
+                            seen = set(nums)
+                            for x in range(len(nums) + 1):  # try 0, 1, ..., n
+                                if x not in seen:
+                                    return x
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"set":[5,6,7],"check":[8],"found":[9]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int missingNumber(std::vector<int>& nums) {
+                            const int n = nums.size();
+                            std::vector<char> seen(n + 1, 0); // the values are 0..n, so an array works as the set
+                            for (int x : nums) seen[x] = 1;
+                            for (int x = 0; x <= n; ++x) // try 0, 1, ..., n
+                                if (!seen[x]) return x;
+                            return -1; // not reached
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"set":[3,4,5],"check":[6],"found":[7]}'>
+                    class Solution {
+                        public int missingNumber(int[] nums) {
+                            int n = nums.length;
+                            boolean[] seen = new boolean[n + 1]; // the values are 0..n, so an array works as the set
+                            for (int x : nums) seen[x] = true;
+                            for (int x = 0; x <= n; x++) // try 0, 1, ..., n
+                                if (!seen[x]) return x;
+                            return -1; // not reached
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: XOR
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Start with <code>res = n</code> (the one index with no slot). For each
+                  <code>i</code>, do <code>res ^= i ^ nums[i]</code>. Pairs cancel, and
+                  the missing number remains.
+                </p>
+                <ul>
+                  <li>XOR can't overflow; a sum can in languages with fixed-size ints (here n ≤ 10⁴ keeps the sum small, so both work).</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  10⁴ values: Python 0.40 ms, Java 27 µs, C++ 4.0 µs, the fastest in C++
+                  and Java.
+                </p>
+                <div class="code-tabs" data-viz="0268-missing-number/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"xor":[4,5],"return":[6]}'>
+                    class Solution(object):
+                        def missingNumber(self, nums):
+                            res = len(nums)  # start with n, the one index that has no slot
+                            for i, x in enumerate(nums):
+                                res ^= i ^ x  # every number that's present appears twice (as an index and a value) and cancels
+                            return res  # only the missing one is left
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"xor":[6,7],"return":[8]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int missingNumber(std::vector<int>& nums) {
+                            int res = nums.size(); // start with n, the one index that has no slot
+                            for (int i = 0; i < (int)nums.size(); ++i)
+                                res ^= i ^ nums[i]; // every number that's present appears twice (as an index and a value) and cancels
+                            return res; // only the missing one is left
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"xor":[4,5],"return":[6]}'>
+                    class Solution {
+                        public int missingNumber(int[] nums) {
+                            int res = nums.length; // start with n, the one index that has no slot
+                            for (int i = 0; i < nums.length; i++)
+                                res ^= i ^ nums[i]; // every number that's present appears twice (as an index and a value) and cancels
+                            return res; // only the missing one is left
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  In Python, Gauss's formula with <code>sum</code>:
+                  <code>n(n + 1)/2 − sum(nums)</code>. Python ints don't overflow.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    class Solution(object):
+                        def missingNumber(self, nums):
+                            n = len(nums)
+                            return n * (n + 1) // 2 - sum(nums)  # 0 + 1 + ... + n, minus what's there
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  Should pass on LeetCode: 34 µs for 10⁴ values, 12 times faster than
+                  the XOR loop in Python, because <code>sum</code> runs in C.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Sort</th>
+                        <td>First index i not holding i</td>
+                        <td>O(n log n)</td>
+                        <td>O(1)</td>
+                        <td>Don't forget n</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Mark What's There</th>
+                        <td>Flags for 0..n</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Simple to explain</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">XOR</th>
+                        <td>Pairs cancel</td>
+                        <td>O(n)</td>
                         <td>O(1)</td>
                         <td>Expected answer</td>
                       </tr>
@@ -69089,6 +69393,70 @@
             steps.push({ line: "use", note: `'${t[i]}' from t: count down to ${count[k]}.`, view: view({ m: { [at(t[i])]: "new" }, tm: { [i]: "active" } }) });
           }
           steps.push({ line: "return", note: "Return true. Same length and no count went below 0, so every count is back to 0. O(n) time, O(1) space.", view: view({ m: Object.fromEntries(used.map((_, i) => [i, "match"])) }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0268-missing-number/approach1.visual.js -->
+    <script>
+      // Sort: then index i should hold i. The first index that doesn't is the missing number.
+      DSAViz.register("0268-missing-number/approach1", {
+        inputs: [{ name: "nums", type: "int[]", value: "[9, 6, 4, 2, 3, 5, 7, 0, 1]", minLength: 1, maxLength: 10, minValue: 0, maxValue: 10 }],
+        trace({ nums }) {
+          const n = nums.length;
+          if (nums.some((x) => x > n)) throw new DSAViz.InputError(`With ${n} values, each must be 0 to ${n}.`);
+          if (new Set(nums).size !== n) throw new DSAViz.InputError("All values must be different.");
+          const a = nums.slice().sort((x, y) => x - y);
+          const steps = [{ line: "sort", note: `Sort. If nothing were missing before the end, index i would hold i.`, view: [{ type: "array", label: "nums", values: nums }, { type: "array", label: "sorted", values: a }] }];
+          for (let i = 0; i < n; i++) {
+            if (a[i] !== i) {
+              steps.push({ line: ["scan", "found"], note: `Return ${i}. Index ${i} holds ${a[i]}, not ${i}: ${i} is missing. Sorting costs O(n log n).`, view: [{ type: "array", label: "sorted (green = in place, red = the first gap)", values: a, marks: { ...Object.fromEntries(Array.from({ length: i }, (_, k) => [k, "match"])), [i]: "cut" } }] });
+              return steps;
+            }
+          }
+          steps.push({ line: ["scan", "end"], note: `Return ${n}. Every index 0..${n - 1} holds its own number, so the missing one is n = ${n}.`, view: [{ type: "array", label: "sorted (green = in place)", values: a, marks: Object.fromEntries(a.map((_, k) => [k, "match"])) }] });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0268-missing-number/approach2.visual.js -->
+    <script>
+      // Mark every value as seen, then check 0..n for the one that isn't.
+      DSAViz.register("0268-missing-number/approach2", {
+        inputs: [{ name: "nums", type: "int[]", value: "[9, 6, 4, 2, 3, 5, 7, 0, 1]", minLength: 1, maxLength: 10, minValue: 0, maxValue: 10 }],
+        trace({ nums }) {
+          const n = nums.length;
+          if (nums.some((x) => x > n)) throw new DSAViz.InputError(`With ${n} values, each must be 0 to ${n}.`);
+          if (new Set(nums).size !== n) throw new DSAViz.InputError("All values must be different.");
+          const seen = Array(n + 1).fill(false);
+          nums.forEach((x) => (seen[x] = true));
+          const steps = [{ line: "set", note: `Mark the ${n} values. The values can only be 0..${n}, so C++ and Java use an array of n + 1 flags; Python uses a set.`, view: [{ type: "array", label: "nums", values: nums }, { type: "array", label: "seen[x] (✓ = in nums)", values: seen.map((b) => (b ? "✓" : "")), marks: Object.fromEntries(seen.map((b, k) => [k, b ? "new" : ""]).filter(([, m]) => m)) }] }];
+          const miss = seen.indexOf(false);
+          steps.push({ line: ["check", "found"], note: `Return ${miss}. Checking 0, 1, 2, …: ${miss} is the first value not seen. O(n) time, O(n) space.`, view: [{ type: "array", label: "seen[x]", values: seen.map((b) => (b ? "✓" : "")), marks: { ...Object.fromEntries(Array.from({ length: miss }, (_, k) => [k, "match"])), [miss]: "cut" } }] });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0268-missing-number/approach3.visual.js -->
+    <script>
+      // XOR every index 0..n and every value. Pairs cancel (x ^ x = 0); the missing number is left.
+      DSAViz.register("0268-missing-number/approach3", {
+        inputs: [{ name: "nums", type: "int[]", value: "[9, 6, 4, 2, 3, 5, 7, 0, 1]", minLength: 1, maxLength: 10, minValue: 0, maxValue: 10 }],
+        trace({ nums }) {
+          const n = nums.length;
+          if (nums.some((x) => x > n)) throw new DSAViz.InputError(`With ${n} values, each must be 0 to ${n}.`);
+          if (new Set(nums).size !== n) throw new DSAViz.InputError("All values must be different.");
+          const bits = (v) => v.toString(2).padStart(4, "0");
+          let res = n;
+          const steps = [];
+          const view = (i) => [{ type: "array", label: "nums (dark = this index)", values: nums, marks: i !== undefined ? { [i]: "active" } : {}, pointers: i !== undefined ? { i } : {} }, { type: "vars", items: [{ name: "res", value: `${res} (${bits(res)})`, mark: i !== undefined ? "new" : "" }] }];
+          steps.push({ line: "init", note: `res = n = ${n}. Indexes run 0..${n - 1}, so n is the one index with no slot: add it up front.`, view: view() });
+          nums.forEach((x, i) => {
+            const before = res;
+            res ^= i ^ x;
+            steps.push({ line: "xor", note: `res ^= ${i} (index) ^ ${x} (value): ${before} → ${res}.`, view: view(i) });
+          });
+          steps.push({ line: "return", note: `Return ${res}. Every number 0..n went in once as an index (or as n), and once as a value, except the missing one. x ^ x = 0, so only it is left. O(n) time, O(1) space.`, view: [{ type: "array", label: "nums", values: nums }, { type: "vars", items: [{ name: "res", value: res, mark: "match" }] }] });
           return steps;
         },
       });

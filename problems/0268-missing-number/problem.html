@@ -1,0 +1,195 @@
+<details class="question" data-group="bit-manipulation" data-tags="bit manipulation xor math sum missing number array">
+  <summary>
+    <span class="q-title">268. Missing Number</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Bit Manipulation</span>
+      <span class="tag">Math</span>
+      <span class="tag">Array</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> XOR all the indexes <code>0..n</code> and
+      all the values together. Every number that's present shows up twice
+      (once as an index, once as a value) and cancels, since
+      <code>x ^ x = 0</code>. The missing number is what's left. O(n) time,
+      O(1) space. The sum <code>0 + 1 + … + n</code> minus the actual sum
+      works the same way.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/missing-number/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>nums</code> holds <code>n</code> different numbers from the
+        range <code>0..n</code>. Exactly one is missing. Return it.
+      </p>
+      <ul>
+        <li><code>1 &lt;= n &lt;= 10⁴</code>, all values different</li>
+      </ul>
+      <p class="note">
+        Example: <code>[3,0,1]</code> → <code>2</code>. <code>[0,1]</code> →
+        <code>2</code>. <code>[9,6,4,2,3,5,7,0,1]</code> → <code>8</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[0]</code></td>
+              <td><code>1</code></td>
+              <td>The missing number is n itself. The sorted scan without a final <code>return n</code> found no gap; wrong on 503 of 3007 tests.</td>
+            </tr>
+            <tr>
+              <td><code>[1]</code></td>
+              <td><code>0</code></td>
+              <td>0 is missing: check from 0, not 1.</td>
+            </tr>
+            <tr>
+              <td><code>[0,1]</code></td>
+              <td><code>2</code></td>
+              <td>The range is 0..n, so n = 2 counts.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Sort</h2>
+      <p class="intuition">
+        After sorting, index <code>i</code> should hold <code>i</code>. The
+        first index that doesn't is the answer; if every one does, the answer
+        is <code>n</code>.
+      </p>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(1) in place (O(n) for Python's <code>sorted</code>)</span>
+      </div>
+      <p class="note">
+        10⁴ values: Python 1.1 ms, Java 0.69 ms, C++ 0.17 ms, the slowest in
+        every language.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Mark What's There</h2>
+      <p class="intuition">
+        Mark every value as seen, then check 0, 1, …, n for the first one
+        that isn't. The values are at most n, so C++ and Java use an array of
+        n + 1 flags instead of a hash set.
+      </p>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        10⁴ values: Python 0.43 ms, Java 47 µs, C++ 8.7 µs.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: XOR
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Start with <code>res = n</code> (the one index with no slot). For each
+        <code>i</code>, do <code>res ^= i ^ nums[i]</code>. Pairs cancel, and
+        the missing number remains.
+      </p>
+      <ul>
+        <li>XOR can't overflow; a sum can in languages with fixed-size ints (here n ≤ 10⁴ keeps the sum small, so both work).</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        10⁴ values: Python 0.40 ms, Java 27 µs, C++ 4.0 µs, the fastest in C++
+        and Java.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        In Python, Gauss's formula with <code>sum</code>:
+        <code>n(n + 1)/2 − sum(nums)</code>. Python ints don't overflow.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Should pass on LeetCode: 34 µs for 10⁴ values, 12 times faster than
+        the XOR loop in Python, because <code>sum</code> runs in C.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Sort</th>
+              <td>First index i not holding i</td>
+              <td>O(n log n)</td>
+              <td>O(1)</td>
+              <td>Don't forget n</td>
+            </tr>
+            <tr>
+              <th scope="row">Mark What's There</th>
+              <td>Flags for 0..n</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Simple to explain</td>
+            </tr>
+            <tr>
+              <th scope="row">XOR</th>
+              <td>Pairs cancel</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
