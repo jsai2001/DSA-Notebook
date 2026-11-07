@@ -1,0 +1,201 @@
+<details class="question" data-group="graphs" data-tags="graph eulerian path hierholzer dfs backtracking stack lexical order itinerary">
+  <summary>
+    <span class="q-title">332. Reconstruct Itinerary</span>
+    <span class="q-meta">
+      <span class="badge hard">Hard</span>
+      <span class="tag">Graph</span>
+      <span class="tag">Eulerian Path</span>
+      <span class="tag">DFS</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Using every ticket once is an Eulerian path.
+      Hierholzer: from JFK, keep flying the smallest ticket left. When an
+      airport has no tickets left, it goes on the route. The route comes out
+      backwards, so reverse it. A dead end can only be the true end, so no
+      backing up is needed. O(E log E) for the sort.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/reconstruct-itinerary/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Each ticket is <code>[from, to]</code>. Start at <code>"JFK"</code> and
+        use every ticket exactly once. If more than one route works, return
+        the smallest one in dictionary order (compare airport by airport).
+        At least one route always exists.
+      </p>
+      <ul>
+        <li><code>1 &lt;= tickets.length &lt;= 300</code>, airports are 3 capital letters, <code>from != to</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[["MUC","LHR"],["JFK","MUC"],["SFO","SJC"],["LHR","SFO"]]</code> →
+        <code>["JFK","MUC","LHR","SFO","SJC"]</code>.
+        <code>[["JFK","SFO"],["JFK","ATL"],["SFO","ATL"],["ATL","JFK"],["ATL","SFO"]]</code> →
+        <code>["JFK","ATL","JFK","SFO","ATL","SFO"]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[["JFK","KUL"],["JFK","NRT"],["NRT","JFK"]]</code></td>
+              <td><code>["JFK","NRT","JFK","KUL"]</code></td>
+              <td>KUL is smaller, but flying there first gets stuck with tickets left. Always taking the smallest, with no backing up and no Hierholzer, gives <code>["JFK","KUL"]</code>. That bug was wrong on 522 of 1,908 tests.</td>
+            </tr>
+            <tr>
+              <td><code>[["JFK","AAA"],["AAA","JFK"],["JFK","AAA"],["AAA","JFK"]]</code></td>
+              <td><code>["JFK","AAA","JFK","AAA","JFK"]</code></td>
+              <td>The same ticket can appear more than once. Keep a list, not a set.</td>
+            </tr>
+            <tr>
+              <td>300 tickets</td>
+              <td>301 airports in the route</td>
+              <td>The recursive versions can go about 300 calls deep. That's fine in all three languages (Python's default limit is 1,000); the Python files raise the limit anyway.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Backtracking</h2>
+      <p class="intuition">
+        Sort the tickets. From the current airport, try its unused tickets
+        smallest first. If the route gets stuck before every ticket is used,
+        undo the last ticket and try the next one. The first full route found
+        is the smallest.
+      </p>
+      <ul>
+        <li>Skip a ticket equal to one just tried from the same airport: it would lead to the same dead end.</li>
+        <li>Easy to get right. It just does extra work at dead ends.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(E log E) plus the work undone at dead ends</span>
+        <span><strong>Space</strong> O(E)</span>
+      </div>
+      <p class="note">
+        300 random tickets over 4 airports: Python 0.86 ms, C++ 0.33 ms, Java
+        0.25 ms, 4 to 6 times the time of Approach 3. Still fast at LeetCode's
+        size.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Hierholzer, Recursive</h2>
+      <p class="intuition">
+        <code>visit(a)</code>: while <code>a</code> has a ticket left, fly the
+        smallest one and visit there. When none are left, add
+        <code>a</code> to the route. A place you get stuck early (like KUL
+        above) gets added first, so it ends up last after the reverse.
+        Everything else gets spliced in before it.
+      </p>
+      <ul>
+        <li>Sort each airport's list biggest first, so <code>pop()</code> from the end gives the smallest in O(1).</li>
+        <li>Every ticket is flown once. No undo.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(E log E)</span>
+        <span><strong>Space</strong> O(E)</span>
+      </div>
+      <p class="note">
+        300 tickets, 4 airports: Python 0.21 ms, C++ 0.064 ms, Java 0.055 ms.
+        Within noise of Approach 3.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Hierholzer With a Stack
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        The same idea as Approach 2 without recursion. The stack is the
+        current path. If the top airport has a ticket left, push its
+        smallest destination. If not, pop it onto the route. Reverse at the
+        end.
+      </p>
+      <ul>
+        <li>No recursion limit to worry about.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(E log E)</span>
+        <span><strong>Space</strong> O(E)</span>
+      </div>
+      <p class="note">
+        300 tickets, 4 airports: Python 0.16 ms, C++ 0.059 ms, Java 0.055 ms.
+        Approaches 2 and 3 swapped places on other inputs, so treat them as
+        the same speed.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>Nothing built in. Approach 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Backtracking</th>
+              <td>Smallest first, undo at dead ends</td>
+              <td>O(E log E) + undos</td>
+              <td>O(E)</td>
+              <td>4–6× slower here</td>
+            </tr>
+            <tr>
+              <th scope="row">Hierholzer, Recursive</th>
+              <td>Add an airport once it's used up</td>
+              <td>O(E log E)</td>
+              <td>O(E)</td>
+              <td>Short code</td>
+            </tr>
+            <tr>
+              <th scope="row">Hierholzer, Stack</th>
+              <td>Same, with an explicit stack</td>
+              <td>O(E log E)</td>
+              <td>O(E)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
