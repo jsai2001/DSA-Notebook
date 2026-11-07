@@ -1,0 +1,204 @@
+<details class="question" data-group="dynamic-programming" data-tags="dynamic programming dp coin change unbounded knapsack bfs fewest coins">
+  <summary>
+    <span class="q-title">322. Coin Change</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Dynamic Programming</span>
+      <span class="tag">Breadth-First Search</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> The last coin you use is one of
+      <code>coins</code>, so
+      <code>dp[a] = 1 + min(dp[a − c])</code> over every coin that fits. Fill
+      <code>dp</code> from 0 up to <code>amount</code>, with "impossible"
+      as a value bigger than any real answer. O(amount × coins). Greedy
+      (biggest coin first) doesn't work.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/coin-change/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Return the fewest coins that add up to <code>amount</code>, using
+        any number of each coin value, or <code>-1</code> if it can't be done.
+      </p>
+      <ul>
+        <li><code>1 &lt;= coins.length &lt;= 12</code>, <code>1 &lt;= coins[i] &lt;= 2³¹ − 1</code></li>
+        <li><code>0 &lt;= amount &lt;= 10⁴</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[1,2,5], 11</code> → <code>3</code> (5 + 5 + 1).
+        <code>[2], 3</code> → <code>-1</code>. <code>[1], 0</code> →
+        <code>0</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[3,4], 6</code></td>
+              <td><code>2</code></td>
+              <td>Greedy takes a 4 and gets stuck with 2 left: it said <code>-1</code>. Wrong on 472 of 3007 tests.</td>
+            </tr>
+            <tr>
+              <td><code>[2147483647], 2</code></td>
+              <td><code>-1</code></td>
+              <td>A huge coin. In C++ and Java, <code>a + coin</code> overflows an <code>int</code>; the BFS adds in 64 bits.</td>
+            </tr>
+            <tr>
+              <td><code>[1], 10⁴</code></td>
+              <td><code>10000</code></td>
+              <td>
+                The recursion goes 10⁴ calls deep. On Python 3.14, writing the
+                inner loop as <code>min(1 + fewest(a − c) for …)</code> crashed
+                with a stack overflow even with a raised recursion limit; a
+                plain <code>for</code> loop worked.
+              </td>
+            </tr>
+            <tr>
+              <td><code>[1], 0</code></td>
+              <td><code>0</code></td>
+              <td>Nothing to pay: zero coins, not −1.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Recursion with Memo</h2>
+      <p class="intuition">
+        <code>fewest(a)</code> = 0 for <code>a = 0</code>, otherwise
+        <code>1 + fewest(a − c)</code> for the best coin <code>c ≤ a</code>.
+        Remember each result, with "impossible" as infinity (or −1).
+      </p>
+      <ul>
+        <li>The calls can go <code>amount</code> deep when there's a 1-coin.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(amount · coins)</span>
+        <span><strong>Space</strong> O(amount)</span>
+      </div>
+      <p class="note">
+        12 coins, amount 10⁴: Python 22 ms, Java 0.31 ms, C++ 0.23 ms.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: BFS Over Amounts</h2>
+      <p class="intuition">
+        Level k of a BFS from 0 holds every amount you can make with k coins.
+        Add each coin to each amount in the level. The first level that
+        reaches <code>amount</code> is the answer: BFS finds the fewest steps.
+      </p>
+      <ul>
+        <li>Stops as soon as the amount is reached, so it often does less work than the DP.</li>
+        <li>Each amount is queued at most once.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(amount · coins)</span>
+        <span><strong>Space</strong> O(amount)</span>
+      </div>
+      <p class="note">
+        12 coins, amount 10⁴: Python 5.9 ms, C++ 0.10 ms, the fastest in both.
+        Java 0.30 ms.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Bottom-Up DP
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        <code>dp[0] = 0</code>, everything else <code>amount + 1</code> (more
+        than any real answer). For each amount from 1 up, try every coin as
+        the last one. <code>dp[amount]</code> is the answer if it's still ≤
+        <code>amount</code>.
+      </p>
+      <ul>
+        <li>No recursion and no queue: two loops and one array.</li>
+        <li>Using <code>amount + 1</code> instead of infinity means no overflow when you add 1.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(amount · coins)</span>
+        <span><strong>Space</strong> O(amount)</span>
+      </div>
+      <p class="note">
+        12 coins, amount 10⁴: Python 6.7 ms, Java 0.10 ms (the fastest in
+        Java), C++ 0.30 ms. The expected answer, and the base for Coin
+        Change II.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>Nothing built in. Approach 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Recursion with Memo</th>
+              <td>fewest(a) from the top down</td>
+              <td>O(amount · coins)</td>
+              <td>O(amount)</td>
+              <td>Up to 10⁴ calls deep</td>
+            </tr>
+            <tr>
+              <th scope="row">BFS Over Amounts</th>
+              <td>Level k = k coins</td>
+              <td>O(amount · coins)</td>
+              <td>O(amount)</td>
+              <td>Stops early; fastest in Python and C++</td>
+            </tr>
+            <tr>
+              <th scope="row">Bottom-Up DP</th>
+              <td>dp[a] = 1 + min dp[a − c]</td>
+              <td>O(amount · coins)</td>
+              <td>O(amount)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
