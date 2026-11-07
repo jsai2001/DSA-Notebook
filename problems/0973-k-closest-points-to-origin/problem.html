@@ -1,0 +1,210 @@
+<details class="question" data-group="heap" data-tags="heap priority queue quickselect sorting top k geometry">
+  <summary>
+    <span class="q-title">973. K Closest Points to Origin</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Heap</span>
+      <span class="tag">Quickselect</span>
+      <span class="tag">Sorting</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Compare <code>x² + y²</code>, never the
+      square root. To get the k smallest without sorting everything, either
+      keep a size-k max-heap (O(n log k)), or quickselect: partition around a
+      <strong>random</strong> pivot and keep only the side that holds place
+      <code>k − 1</code> (O(n) on average).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/k-closest-points-to-origin/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Return the <code>k</code> points closest to <code>(0, 0)</code>, in
+        any order. The answer is promised to be unique.
+      </p>
+      <ul>
+        <li><code>1 &lt;= k &lt;= points.length &lt;= 10⁴</code>, <code>-10⁴ &lt;= x, y &lt;= 10⁴</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>points = [[1,3],[-2,2]], k = 1</code> →
+        <code>[[-2,2]]</code>. <code>points = [[3,3],[5,-1],[-2,4]], k = 2</code>
+        → <code>[[3,3],[-2,4]]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>10⁴ points already sorted by distance, <code>k = 1</code></td>
+              <td>the first point</td>
+              <td>Quickselect that always picks the last element as pivot removes one point per round: 3.7 s in Python. A random pivot: 1 ms.</td>
+            </tr>
+            <tr>
+              <td><code>[[10000,10000],[-10000,-10000],[0,1]], k = 1</code></td>
+              <td><code>[[0,1]]</code></td>
+              <td>The biggest <code>x² + y²</code> is 2·10⁸, which still fits in a 32-bit <code>int</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[[0,0]], k = 1</code></td>
+              <td><code>[[0,0]]</code></td>
+              <td>k can equal the number of points.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Sort by Distance</h2>
+      <p class="intuition">
+        Sort the points by <code>x² + y²</code> and return the first
+        <code>k</code>.
+      </p>
+      <ul>
+        <li>Squared distances keep the same order as real ones, with no floating point.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        10⁴ random points, <code>k = 5000</code>, average of 30 runs: Python
+        2.1 ms, Java 4.5 ms, C++ 0.72 ms. In Python that beats Approach 3 (3.0
+        ms), because the sort runs in C.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Size-k Max-Heap</h2>
+      <p class="intuition">
+        Push each point into a max-heap by distance. When it holds more than
+        <code>k</code>, pop the top: the farthest of them. The <code>k</code>
+        left are the closest.
+      </p>
+      <ul>
+        <li>Works on a stream of points too.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log k)</span>
+        <span><strong>Space</strong> O(k)</span>
+      </div>
+      <p class="note">
+        <code>k = 10</code>: Python 3.0 ms, Java 0.22 ms, C++ 0.11 ms.
+        <code>k = 5000</code>: Python 4.8 ms, Java 0.77 ms, C++ 0.68 ms. Good
+        for small <code>k</code>.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Quickselect
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Pick a random pivot and partition: closer points to the left, the
+        pivot at its sorted place <code>store</code>. If <code>store</code> is
+        <code>k − 1</code>, the first <code>k</code> are the answer. Otherwise
+        repeat on the one side that holds place <code>k − 1</code>.
+      </p>
+      <ul>
+        <li>Each round keeps about half, so about n + n/2 + n/4 + … ≈ 2n work on average.</li>
+        <li>O(n²) is possible with very bad luck, but no input can force it.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n) average</span>
+        <span><strong>Space</strong> O(n) for the distances</span>
+      </div>
+      <p class="note">
+        <code>k = 5000</code>: Java 0.11 ms, C++ 0.19 ms, the fastest in both;
+        Python 3.0 ms. <code>k = 10</code>: Java 0.044 ms, C++ 0.063 ms,
+        Python 1.8 ms.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Python's <code>heapq.nsmallest(k, points, key=…)</code> is Approach 2
+        in C. C++'s <code>std::nth_element</code> is quickselect. Java has
+        neither; use a <code>PriorityQueue</code> or sort.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log k) / O(n) average</span>
+        <span><strong>Space</strong> O(k) / O(n)</span>
+      </div>
+      <p class="note">
+        Should pass on LeetCode. Python <code>nsmallest</code>: 0.87 ms with
+        <code>k = 10</code>, the fastest Python here, but 4.7 ms with
+        <code>k = 5000</code>. C++ <code>nth_element</code>: 0.28 to 0.32 ms,
+        slower than Approach 3 here, probably because it moves
+        whole <code>vector&lt;int&gt;</code> points instead of ints.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Sort</th>
+              <td>Sort by x² + y²</td>
+              <td>O(n log n)</td>
+              <td>O(n)</td>
+              <td>Fine in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">Size-k Max-Heap</th>
+              <td>Drop the farthest past k</td>
+              <td>O(n log k)</td>
+              <td>O(k)</td>
+              <td>Streams; small k</td>
+            </tr>
+            <tr>
+              <th scope="row">Quickselect</th>
+              <td>Random pivot, keep one side</td>
+              <td>O(n) average</td>
+              <td>O(n)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

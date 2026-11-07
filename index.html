@@ -25973,7 +25973,7 @@
       <details class="pattern-group" id="g-heap">
         <summary>
           <span class="g-name">Heap / Priority Queue</span>
-          <span class="g-count"><span class="g-total">5 problems</span></span>
+          <span class="g-count"><span class="g-total">6 problems</span></span>
           <span class="g-hint">Always pop the smallest (or biggest) first</span>
         </summary>
         <div class="g-body">
@@ -27890,6 +27890,393 @@
                         <td>Keep the k biggest</td>
                         <td>O(log k) per add</td>
                         <td>O(k)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0973-k-closest-points-to-origin ===== -->
+          <details class="question" data-group="heap" data-tags="heap priority queue quickselect sorting top k geometry">
+            <summary>
+              <span class="q-title">973. K Closest Points to Origin</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Heap</span>
+                <span class="tag">Quickselect</span>
+                <span class="tag">Sorting</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Compare <code>x² + y²</code>, never the
+                square root. To get the k smallest without sorting everything, either
+                keep a size-k max-heap (O(n log k)), or quickselect: partition around a
+                <strong>random</strong> pivot and keep only the side that holds place
+                <code>k − 1</code> (O(n) on average).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/k-closest-points-to-origin/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Return the <code>k</code> points closest to <code>(0, 0)</code>, in
+                  any order. The answer is promised to be unique.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= k &lt;= points.length &lt;= 10⁴</code>, <code>-10⁴ &lt;= x, y &lt;= 10⁴</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>points = [[1,3],[-2,2]], k = 1</code> →
+                  <code>[[-2,2]]</code>. <code>points = [[3,3],[5,-1],[-2,4]], k = 2</code>
+                  → <code>[[3,3],[-2,4]]</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>10⁴ points already sorted by distance, <code>k = 1</code></td>
+                        <td>the first point</td>
+                        <td>Quickselect that always picks the last element as pivot removes one point per round: 3.7 s in Python. A random pivot: 1 ms.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[10000,10000],[-10000,-10000],[0,1]], k = 1</code></td>
+                        <td><code>[[0,1]]</code></td>
+                        <td>The biggest <code>x² + y²</code> is 2·10⁸, which still fits in a 32-bit <code>int</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[0,0]], k = 1</code></td>
+                        <td><code>[[0,0]]</code></td>
+                        <td>k can equal the number of points.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Sort by Distance</h2>
+                <p class="intuition">
+                  Sort the points by <code>x² + y²</code> and return the first
+                  <code>k</code>.
+                </p>
+                <ul>
+                  <li>Squared distances keep the same order as real ones, with no floating point.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  10⁴ random points, <code>k = 5000</code>, average of 30 runs: Python
+                  2.1 ms, Java 4.5 ms, C++ 0.72 ms. In Python that beats Approach 3 (3.0
+                  ms), because the sort runs in C.
+                </p>
+                <div class="code-tabs" data-viz="0973-k-closest-points-to-origin/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"sort":[3],"return":[4]}'>
+                    class Solution(object):
+                        def kClosest(self, points, k):
+                            order = sorted(points, key=lambda p: p[0] * p[0] + p[1] * p[1])  # squared distance: no sqrt needed
+                            return order[:k]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"sort":[6,7,8],"return":[10,11]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<std::vector<int>> kClosest(std::vector<std::vector<int>>& points, int k) {
+                            auto order = points;
+                            std::sort(order.begin(), order.end(), [](const auto& a, const auto& b) {
+                                return a[0] * a[0] + a[1] * a[1] < b[0] * b[0] + b[1] * b[1]; // squared distance: no sqrt needed
+                            });
+                            order.resize(k);
+                            return order;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"sort":[4,5],"return":[6]}'>
+                    import java.util.*;
+                    class Solution {
+                        public int[][] kClosest(int[][] points, int k) {
+                            int[][] order = points.clone();
+                            Arrays.sort(order, (a, b) -> Integer.compare(a[0] * a[0] + a[1] * a[1], b[0] * b[0] + b[1] * b[1])); // squared distance: no sqrt needed
+                            return Arrays.copyOf(order, k);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Size-k Max-Heap</h2>
+                <p class="intuition">
+                  Push each point into a max-heap by distance. When it holds more than
+                  <code>k</code>, pop the top: the farthest of them. The <code>k</code>
+                  left are the closest.
+                </p>
+                <ul>
+                  <li>Works on a stream of points too.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log k)</span>
+                  <span><strong>Space</strong> O(k)</span>
+                </div>
+                <p class="note">
+                  <code>k = 10</code>: Python 3.0 ms, Java 0.22 ms, C++ 0.11 ms.
+                  <code>k = 5000</code>: Python 4.8 ms, Java 0.77 ms, C++ 0.68 ms. Good
+                  for small <code>k</code>.
+                </p>
+                <div class="code-tabs" data-viz="0973-k-closest-points-to-origin/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4],"push":[5,6],"pop":[7,8],"return":[9]}'>
+                    import heapq
+                    class Solution(object):
+                        def kClosest(self, points, k):
+                            heap = []  # max-heap of the k closest so far, as (-distance, x, y)
+                            for x, y in points:
+                                heapq.heappush(heap, (-(x * x + y * y), x, y))
+                                if len(heap) > k:  # one too many: drop the farthest
+                                    heapq.heappop(heap)
+                            return [[x, y] for _, x, y in heap]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7],"push":[8,9],"pop":[10],"return":[12,13,14]}'>
+                    #include <queue>
+                    #include <utility>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<std::vector<int>> kClosest(std::vector<std::vector<int>>& points, int k) {
+                            std::priority_queue<std::pair<int, int>> heap; // max-heap of (distance, index): the k closest so far
+                            for (int i = 0; i < (int)points.size(); ++i) {
+                                heap.push({points[i][0] * points[i][0] + points[i][1] * points[i][1], i});
+                                if ((int)heap.size() > k) heap.pop(); // one too many: drop the farthest
+                            }
+                            std::vector<std::vector<int>> ans;
+                            for (; !heap.empty(); heap.pop()) ans.push_back(points[heap.top().second]);
+                            return ans;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4],"push":[5,6],"pop":[7],"return":[9]}'>
+                    import java.util.*;
+                    class Solution {
+                        public int[][] kClosest(int[][] points, int k) {
+                            PriorityQueue<int[]> heap = new PriorityQueue<>((a, b) -> Integer.compare(b[0] * b[0] + b[1] * b[1], a[0] * a[0] + a[1] * a[1])); // farthest on top
+                            for (int[] p : points) {
+                                heap.add(p);
+                                if (heap.size() > k) heap.poll(); // one too many: drop the farthest
+                            }
+                            return heap.toArray(new int[0][]);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Quickselect
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Pick a random pivot and partition: closer points to the left, the
+                  pivot at its sorted place <code>store</code>. If <code>store</code> is
+                  <code>k − 1</code>, the first <code>k</code> are the answer. Otherwise
+                  repeat on the one side that holds place <code>k − 1</code>.
+                </p>
+                <ul>
+                  <li>Each round keeps about half, so about n + n/2 + n/4 + … ≈ 2n work on average.</li>
+                  <li>O(n²) is possible with very bad luck, but no input can force it.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n) average</span>
+                  <span><strong>Space</strong> O(n) for the distances</span>
+                </div>
+                <p class="note">
+                  <code>k = 5000</code>: Java 0.11 ms, C++ 0.19 ms, the fastest in both;
+                  Python 3.0 ms. <code>k = 10</code>: Java 0.044 ms, C++ 0.063 ms,
+                  Python 1.8 ms.
+                </p>
+                <div class="code-tabs" data-viz="0973-k-closest-points-to-origin/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5,6],"part":[7,8,9,10,11,12,13,14,15],"keep":[16,17,18,19,20,21],"return":[22]}'>
+                    import random
+                    class Solution(object):
+                        def kClosest(self, points, k):
+                            d = [x * x + y * y for x, y in points]  # squared distances
+                            idx = list(range(len(points)))
+                            lo, hi = 0, len(idx) - 1  # put the k smallest distances in idx[:k], in any order
+                            while lo < hi:
+                                p = random.randint(lo, hi)  # random pivot: no bad input can force O(n²)
+                                idx[p], idx[hi] = idx[hi], idx[p]
+                                pivot, store = d[idx[hi]], lo
+                                for i in range(lo, hi):  # move everything closer than the pivot to the left
+                                    if d[idx[i]] < pivot:
+                                        idx[i], idx[store] = idx[store], idx[i]
+                                        store += 1
+                                idx[store], idx[hi] = idx[hi], idx[store]  # the pivot lands at its sorted place
+                                if store == k - 1:
+                                    break
+                                if store < k - 1:  # the k-th closest is to the right
+                                    lo = store + 1
+                                else:  # it's to the left
+                                    hi = store - 1
+                            return [points[i] for i in idx[:k]]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8,9,10,11],"part":[12,13,14,15,16,17],"keep":[18,19,20],"return":[22,23,24]}'>
+                    #include <random>
+                    #include <utility>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<std::vector<int>> kClosest(std::vector<std::vector<int>>& points, int k) {
+                            int n = points.size();
+                            std::vector<int> d(n), idx(n); // squared distances, and the order being partitioned
+                            for (int i = 0; i < n; ++i) { d[i] = points[i][0] * points[i][0] + points[i][1] * points[i][1]; idx[i] = i; }
+                            static std::mt19937 rng(973);
+                            int lo = 0, hi = n - 1; // put the k smallest distances in idx[0..k-1], in any order
+                            while (lo < hi) {
+                                std::swap(idx[std::uniform_int_distribution<int>(lo, hi)(rng)], idx[hi]); // random pivot: no bad input can force O(n²)
+                                int pivot = d[idx[hi]], store = lo;
+                                for (int i = lo; i < hi; ++i) // move everything closer than the pivot to the left
+                                    if (d[idx[i]] < pivot) std::swap(idx[i], idx[store++]);
+                                std::swap(idx[store], idx[hi]); // the pivot lands at its sorted place
+                                if (store == k - 1) break;
+                                if (store < k - 1) lo = store + 1; // the k-th closest is to the right
+                                else hi = store - 1; // it's to the left
+                            }
+                            std::vector<std::vector<int>> ans;
+                            for (int i = 0; i < k; ++i) ans.push_back(points[idx[i]]);
+                            return ans;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6,7,8],"part":[9,10,11,12,13,14],"keep":[15,16,17],"return":[19,20,21]}'>
+                    import java.util.*;
+                    class Solution {
+                        private final Random rng = new Random(973);
+                        public int[][] kClosest(int[][] points, int k) {
+                            int n = points.length;
+                            int[] d = new int[n], idx = new int[n]; // squared distances, and the order being partitioned
+                            for (int i = 0; i < n; i++) { d[i] = points[i][0] * points[i][0] + points[i][1] * points[i][1]; idx[i] = i; }
+                            int lo = 0, hi = n - 1; // put the k smallest distances in idx[0..k-1], in any order
+                            while (lo < hi) {
+                                int p = lo + rng.nextInt(hi - lo + 1), t = idx[p]; idx[p] = idx[hi]; idx[hi] = t; // random pivot: no bad input can force O(n²)
+                                int pivot = d[idx[hi]], store = lo;
+                                for (int i = lo; i < hi; i++) // move everything closer than the pivot to the left
+                                    if (d[idx[i]] < pivot) { t = idx[i]; idx[i] = idx[store]; idx[store++] = t; }
+                                t = idx[store]; idx[store] = idx[hi]; idx[hi] = t; // the pivot lands at its sorted place
+                                if (store == k - 1) break;
+                                if (store < k - 1) lo = store + 1; // the k-th closest is to the right
+                                else hi = store - 1; // it's to the left
+                            }
+                            int[][] ans = new int[k][];
+                            for (int i = 0; i < k; i++) ans[i] = points[idx[i]];
+                            return ans;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  Python's <code>heapq.nsmallest(k, points, key=…)</code> is Approach 2
+                  in C. C++'s <code>std::nth_element</code> is quickselect. Java has
+                  neither; use a <code>PriorityQueue</code> or sort.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    import heapq
+                    class Solution(object):
+                        def kClosest(self, points, k):
+                            return heapq.nsmallest(k, points, key=lambda p: p[0] * p[0] + p[1] * p[1])  # a size-k heap, run in C
+                  </script>
+                  <script type="text/plain" data-lang="C++">
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<std::vector<int>> kClosest(std::vector<std::vector<int>>& points, int k) {
+                            auto order = points;
+                            std::nth_element(order.begin(), order.begin() + (k - 1), order.end(), [](const auto& a, const auto& b) {
+                                return a[0] * a[0] + a[1] * a[1] < b[0] * b[0] + b[1] * b[1];
+                            }); // quickselect: the k closest end up first, in any order
+                            order.resize(k);
+                            return order;
+                        }
+                    };
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log k) / O(n) average</span>
+                  <span><strong>Space</strong> O(k) / O(n)</span>
+                </div>
+                <p class="note">
+                  Should pass on LeetCode. Python <code>nsmallest</code>: 0.87 ms with
+                  <code>k = 10</code>, the fastest Python here, but 4.7 ms with
+                  <code>k = 5000</code>. C++ <code>nth_element</code>: 0.28 to 0.32 ms,
+                  slower than Approach 3 here, probably because it moves
+                  whole <code>vector&lt;int&gt;</code> points instead of ints.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Sort</th>
+                        <td>Sort by x² + y²</td>
+                        <td>O(n log n)</td>
+                        <td>O(n)</td>
+                        <td>Fine in Python</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Size-k Max-Heap</th>
+                        <td>Drop the farthest past k</td>
+                        <td>O(n log k)</td>
+                        <td>O(k)</td>
+                        <td>Streams; small k</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Quickselect</th>
+                        <td>Random pivot, keep one side</td>
+                        <td>O(n) average</td>
+                        <td>O(n)</td>
                         <td>Expected answer</td>
                       </tr>
                     </tbody>
@@ -85014,6 +85401,128 @@
             }
           }
           steps.push({ line: "return", note: `Return ${lo}. lo = hi after ${rounds} round${rounds === 1 ? "" : "s"}, each a pass over the piles: O(n log max).`, view: [pview(piles, lo), vars()] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0973-k-closest-points-to-origin/approach1.visual.js -->
+    <script>
+      // Sort the points by squared distance and take the first k.
+      (function () {
+      const INPUTS = [
+        { name: "points", type: "int[][]", value: "[[3, 3], [5, -1], [-2, 4], [1, 1], [0, -3], [4, 4]]", maxRows: 8, maxCols: 2, minValue: -99, maxValue: 99 },
+        { name: "k", type: "int", value: "3", min: 1, max: 8 },
+      ];
+      const dist = ([x, y]) => x * x + y * y;
+      function check(pts, k) {
+        if (!pts.length || pts.some((p) => p.length !== 2)) throw new DSAViz.InputError("Each point is [x, y], like [[1, 3], [-2, 2]].");
+        if (k > pts.length) throw new DSAViz.InputError(`k must be at most ${pts.length}, the number of points.`);
+        const d = pts.map(dist).sort((a, b) => a - b);
+        if (k < d.length && d[k - 1] === d[k]) throw new DSAViz.InputError(`The answer must be unique: places ${k} and ${k + 1} by distance are tied at ${d[k]}. Change k or the points.`);
+      }
+      const pv = (pts, label, marks = {}, extra = {}) => ({ type: "array", label, values: pts.map(([x, y]) => `(${x}, ${y})`), sub: pts.map((p) => `d² ${dist(p)}`), wide: true, marks, ...extra });
+      const show = (pts) => `[${pts.map(([x, y]) => `[${x}, ${y}]`).join(", ")}]`;
+      DSAViz.register("0973-k-closest-points-to-origin/approach1", {
+        inputs: INPUTS,
+        trace({ points, k }) {
+          check(points, k);
+          const order = [...points].sort((a, b) => dist(a) - dist(b));
+          const steps = [{ line: "sort", note: "Compare squared distances x² + y²: same order as real distances, no square roots.", view: [pv(points, "points")] }];
+          steps.push({ line: "sort", note: `Sorted by d², closest first.`, view: [pv(order, "sorted by distance", {}, { cut: k < order.length ? k : undefined })] });
+          steps.push({ line: "return", note: `Return ${show(order.slice(0, k))}: the first ${k}. The sort makes it O(n log n).`, view: [pv(order, "sorted by distance", Object.fromEntries(order.slice(0, k).map((_, i) => [i, "match"])), { cut: k < order.length ? k : undefined })] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0973-k-closest-points-to-origin/approach2.visual.js -->
+    <script>
+      // Max-heap of the k closest so far: push each point, and drop the farthest whenever there are more than k.
+      (function () {
+      const INPUTS = [
+        { name: "points", type: "int[][]", value: "[[3, 3], [5, -1], [-2, 4], [1, 1], [0, -3], [4, 4]]", maxRows: 8, maxCols: 2, minValue: -99, maxValue: 99 },
+        { name: "k", type: "int", value: "3", min: 1, max: 8 },
+      ];
+      const dist = ([x, y]) => x * x + y * y;
+      function check(pts, k) {
+        if (!pts.length || pts.some((p) => p.length !== 2)) throw new DSAViz.InputError("Each point is [x, y], like [[1, 3], [-2, 2]].");
+        if (k > pts.length) throw new DSAViz.InputError(`k must be at most ${pts.length}, the number of points.`);
+        const d = pts.map(dist).sort((a, b) => a - b);
+        if (k < d.length && d[k - 1] === d[k]) throw new DSAViz.InputError(`The answer must be unique: places ${k} and ${k + 1} by distance are tied at ${d[k]}. Change k or the points.`);
+      }
+      const pv = (pts, label, marks = {}, extra = {}) => ({ type: "array", label, values: pts.map(([x, y]) => `(${x}, ${y})`), sub: pts.map((p) => `d² ${dist(p)}`), wide: true, marks, ...extra });
+      const show = (pts) => `[${pts.map(([x, y]) => `[${x}, ${y}]`).join(", ")}]`;
+      DSAViz.register("0973-k-closest-points-to-origin/approach2", {
+        inputs: INPUTS,
+        trace({ points, k }) {
+          check(points, k);
+          const heap = [];
+          const more = (a, b) => dist(a) > dist(b);
+          const up = () => { let i = heap.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (!more(heap[i], heap[p])) break; [heap[i], heap[p]] = [heap[p], heap[i]]; i = p; } };
+          const down = () => { let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < heap.length && more(heap[l], heap[m])) m = l; if (r < heap.length && more(heap[r], heap[m])) m = r; if (m === i) break; [heap[i], heap[m]] = [heap[m], heap[i]]; i = m; } };
+          const hv = (marks = {}) => ({ type: "tree", label: "max-heap by d² (farthest on top); caption = point", values: heap.map(dist), captions: Object.fromEntries(heap.map(([x, y], i) => [i, `(${x},${y})`])), marks });
+          const steps = [{ line: "init", note: `Keep the ${k} closest so far in a max-heap: the farthest of them is on top.`, view: [pv(points, "points"), hv()] }];
+          points.forEach((p, i) => {
+            heap.push(p); up();
+            steps.push({ line: "push", note: `Push (${p}), d² = ${dist(p)}.`, view: [pv(points, "points", { [i]: "active" }), hv()] });
+            if (heap.length > k) {
+              const top = heap[0];
+              steps.push({ line: "pop", note: `${heap.length} > k = ${k}: drop the top, (${top}), the farthest (d² = ${dist(top)}).`, view: [pv(points, "points"), hv({ 0: "cut" })] });
+              heap[0] = heap[heap.length - 1]; heap.pop(); down();
+            }
+          });
+          steps.push({ line: "return", note: `Return ${show(heap)}: what's left. The heap never holds more than k + 1: O(n log k).`, view: [hv(Object.fromEntries(heap.map((_, i) => [i, "match"])))] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0973-k-closest-points-to-origin/approach3.visual.js -->
+    <script>
+      // Quickselect: partition around a random pivot until the pivot lands at place k − 1. Then the first k are the closest.
+      (function () {
+      const INPUTS = [
+        { name: "points", type: "int[][]", value: "[[3, 3], [5, -1], [-2, 4], [1, 1], [0, -3], [4, 4]]", maxRows: 8, maxCols: 2, minValue: -99, maxValue: 99 },
+        { name: "k", type: "int", value: "3", min: 1, max: 8 },
+      ];
+      const dist = ([x, y]) => x * x + y * y;
+      function check(pts, k) {
+        if (!pts.length || pts.some((p) => p.length !== 2)) throw new DSAViz.InputError("Each point is [x, y], like [[1, 3], [-2, 2]].");
+        if (k > pts.length) throw new DSAViz.InputError(`k must be at most ${pts.length}, the number of points.`);
+        const d = pts.map(dist).sort((a, b) => a - b);
+        if (k < d.length && d[k - 1] === d[k]) throw new DSAViz.InputError(`The answer must be unique: places ${k} and ${k + 1} by distance are tied at ${d[k]}. Change k or the points.`);
+      }
+      const pv = (pts, label, marks = {}, extra = {}) => ({ type: "array", label, values: pts.map(([x, y]) => `(${x}, ${y})`), sub: pts.map((p) => `d² ${dist(p)}`), wide: true, marks, ...extra });
+      const show = (pts) => `[${pts.map(([x, y]) => `[${x}, ${y}]`).join(", ")}]`;
+      DSAViz.register("0973-k-closest-points-to-origin/approach3", {
+        inputs: INPUTS,
+        trace({ points, k }) {
+          check(points, k);
+          const d = points.map(dist);
+          const idx = points.map((_, i) => i);
+          let seed = 973;
+          const rand = (lo, hi) => { seed = (seed * 1103515245 + 12345) % 2147483648; return lo + (seed % (hi - lo + 1)); };
+          const iv = (marks = {}, extra = {}) => ({ type: "array", label: "points in the order being partitioned; caption = d²", values: idx.map((i) => `(${points[i]})`), sub: idx.map((i) => String(d[i])), wide: true, marks, ...extra });
+          let lo = 0, hi = idx.length - 1;
+          const steps = [{ line: "init", note: `Goal: the ${k} smallest d² in places 0 to ${k - 1}, in any order.`, view: [iv()] }];
+          while (lo < hi) {
+            const p = rand(lo, hi);
+            [idx[p], idx[hi]] = [idx[hi], idx[p]];
+            const pivot = d[idx[hi]];
+            let store = lo;
+            for (let i = lo; i < hi; i++) if (d[idx[i]] < pivot) { [idx[i], idx[store]] = [idx[store], idx[i]]; store++; }
+            [idx[store], idx[hi]] = [idx[hi], idx[store]];
+            const marks = {};
+            for (let i = lo; i <= hi; i++) marks[i] = i < store ? "compare" : i === store ? "active" : "window";
+            let note = `Places ${lo}–${hi}: random pivot (${points[idx[store]]}), d² ${pivot}. Closer ones (yellow) go left; the pivot lands at place ${store}.`;
+            if (store === k - 1) { steps.push({ line: ["part", "keep"], note: `${note} That's place k − 1 = ${k - 1}: done.`, view: [iv(marks, { cut: k < idx.length ? k : undefined })] }); break; }
+            if (store < k - 1) { note += ` ${store} < ${k - 1}: the rest of the answer is to the right.`; lo = store + 1; }
+            else { note += ` ${store} > ${k - 1}: the answer is all to the left.`; hi = store - 1; }
+            steps.push({ line: ["part", "keep"], note, view: [iv(marks)] });
+          }
+          const ans = idx.slice(0, k).map((i) => points[i]);
+          steps.push({ line: "return", note: `Return ${show(ans)}: places 0 to ${k - 1}. Each round keeps one side, about half: O(n) on average.`, view: [iv(Object.fromEntries(ans.map((_, i) => [i, "match"])), { cut: k < idx.length ? k : undefined })] });
           return steps;
         },
       });
