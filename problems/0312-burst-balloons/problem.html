@@ -1,0 +1,198 @@
+<details class="question" data-group="dynamic-programming" data-tags="dynamic programming interval dp burst balloons last element matrix chain memoization">
+  <summary>
+    <span class="q-title">312. Burst Balloons</span>
+    <span class="q-meta">
+      <span class="badge hard">Hard</span>
+      <span class="tag">Dynamic Programming</span>
+      <span class="tag">Array</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Think about which balloon is burst
+      <strong>last</strong>, not first. Pad the array with a 1 at each end.
+      If <code>k</code> is the last balloon burst between <code>lo</code>
+      and <code>hi</code>, its neighbours at that moment are exactly
+      <code>lo</code> and <code>hi</code>, and the two sides are independent:
+      <code>dp[lo][hi] = max over k of dp[lo][k] + a[lo]·a[k]·a[hi] + dp[k][hi]</code>.
+      O(n³).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/burst-balloons/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Bursting balloon <code>i</code> earns
+        <code>nums[left] × nums[i] × nums[right]</code>, where left and right
+        are its current neighbours (use 1 past either end). Burst them all,
+        in the best order, and return the most coins.
+      </p>
+      <ul>
+        <li><code>1 &lt;= n &lt;= 300</code>, <code>0 &lt;= nums[i] &lt;= 100</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[3,1,5,8]</code> → <code>167</code>
+        (3·1·5 + 3·5·8 + 1·3·8 + 1·8·1). <code>[1,5]</code> →
+        <code>10</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[1,2,22]</code></td>
+              <td><code>88</code></td>
+              <td>Greedy "burst the smallest balloon first" said <code>68</code>. Wrong on 805 of 1505 tests: there's no greedy rule here.</td>
+            </tr>
+            <tr>
+              <td><code>[7]</code></td>
+              <td><code>7</code></td>
+              <td>One balloon: 1 × 7 × 1.</td>
+            </tr>
+            <tr>
+              <td><code>[9,0,9]</code></td>
+              <td><code>90</code></td>
+              <td>Burst the 0 first (it earns nothing), so the two 9s become neighbours: 0 + 9·9·1 + 1·9·1.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Try Every Next Balloon (Bitmask Memo)</h2>
+      <p class="intuition">
+        The state is "which balloons are still there". For each state, try
+        each remaining balloon as the next one, using its current neighbours,
+        and remember the best total for that state.
+      </p>
+      <ul>
+        <li>Thinking "first" forces you to remember the whole set: 2ⁿ states.</li>
+        <li>Works for about n ≤ 15, not for 300.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(2ⁿ · n)</span>
+        <span><strong>Space</strong> O(2ⁿ)</span>
+      </div>
+      <p class="note">
+        Just 15 balloons: Python 104 ms, Java 5.4 ms, C++ 6.9 ms. Each extra
+        balloon roughly doubles that.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Interval Recursion, Last Balloon</h2>
+      <p class="intuition">
+        <code>best(lo, hi)</code> = the most coins from the balloons strictly
+        between <code>lo</code> and <code>hi</code>. Pick <code>k</code> to be
+        burst last: everything else in there is gone by then, so it earns
+        <code>a[lo]·a[k]·a[hi]</code>, and the two sides
+        <code>best(lo, k)</code> and <code>best(k, hi)</code> don't affect
+        each other.
+      </p>
+      <ul>
+        <li>Only about n²/2 intervals instead of 2ⁿ sets.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n³)</span>
+        <span><strong>Space</strong> O(n²)</span>
+      </div>
+      <p class="note">
+        300 balloons: Python 2.5 s, Java 18 ms, C++ 16 ms. The function calls
+        make it slow in Python.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Interval DP, Bottom-Up
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Fill <code>dp[lo][hi]</code> by increasing gap
+        <code>hi − lo</code>. When you reach an interval, every shorter one
+        inside it is already done.
+      </p>
+      <ul>
+        <li>The same formula as Approach 2, with loops instead of calls.</li>
+        <li>The same pattern solves matrix-chain multiplication and similar "split an interval" problems.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n³)</span>
+        <span><strong>Space</strong> O(n²)</span>
+      </div>
+      <p class="note">
+        300 balloons: Python 0.62 s, Java 4.5 ms, C++ 4.9 ms, the fastest in
+        every language, and 4 times faster than Approach 2 in Python.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>Nothing built in. Approach 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Try Every Next Balloon</th>
+              <td>Bitmask of balloons left</td>
+              <td>O(2ⁿ · n)</td>
+              <td>O(2ⁿ)</td>
+              <td>Only for n ≤ ~15</td>
+            </tr>
+            <tr>
+              <th scope="row">Interval Recursion</th>
+              <td>Choose the last balloon</td>
+              <td>O(n³)</td>
+              <td>O(n²)</td>
+              <td>2.5 s in Python at 300</td>
+            </tr>
+            <tr>
+              <th scope="row">Interval DP, Bottom-Up</th>
+              <td>Fill by increasing gap</td>
+              <td>O(n³)</td>
+              <td>O(n²)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

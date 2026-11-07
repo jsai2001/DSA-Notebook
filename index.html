@@ -38448,7 +38448,7 @@
       <details class="pattern-group" id="g-dynamic-programming">
         <summary>
           <span class="g-name">Dynamic Programming</span>
-          <span class="g-count"><span class="g-total">19 problems</span></span>
+          <span class="g-count"><span class="g-total">20 problems</span></span>
           <span class="g-hint">Reuse the answers to smaller problems</span>
         </summary>
         <div class="g-body">
@@ -44739,6 +44739,401 @@
                         <td>Update all from yesterday</td>
                         <td>O(n)</td>
                         <td>O(1)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0312-burst-balloons ===== -->
+          <details class="question" data-group="dynamic-programming" data-tags="dynamic programming interval dp burst balloons last element matrix chain memoization">
+            <summary>
+              <span class="q-title">312. Burst Balloons</span>
+              <span class="q-meta">
+                <span class="badge hard">Hard</span>
+                <span class="tag">Dynamic Programming</span>
+                <span class="tag">Array</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Think about which balloon is burst
+                <strong>last</strong>, not first. Pad the array with a 1 at each end.
+                If <code>k</code> is the last balloon burst between <code>lo</code>
+                and <code>hi</code>, its neighbours at that moment are exactly
+                <code>lo</code> and <code>hi</code>, and the two sides are independent:
+                <code>dp[lo][hi] = max over k of dp[lo][k] + a[lo]·a[k]·a[hi] + dp[k][hi]</code>.
+                O(n³).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/burst-balloons/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Bursting balloon <code>i</code> earns
+                  <code>nums[left] × nums[i] × nums[right]</code>, where left and right
+                  are its current neighbours (use 1 past either end). Burst them all,
+                  in the best order, and return the most coins.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= n &lt;= 300</code>, <code>0 &lt;= nums[i] &lt;= 100</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>[3,1,5,8]</code> → <code>167</code>
+                  (3·1·5 + 3·5·8 + 1·3·8 + 1·8·1). <code>[1,5]</code> →
+                  <code>10</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[1,2,22]</code></td>
+                        <td><code>88</code></td>
+                        <td>Greedy "burst the smallest balloon first" said <code>68</code>. Wrong on 805 of 1505 tests: there's no greedy rule here.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[7]</code></td>
+                        <td><code>7</code></td>
+                        <td>One balloon: 1 × 7 × 1.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[9,0,9]</code></td>
+                        <td><code>90</code></td>
+                        <td>Burst the 0 first (it earns nothing), so the two 9s become neighbours: 0 + 9·9·1 + 1·9·1.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Try Every Next Balloon (Bitmask Memo)</h2>
+                <p class="intuition">
+                  The state is "which balloons are still there". For each state, try
+                  each remaining balloon as the next one, using its current neighbours,
+                  and remember the best total for that state.
+                </p>
+                <ul>
+                  <li>Thinking "first" forces you to remember the whole set: 2ⁿ states.</li>
+                  <li>Works for about n ≤ 15, not for 300.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(2ⁿ · n)</span>
+                  <span><strong>Space</strong> O(2ⁿ)</span>
+                </div>
+                <p class="note">
+                  Just 15 balloons: Python 104 ms, Java 5.4 ms, C++ 6.9 ms. Each extra
+                  balloon roughly doubles that.
+                </p>
+                <div class="code-tabs" data-viz="0312-burst-balloons/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4],"call":[5],"base":[6,7],"memo":[8,9,15,16],"try":[10,11,12,13,14],"return":[17]}'>
+                    class Solution(object):
+                        def maxCoins(self, nums):
+                            n = len(nums)
+                            memo = {}  # remaining balloons (as a bitmask) -> the most coins from bursting them all
+                            def best(mask):
+                                if mask == 0:
+                                    return 0
+                                if mask not in memo:
+                                    alive = [i for i in range(n) if mask >> i & 1]
+                                    top = 0
+                                    for k, i in enumerate(alive):  # burst balloon i next: its neighbours are the nearest alive ones
+                                        left = nums[alive[k - 1]] if k > 0 else 1
+                                        right = nums[alive[k + 1]] if k + 1 < len(alive) else 1
+                                        top = max(top, left * nums[i] * right + best(mask & ~(1 << i)))
+                                    memo[mask] = top
+                                return memo[mask]
+                            return best((1 << n) - 1)  # every balloon is still there
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8],"return":[9],"call":[14],"base":[15],"memo":[16,17,18,19,26],"try":[20,21,22,23,24]}'>
+                    #include <algorithm>
+                    #include <unordered_map>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int maxCoins(std::vector<int>& nums) {
+                            a = nums;
+                            memo.clear(); // remaining balloons (as a bitmask) -> the most coins from bursting them all
+                            return best((1 << a.size()) - 1); // every balloon is still there
+                        }
+                    private:
+                        std::vector<int> a;
+                        std::unordered_map<int, int> memo;
+                        int best(int mask) {
+                            if (mask == 0) return 0;
+                            auto it = memo.find(mask);
+                            if (it != memo.end()) return it->second;
+                            std::vector<int> alive;
+                            for (int i = 0; i < (int)a.size(); ++i) if (mask >> i & 1) alive.push_back(i);
+                            int top = 0;
+                            for (size_t k = 0; k < alive.size(); ++k) { // burst balloon alive[k] next: its neighbours are the nearest alive ones
+                                int left = k > 0 ? a[alive[k - 1]] : 1;
+                                int right = k + 1 < alive.size() ? a[alive[k + 1]] : 1;
+                                top = std::max(top, left * a[alive[k]] * right + best(mask & ~(1 << alive[k])));
+                            }
+                            return memo[mask] = top;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,6,7],"return":[8],"call":[10],"base":[11],"memo":[12,13,14,15,22,23],"try":[16,17,18,19,20]}'>
+                    import java.util.*;
+                    class Solution {
+                        private int[] a;
+                        private final Map<Integer, Integer> memo = new HashMap<>(); // remaining balloons (as a bitmask) -> the most coins from bursting them all
+                        public int maxCoins(int[] nums) {
+                            a = nums;
+                            memo.clear();
+                            return best((1 << a.length) - 1); // every balloon is still there
+                        }
+                        private int best(int mask) {
+                            if (mask == 0) return 0;
+                            Integer got = memo.get(mask);
+                            if (got != null) return got;
+                            List<Integer> alive = new ArrayList<>();
+                            for (int i = 0; i < a.length; i++) if ((mask >> i & 1) == 1) alive.add(i);
+                            int top = 0;
+                            for (int k = 0; k < alive.size(); k++) { // burst balloon alive[k] next: its neighbours are the nearest alive ones
+                                int left = k > 0 ? a[alive.get(k - 1)] : 1;
+                                int right = k + 1 < alive.size() ? a[alive.get(k + 1)] : 1;
+                                top = Math.max(top, left * a[alive.get(k)] * right + best(mask & ~(1 << alive.get(k))));
+                            }
+                            memo.put(mask, top);
+                            return top;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Interval Recursion, Last Balloon</h2>
+                <p class="intuition">
+                  <code>best(lo, hi)</code> = the most coins from the balloons strictly
+                  between <code>lo</code> and <code>hi</code>. Pick <code>k</code> to be
+                  burst last: everything else in there is gone by then, so it earns
+                  <code>a[lo]·a[k]·a[hi]</code>, and the two sides
+                  <code>best(lo, k)</code> and <code>best(k, hi)</code> don't affect
+                  each other.
+                </p>
+                <ul>
+                  <li>Only about n²/2 intervals instead of 2ⁿ sets.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n³)</span>
+                  <span><strong>Space</strong> O(n²)</span>
+                </div>
+                <p class="note">
+                  300 balloons: Python 2.5 s, Java 18 ms, C++ 16 ms. The function calls
+                  make it slow in Python.
+                </p>
+                <div class="code-tabs" data-viz="0312-burst-balloons/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[5,6],"call":[7],"base":[8,9],"memo":[10,13],"last":[11,12],"return":[14]}'>
+                    import sys
+                    sys.setrecursionlimit(5000)
+                    class Solution(object):
+                        def maxCoins(self, nums):
+                            a = [1] + nums + [1]  # padding: the ends act like balloons worth 1 that never burst
+                            memo = {}
+                            def best(lo, hi):  # the most coins from bursting every balloon strictly between lo and hi
+                                if lo + 1 == hi:  # nothing in between
+                                    return 0
+                                if (lo, hi) not in memo:
+                                    memo[(lo, hi)] = max(  # pick k, the LAST balloon burst in here: when it goes, lo and hi are its neighbours
+                                        best(lo, k) + a[lo] * a[k] * a[hi] + best(k, hi) for k in range(lo + 1, hi))
+                                return memo[(lo, hi)]
+                            return best(0, len(a) - 1)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8,9],"return":[10],"call":[15],"base":[16],"memo":[17,18,21],"last":[19,20]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int maxCoins(std::vector<int>& nums) {
+                            a = {1}; // padding: the ends act like balloons worth 1 that never burst
+                            a.insert(a.end(), nums.begin(), nums.end());
+                            a.push_back(1);
+                            memo.assign(a.size(), std::vector<int>(a.size(), -1));
+                            return best(0, a.size() - 1);
+                        }
+                    private:
+                        std::vector<int> a;
+                        std::vector<std::vector<int>> memo;
+                        int best(int lo, int hi) { // the most coins from bursting every balloon strictly between lo and hi
+                            if (lo + 1 == hi) return 0; // nothing in between
+                            int& m = memo[lo][hi];
+                            if (m >= 0) return m;
+                            for (int k = lo + 1; k < hi; ++k) // pick k, the LAST balloon burst in here: when it goes, lo and hi are its neighbours
+                                m = std::max(m, best(lo, k) + a[lo] * a[k] * a[hi] + best(k, hi));
+                            return m;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[6,7,8,9,10,11],"return":[12],"call":[14],"base":[15],"memo":[16,17,20],"last":[18,19]}'>
+                    import java.util.*;
+                    class Solution {
+                        private int[] a;
+                        private int[][] memo;
+                        public int maxCoins(int[] nums) {
+                            int n = nums.length;
+                            a = new int[n + 2]; // padding: the ends act like balloons worth 1 that never burst
+                            a[0] = a[n + 1] = 1;
+                            System.arraycopy(nums, 0, a, 1, n);
+                            memo = new int[n + 2][n + 2];
+                            for (int[] row : memo) Arrays.fill(row, -1);
+                            return best(0, n + 1);
+                        }
+                        private int best(int lo, int hi) { // the most coins from bursting every balloon strictly between lo and hi
+                            if (lo + 1 == hi) return 0; // nothing in between
+                            if (memo[lo][hi] >= 0) return memo[lo][hi];
+                            int m = 0;
+                            for (int k = lo + 1; k < hi; k++) // pick k, the LAST balloon burst in here: when it goes, lo and hi are its neighbours
+                                m = Math.max(m, best(lo, k) + a[lo] * a[k] * a[hi] + best(k, hi));
+                            return memo[lo][hi] = m;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Interval DP, Bottom-Up
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Fill <code>dp[lo][hi]</code> by increasing gap
+                  <code>hi − lo</code>. When you reach an interval, every shorter one
+                  inside it is already done.
+                </p>
+                <ul>
+                  <li>The same formula as Approach 2, with loops instead of calls.</li>
+                  <li>The same pattern solves matrix-chain multiplication and similar "split an interval" problems.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n³)</span>
+                  <span><strong>Space</strong> O(n²)</span>
+                </div>
+                <p class="note">
+                  300 balloons: Python 0.62 s, Java 4.5 ms, C++ 4.9 ms, the fastest in
+                  every language, and 4 times faster than Approach 2 in Python.
+                </p>
+                <div class="code-tabs" data-viz="0312-burst-balloons/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"gap":[6,7,8],"last":[9],"return":[10]}'>
+                    class Solution(object):
+                        def maxCoins(self, nums):
+                            a = [1] + nums + [1]  # padding: the ends act like balloons worth 1 that never burst
+                            m = len(a)
+                            dp = [[0] * m for _ in range(m)]  # dp[lo][hi] = the most coins from the balloons strictly between lo and hi
+                            for gap in range(2, m):  # short intervals first, so the parts are ready
+                                for lo in range(m - gap):
+                                    hi = lo + gap
+                                    dp[lo][hi] = max(dp[lo][k] + a[lo] * a[k] * a[hi] + dp[k][hi] for k in range(lo + 1, hi))  # k is burst last
+                            return dp[0][m - 1]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8,9,10],"gap":[11,12,13],"last":[14,15],"return":[17]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int maxCoins(std::vector<int>& nums) {
+                            std::vector<int> a{1}; // padding: the ends act like balloons worth 1 that never burst
+                            a.insert(a.end(), nums.begin(), nums.end());
+                            a.push_back(1);
+                            const int m = a.size();
+                            std::vector<std::vector<int>> dp(m, std::vector<int>(m, 0)); // dp[lo][hi] = the most coins from the balloons strictly between lo and hi
+                            for (int gap = 2; gap < m; ++gap) // short intervals first, so the parts are ready
+                                for (int lo = 0; lo + gap < m; ++lo) {
+                                    int hi = lo + gap;
+                                    for (int k = lo + 1; k < hi; ++k) // k is burst last
+                                        dp[lo][hi] = std::max(dp[lo][hi], dp[lo][k] + a[lo] * a[k] * a[hi] + dp[k][hi]);
+                                }
+                            return dp[0][m - 1];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5,6,7],"gap":[8,9,10],"last":[11,12],"return":[14]}'>
+                    class Solution {
+                        public int maxCoins(int[] nums) {
+                            int m = nums.length + 2;
+                            int[] a = new int[m]; // padding: the ends act like balloons worth 1 that never burst
+                            a[0] = a[m - 1] = 1;
+                            System.arraycopy(nums, 0, a, 1, nums.length);
+                            int[][] dp = new int[m][m]; // dp[lo][hi] = the most coins from the balloons strictly between lo and hi
+                            for (int gap = 2; gap < m; gap++) // short intervals first, so the parts are ready
+                                for (int lo = 0; lo + gap < m; lo++) {
+                                    int hi = lo + gap;
+                                    for (int k = lo + 1; k < hi; k++) // k is burst last
+                                        dp[lo][hi] = Math.max(dp[lo][hi], dp[lo][k] + a[lo] * a[k] * a[hi] + dp[k][hi]);
+                                }
+                            return dp[0][m - 1];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>Nothing built in. Approach 3 is what you'd write.</p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Try Every Next Balloon</th>
+                        <td>Bitmask of balloons left</td>
+                        <td>O(2ⁿ · n)</td>
+                        <td>O(2ⁿ)</td>
+                        <td>Only for n ≤ ~15</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Interval Recursion</th>
+                        <td>Choose the last balloon</td>
+                        <td>O(n³)</td>
+                        <td>O(n²)</td>
+                        <td>2.5 s in Python at 300</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Interval DP, Bottom-Up</th>
+                        <td>Fill by increasing gap</td>
+                        <td>O(n³)</td>
+                        <td>O(n²)</td>
                         <td>Expected answer</td>
                       </tr>
                     </tbody>
@@ -73529,6 +73924,86 @@
             steps.push({ line: "day", note: `Day ${i} (${p}): ${why}. All three read yesterday's values.`, view: [{ type: "array", label: "prices (dark = today)", values: prices, marks: { [i]: "active" } }, vars("new")] });
           }
           steps.push({ line: "return", note: `Return ${Math.max(sold, rest)}. O(n) time, O(1) space.`, view: [{ type: "array", label: "prices", values: prices }, vars("match")] });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0312-burst-balloons/approach1.visual.js -->
+    <script>
+      // Try every balloon as the next one to burst; remember the best for each set of balloons still there (a bitmask).
+      DSAViz.register("0312-burst-balloons/approach1", {
+        inputs: [{ name: "nums", type: "int[]", value: "[3, 1, 5, 8]", minLength: 1, maxLength: 6, minValue: 0, maxValue: 100 }],
+        trace({ nums }) {
+          const n = nums.length;
+          const memo = new Map();
+          const steps = [];
+          const MAX = 80; let hidden = 0, states = 0;
+          const push = (s) => (steps.length < MAX ? steps.push(s) : hidden++);
+          const view = (mask, pick) => [{ type: "array", label: "balloons (dashed = already burst, green = the best one to burst next)", values: nums, marks: Object.fromEntries(nums.map((_, i) => [i, !(mask >> i & 1) ? "ghost" : i === pick ? "match" : ""]).filter(([, m]) => m)) }, { type: "vars", items: [{ name: "sets worked out", value: states }] }];
+          const best = (mask) => {
+            if (!mask) return 0;
+            if (memo.has(mask)) return memo.get(mask);
+            const alive = []; for (let i = 0; i < n; i++) if (mask >> i & 1) alive.push(i);
+            let top = -1, pick = -1, how = "";
+            alive.forEach((i, k) => { const l = k ? nums[alive[k - 1]] : 1, r = k + 1 < alive.length ? nums[alive[k + 1]] : 1; const v = l * nums[i] * r + best(mask & ~(1 << i)); if (v > top) { top = v; pick = i; how = `${l} × ${nums[i]} × ${r} = ${l * nums[i] * r}`; } });
+            memo.set(mask, top); states++;
+            push({ line: ["call", "memo", "try"], note: `Balloons left: ${alive.map((i) => nums[i]).join(", ")}. Best is to burst ${nums[pick]} next (${how}), then do the rest: ${top} in total.`, view: view(mask, pick) });
+            return top;
+          };
+          push({ line: "init", note: "All balloons are still there. Try each one as the next to burst.", view: view((1 << n) - 1, -1) });
+          const ans = best((1 << n) - 1);
+          steps.push({ line: "return", note: `Return ${ans}. ${states} different sets of balloons${hidden ? ` (${hidden} steps not shown)` : ""}: up to 2ⁿ, so this only works for small n.`, view: view((1 << n) - 1, -1) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0312-burst-balloons/approach2.visual.js -->
+    <script>
+      // best(lo, hi) = the most coins from the balloons strictly between lo and hi. Choose the one burst LAST: its neighbours are then lo and hi.
+      DSAViz.register("0312-burst-balloons/approach2", {
+        inputs: [{ name: "nums", type: "int[]", value: "[3, 1, 5, 8]", minLength: 1, maxLength: 6, minValue: 0, maxValue: 100 }],
+        trace({ nums }) {
+          const a = [1, ...nums, 1], m = a.length;
+          const dp = Array.from({ length: m }, () => Array(m).fill(null));
+          const steps = [];
+          const view = (lo, hi, k) => [{ type: "array", label: "a = [1] + nums + [1] (dark = k, burst last; yellow = lo and hi, its neighbours then)", values: a, marks: lo === undefined ? { 0: "ghost", [m - 1]: "ghost" } : { [lo]: "compare", [hi]: "compare", [k]: "active" } }, { type: "grid", label: "dp[lo][hi] (blank = not worked out; green = just set)", rows: a.map((_, i) => i), cols: a.map((_, i) => i), corner: "lo \\ hi", cells: dp.map((r, i) => r.map((v, j) => (j <= i + 1 && v === null ? (j > i ? 0 : "") : v === null ? "" : v))), marks: lo === undefined ? {} : { [`${lo},${hi}`]: "match" } }];
+          steps.push({ line: "init", note: "Pad both ends with a 1. Intervals with nothing inside (hi = lo + 1) give 0.", view: view() });
+          const fill = (lo, hi) => {
+            let best = -1, bk = -1;
+            for (let k = lo + 1; k < hi; k++) { const v = dp[lo][k] + a[lo] * a[k] * a[hi] + dp[k][hi]; if (v > best) { best = v; bk = k; } }
+            dp[lo][hi] = best;
+            steps.push({ line: ["call", "memo", "last"], note: `dp[${lo}][${hi}]: the best last balloon is a[${bk}] = ${a[bk]}. dp[${lo}][${bk}] + ${a[lo]}×${a[bk]}×${a[hi]} + dp[${bk}][${hi}] = ${dp[lo][bk]} + ${a[lo] * a[bk] * a[hi]} + ${dp[bk][hi]} = ${best}.`, view: view(lo, hi, bk) });
+          };
+          for (let i = 0; i + 1 < m; i++) dp[i][i + 1] = 0;
+          const best = (lo, hi) => { if (lo + 1 === hi) return 0; if (dp[lo][hi] !== null) return dp[lo][hi]; for (let k = lo + 1; k < hi; k++) { best(lo, k); best(k, hi); } fill(lo, hi); return dp[lo][hi]; };
+          best(0, m - 1);
+
+          steps.push({ line: "return", note: `Return ${dp[0][m - 1]}. About n² intervals, n choices each: O(n³).`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0312-burst-balloons/approach3.visual.js -->
+    <script>
+      // The same intervals, filled bottom-up: short gaps first, so dp[lo][k] and dp[k][hi] are ready when dp[lo][hi] needs them.
+      DSAViz.register("0312-burst-balloons/approach3", {
+        inputs: [{ name: "nums", type: "int[]", value: "[3, 1, 5, 8]", minLength: 1, maxLength: 6, minValue: 0, maxValue: 100 }],
+        trace({ nums }) {
+          const a = [1, ...nums, 1], m = a.length;
+          const dp = Array.from({ length: m }, () => Array(m).fill(null));
+          const steps = [];
+          const view = (lo, hi, k) => [{ type: "array", label: "a = [1] + nums + [1] (dark = k, burst last; yellow = lo and hi, its neighbours then)", values: a, marks: lo === undefined ? { 0: "ghost", [m - 1]: "ghost" } : { [lo]: "compare", [hi]: "compare", [k]: "active" } }, { type: "grid", label: "dp[lo][hi] (blank = not worked out; green = just set)", rows: a.map((_, i) => i), cols: a.map((_, i) => i), corner: "lo \\ hi", cells: dp.map((r, i) => r.map((v, j) => (j <= i + 1 && v === null ? (j > i ? 0 : "") : v === null ? "" : v))), marks: lo === undefined ? {} : { [`${lo},${hi}`]: "match" } }];
+          steps.push({ line: "init", note: "Pad both ends with a 1. Intervals with nothing inside (hi = lo + 1) give 0.", view: view() });
+          const fill = (lo, hi) => {
+            let best = -1, bk = -1;
+            for (let k = lo + 1; k < hi; k++) { const v = dp[lo][k] + a[lo] * a[k] * a[hi] + dp[k][hi]; if (v > best) { best = v; bk = k; } }
+            dp[lo][hi] = best;
+            steps.push({ line: ["gap", "last"], note: `dp[${lo}][${hi}]: the best last balloon is a[${bk}] = ${a[bk]}. dp[${lo}][${bk}] + ${a[lo]}×${a[bk]}×${a[hi]} + dp[${bk}][${hi}] = ${dp[lo][bk]} + ${a[lo] * a[bk] * a[hi]} + ${dp[bk][hi]} = ${best}.`, view: view(lo, hi, bk) });
+          };
+          for (let i = 0; i + 1 < m; i++) dp[i][i + 1] = 0;
+
+          for (let gap = 2; gap < m; gap++) for (let lo = 0; lo + gap < m; lo++) fill(lo, lo + gap);
+          steps.push({ line: "return", note: `Return ${dp[0][m - 1]}. About n² intervals, n choices each: O(n³).`, view: view() });
           return steps;
         },
       });
