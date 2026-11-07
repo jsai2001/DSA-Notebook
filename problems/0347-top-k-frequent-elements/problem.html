@@ -1,0 +1,208 @@
+<details class="question" data-group="heap" data-tags="heap priority queue hash map counting bucket sort top k frequency">
+  <summary>
+    <span class="q-title">347. Top K Frequent Elements</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Heap</span>
+      <span class="tag">Bucket Sort</span>
+      <span class="tag">Hash Map</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Count each value. A count is at most
+      <code>n</code>, so put each value in <code>bucket[count]</code> and read
+      the buckets from the top until you have <code>k</code>. O(n), no sort.
+      A size-k min-heap (O(n log k)) is the other common answer.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/top-k-frequent-elements/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Return the <code>k</code> values that appear most often in
+        <code>nums</code>, in any order. The answer is promised to be unique.
+      </p>
+      <ul>
+        <li><code>1 &lt;= nums.length &lt;= 10⁵</code>, <code>-10⁴ &lt;= nums[i] &lt;= 10⁴</code></li>
+        <li><code>k</code> is between 1 and the number of different values</li>
+        <li>Follow-up: better than O(n log n).</li>
+      </ul>
+      <p class="note">
+        Example: <code>nums = [1,1,1,2,2,3], k = 2</code> → <code>[1,2]</code>.
+        <code>nums = [1], k = 1</code> → <code>[1]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>nums = [1], k = 1</code></td>
+              <td><code>[1]</code></td>
+              <td>A value can appear <code>n</code> times, so the buckets need slots 0 to <code>n</code>. With only <code>n</code> buckets this crashed with an IndexError on 184 of 3,006 tests.</td>
+            </tr>
+            <tr>
+              <td><code>nums = [-1,-1,2], k = 2</code></td>
+              <td><code>[-1,2]</code></td>
+              <td>Negative values: count with a hash map, not an array indexed by value.</td>
+            </tr>
+            <tr>
+              <td>10⁵ different values plus one repeat, <code>k = 1</code></td>
+              <td>the repeated value</td>
+              <td>Almost every bucket is empty, but the bucket loop still only walks n + 1 of them.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Count, Then Sort</h2>
+      <p class="intuition">
+        Count each value in a hash map. Sort the different values by count,
+        biggest first, and return the first <code>k</code>.
+      </p>
+      <ul>
+        <li>Simple. Doesn't meet the follow-up when most values are different.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        10⁵ numbers, about 20,000 different values, average of 30 runs:
+        Python 9.6 ms, Java 5.0 ms, C++ 2.7 ms. The fastest of the three in
+        Python, because <code>sorted</code> runs in C.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Size-k Min-Heap</h2>
+      <p class="intuition">
+        After counting, push each value into a min-heap keyed by count. When
+        the heap holds more than <code>k</code>, pop the top: it's the least
+        frequent of them. The <code>k</code> left are the answer.
+      </p>
+      <ul>
+        <li>Good when <code>k</code> is small. Also works on a stream of counts.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log k)</span>
+        <span><strong>Space</strong> O(n) for the counts, O(k) for the heap</span>
+      </div>
+      <p class="note">
+        Same input, <code>k = 10</code>: Python 12 ms, Java 4.0 ms, C++ 2.6
+        ms. With <code>k = 4689</code>: Python 18.5 ms, Java 8.3 ms, C++ 4.0
+        ms, the slowest of the three.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Bucket by Count
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        A count is between 1 and <code>n</code>. Make <code>n + 1</code>
+        buckets and put each value in <code>bucket[count]</code>. Walk the
+        buckets from <code>n</code> down, taking values until you have
+        <code>k</code>.
+      </p>
+      <ul>
+        <li>No comparisons between counts at all.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Same input: Java 3.2 ms and C++ 2.6 ms, the fastest for both
+        <code>k</code>s (in C++ only just: counting takes most of the time).
+        Python 17 ms, behind Approach 1: building 10⁵ + 1 lists in Python
+        costs more than a sort in C.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Python's <code>Counter(nums).most_common(k)</code> counts in C and
+        then uses <code>heapq.nlargest</code>, which is Approach 2. C++ and
+        Java have no one-liner; use Approach 3.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log k)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Should pass on LeetCode. Same input: 5.1 ms with <code>k = 10</code>,
+        the fastest Python here. 10.9 ms with <code>k = 4689</code>, a bit
+        behind Approach 1.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Count, Then Sort</th>
+              <td>Sort values by count</td>
+              <td>O(n log n)</td>
+              <td>O(n)</td>
+              <td>Fastest in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">Size-k Min-Heap</th>
+              <td>Drop the least frequent past k</td>
+              <td>O(n log k)</td>
+              <td>O(n)</td>
+              <td>Slows as k grows</td>
+            </tr>
+            <tr>
+              <th scope="row">Bucket by Count</th>
+              <td><code>bucket[count]</code>, read from the top</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
