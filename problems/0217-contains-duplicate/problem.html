@@ -1,0 +1,211 @@
+<details class="question" data-group="arrays-hashing" data-tags="array hash set duplicate sort contains">
+  <summary>
+    <span class="q-title">217. Contains Duplicate</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Array</span>
+      <span class="tag">Hash Table</span>
+      <span class="tag">Sorting</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Walk the array once with a
+      <strong>hash set</strong> of the values seen so far. If the next value
+      is already in the set, it's a repeat. O(n) time, O(n) space. Sorting
+      first (repeats end up side by side) uses less memory but costs
+      O(n log n).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/contains-duplicate/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Return <code>true</code> if any value appears at least twice in
+        <code>nums</code>, and <code>false</code> if every value is different.
+      </p>
+      <ul>
+        <li><code>1 &lt;= nums.length &lt;= 10⁵</code></li>
+        <li><code>-10⁹ &lt;= nums[i] &lt;= 10⁹</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[1,2,3,1]</code> → <code>true</code>.
+        <code>[1,2,3,4]</code> → <code>false</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[5]</code></td>
+              <td><code>false</code></td>
+              <td>One value: nothing to compare with.</td>
+            </tr>
+            <tr>
+              <td>10⁵ different values</td>
+              <td><code>false</code></td>
+              <td>No early exit. Comparing every pair is about 5 × 10⁹ checks: 1.4 s in Python for just 10⁴ values.</td>
+            </tr>
+            <tr>
+              <td><code>[-1,1]</code></td>
+              <td><code>false</code></td>
+              <td>Same size, different sign. A trick like an array indexed by <code>abs(x)</code> would say <code>true</code>.</td>
+            </tr>
+            <tr>
+              <td>values up to 10⁹</td>
+              <td>-</td>
+              <td>Too big for a "seen" array indexed by value; use a hash set.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Compare Every Pair</h2>
+      <p class="intuition">
+        For each <code>i</code>, compare <code>nums[i]</code> with every later
+        value. Return <code>true</code> on the first match.
+      </p>
+      <ul>
+        <li>No extra memory, and the array isn't changed.</li>
+        <li>n(n − 1) / 2 comparisons when there's no repeat.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        10⁴ different values: Python 1.4 s, Java 15 ms, C++ 16 ms. At 10⁵ it's
+        100 times more work: too slow for LeetCode.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Sort, Then Compare Neighbours</h2>
+      <p class="intuition">
+        After sorting, equal values are next to each other. One pass checks
+        each value against the one before it.
+      </p>
+      <ul>
+        <li>No hash set. The C++ and Java versions sort <code>nums</code> in place, so the caller's array changes.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(1) extra in place (O(n) for Python's <code>sorted</code>)</span>
+      </div>
+      <p class="note">
+        10⁵ different values: Python 18 ms, Java 4.8 ms, C++ 1.9 ms. In C++
+        this beat the hash set (4.1 ms): sorting ints is fast, and the set
+        allocates a node per value.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Hash Set
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Keep a set of the values seen so far. For each value: if it's in the
+        set, return <code>true</code>; otherwise add it. In C++ and Java,
+        <code>insert</code>/<code>add</code> already says whether the value
+        was new, so it's one call.
+      </p>
+      <ul>
+        <li>Stops at the first repeat.</li>
+        <li>Reserving room up front avoids rehashing as the set grows.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        10⁵ different values: Python 6.2 ms, Java 1.5 ms, C++ 4.1 ms. The
+        fastest in Python and Java.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Build a set of all the values and compare sizes: if the set is
+        smaller, something repeated. In Java,
+        <code>Arrays.stream(nums).distinct().count()</code> does the same.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Should pass on LeetCode. Python's one-liner took 3.4 ms on 10⁵ values,
+        faster than Approach 3, though it never stops early. Java's stream took
+        6.0 ms, slower than a plain <code>HashSet</code> loop.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Compare Every Pair</th>
+              <td>Two loops</td>
+              <td>O(n²)</td>
+              <td>O(1)</td>
+              <td>1.4 s in Python at 10⁴</td>
+            </tr>
+            <tr>
+              <th scope="row">Sort, Then Neighbours</th>
+              <td>Repeats end up side by side</td>
+              <td>O(n log n)</td>
+              <td>O(1) in place</td>
+              <td>Fastest in C++</td>
+            </tr>
+            <tr>
+              <th scope="row">Hash Set</th>
+              <td>Seen before?</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

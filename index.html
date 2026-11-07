@@ -57,7 +57,7 @@
       <details class="pattern-group" id="g-arrays-hashing">
         <summary>
           <span class="g-name">Arrays &amp; Hashing</span>
-          <span class="g-count"><span class="g-total">4 problems</span></span>
+          <span class="g-count"><span class="g-total">5 problems</span></span>
           <span class="g-hint">Count or look things up in a hash map</span>
         </summary>
         <div class="g-body">
@@ -1291,6 +1291,340 @@
                         <td>O(n)</td>
                         <td>O(n)</td>
                         <td>Required answer; loop over the set</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0217-contains-duplicate ===== -->
+          <details class="question" data-group="arrays-hashing" data-tags="array hash set duplicate sort contains">
+            <summary>
+              <span class="q-title">217. Contains Duplicate</span>
+              <span class="q-meta">
+                <span class="badge easy">Easy</span>
+                <span class="tag">Array</span>
+                <span class="tag">Hash Table</span>
+                <span class="tag">Sorting</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Walk the array once with a
+                <strong>hash set</strong> of the values seen so far. If the next value
+                is already in the set, it's a repeat. O(n) time, O(n) space. Sorting
+                first (repeats end up side by side) uses less memory but costs
+                O(n log n).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/contains-duplicate/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Return <code>true</code> if any value appears at least twice in
+                  <code>nums</code>, and <code>false</code> if every value is different.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= nums.length &lt;= 10⁵</code></li>
+                  <li><code>-10⁹ &lt;= nums[i] &lt;= 10⁹</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>[1,2,3,1]</code> → <code>true</code>.
+                  <code>[1,2,3,4]</code> → <code>false</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[5]</code></td>
+                        <td><code>false</code></td>
+                        <td>One value: nothing to compare with.</td>
+                      </tr>
+                      <tr>
+                        <td>10⁵ different values</td>
+                        <td><code>false</code></td>
+                        <td>No early exit. Comparing every pair is about 5 × 10⁹ checks: 1.4 s in Python for just 10⁴ values.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[-1,1]</code></td>
+                        <td><code>false</code></td>
+                        <td>Same size, different sign. A trick like an array indexed by <code>abs(x)</code> would say <code>true</code>.</td>
+                      </tr>
+                      <tr>
+                        <td>values up to 10⁹</td>
+                        <td>-</td>
+                        <td>Too big for a "seen" array indexed by value; use a hash set.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Compare Every Pair</h2>
+                <p class="intuition">
+                  For each <code>i</code>, compare <code>nums[i]</code> with every later
+                  value. Return <code>true</code> on the first match.
+                </p>
+                <ul>
+                  <li>No extra memory, and the array isn't changed.</li>
+                  <li>n(n − 1) / 2 comparisons when there's no repeat.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n²)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  10⁴ different values: Python 1.4 s, Java 15 ms, C++ 16 ms. At 10⁵ it's
+                  100 times more work: too slow for LeetCode.
+                </p>
+                <div class="code-tabs" data-viz="0217-contains-duplicate/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"pair":[4,5],"found":[6,7],"none":[8]}'>
+                    class Solution(object):
+                        def containsDuplicate(self, nums):
+                            n = len(nums)
+                            for i in range(n):  # compare every pair once
+                                for j in range(i + 1, n):
+                                    if nums[i] == nums[j]:
+                                        return True
+                            return False
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"pair":[6,7],"found":[8],"none":[9]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool containsDuplicate(std::vector<int>& nums) {
+                            const int n = nums.size();
+                            for (int i = 0; i < n; ++i) // compare every pair once
+                                for (int j = i + 1; j < n; ++j)
+                                    if (nums[i] == nums[j]) return true;
+                            return false;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"pair":[4,5],"found":[6],"none":[7]}'>
+                    class Solution {
+                        public boolean containsDuplicate(int[] nums) {
+                            int n = nums.length;
+                            for (int i = 0; i < n; i++) // compare every pair once
+                                for (int j = i + 1; j < n; j++)
+                                    if (nums[i] == nums[j]) return true;
+                            return false;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Sort, Then Compare Neighbours</h2>
+                <p class="intuition">
+                  After sorting, equal values are next to each other. One pass checks
+                  each value against the one before it.
+                </p>
+                <ul>
+                  <li>No hash set. The C++ and Java versions sort <code>nums</code> in place, so the caller's array changes.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n)</span>
+                  <span><strong>Space</strong> O(1) extra in place (O(n) for Python's <code>sorted</code>)</span>
+                </div>
+                <p class="note">
+                  10⁵ different values: Python 18 ms, Java 4.8 ms, C++ 1.9 ms. In C++
+                  this beat the hash set (4.1 ms): sorting ints is fast, and the set
+                  allocates a node per value.
+                </p>
+                <div class="code-tabs" data-viz="0217-contains-duplicate/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"sort":[3],"scan":[4],"found":[5,6],"none":[7]}'>
+                    class Solution(object):
+                        def containsDuplicate(self, nums):
+                            nums = sorted(nums)  # equal values end up side by side
+                            for i in range(1, len(nums)):
+                                if nums[i] == nums[i - 1]:
+                                    return True
+                            return False
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"sort":[6],"scan":[7],"found":[8],"none":[9]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool containsDuplicate(std::vector<int>& nums) {
+                            std::sort(nums.begin(), nums.end()); // equal values end up side by side
+                            for (size_t i = 1; i < nums.size(); ++i)
+                                if (nums[i] == nums[i - 1]) return true;
+                            return false;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"sort":[4],"scan":[5],"found":[6],"none":[7]}'>
+                    import java.util.*;
+                    class Solution {
+                        public boolean containsDuplicate(int[] nums) {
+                            Arrays.sort(nums); // equal values end up side by side
+                            for (int i = 1; i < nums.length; i++)
+                                if (nums[i] == nums[i - 1]) return true;
+                            return false;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Hash Set
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Keep a set of the values seen so far. For each value: if it's in the
+                  set, return <code>true</code>; otherwise add it. In C++ and Java,
+                  <code>insert</code>/<code>add</code> already says whether the value
+                  was new, so it's one call.
+                </p>
+                <ul>
+                  <li>Stops at the first repeat.</li>
+                  <li>Reserving room up front avoids rehashing as the set grows.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  10⁵ different values: Python 6.2 ms, Java 1.5 ms, C++ 4.1 ms. The
+                  fastest in Python and Java.
+                </p>
+                <div class="code-tabs" data-viz="0217-contains-duplicate/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"loop":[4],"found":[5,6],"add":[7],"none":[8]}'>
+                    class Solution(object):
+                        def containsDuplicate(self, nums):
+                            seen = set()  # values met so far
+                            for x in nums:
+                                if x in seen:  # met before: a duplicate
+                                    return True
+                                seen.add(x)
+                            return False
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7],"loop":[8],"found":[9],"add":[9],"none":[11]}'>
+                    #include <unordered_set>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool containsDuplicate(std::vector<int>& nums) {
+                            std::unordered_set<int> seen; // values met so far
+                            seen.reserve(nums.size());
+                            for (int x : nums) {
+                                if (!seen.insert(x).second) return true; // insert fails if x is already there: a duplicate
+                            }
+                            return false;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4],"loop":[5],"found":[6],"add":[6],"none":[8]}'>
+                    import java.util.*;
+                    class Solution {
+                        public boolean containsDuplicate(int[] nums) {
+                            Set<Integer> seen = new HashSet<>(nums.length * 2); // values met so far
+                            for (int x : nums) {
+                                if (!seen.add(x)) return true; // add fails if x is already there: a duplicate
+                            }
+                            return false;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  Build a set of all the values and compare sizes: if the set is
+                  smaller, something repeated. In Java,
+                  <code>Arrays.stream(nums).distinct().count()</code> does the same.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    class Solution(object):
+                        def containsDuplicate(self, nums):
+                            return len(set(nums)) < len(nums)  # the set drops repeats
+                  </script>
+                  <script type="text/plain" data-lang="Java">
+                    import java.util.*;
+                    class Solution {
+                        public boolean containsDuplicate(int[] nums) {
+                            return Arrays.stream(nums).distinct().count() < nums.length;
+                        }
+                    }
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  Should pass on LeetCode. Python's one-liner took 3.4 ms on 10⁵ values,
+                  faster than Approach 3, though it never stops early. Java's stream took
+                  6.0 ms, slower than a plain <code>HashSet</code> loop.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Compare Every Pair</th>
+                        <td>Two loops</td>
+                        <td>O(n²)</td>
+                        <td>O(1)</td>
+                        <td>1.4 s in Python at 10⁴</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Sort, Then Neighbours</th>
+                        <td>Repeats end up side by side</td>
+                        <td>O(n log n)</td>
+                        <td>O(1) in place</td>
+                        <td>Fastest in C++</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Hash Set</th>
+                        <td>Seen before?</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Expected answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -63764,6 +64098,79 @@
               nums = small;
             }
           }
+        },
+      });
+    </script>
+    <!-- problems/0217-contains-duplicate/approach1.visual.js -->
+    <script>
+      // Compare every pair (i, j) with i < j.
+      DSAViz.register("0217-contains-duplicate/approach1", {
+        inputs: [{ name: "nums", type: "int[]", value: "[1, 2, 3, 1]", minLength: 1, maxLength: 10, minValue: -1000000000, maxValue: 1000000000 }],
+        trace({ nums }) {
+          const n = nums.length;
+          const steps = [];
+          let pairs = 0;
+          const view = (i, j, hit) => [{ type: "array", label: "nums (yellow = the pair being compared, green = equal)", values: nums, marks: i === undefined ? {} : { [i]: hit ? "match" : "compare", [j]: hit ? "match" : "compare" }, pointers: i === undefined ? {} : { i, j } }, { type: "vars", items: [{ name: "pairs compared", value: pairs }] }];
+          steps.push({ line: "init", note: `${n} values: up to ${(n * (n - 1)) / 2} pairs to compare.`, view: view() });
+          for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+            pairs++;
+            if (nums[i] === nums[j]) {
+              steps.push({ line: ["pair", "found"], note: `nums[${i}] = nums[${j}] = ${nums[i]}.`, view: view(i, j, true) });
+              steps.push({ line: "found", note: `Return true. Found after ${pairs} comparison${pairs > 1 ? "s" : ""}.`, view: view(i, j, true) });
+              return steps;
+            }
+            steps.push({ line: "pair", note: `nums[${i}] = ${nums[i]}, nums[${j}] = ${nums[j]}: different.`, view: view(i, j, false) });
+          }
+          steps.push({ line: "none", note: `Return false. All ${pairs} pairs differ: O(n²) time.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0217-contains-duplicate/approach2.visual.js -->
+    <script>
+      // Sort, so equal values sit next to each other, then compare neighbours.
+      DSAViz.register("0217-contains-duplicate/approach2", {
+        inputs: [{ name: "nums", type: "int[]", value: "[1, 2, 3, 1]", minLength: 1, maxLength: 10, minValue: -1000000000, maxValue: 1000000000 }],
+        trace({ nums }) {
+          const s = nums.slice().sort((a, b) => a - b);
+          const steps = [];
+          const view = (i, hit) => [{ type: "array", label: "sorted (yellow = the two neighbours, green = equal)", values: s, marks: i === undefined ? {} : { [i - 1]: hit ? "match" : "compare", [i]: hit ? "match" : "compare" }, pointers: i === undefined ? {} : { i } }];
+          steps.push({ line: "sort", note: "Sort: any repeated value now has a copy right next to it.", view: [{ type: "array", label: "nums", values: nums }, ...view()] });
+          for (let i = 1; i < s.length; i++) {
+            if (s[i] === s[i - 1]) {
+              steps.push({ line: ["scan", "found"], note: `sorted[${i - 1}] = sorted[${i}] = ${s[i]}.`, view: view(i, true) });
+              steps.push({ line: "found", note: "Return true. Sorting costs O(n log n); the scan is O(n).", view: view(i, true) });
+              return steps;
+            }
+            steps.push({ line: "scan", note: `${s[i - 1]} and ${s[i]} differ.`, view: view(i, false) });
+          }
+          steps.push({ line: "none", note: "Return false. No two neighbours are equal, so no value repeats. O(n log n) time.", view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0217-contains-duplicate/approach3.visual.js -->
+    <script>
+      // Remember every value in a hash set; meeting one that's already there means a duplicate.
+      DSAViz.register("0217-contains-duplicate/approach3", {
+        inputs: [{ name: "nums", type: "int[]", value: "[1, 2, 3, 1]", minLength: 1, maxLength: 10, minValue: -1000000000, maxValue: 1000000000 }],
+        trace({ nums }) {
+          const seen = [];
+          const steps = [];
+          const view = (i, o = {}) => [{ type: "array", label: "nums (dark = this value)", values: nums, marks: i === undefined ? {} : { [i]: o.hit ? "match" : "active" } }, { type: "set", label: "seen", items: seen.map(String), marks: o.key !== undefined ? { [String(o.key)]: o.hit ? "match" : "new" } : {} }];
+          steps.push({ line: "init", note: "Start with an empty set.", view: view() });
+          for (let i = 0; i < nums.length; i++) {
+            const x = nums[i];
+            if (seen.includes(x)) {
+              steps.push({ line: ["loop", "found"], note: `${x} is already in seen.`, view: view(i, { hit: true, key: x }) });
+              steps.push({ line: "found", note: `Return true. Each lookup is O(1) on average.`, view: view(i, { hit: true, key: x }) });
+              return steps;
+            }
+            seen.push(x);
+            steps.push({ line: ["loop", "found", "add"], note: `${x} isn't in seen: add it.`, view: view(i, { key: x }) });
+          }
+          steps.push({ line: "none", note: `Return false. All ${nums.length} values are different. O(n) time, O(n) space.`, view: view() });
+          return steps;
         },
       });
     </script>
