@@ -1,0 +1,216 @@
+<details class="question" data-group="heap" data-tags="heap priority queue quickselect partition sort kth largest selection">
+  <summary>
+    <span class="q-title">215. Kth Largest Element in an Array</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Heap (Priority Queue)</span>
+      <span class="tag">Quickselect</span>
+      <span class="tag">Sorting</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> You don't need the whole array sorted. A
+      <strong>min-heap of size k</strong> keeps the k biggest values, and its
+      top is the answer: O(n log k). <strong>Quickselect</strong> does better
+      on average: split around a random pivot and keep only the side that
+      holds the answer, O(n). Split into three parts (bigger, equal, smaller)
+      so repeated values don't slow it down.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/kth-largest-element-in-an-array/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Return the <code>k</code>-th largest value in <code>nums</code>: the
+        k-th in sorted order, counting repeats (not the k-th distinct value).
+        LeetCode asks for a solution without sorting.
+      </p>
+      <ul>
+        <li><code>1 &lt;= k &lt;= nums.length &lt;= 10⁵</code></li>
+        <li><code>-10⁴ &lt;= nums[i] &lt;= 10⁴</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[3,2,1,5,6,4], k = 2</code> → <code>5</code>.
+        <code>[3,2,3,1,2,4,5,5,6], k = 4</code> → <code>4</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>10⁵ copies of <code>1</code>, <code>k = 50000</code></td>
+              <td><code>1</code></td>
+              <td>Quickselect with a 2-way split moves only one value per round when all are equal: 1.2 s in C++. The 3-way split took 0.07 ms.</td>
+            </tr>
+            <tr>
+              <td><code>[3,2,3,1,2,4,5,5,6], k = 4</code></td>
+              <td><code>4</code></td>
+              <td>Repeats count: the order is 6, 5, 5, 4. Removing duplicates first gives <code>3</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[1], k = 1</code></td>
+              <td><code>1</code></td>
+              <td>One value.</td>
+            </tr>
+            <tr>
+              <td><code>[2,1], k = 2</code></td>
+              <td><code>1</code></td>
+              <td>k = n is the smallest value: watch the off-by-one (index <code>k − 1</code> from the top).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Sort</h2>
+      <p class="intuition">
+        Sort, biggest first, and return index <code>k − 1</code> (or sort
+        ascending and take index <code>n − k</code>).
+      </p>
+      <ul>
+        <li>Two lines, and hard to get wrong.</li>
+        <li>It orders everything, which this problem doesn't need, and LeetCode asks you not to.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(n) in Python, O(log n) in place</span>
+      </div>
+      <p class="note">
+        10⁵ random values: Python 10.9 ms, Java 4.7 ms, C++ 1.7 ms. In Python
+        this is the fastest of the three, because the sort runs in C.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Min-Heap of Size k</h2>
+      <p class="intuition">
+        Push each value into a min-heap. When it holds more than
+        <code>k</code>, pop the smallest. At the end it holds the k biggest
+        values, and the top is the smallest of those: the answer.
+      </p>
+      <ul>
+        <li>Works on a stream: you never need all of <code>nums</code> at once.</li>
+        <li>Fast for small k; slow when k is about n / 2.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log k)</span>
+        <span><strong>Space</strong> O(k)</span>
+      </div>
+      <p class="note">
+        10⁵ random values, k = 50000: Python 30 ms, Java 9.5 ms, C++ 3.7 ms,
+        the slowest here in every language.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Quickselect, 3-Way Split
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Pick a random pivot and split the values into bigger, equal and
+        smaller. If <code>k</code> falls in the bigger part, keep only that;
+        if it falls on the equal part, the pivot is the answer; otherwise keep
+        the smaller part and subtract what you skipped from <code>k</code>.
+      </p>
+      <ul>
+        <li>Each round keeps one side, so the work is n + n/2 + n/4 + … ≈ 2n on average.</li>
+        <li>The random pivot means no fixed input is always slow. The worst case is still O(n²), but it's very unlikely.</li>
+        <li>C++ and Java split in place (Dutch national flag); Python builds lists for clarity.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n) average, O(n²) worst</span>
+        <span><strong>Space</strong> O(1) in place (O(n) for Python's lists)</span>
+      </div>
+      <p class="note">
+        10⁵ random values: Java 1.2 ms, C++ 0.84 ms, the fastest written-out
+        solution in both. Python 11.5 ms, about the same as sorting.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        C++ has <code>std::nth_element</code>, a quickselect that puts the
+        k-th value in its sorted place. Python has
+        <code>heapq.nlargest(k, nums)</code>, which keeps a size-k heap. Java
+        has neither, so use Approach 2 or 3.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n) average (C++), O(n log k) (Python)</span>
+        <span><strong>Space</strong> O(1) (C++), O(k) (Python)</span>
+      </div>
+      <p class="note">
+        Should pass on LeetCode. <code>nth_element</code> took 0.69 ms on 10⁵
+        values, the fastest here. <code>heapq.nlargest</code> took 56 ms with
+        k = 50000: for a big k, <code>sorted</code> is faster in Python.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Sort</th>
+              <td>Sort, read index k − 1</td>
+              <td>O(n log n)</td>
+              <td>O(n)</td>
+              <td>Fastest in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">Min-Heap of Size k</th>
+              <td>Keep the k biggest</td>
+              <td>O(n log k)</td>
+              <td>O(k)</td>
+              <td>Good for streams and small k</td>
+            </tr>
+            <tr>
+              <th scope="row">Quickselect, 3-Way Split</th>
+              <td>Random pivot, keep one side</td>
+              <td>O(n) average</td>
+              <td>O(1)</td>
+              <td>Fastest in C++ and Java</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
