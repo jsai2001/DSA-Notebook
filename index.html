@@ -9551,7 +9551,7 @@
       <details class="pattern-group" id="g-linked-list">
         <summary>
           <span class="g-name">Linked List</span>
-          <span class="g-count"><span class="g-total">10 problems</span></span>
+          <span class="g-count"><span class="g-total">11 problems</span></span>
           <span class="g-hint">Pointer rewiring and dummy heads</span>
         </summary>
         <div class="g-body">
@@ -14931,6 +14931,343 @@
                       <tr>
                         <th scope="row">Three Pointers</th>
                         <td>Save, flip, step</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0287-find-the-duplicate-number ===== -->
+          <details class="question" data-group="linked-list" data-tags="floyd cycle detection fast slow pointers binary search pigeonhole duplicate array linked list">
+            <summary>
+              <span class="q-title">287. Find the Duplicate Number</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Two Pointers</span>
+                <span class="tag">Binary Search</span>
+                <span class="tag">Array</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Read <code>i → nums[i]</code> as a link.
+                Every value is 1..n, so following the links from index 0 never comes
+                back to 0 and must run into a <strong>cycle</strong>. The repeated
+                value has two links pointing to it, so it's where the cycle begins.
+                Floyd's slow/fast pointers find that entry in O(n) time, O(1) space,
+                without changing <code>nums</code>.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/find-the-duplicate-number/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  <code>nums</code> has <code>n + 1</code> values, each in
+                  <code>1..n</code>. Exactly one value repeats (possibly more than
+                  twice). Return it without changing <code>nums</code> and using only
+                  O(1) extra space.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= n &lt;= 10⁵</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>[1,3,4,2,2]</code> → <code>2</code>.
+                  <code>[3,1,3,4,2]</code> → <code>3</code>. <code>[3,3,3,3,3]</code>
+                  → <code>3</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[2,2,2]</code></td>
+                        <td><code>2</code></td>
+                        <td>The value can repeat more than twice, so some values are missing. "sum(nums) − (1 + … + n)" said <code>3</code>; wrong on 737 of 3006 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,1]</code></td>
+                        <td><code>1</code></td>
+                        <td>The smallest case: n = 1.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[3,1,3,4,2]</code></td>
+                        <td><code>3</code></td>
+                        <td>Sorting would find it, but the problem says not to change <code>nums</code>.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Seen Set</h2>
+                <p class="intuition">
+                  Remember every value; the first one you meet again is the answer.
+                  The values are 1..n, so C++ and Java use an array of n flags.
+                </p>
+                <ul>
+                  <li>Simple and fast, but uses O(n) extra space, which the problem doesn't allow.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  10⁵ values, one repeat: Python 4.0 ms, Java 0.30 ms, C++ 0.06 ms.
+                </p>
+                <div class="code-tabs" data-viz="0287-find-the-duplicate-number/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"loop":[4],"found":[5,6],"add":[7]}'>
+                    class Solution(object):
+                        def findDuplicate(self, nums):
+                            seen = set()
+                            for x in nums:
+                                if x in seen:  # met before
+                                    return x
+                                seen.add(x)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"loop":[6],"found":[7],"add":[8]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int findDuplicate(std::vector<int>& nums) {
+                            std::vector<char> seen(nums.size(), 0); // values are 1..n, so an array of flags works as the set
+                            for (int x : nums) {
+                                if (seen[x]) return x; // met before
+                                seen[x] = 1;
+                            }
+                            return -1; // not reached
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"loop":[4],"found":[5],"add":[6]}'>
+                    class Solution {
+                        public int findDuplicate(int[] nums) {
+                            boolean[] seen = new boolean[nums.length]; // values are 1..n, so an array of flags works as the set
+                            for (int x : nums) {
+                                if (seen[x]) return x; // met before
+                                seen[x] = true;
+                            }
+                            return -1; // not reached
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Binary Search on the Value</h2>
+                <p class="intuition">
+                  Guess <code>mid</code> and count the values ≤ <code>mid</code>. If
+                  there are more than <code>mid</code>, two of them must share a value
+                  in <code>1..mid</code> (pigeonhole), so search left; otherwise search
+                  right.
+                </p>
+                <ul>
+                  <li>O(1) space and <code>nums</code> stays as it is.</li>
+                  <li>About 17 counting passes over all 10⁵ values.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  10⁵ values: Python 60 ms, Java 1.1 ms, the slowest in both. But C++
+                  took only 0.08 ms, faster than Floyd there: each pass reads the array
+                  in order, which the CPU does very quickly.
+                </p>
+                <div class="code-tabs" data-viz="0287-find-the-duplicate-number/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"guess":[4,5],"count":[6],"left":[7,8],"right":[9,10],"return":[11]}'>
+                    class Solution(object):
+                        def findDuplicate(self, nums):
+                            lo, hi = 1, len(nums) - 1  # the duplicate is a value in 1..n
+                            while lo < hi:
+                                mid = (lo + hi) // 2
+                                count = sum(1 for x in nums if x <= mid)  # how many values are <= mid?
+                                if count > mid:  # more than mid values fit in 1..mid: a repeat is in there
+                                    hi = mid
+                                else:
+                                    lo = mid + 1
+                            return lo
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"guess":[6,7],"count":[8,9],"left":[10],"right":[11],"return":[13]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int findDuplicate(std::vector<int>& nums) {
+                            int lo = 1, hi = nums.size() - 1; // the duplicate is a value in 1..n
+                            while (lo < hi) {
+                                int mid = (lo + hi) / 2;
+                                int count = 0;
+                                for (int x : nums) count += x <= mid; // how many values are <= mid?
+                                if (count > mid) hi = mid; // more than mid values fit in 1..mid: a repeat is in there
+                                else lo = mid + 1;
+                            }
+                            return lo;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"guess":[4,5],"count":[6,7],"left":[8],"right":[9],"return":[11]}'>
+                    class Solution {
+                        public int findDuplicate(int[] nums) {
+                            int lo = 1, hi = nums.length - 1; // the duplicate is a value in 1..n
+                            while (lo < hi) {
+                                int mid = (lo + hi) / 2;
+                                int count = 0;
+                                for (int x : nums) if (x <= mid) count++; // how many values are <= mid?
+                                if (count > mid) hi = mid; // more than mid values fit in 1..mid: a repeat is in there
+                                else lo = mid + 1;
+                            }
+                            return lo;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Floyd's Cycle Detection
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Phase 1: from index 0, move <code>slow</code> one link and
+                  <code>fast</code> two links per step until they meet inside the cycle.
+                  Phase 2: move <code>slow</code> back to 0 and step both one link at a
+                  time. They meet at the cycle's entry, the repeated value.
+                </p>
+                <ul>
+                  <li>The same trick as Linked List Cycle II, with indexes instead of nodes.</li>
+                  <li>Phase 2 works because the distance from 0 to the entry equals the distance from the meeting point to the entry, plus whole laps.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  10⁵ values, one repeat: Python 3.6 ms, Java 0.79 ms, C++ 0.71 ms. The
+                  fastest in Python and Java. In C++ Approach 2 won, probably because
+                  these jumps around memory are slow next to reading the array in order.
+                </p>
+                <div class="code-tabs" data-viz="0287-find-the-duplicate-number/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"meet":[4,5,6,7,8],"entry":[9,10,11,12],"return":[13]}'>
+                    class Solution(object):
+                        def findDuplicate(self, nums):
+                            slow = fast = 0  # treat i -> nums[i] as a link: index 0 starts a path that ends in a cycle
+                            while True:  # phase 1: fast moves 2 links per step, slow 1, until they meet in the cycle
+                                slow = nums[slow]
+                                fast = nums[nums[fast]]
+                                if slow == fast:
+                                    break
+                            slow = 0  # phase 2: one from the start, one from the meeting point, 1 link each
+                            while slow != fast:  # they meet where the cycle begins
+                                slow = nums[slow]
+                                fast = nums[fast]
+                            return slow  # the cycle's entry has two links into it: that's the repeated value
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"meet":[6,7,8,9],"entry":[10,11,12,13],"return":[15]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int findDuplicate(std::vector<int>& nums) {
+                            int slow = 0, fast = 0; // treat i -> nums[i] as a link: index 0 starts a path that ends in a cycle
+                            do { // phase 1: fast moves 2 links per step, slow 1, until they meet in the cycle
+                                slow = nums[slow];
+                                fast = nums[nums[fast]];
+                            } while (slow != fast);
+                            slow = 0; // phase 2: one from the start, one from the meeting point, 1 link each
+                            while (slow != fast) { // they meet where the cycle begins
+                                slow = nums[slow];
+                                fast = nums[fast];
+                            }
+                            return slow; // the cycle's entry has two links into it: that's the repeated value
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"meet":[4,5,6,7],"entry":[8,9,10,11],"return":[13]}'>
+                    class Solution {
+                        public int findDuplicate(int[] nums) {
+                            int slow = 0, fast = 0; // treat i -> nums[i] as a link: index 0 starts a path that ends in a cycle
+                            do { // phase 1: fast moves 2 links per step, slow 1, until they meet in the cycle
+                                slow = nums[slow];
+                                fast = nums[nums[fast]];
+                            } while (slow != fast);
+                            slow = 0; // phase 2: one from the start, one from the meeting point, 1 link each
+                            while (slow != fast) { // they meet where the cycle begins
+                                slow = nums[slow];
+                                fast = nums[fast];
+                            }
+                            return slow; // the cycle's entry has two links into it: that's the repeated value
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  Without the space rule you'd write Approach 1, or
+                  <code>Counter(nums).most_common(1)</code> in Python. With it,
+                  Approach 3 is the expected answer.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Seen Set</th>
+                        <td>First value met twice</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Breaks the space rule</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Binary Search on the Value</th>
+                        <td>Count values ≤ mid</td>
+                        <td>O(n log n)</td>
+                        <td>O(1)</td>
+                        <td>Fastest in C++ here</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Floyd's Cycle Detection</th>
+                        <td>Cycle entry of i → nums[i]</td>
                         <td>O(n)</td>
                         <td>O(1)</td>
                         <td>Expected answer</td>
@@ -70610,6 +70947,83 @@
             steps.push({ line: "xor", note: `res ^= ${i} (index) ^ ${x} (value): ${before} → ${res}.`, view: view(i) });
           });
           steps.push({ line: "return", note: `Return ${res}. Every number 0..n went in once as an index (or as n), and once as a value, except the missing one. x ^ x = 0, so only it is left. O(n) time, O(1) space.`, view: [{ type: "array", label: "nums", values: nums }, { type: "vars", items: [{ name: "res", value: res, mark: "match" }] }] });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0287-find-the-duplicate-number/approach1.visual.js -->
+    <script>
+      // Remember every value; the first one met again is the duplicate.
+      DSAViz.register("0287-find-the-duplicate-number/approach1", {
+        inputs: [{ name: "nums", type: "int[]", value: "[1, 3, 4, 2, 2]", minLength: 2, maxLength: 10, minValue: 1, maxValue: 9 }],
+        trace({ nums }) {
+          const n = nums.length - 1;
+          if (nums.some((x) => x > n)) throw new DSAViz.InputError(`With ${n + 1} values, each must be 1 to ${n}.`);
+          const cnt = {}; nums.forEach((x) => (cnt[x] = (cnt[x] || 0) + 1));
+          if (Object.values(cnt).filter((c) => c > 1).length !== 1) throw new DSAViz.InputError("Exactly one value must repeat (it may appear more than twice).");
+          const seen = [];
+          const steps = [{ line: "init", note: "An empty set (an array of n flags in C++ and Java).", view: [{ type: "array", label: "nums", values: nums }, { type: "set", label: "seen", items: [] }] }];
+          for (let i = 0; i < nums.length; i++) {
+            const x = nums[i];
+            if (seen.includes(x)) { steps.push({ line: ["loop", "found"], note: `Return ${x}. It's already in seen. O(n) time, but O(n) extra space, which the follow-up rules out.`, view: [{ type: "array", label: "nums", values: nums, marks: { [i]: "match", [nums.indexOf(x)]: "match" } }, { type: "set", label: "seen", items: seen.map(String), marks: { [String(x)]: "match" } }] }); return steps; }
+            seen.push(x);
+            steps.push({ line: ["loop", "found", "add"], note: `${x} is new: add it.`, view: [{ type: "array", label: "nums", values: nums, marks: { [i]: "active" } }, { type: "set", label: "seen", items: seen.map(String), marks: { [String(x)]: "new" } }] });
+          }
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0287-find-the-duplicate-number/approach2.visual.js -->
+    <script>
+      // Binary search on the value: if more than mid values are <= mid, the repeat is in 1..mid (pigeonhole).
+      DSAViz.register("0287-find-the-duplicate-number/approach2", {
+        inputs: [{ name: "nums", type: "int[]", value: "[1, 3, 4, 2, 2]", minLength: 2, maxLength: 10, minValue: 1, maxValue: 9 }],
+        trace({ nums }) {
+          const n = nums.length - 1;
+          if (nums.some((x) => x > n)) throw new DSAViz.InputError(`With ${n + 1} values, each must be 1 to ${n}.`);
+          const cnt = {}; nums.forEach((x) => (cnt[x] = (cnt[x] || 0) + 1));
+          if (Object.values(cnt).filter((c) => c > 1).length !== 1) throw new DSAViz.InputError("Exactly one value must repeat (it may appear more than twice).");
+          let lo = 1, hi = n;
+          const steps = [{ line: "init", note: `The duplicate is one of the values 1..${n}. Search that range, not the array.`, view: [{ type: "array", label: "nums", values: nums }, { type: "vars", items: [{ name: "lo", value: lo }, { name: "hi", value: hi }] }] }];
+          while (lo < hi) {
+            const mid = Math.floor((lo + hi) / 2);
+            const count = nums.filter((x) => x <= mid).length;
+            const left = count > mid;
+            steps.push({ line: ["guess", "count", left ? "left" : "right"], note: `mid = ${mid}: ${count} value${count === 1 ? "" : "s"} are ≤ ${mid}. ${left ? `That's more than ${mid}, so two of them share a value in 1..${mid}: hi = ${mid}.` : `At most ${mid}, so 1..${mid} has no repeat: lo = ${mid + 1}.`}`, view: [{ type: "array", label: `nums (yellow = ≤ ${mid})`, values: nums, marks: Object.fromEntries(nums.map((x, k) => [k, x <= mid ? "compare" : ""]).filter(([, m]) => m)) }, { type: "vars", items: [{ name: "lo", value: left ? lo : mid + 1 }, { name: "hi", value: left ? mid : hi }, { name: "count", value: count, mark: left ? "cut" : "match" }] }] });
+            if (left) hi = mid; else lo = mid + 1;
+          }
+          steps.push({ line: "return", note: `Return ${lo}. lo = hi. log n rounds, each counting all n values: O(n log n), O(1) space, and nums isn't changed.`, view: [{ type: "array", label: "nums", values: nums, marks: Object.fromEntries(nums.map((x, k) => [k, x === lo ? "match" : ""]).filter(([, m]) => m)) }] });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0287-find-the-duplicate-number/approach3.visual.js -->
+    <script>
+      // Read i -> nums[i] as a linked list. The repeated value has two links into it, so it's where the cycle begins (Floyd).
+      DSAViz.register("0287-find-the-duplicate-number/approach3", {
+        inputs: [{ name: "nums", type: "int[]", value: "[1, 3, 4, 2, 2]", minLength: 2, maxLength: 10, minValue: 1, maxValue: 9 }],
+        trace({ nums }) {
+          const n = nums.length - 1;
+          if (nums.some((x) => x > n)) throw new DSAViz.InputError(`With ${n + 1} values, each must be 1 to ${n}.`);
+          const cnt = {}; nums.forEach((x) => (cnt[x] = (cnt[x] || 0) + 1));
+          if (Object.values(cnt).filter((c) => c > 1).length !== 1) throw new DSAViz.InputError("Exactly one value must repeat (it may appear more than twice).");
+          const steps = [];
+          const path = [0];
+          { let x = 0; const seen = new Set([0]); for (;;) { x = nums[x]; path.push(x); if (seen.has(x)) break; seen.add(x); } }
+          const view = (s, f, phase) => [{ type: "array", label: "nums (index i links to nums[i]; yellow = slow, dark = fast)", values: nums, marks: s === f ? { [s]: "match" } : { [s]: "compare", [f]: "active" }, pointers: s === f ? { "slow = fast": s } : { slow: s, fast: f } }, { type: "array", label: "the links from index 0 (they end in a cycle)", values: path.map(String), wide: true }, { type: "vars", items: [{ name: "phase", value: phase }, { name: "slow", value: s }, { name: "fast", value: f }] }];
+          let slow = 0, fast = 0;
+          steps.push({ line: "init", note: `Values are 1..n, so no link goes back to index 0, and some index is reached twice: the path from 0 runs into a cycle: ${path.join(" → ")}.`, view: view(0, 0, 1) });
+          do {
+            slow = nums[slow]; fast = nums[nums[fast]];
+            steps.push({ line: "meet", note: `Phase 1: slow moves 1 link to ${slow}, fast moves 2 links to ${fast}.${slow === fast ? " They meet inside the cycle." : ""}`, view: view(slow, fast, 1) });
+          } while (slow !== fast);
+          slow = 0;
+          steps.push({ line: "entry", note: "Phase 2: put slow back at 0. Now both move 1 link per step.", view: view(slow, fast, 2) });
+          while (slow !== fast) {
+            slow = nums[slow]; fast = nums[fast];
+            steps.push({ line: "entry", note: `slow → ${slow}, fast → ${fast}.${slow === fast ? " They meet at the start of the cycle." : ""}`, view: view(slow, fast, 2) });
+          }
+          steps.push({ line: "return", note: `Return ${slow}. Two indexes link to ${slow}, so it's the value that repeats. O(n) time, O(1) space, nums not changed.`, view: view(slow, fast, 2) });
           return steps;
         },
       });
