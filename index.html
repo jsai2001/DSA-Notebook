@@ -53911,7 +53911,7 @@
       <details class="pattern-group" id="g-intervals">
         <summary>
           <span class="g-name">Intervals</span>
-          <span class="g-count"><span class="g-total">3 problems</span></span>
+          <span class="g-count"><span class="g-total">4 problems</span></span>
           <span class="g-hint">Sort by start, then merge</span>
         </summary>
         <div class="g-body">
@@ -55196,6 +55196,409 @@
                         <td>Keep whatever fits next</td>
                         <td>O(n log n)</td>
                         <td>O(n)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/1851-minimum-interval-to-include-each-query ===== -->
+          <details class="question" data-group="intervals" data-tags="intervals heap priority queue sweep line sorting offline queries union find">
+            <summary>
+              <span class="q-title">1851. Minimum Interval to Include Each Query</span>
+              <span class="q-meta">
+                <span class="badge hard">Hard</span>
+                <span class="tag">Intervals</span>
+                <span class="tag">Heap</span>
+                <span class="tag">Sweep Line</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Answer the queries in sorted order, not the
+                given order. Sweep left to right: push every interval that has started
+                into a min-heap by size, pop tops that have already ended (later
+                queries are bigger, so they're gone for good), and the top is the
+                answer. O(n log n + q log q).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/minimum-interval-to-include-each-query/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  The size of <code>[l, r]</code> is <code>r − l + 1</code>. For each
+                  query <code>q</code>, return the size of the smallest interval with
+                  <code>l &lt;= q &lt;= r</code>, or <code>-1</code> if there is none.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= intervals.length, queries.length &lt;= 10⁵</code>, <code>1 &lt;= l &lt;= r &lt;= 10⁷</code>, <code>1 &lt;= q &lt;= 10⁷</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>intervals = [[1,4],[2,4],[3,6],[4,4]], queries = [2,3,4,5]</code>
+                  → <code>[3,3,1,4]</code>.
+                  <code>intervals = [[2,3],[2,5],[1,8],[20,25]], queries = [2,19,5,22]</code>
+                  → <code>[2,-1,4,6]</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>intervals = [[100,145]], queries = [151]</code></td>
+                        <td><code>[-1]</code></td>
+                        <td>The interval started but ended before the query. Reading the heap top without popping ended intervals gave 46, and was wrong on 2,383 of 3,004 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>intervals = [[1,1]], queries = [1,2]</code></td>
+                        <td><code>[1,-1]</code></td>
+                        <td>An interval of one point has size 1, not 0.</td>
+                      </tr>
+                      <tr>
+                        <td>Repeated queries, like <code>[5,5,5]</code></td>
+                        <td>the same answer three times</td>
+                        <td>Return answers in the queries' original order: sort a copy, then map back.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Check Every Interval per Query</h2>
+                <p class="intuition">
+                  For each query, look at every interval and keep the smallest that
+                  contains it.
+                </p>
+                <ul>
+                  <li>Simple, but 10⁵ × 10⁵ checks at LeetCode's size.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · q)</span>
+                  <span><strong>Space</strong> O(1) besides the answer</span>
+                </div>
+                <p class="note">
+                  3,000 intervals and 3,000 queries: Python 0.29 s, Java 26 ms, C++ 17
+                  ms.
+                </p>
+                <div class="code-tabs" data-viz="1851-minimum-interval-to-include-each-query/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"query":[4,5],"check":[6,7,8],"answer":[9],"return":[10]}'>
+                    class Solution(object):
+                        def minInterval(self, intervals, queries):
+                            ans = []
+                            for q in queries:
+                                best = -1
+                                for l, r in intervals:  # check every interval
+                                    if l <= q <= r and (best == -1 or r - l + 1 < best):  # contains q and is smaller
+                                        best = r - l + 1
+                                ans.append(best)
+                            return ans
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"query":[6,7],"check":[8,9],"answer":[10],"return":[12]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> minInterval(std::vector<std::vector<int>>& intervals, std::vector<int>& queries) {
+                            std::vector<int> ans;
+                            for (int q : queries) {
+                                int best = -1;
+                                for (auto& iv : intervals) // check every interval
+                                    if (iv[0] <= q && q <= iv[1] && (best == -1 || iv[1] - iv[0] + 1 < best)) best = iv[1] - iv[0] + 1; // contains q and is smaller
+                                ans.push_back(best);
+                            }
+                            return ans;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"query":[4,5],"check":[6,7],"answer":[8],"return":[10]}'>
+                    class Solution {
+                        public int[] minInterval(int[][] intervals, int[] queries) {
+                            int[] ans = new int[queries.length];
+                            for (int k = 0; k < queries.length; k++) {
+                                int q = queries[k], best = -1;
+                                for (int[] iv : intervals) // check every interval
+                                    if (iv[0] <= q && q <= iv[1] && (best == -1 || iv[1] - iv[0] + 1 < best)) best = iv[1] - iv[0] + 1; // contains q and is smaller
+                                ans[k] = best;
+                            }
+                            return ans;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Smallest Interval First, Skip Answered Points</h2>
+                <p class="intuition">
+                  Sort the different query points, and the intervals by size. The
+                  smallest interval left is the answer for every unanswered point it
+                  covers. Find them with binary search, and skip answered points with a
+                  "next unanswered" pointer per point (union-find with path
+                  compression).
+                </p>
+                <ul>
+                  <li>Each point is answered exactly once.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n + q log q)</span>
+                  <span><strong>Space</strong> O(q)</span>
+                </div>
+                <p class="note">
+                  10⁵ intervals and 10⁵ queries, average of 8 runs: Python 157 ms, Java
+                  46 ms, C++ 21 ms. A little faster than Approach 3 in Python and C++,
+                  a little slower in Java.
+                </p>
+                <div class="code-tabs" data-viz="1851-minimum-interval-to-include-each-query/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5,6,7,8,9,10,11,12,13],"interval":[14,15],"fill":[16,17,18,19],"return":[20,21]}'>
+                    from bisect import bisect_left
+                    class Solution(object):
+                        def minInterval(self, intervals, queries):
+                            qs = sorted(set(queries))  # the different query points, in order
+                            size = [-1] * len(qs)  # answer for each point
+                            nxt = list(range(len(qs) + 1))  # nxt[i] leads to the first unanswered point at or after i
+                            def find(i):  # follow nxt, shortening the path as we go
+                                root = i
+                                while nxt[root] != root:
+                                    root = nxt[root]
+                                while nxt[i] != root:
+                                    nxt[i], i = root, nxt[i]
+                                return root
+                            for l, r in sorted(intervals, key=lambda iv: iv[1] - iv[0]):  # smallest interval first
+                                i = find(bisect_left(qs, l))  # first unanswered point inside [l, r]
+                                while i < len(qs) and qs[i] <= r:  # every unanswered point it covers: this is their smallest
+                                    size[i] = r - l + 1
+                                    nxt[i] = i + 1  # answered: skip it from now on
+                                    i = find(i + 1)
+                            at = {q: size[i] for i, q in enumerate(qs)}
+                            return [at[q] for q in queries]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8,9,10,14,15,16,17,18,19,20],"interval":[21,22,23,24],"fill":[25,26,27,28],"return":[31,32,33]}'>
+                    #include <algorithm>
+                    #include <numeric>
+                    #include <vector>
+                    class Solution {
+                        std::vector<int> nxt; // nxt[i] leads to the first unanswered point at or after i
+                        int find(int i) { // follow nxt, shortening the path as we go
+                            int root = i;
+                            while (nxt[root] != root) root = nxt[root];
+                            while (nxt[i] != root) { int up = nxt[i]; nxt[i] = root; i = up; }
+                            return root;
+                        }
+                    public:
+                        std::vector<int> minInterval(std::vector<std::vector<int>>& intervals, std::vector<int>& queries) {
+                            std::vector<int> qs(queries); // the different query points, in order
+                            std::sort(qs.begin(), qs.end());
+                            qs.erase(std::unique(qs.begin(), qs.end()), qs.end());
+                            int m = qs.size();
+                            std::vector<int> size(m, -1); // answer for each point
+                            nxt.assign(m + 1, 0);
+                            std::iota(nxt.begin(), nxt.end(), 0);
+                            auto iv = intervals;
+                            std::sort(iv.begin(), iv.end(), [](const auto& x, const auto& y) { return x[1] - x[0] < y[1] - y[0]; }); // smallest interval first
+                            for (auto& v : iv) {
+                                int i = find(std::lower_bound(qs.begin(), qs.end(), v[0]) - qs.begin()); // first unanswered point inside
+                                while (i < m && qs[i] <= v[1]) { // every unanswered point it covers: this is their smallest
+                                    size[i] = v[1] - v[0] + 1;
+                                    nxt[i] = i + 1; // answered: skip it from now on
+                                    i = find(i + 1);
+                                }
+                            }
+                            std::vector<int> ans;
+                            for (int q : queries) ans.push_back(size[std::lower_bound(qs.begin(), qs.end(), q) - qs.begin()]);
+                            return ans;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5,6,7,8,11,12,13,14,15,16],"interval":[17,18,19,20,21],"fill":[22,23,24,25],"return":[28,29,30]}'>
+                    import java.util.*;
+                    class Solution {
+                        private int[] nxt; // nxt[i] leads to the first unanswered point at or after i
+                        private int find(int i) { // follow nxt, shortening the path as we go
+                            int root = i;
+                            while (nxt[root] != root) root = nxt[root];
+                            while (nxt[i] != root) { int up = nxt[i]; nxt[i] = root; i = up; }
+                            return root;
+                        }
+                        public int[] minInterval(int[][] intervals, int[] queries) {
+                            int[] qs = Arrays.stream(queries).sorted().distinct().toArray(); // the different query points, in order
+                            int m = qs.length;
+                            int[] size = new int[m]; // answer for each point
+                            Arrays.fill(size, -1);
+                            nxt = new int[m + 1];
+                            for (int i = 0; i <= m; i++) nxt[i] = i;
+                            int[][] iv = intervals.clone();
+                            Arrays.sort(iv, (x, y) -> Integer.compare(x[1] - x[0], y[1] - y[0])); // smallest interval first
+                            for (int[] v : iv) {
+                                int p = Arrays.binarySearch(qs, v[0]);
+                                int i = find(p >= 0 ? p : -p - 1); // first unanswered point inside
+                                while (i < m && qs[i] <= v[1]) { // every unanswered point it covers: this is their smallest
+                                    size[i] = v[1] - v[0] + 1;
+                                    nxt[i] = i + 1; // answered: skip it from now on
+                                    i = find(i + 1);
+                                }
+                            }
+                            int[] ans = new int[queries.length];
+                            for (int k = 0; k < queries.length; k++) ans[k] = size[Arrays.binarySearch(qs, queries[k])];
+                            return ans;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Sweep With a Min-Heap
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Sort intervals by left end and go through the queries in increasing
+                  order. Push each interval whose left end is at most <code>q</code>
+                  as <code>(size, right)</code>. Pop the top while its right end is
+                  less than <code>q</code>. The top is then the smallest interval
+                  containing <code>q</code>.
+                </p>
+                <ul>
+                  <li>An interval popped for one query has ended for every later query too, so each is pushed and popped once.</li>
+                  <li>Intervals that ended but aren't on top can stay in the heap: they only matter once they reach the top.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n + q log q)</span>
+                  <span><strong>Space</strong> O(n + q)</span>
+                </div>
+                <p class="note">
+                  Same input: Python 165 ms, Java 38 ms, C++ 24 ms. About the same as
+                  Approach 2; the sweep is the answer most people expect.
+                </p>
+                <div class="code-tabs" data-viz="1851-minimum-interval-to-include-each-query/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5],"query":[6],"push":[7,8,9],"pop":[10,11],"answer":[12],"return":[13]}'>
+                    import heapq
+                    class Solution(object):
+                        def minInterval(self, intervals, queries):
+                            iv = sorted(intervals)  # by left end
+                            heap, i, at = [], 0, {}  # heap of (size, right) for intervals that start at or before q
+                            for q in sorted(set(queries)):  # queries from left to right
+                                while i < len(iv) and iv[i][0] <= q:  # add every interval that has started
+                                    heapq.heappush(heap, (iv[i][1] - iv[i][0] + 1, iv[i][1]))
+                                    i += 1
+                                while heap and heap[0][1] < q:  # the smallest one ended before q; later queries are bigger, so drop it for good
+                                    heapq.heappop(heap)
+                                at[q] = heap[0][0] if heap else -1
+                            return [at[q] for q in queries]  # back in the original order
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[10,11,12,13,14,15,16],"query":[17],"push":[18],"pop":[19],"answer":[20],"return":[22,23,24]}'>
+                    #include <algorithm>
+                    #include <functional>
+                    #include <queue>
+                    #include <unordered_map>
+                    #include <utility>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> minInterval(std::vector<std::vector<int>>& intervals, std::vector<int>& queries) {
+                            auto iv = intervals;
+                            std::sort(iv.begin(), iv.end()); // by left end
+                            std::vector<int> qs(queries);
+                            std::sort(qs.begin(), qs.end()); // queries from left to right
+                            std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<>> heap; // (size, right)
+                            std::unordered_map<int, int> at;
+                            size_t i = 0;
+                            for (int q : qs) {
+                                while (i < iv.size() && iv[i][0] <= q) { heap.push({iv[i][1] - iv[i][0] + 1, iv[i][1]}); ++i; } // add every interval that has started
+                                while (!heap.empty() && heap.top().second < q) heap.pop(); // ended before q: later queries are bigger, so drop it for good
+                                at[q] = heap.empty() ? -1 : heap.top().first;
+                            }
+                            std::vector<int> ans; // back in the original order
+                            for (int q : queries) ans.push_back(at[q]);
+                            return ans;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5,6,7,8,9,10,11],"query":[12,13],"push":[14],"pop":[15],"answer":[16],"return":[18]}'>
+                    import java.util.*;
+                    class Solution {
+                        public int[] minInterval(int[][] intervals, int[] queries) {
+                            int[][] iv = intervals.clone();
+                            Arrays.sort(iv, (x, y) -> Integer.compare(x[0], y[0])); // by left end
+                            Integer[] order = new Integer[queries.length];
+                            for (int k = 0; k < order.length; k++) order[k] = k;
+                            Arrays.sort(order, (x, y) -> Integer.compare(queries[x], queries[y])); // queries from left to right
+                            PriorityQueue<int[]> heap = new PriorityQueue<>((x, y) -> Integer.compare(x[0], y[0])); // {size, right}
+                            int[] ans = new int[queries.length];
+                            int i = 0;
+                            for (int k : order) {
+                                int q = queries[k];
+                                while (i < iv.length && iv[i][0] <= q) { heap.add(new int[] {iv[i][1] - iv[i][0] + 1, iv[i][1]}); i++; } // add every interval that has started
+                                while (!heap.isEmpty() && heap.peek()[1] < q) heap.poll(); // ended before q: later queries are bigger, so drop it for good
+                                ans[k] = heap.isEmpty() ? -1 : heap.peek()[0];
+                            }
+                            return ans;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>Nothing built in. Approach 3 is what you'd write.</p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Check Every Interval</th>
+                        <td>Scan all intervals per query</td>
+                        <td>O(n · q)</td>
+                        <td>O(1)</td>
+                        <td>Too slow at 10⁵ × 10⁵</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Smallest First + Skip</th>
+                        <td>Union-find over sorted points</td>
+                        <td>O(n log n + q log q)</td>
+                        <td>O(q)</td>
+                        <td>Fast, less common</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Sweep + Min-Heap</th>
+                        <td>Sorted queries, heap by size</td>
+                        <td>O(n log n + q log q)</td>
+                        <td>O(n + q)</td>
                         <td>Expected answer</td>
                       </tr>
                     </tbody>
@@ -84732,6 +85135,125 @@
         ys.forEach((y, r) => xs.forEach((x) => { const k = at[`${x},${y}`]; if (k === undefined) m[`${r},${x}`] = "ghost"; else if (marks[k]) m[`${r},${x}`] = marks[k]; }));
         return { type: "grid", label, rows: ys, cols: xs, corner: "y \\ x", cells: ys.map((y) => xs.map((x) => (at[`${x},${y}`] === undefined ? "" : `P${at[`${x},${y}`]}`))), marks: m };
       }
+      })();
+    </script>
+    <!-- problems/1851-minimum-interval-to-include-each-query/approach1.visual.js -->
+    <script>
+      // For each query, check every interval and keep the smallest one that contains it.
+      (function () {
+      const INPUTS = [
+        { name: "intervals", type: "int[][]", value: "[[1, 4], [2, 4], [3, 6], [4, 4]]", maxRows: 6, maxCols: 2, minValue: 1, maxValue: 99 },
+        { name: "queries", type: "int[]", value: "[2, 3, 4, 5]", minLength: 1, maxLength: 6, minValue: 1, maxValue: 99 },
+      ];
+      function check(iv) {
+        if (!iv.length) throw new DSAViz.InputError("Give at least one interval.");
+        if (iv.some((x) => x.length !== 2)) throw new DSAViz.InputError("Each interval is [left, right], like [[1, 4], [2, 4]].");
+        if (iv.some(([l, r]) => l > r)) throw new DSAViz.InputError("Each interval needs left ≤ right.");
+      }
+      const ivv = (iv, label, marks = {}) => ({ type: "array", label, values: iv.map(([l, r]) => `[${l}, ${r}]`), wide: true, marks, sub: iv.map(([l, r]) => `size ${r - l + 1}`) });
+      const show = (a) => `[${a.join(", ")}]`;
+      DSAViz.register("1851-minimum-interval-to-include-each-query/approach1", {
+        inputs: INPUTS,
+        trace({ intervals, queries }) {
+          check(intervals);
+          const ans = [];
+          const av = () => ({ type: "array", label: "answers", values: ans.length ? [...ans] : ["—"], marks: ans.length ? { [ans.length - 1]: "new" } : { 0: "ghost" } });
+          const steps = [{ line: "init", note: "Size of [l, r] is r − l + 1. For each query, look at every interval.", view: [ivv(intervals, "intervals"), av()] }];
+          queries.forEach((q, k) => {
+            let best = -1, bi = -1;
+            const marks = {};
+            intervals.forEach(([l, r], i) => { if (l <= q && q <= r) { marks[i] = "compare"; if (best === -1 || r - l + 1 < best) { best = r - l + 1; bi = i; } } else marks[i] = "visited"; });
+            if (bi >= 0) marks[bi] = "match";
+            ans.push(best);
+            steps.push({ line: ["query", "check", "answer"], note: best === -1 ? `Query ${q}: no interval contains it. Answer −1.` : `Query ${q}: ${Object.values(marks).filter((m) => m !== "visited").length} interval(s) contain it (yellow). The smallest is [${intervals[bi]}], size ${best}.`, view: [ivv(intervals, `query ${q} (index ${k}); grey = doesn't contain it`, marks), av()] });
+          });
+          steps.push({ line: "return", note: `Return ${show(ans)}. Every query checks every interval: O(n · q).`, view: [av()] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/1851-minimum-interval-to-include-each-query/approach2.visual.js -->
+    <script>
+      // Smallest interval first: it answers every query point inside it that's still unanswered. A skip pointer jumps over answered points.
+      (function () {
+      const INPUTS = [
+        { name: "intervals", type: "int[][]", value: "[[1, 4], [2, 4], [3, 6], [4, 4]]", maxRows: 6, maxCols: 2, minValue: 1, maxValue: 99 },
+        { name: "queries", type: "int[]", value: "[2, 3, 4, 5]", minLength: 1, maxLength: 6, minValue: 1, maxValue: 99 },
+      ];
+      function check(iv) {
+        if (!iv.length) throw new DSAViz.InputError("Give at least one interval.");
+        if (iv.some((x) => x.length !== 2)) throw new DSAViz.InputError("Each interval is [left, right], like [[1, 4], [2, 4]].");
+        if (iv.some(([l, r]) => l > r)) throw new DSAViz.InputError("Each interval needs left ≤ right.");
+      }
+      const ivv = (iv, label, marks = {}) => ({ type: "array", label, values: iv.map(([l, r]) => `[${l}, ${r}]`), wide: true, marks, sub: iv.map(([l, r]) => `size ${r - l + 1}`) });
+      const show = (a) => `[${a.join(", ")}]`;
+      DSAViz.register("1851-minimum-interval-to-include-each-query/approach2", {
+        inputs: INPUTS,
+        trace({ intervals, queries }) {
+          check(intervals);
+          const qs = [...new Set(queries)].sort((a, b) => a - b);
+          const size = qs.map(() => -1);
+          const iv = [...intervals].sort((a, b) => a[1] - a[0] - (b[1] - b[0]));
+          const qv = (marks = {}) => ({ type: "array", label: "query points, sorted; caption = answer so far", values: qs, sub: size.map((v) => (v === -1 ? "?" : String(v))), marks });
+          const steps = [{ line: "init", note: `Sort the ${qs.length} different query points. Sort the intervals by size, smallest first.`, view: [ivv(iv, "intervals, smallest first"), qv()] }];
+          iv.forEach(([l, r], k) => {
+            const got = [];
+            qs.forEach((q, i) => { if (size[i] === -1 && l <= q && q <= r) { size[i] = r - l + 1; got.push(i); } });
+            const marks = Object.fromEntries(qs.map((q, i) => [i, got.includes(i) ? "new" : size[i] !== -1 ? "visited" : ""]).filter(([, m]) => m));
+            steps.push({ line: got.length ? ["interval", "fill"] : "interval", note: got.length ? `[${l}, ${r}], size ${r - l + 1}: no smaller interval is left, so it answers unanswered points ${got.map((i) => qs[i]).join(", ")}.` : `[${l}, ${r}], size ${r - l + 1}: every point inside it is already answered (or there are none). Skip.`, view: [ivv(iv, "intervals, smallest first", { [k]: "active" }), qv(marks)] });
+          });
+          const at = Object.fromEntries(qs.map((q, i) => [q, size[i]]));
+          const ans = queries.map((q) => at[q]);
+          steps.push({ line: "return", note: `Return ${show(ans)}, in the queries' order. Each point is answered once; the skip pointers (union-find) jump over answered ones: O(n log n + q log q).`, view: [qv()] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/1851-minimum-interval-to-include-each-query/approach3.visual.js -->
+    <script>
+      // Sweep queries left to right. Push intervals that have started into a min-heap by size; drop ones that already ended.
+      (function () {
+      const INPUTS = [
+        { name: "intervals", type: "int[][]", value: "[[1, 4], [2, 4], [3, 6], [4, 4]]", maxRows: 6, maxCols: 2, minValue: 1, maxValue: 99 },
+        { name: "queries", type: "int[]", value: "[2, 3, 4, 5]", minLength: 1, maxLength: 6, minValue: 1, maxValue: 99 },
+      ];
+      function check(iv) {
+        if (!iv.length) throw new DSAViz.InputError("Give at least one interval.");
+        if (iv.some((x) => x.length !== 2)) throw new DSAViz.InputError("Each interval is [left, right], like [[1, 4], [2, 4]].");
+        if (iv.some(([l, r]) => l > r)) throw new DSAViz.InputError("Each interval needs left ≤ right.");
+      }
+      const ivv = (iv, label, marks = {}) => ({ type: "array", label, values: iv.map(([l, r]) => `[${l}, ${r}]`), wide: true, marks, sub: iv.map(([l, r]) => `size ${r - l + 1}`) });
+      const show = (a) => `[${a.join(", ")}]`;
+      DSAViz.register("1851-minimum-interval-to-include-each-query/approach3", {
+        inputs: INPUTS,
+        trace({ intervals, queries }) {
+          check(intervals);
+          const iv = [...intervals].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+          const heap = [];
+          const less = (a, b) => a[0] < b[0] || (a[0] === b[0] && a[1] < b[1]);
+          const up = () => { let i = heap.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (!less(heap[i], heap[p])) break; [heap[i], heap[p]] = [heap[p], heap[i]]; i = p; } };
+          const down = () => { let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < heap.length && less(heap[l], heap[m])) m = l; if (r < heap.length && less(heap[r], heap[m])) m = r; if (m === i) break; [heap[i], heap[m]] = [heap[m], heap[i]]; i = m; } };
+          const hv = (marks = {}) => ({ type: "tree", label: "min-heap by size; caption = right end", values: heap.map(([s]) => s), captions: Object.fromEntries(heap.map(([, r], i) => [i, `ends ${r}`])), marks });
+          const at = {};
+          let i = 0;
+          const steps = [{ line: "init", note: "Sort intervals by left end and the query points from left to right.", view: [ivv(iv, "intervals by left end"), hv()] }];
+          for (const q of [...new Set(queries)].sort((a, b) => a - b)) {
+            const added = [];
+            while (i < iv.length && iv[i][0] <= q) { heap.push([iv[i][1] - iv[i][0] + 1, iv[i][1]]); up(); added.push(i); i++; }
+            if (added.length) steps.push({ line: ["query", "push"], note: `Query ${q}: push ${added.map((k) => `[${iv[k]}]`).join(", ")}: they start at or before ${q}.`, view: [ivv(iv, "intervals by left end", Object.fromEntries(added.map((k) => [k, "new"]))), hv()] });
+            const dropped = [];
+            while (heap.length && heap[0][1] < q) { dropped.push(heap[0]); heap[0] = heap[heap.length - 1]; heap.pop(); down(); }
+            if (dropped.length) steps.push({ line: "pop", note: `The top ended before ${q}: pop ${dropped.map(([s, r]) => `size ${s} (ends ${r})`).join(", ")}. Later queries are bigger, so they're gone for good.`, view: [ivv(iv, "intervals by left end"), hv()] });
+            at[q] = heap.length ? heap[0][0] : -1;
+            steps.push({ line: ["query", "answer"], note: heap.length ? `Query ${q}: the heap top contains ${q} and is the smallest started interval still open. Answer ${at[q]}.` : `Query ${q}: the heap is empty. Answer −1.`, view: [ivv(iv, "intervals by left end"), hv(heap.length ? { 0: "match" } : {})] });
+          }
+          const ans = queries.map((q) => at[q]);
+          steps.push({ line: "return", note: `Return ${show(ans)}, in the queries' order. Each interval is pushed and popped once: O(n log n + q log q).`, view: [hv()] });
+          return steps;
+        },
+      });
       })();
     </script>
     <!-- problems/2013-detect-squares/approach1.visual.js -->

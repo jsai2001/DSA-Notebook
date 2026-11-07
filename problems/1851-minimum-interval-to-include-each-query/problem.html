@@ -1,0 +1,197 @@
+<details class="question" data-group="intervals" data-tags="intervals heap priority queue sweep line sorting offline queries union find">
+  <summary>
+    <span class="q-title">1851. Minimum Interval to Include Each Query</span>
+    <span class="q-meta">
+      <span class="badge hard">Hard</span>
+      <span class="tag">Intervals</span>
+      <span class="tag">Heap</span>
+      <span class="tag">Sweep Line</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Answer the queries in sorted order, not the
+      given order. Sweep left to right: push every interval that has started
+      into a min-heap by size, pop tops that have already ended (later
+      queries are bigger, so they're gone for good), and the top is the
+      answer. O(n log n + q log q).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/minimum-interval-to-include-each-query/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        The size of <code>[l, r]</code> is <code>r − l + 1</code>. For each
+        query <code>q</code>, return the size of the smallest interval with
+        <code>l &lt;= q &lt;= r</code>, or <code>-1</code> if there is none.
+      </p>
+      <ul>
+        <li><code>1 &lt;= intervals.length, queries.length &lt;= 10⁵</code>, <code>1 &lt;= l &lt;= r &lt;= 10⁷</code>, <code>1 &lt;= q &lt;= 10⁷</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>intervals = [[1,4],[2,4],[3,6],[4,4]], queries = [2,3,4,5]</code>
+        → <code>[3,3,1,4]</code>.
+        <code>intervals = [[2,3],[2,5],[1,8],[20,25]], queries = [2,19,5,22]</code>
+        → <code>[2,-1,4,6]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>intervals = [[100,145]], queries = [151]</code></td>
+              <td><code>[-1]</code></td>
+              <td>The interval started but ended before the query. Reading the heap top without popping ended intervals gave 46, and was wrong on 2,383 of 3,004 tests.</td>
+            </tr>
+            <tr>
+              <td><code>intervals = [[1,1]], queries = [1,2]</code></td>
+              <td><code>[1,-1]</code></td>
+              <td>An interval of one point has size 1, not 0.</td>
+            </tr>
+            <tr>
+              <td>Repeated queries, like <code>[5,5,5]</code></td>
+              <td>the same answer three times</td>
+              <td>Return answers in the queries' original order: sort a copy, then map back.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Check Every Interval per Query</h2>
+      <p class="intuition">
+        For each query, look at every interval and keep the smallest that
+        contains it.
+      </p>
+      <ul>
+        <li>Simple, but 10⁵ × 10⁵ checks at LeetCode's size.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · q)</span>
+        <span><strong>Space</strong> O(1) besides the answer</span>
+      </div>
+      <p class="note">
+        3,000 intervals and 3,000 queries: Python 0.29 s, Java 26 ms, C++ 17
+        ms.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Smallest Interval First, Skip Answered Points</h2>
+      <p class="intuition">
+        Sort the different query points, and the intervals by size. The
+        smallest interval left is the answer for every unanswered point it
+        covers. Find them with binary search, and skip answered points with a
+        "next unanswered" pointer per point (union-find with path
+        compression).
+      </p>
+      <ul>
+        <li>Each point is answered exactly once.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n + q log q)</span>
+        <span><strong>Space</strong> O(q)</span>
+      </div>
+      <p class="note">
+        10⁵ intervals and 10⁵ queries, average of 8 runs: Python 157 ms, Java
+        46 ms, C++ 21 ms. A little faster than Approach 3 in Python and C++,
+        a little slower in Java.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Sweep With a Min-Heap
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Sort intervals by left end and go through the queries in increasing
+        order. Push each interval whose left end is at most <code>q</code>
+        as <code>(size, right)</code>. Pop the top while its right end is
+        less than <code>q</code>. The top is then the smallest interval
+        containing <code>q</code>.
+      </p>
+      <ul>
+        <li>An interval popped for one query has ended for every later query too, so each is pushed and popped once.</li>
+        <li>Intervals that ended but aren't on top can stay in the heap: they only matter once they reach the top.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n + q log q)</span>
+        <span><strong>Space</strong> O(n + q)</span>
+      </div>
+      <p class="note">
+        Same input: Python 165 ms, Java 38 ms, C++ 24 ms. About the same as
+        Approach 2; the sweep is the answer most people expect.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>Nothing built in. Approach 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Check Every Interval</th>
+              <td>Scan all intervals per query</td>
+              <td>O(n · q)</td>
+              <td>O(1)</td>
+              <td>Too slow at 10⁵ × 10⁵</td>
+            </tr>
+            <tr>
+              <th scope="row">Smallest First + Skip</th>
+              <td>Union-find over sorted points</td>
+              <td>O(n log n + q log q)</td>
+              <td>O(q)</td>
+              <td>Fast, less common</td>
+            </tr>
+            <tr>
+              <th scope="row">Sweep + Min-Heap</th>
+              <td>Sorted queries, heap by size</td>
+              <td>O(n log n + q log q)</td>
+              <td>O(n + q)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
