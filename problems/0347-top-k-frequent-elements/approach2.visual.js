@@ -13,7 +13,7 @@ DSAViz.register("0347-top-k-frequent-elements/approach2", {
     const less = (a, b) => a[0] < b[0] || (a[0] === b[0] && a[1] < b[1]);
     const up = () => { let i = heap.length - 1; while (i > 0) { const p = (i - 1) >> 1; if (!less(heap[i], heap[p])) break; [heap[i], heap[p]] = [heap[p], heap[i]]; i = p; } };
     const down = () => { let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i; if (l < heap.length && less(heap[l], heap[m])) m = l; if (r < heap.length && less(heap[r], heap[m])) m = r; if (m === i) break; [heap[i], heap[m]] = [heap[m], heap[i]]; i = m; } };
-    const hview = (marks = {}) => ({ type: "tree", label: "min-heap of (count, value); least frequent on top", values: heap.length ? heap.map(([c, x]) => `${x} ×${c}`) : [], marks });
+    const hview = (marks = {}) => ({ type: "tree", label: "min-heap by count; caption = count", values: heap.map(([, x]) => x), captions: Object.fromEntries(heap.map(([c], i) => [i, `×${c}`])), marks });
     for (const [x, c] of count) {
       heap.push([c, x]);
       up();
