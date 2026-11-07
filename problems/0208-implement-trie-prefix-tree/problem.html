@@ -1,0 +1,211 @@
+<details class="question" data-group="tries" data-tags="trie prefix tree design string insert search startswith hash map">
+  <summary>
+    <span class="q-title">208. Implement Trie (Prefix Tree)</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Trie</span>
+      <span class="tag">Design</span>
+      <span class="tag">Hash Table</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> A trie is a tree of letters. Each node has
+      one child per next letter, and a flag that says "a word ends here".
+      Inserting or looking up a word of length L walks L nodes, so
+      <code>startsWith</code> costs O(L) no matter how many words are stored.
+      <code>search</code> must also check the end flag.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/implement-trie-prefix-tree/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Build a <code>Trie</code> class with <code>insert(word)</code>,
+        <code>search(word)</code> (was this exact word inserted?) and
+        <code>startsWith(prefix)</code> (does any inserted word start with it?).
+      </p>
+      <ul>
+        <li><code>1 &lt;= word.length, prefix.length &lt;= 2000</code>, lowercase letters only</li>
+        <li>At most 3 × 10⁴ calls in total</li>
+      </ul>
+      <p class="note">
+        Example: <code>insert("apple")</code>, <code>search("apple")</code> →
+        <code>true</code>, <code>search("app")</code> → <code>false</code>,
+        <code>startsWith("app")</code> → <code>true</code>,
+        <code>insert("app")</code>, <code>search("app")</code> →
+        <code>true</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>insert("apple")</code>, <code>search("app")</code></td>
+              <td><code>false</code></td>
+              <td>"app" is only a prefix. A <code>search</code> that doesn't check the end flag says <code>true</code>.</td>
+            </tr>
+            <tr>
+              <td>then <code>insert("app")</code>, <code>search("app")</code></td>
+              <td><code>true</code></td>
+              <td>Inserting a word that's a prefix of another adds no nodes: it only sets the end flag.</td>
+            </tr>
+            <tr>
+              <td>10,000 inserts, then 20,000 searches and prefix checks</td>
+              <td>-</td>
+              <td>A plain set has to scan every word for <code>startsWith</code>: 3.2 s in Python.</td>
+            </tr>
+            <tr>
+              <td>a 2000-letter word</td>
+              <td>-</td>
+              <td>2000 nodes in one chain. Fine for a loop; a recursive insert would go 2000 calls deep.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Hash Set of Words</h2>
+      <p class="intuition">
+        Keep the words in a set. <code>insert</code> and <code>search</code>
+        are one hash operation each. <code>startsWith</code> has no shortcut:
+        check whether any stored word starts with the prefix.
+      </p>
+      <ul>
+        <li>Fine if prefix checks are rare.</li>
+        <li><code>startsWith</code> costs O(total letters stored).</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(L) insert/search, O(N·L) startsWith</span>
+        <span><strong>Space</strong> O(total letters)</span>
+      </div>
+      <p class="note">
+        10,000 words, then 20,000 mixed queries: Python 3.2 s, Java 692 ms, C++
+        236 ms. About 45 to 190 times slower than a trie.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Trie of Hash Maps</h2>
+      <p class="intuition">
+        Each node is a map from letter to child. <code>insert</code> walks
+        the letters, adding missing nodes, and marks the last node as a word
+        end. A shared walk finds the node for a string;
+        <code>search</code> also needs the end mark, <code>startsWith</code>
+        doesn't.
+      </p>
+      <ul>
+        <li>Nodes only store the letters they use: good for big alphabets.</li>
+        <li>In Python a node is just a <code>dict</code>, with <code>"$"</code> as the end mark.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(L) per call</span>
+        <span><strong>Space</strong> O(total letters)</span>
+      </div>
+      <p class="note">
+        Same 30,000 calls: Python 20 ms, the fastest in Python. Java 6.6 ms,
+        C++ 5.2 ms.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Trie With 26 Child Slots
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Only lowercase letters appear, so each node can hold an array of 26
+        children: the child for <code>ch</code> is at
+        <code>ch − 'a'</code>. No hashing, just an index.
+      </p>
+      <ul>
+        <li>The usual interview answer, and the fastest in C++ and Java.</li>
+        <li>Each node holds 26 slots even if it uses one, so it takes more memory.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(L) per call</span>
+        <span><strong>Space</strong> O(26 · nodes)</span>
+      </div>
+      <p class="note">
+        Same 30,000 calls: Java 3.6 ms, C++ 3.1 ms. Python 35 ms: slower than
+        Approach 2 here. In Python, a small <code>dict</code> per node beat a
+        26-slot list.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        The standard libraries have no trie. With a sorted list of words,
+        a binary search (<code>bisect</code>, <code>lower_bound</code>,
+        <code>TreeSet.ceiling</code>) finds the first word ≥ the prefix, and
+        checking that one word answers <code>startsWith</code>.
+      </p>
+      <p class="note">For this problem, Approach 2 or 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Hash Set of Words</th>
+              <td>Scan every word for a prefix</td>
+              <td>O(N·L) startsWith</td>
+              <td>O(total letters)</td>
+              <td>3.2 s in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">Trie of Hash Maps</th>
+              <td>letter → child map per node</td>
+              <td>O(L)</td>
+              <td>O(total letters)</td>
+              <td>Fastest in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">Trie With 26 Child Slots</th>
+              <td>child[ch − 'a']</td>
+              <td>O(L)</td>
+              <td>O(26 · nodes)</td>
+              <td>Fastest in C++ and Java</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
