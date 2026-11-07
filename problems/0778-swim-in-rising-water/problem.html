@@ -1,0 +1,197 @@
+<details class="question" data-group="graphs" data-tags="graph grid dijkstra heap binary search union-find minimax path bottleneck">
+  <summary>
+    <span class="q-title">778. Swim in Rising Water</span>
+    <span class="q-meta">
+      <span class="badge hard">Hard</span>
+      <span class="tag">Matrix</span>
+      <span class="tag">Heap (Priority Queue)</span>
+      <span class="tag">Union Find</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> The time a path needs is its
+      <strong>highest cell</strong>, so you want the path whose highest cell
+      is lowest. Since the heights are exactly 0..n²−1, let the water rise one
+      unit at a time: at time t the cell of height t opens and joins its open
+      neighbours (union-find). The first t at which the two corners are in
+      one group is the answer. Dijkstra on "max so far" also works.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/swim-in-rising-water/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>grid[r][c]</code> is a height. At time <code>t</code> the water
+        is at height <code>t</code>, and you can swim between neighbouring
+        cells (up, down, left, right) whose heights are both ≤ t, instantly.
+        Starting at <code>(0, 0)</code>, return the earliest time you can
+        reach <code>(n−1, n−1)</code>.
+      </p>
+      <ul>
+        <li><code>1 &lt;= n &lt;= 50</code></li>
+        <li>The heights are 0 to n² − 1, each exactly once</li>
+      </ul>
+      <p class="note">
+        Example: <code>[[0,2],[1,3]]</code> → <code>3</code>. LeetCode's
+        5 × 5 spiral → <code>16</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[[0,2],[1,3]]</code></td>
+              <td><code>3</code></td>
+              <td>A path's time is its highest cell, not the sum. Dijkstra that adds heights said <code>4</code>; wrong on 1278 of 1504 tests.</td>
+            </tr>
+            <tr>
+              <td><code>[[1,2],[3,0]]</code></td>
+              <td><code>2</code></td>
+              <td>"The higher of the two corners" ignores the cells in between: it said <code>1</code>. Wrong on 487 tests.</td>
+            </tr>
+            <tr>
+              <td><code>[[0]]</code></td>
+              <td><code>0</code></td>
+              <td>Start and end are the same cell.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Binary Search the Time + Flood</h2>
+      <p class="intuition">
+        If you can make it by time t, you can make it by any later time. So
+        binary search t: for each guess, flood from <code>(0, 0)</code>
+        through cells ≤ t and check whether the far corner is reached.
+      </p>
+      <ul>
+        <li>A useful pattern: "is the answer at most t?" is easier than "what is the answer?".</li>
+        <li>Each guess floods the grid from scratch.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n² log n)</span>
+        <span><strong>Space</strong> O(n²)</span>
+      </div>
+      <p class="note">
+        A 50 × 50 snake (one long path): Python 16 ms, Java 1.1 ms, C++
+        0.14 ms. The slowest in every language on that grid.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Dijkstra on the Highest Cell</h2>
+      <p class="intuition">
+        A heap holds <code>(time, r, c)</code>, where time is the highest
+        cell on the way there. Always expand the soonest one; a neighbour's
+        time is <code>max(time, its height)</code>. The first time the far
+        corner is popped, that's the answer.
+      </p>
+      <ul>
+        <li>Dijkstra works with <code>max</code> instead of <code>+</code>, because a path's time never goes down as it gets longer.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n² log n)</span>
+        <span><strong>Space</strong> O(n²)</span>
+      </div>
+      <p class="note">
+        A random 50 × 50 grid: Python 2.3 ms, Java 0.24 ms, C++ 0.18 ms.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Rising Water + Union-Find
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Record where each height is. For t = 0, 1, 2, …: open the cell with
+        height t and join it with every neighbour that's already open. As
+        soon as <code>(0, 0)</code> and <code>(n−1, n−1)</code> share a root,
+        return t.
+      </p>
+      <ul>
+        <li>The heights are a permutation of 0..n²−1, so no sorting is needed: <code>where[h]</code> gives the cell directly.</li>
+        <li>No heap: each cell opens once and does at most 4 joins.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n² · α(n²)), nearly O(n²)</span>
+        <span><strong>Space</strong> O(n²)</span>
+      </div>
+      <p class="note">
+        A random 50 × 50 grid: Python 1.7 ms, Java 0.12 ms, C++ 0.06 ms, the
+        fastest in every language on that grid.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>No library solves bottleneck paths on a grid. Approach 2 or 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Binary Search + Flood</th>
+              <td>"Can I make it by t?"</td>
+              <td>O(n² log n)</td>
+              <td>O(n²)</td>
+              <td>Floods again for each guess</td>
+            </tr>
+            <tr>
+              <th scope="row">Dijkstra on the Highest Cell</th>
+              <td>Heap of max-so-far</td>
+              <td>O(n² log n)</td>
+              <td>O(n²)</td>
+              <td>The usual answer</td>
+            </tr>
+            <tr>
+              <th scope="row">Rising Water + Union-Find</th>
+              <td>Open cells in height order</td>
+              <td>~O(n²)</td>
+              <td>O(n²)</td>
+              <td>Uses that heights are 0..n²−1</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
