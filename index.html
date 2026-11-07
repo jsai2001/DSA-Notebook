@@ -31714,7 +31714,7 @@
       <details class="pattern-group" id="g-dynamic-programming">
         <summary>
           <span class="g-name">Dynamic Programming</span>
-          <span class="g-count"><span class="g-total">14 problems</span></span>
+          <span class="g-count"><span class="g-total">15 problems</span></span>
           <span class="g-hint">Reuse the answers to smaller problems</span>
         </summary>
         <div class="g-body">
@@ -36933,6 +36933,378 @@
                       <tr>
                         <th scope="row">Two Variables</th>
                         <td>Keep only prev and cur</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0213-house-robber-ii ===== -->
+          <details class="question" data-group="dynamic-programming" data-tags="dynamic programming dp house robber circle circular non-adjacent maximum sum">
+            <summary>
+              <span class="q-title">213. House Robber II</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Array</span>
+                <span class="tag">Dynamic Programming</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> The houses form a circle, so the first and
+                last houses are neighbours and can't both be robbed. Break the circle:
+                solve House Robber once <strong>without the last house</strong> and
+                once <strong>without the first</strong>, and take the bigger answer.
+                One house alone is a special case.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/house-robber-ii/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Same as House Robber, but the houses stand in a circle: house 0 and
+                  the last house are next to each other. You can't rob two neighbours.
+                  Return the most money you can rob.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= nums.length &lt;= 100</code></li>
+                  <li><code>0 &lt;= nums[i] &lt;= 1000</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>[2,3,2]</code> → <code>3</code>. <code>[1,2,3,1]</code>
+                  → <code>4</code>. <code>[1,2,3]</code> → <code>3</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[2,3,2]</code></td>
+                        <td><code>3</code></td>
+                        <td>Plain House Robber takes both 2s, which are neighbours on the circle: it said <code>4</code>. Wrong on 1469 of 4509 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[5]</code></td>
+                        <td><code>5</code></td>
+                        <td>Without the special case, both passes get an empty street: it said <code>0</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[3,10]</code></td>
+                        <td><code>10</code></td>
+                        <td>Leaving out <em>both</em> ends at once is too strict: it said <code>0</code>. Wrong on 3564 tests. Leave out one end per pass.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[2,7,9,3,1]</code></td>
+                        <td><code>11</code></td>
+                        <td>On a straight street the answer is 2 + 9 + 1 = 12, but houses 0 and 4 touch here.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Recursion with Memo, Twice</h2>
+                <p class="intuition">
+                  <code>best(i)</code> = the most from house <code>i</code> to the end of
+                  the range: <code>max(best(i + 1), nums[i] + best(i + 2))</code>. Run it
+                  on houses <code>0..n − 2</code> and on <code>1..n − 1</code>, each with
+                  a fresh memo.
+                </p>
+                <ul>
+                  <li>Any valid choice skips house 0 or skips the last house, so one of the two passes covers it.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  At 100 houses: Python 56 µs. Average over 4509 tests: Java 0.32 µs,
+                  C++ 0.30 µs.
+                </p>
+                <div class="code-tabs" data-viz="0213-house-robber-ii/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"one":[4,5],"range":[6,7,14],"call":[8],"base":[9,10],"memo":[11,13],"choose":[12],"answer":[15]}'>
+                    class Solution(object):
+                        def rob(self, nums):
+                            n = len(nums)
+                            if n == 1:  # one house: it has no neighbours
+                                return nums[0]
+                            def best_range(lo, hi):  # House Robber on nums[lo..hi], with a memo
+                                memo = {}
+                                def best(i):  # the most from houses i..hi
+                                    if i > hi:
+                                        return 0
+                                    if i not in memo:
+                                        memo[i] = max(best(i + 1), nums[i] + best(i + 2))  # skip house i, or rob it
+                                    return memo[i]
+                                return best(lo)
+                            return max(best_range(0, n - 2), best_range(1, n - 1))  # the first and last houses touch: leave out one of them
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"one":[7],"answer":[8],"range":[12,13,14],"call":[16],"base":[17],"memo":[18,20],"choose":[19]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int rob(std::vector<int>& nums) {
+                            const int n = nums.size();
+                            if (n == 1) return nums[0]; // one house: it has no neighbours
+                            return std::max(bestRange(nums, 0, n - 2), bestRange(nums, 1, n - 1)); // the first and last houses touch: leave out one of them
+                        }
+                    private:
+                        std::vector<int> memo;
+                        int bestRange(const std::vector<int>& nums, int lo, int hi) { // House Robber on nums[lo..hi], with a memo
+                            memo.assign(nums.size(), -1);
+                            return best(nums, lo, hi);
+                        }
+                        int best(const std::vector<int>& nums, int i, int hi) { // the most from houses i..hi
+                            if (i > hi) return 0;
+                            if (memo[i] < 0)
+                                memo[i] = std::max(best(nums, i + 1, hi), nums[i] + best(nums, i + 2, hi)); // skip house i, or rob it
+                            return memo[i];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5],"one":[6],"answer":[7],"range":[9,10,11,12],"call":[14],"base":[15],"memo":[16,18],"choose":[17]}'>
+                    import java.util.*;
+                    class Solution {
+                        private int[] memo;
+                        public int rob(int[] nums) {
+                            int n = nums.length;
+                            if (n == 1) return nums[0]; // one house: it has no neighbours
+                            return Math.max(bestRange(nums, 0, n - 2), bestRange(nums, 1, n - 1)); // the first and last houses touch: leave out one of them
+                        }
+                        private int bestRange(int[] nums, int lo, int hi) { // House Robber on nums[lo..hi], with a memo
+                            memo = new int[nums.length];
+                            Arrays.fill(memo, -1);
+                            return best(nums, lo, hi);
+                        }
+                        private int best(int[] nums, int i, int hi) { // the most from houses i..hi
+                            if (i > hi) return 0;
+                            if (memo[i] < 0)
+                                memo[i] = Math.max(best(nums, i + 1, hi), nums[i] + best(nums, i + 2, hi)); // skip house i, or rob it
+                            return memo[i];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: DP Table, Twice</h2>
+                <p class="intuition">
+                  Build House Robber's table for each range:
+                  <code>dp[i] = max(dp[i − 1], dp[i − 2] + house)</code>, where
+                  <code>dp[i]</code> covers the first <code>i</code> houses of the
+                  range. Return the larger last entry.
+                </p>
+                <ul>
+                  <li>Pass the range bounds instead of copying the array.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  At 100 houses: Python 19 µs. Average: Java 0.32 µs, C++ 0.30 µs.
+                </p>
+                <div class="code-tabs" data-viz="0213-house-robber-ii/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"one":[4,5],"range":[6,7,8,9,12],"loop":[10],"choose":[11],"answer":[13]}'>
+                    class Solution(object):
+                        def rob(self, nums):
+                            n = len(nums)
+                            if n == 1:  # one house: it has no neighbours
+                                return nums[0]
+                            def best_range(lo, hi):  # House Robber on nums[lo..hi]
+                                m = hi - lo + 1
+                                dp = [0] * (m + 1)  # dp[i] = the most from the first i houses of the range
+                                dp[1] = nums[lo]
+                                for i in range(2, m + 1):
+                                    dp[i] = max(dp[i - 1], dp[i - 2] + nums[lo + i - 1])
+                                return dp[m]
+                            return max(best_range(0, n - 2), best_range(1, n - 1))  # without the last house, or without the first
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"one":[7],"answer":[8],"range":[11,12,13,14,17],"loop":[15],"choose":[16]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int rob(std::vector<int>& nums) {
+                            const int n = nums.size();
+                            if (n == 1) return nums[0]; // one house: it has no neighbours
+                            return std::max(bestRange(nums, 0, n - 2), bestRange(nums, 1, n - 1)); // without the last house, or without the first
+                        }
+                    private:
+                        int bestRange(const std::vector<int>& nums, int lo, int hi) { // House Robber on nums[lo..hi]
+                            const int m = hi - lo + 1;
+                            std::vector<int> dp(m + 1, 0); // dp[i] = the most from the first i houses of the range
+                            dp[1] = nums[lo];
+                            for (int i = 2; i <= m; ++i)
+                                dp[i] = std::max(dp[i - 1], dp[i - 2] + nums[lo + i - 1]);
+                            return dp[m];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"one":[4],"answer":[5],"range":[7,8,9,10,13],"loop":[11],"choose":[12]}'>
+                    class Solution {
+                        public int rob(int[] nums) {
+                            int n = nums.length;
+                            if (n == 1) return nums[0]; // one house: it has no neighbours
+                            return Math.max(bestRange(nums, 0, n - 2), bestRange(nums, 1, n - 1)); // without the last house, or without the first
+                        }
+                        private int bestRange(int[] nums, int lo, int hi) { // House Robber on nums[lo..hi]
+                            int m = hi - lo + 1;
+                            int[] dp = new int[m + 1]; // dp[i] = the most from the first i houses of the range
+                            dp[1] = nums[lo];
+                            for (int i = 2; i <= m; i++)
+                                dp[i] = Math.max(dp[i - 1], dp[i - 2] + nums[lo + i - 1]);
+                            return dp[m];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Two Variables, Twice
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  House Robber needs only the last two answers, <code>prev</code> and
+                  <code>cur</code>. Run that loop on houses <code>0..n − 2</code> and on
+                  <code>1..n − 1</code>, and return the bigger result.
+                </p>
+                <ul>
+                  <li>The Python version slices (<code>nums[:-1]</code>, <code>nums[1:]</code>) for clarity; C++ and Java pass bounds, so they use O(1) space.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1) (O(n) for Python's slices)</span>
+                </div>
+                <p class="note">
+                  At 100 houses: Python 10 µs. Average: Java 0.23 µs, C++ 0.04 µs, the
+                  fastest in every language.
+                </p>
+                <div class="code-tabs" data-viz="0213-house-robber-ii/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"one":[3,4],"range":[5,6,9],"loop":[7],"choose":[8],"answer":[10]}'>
+                    class Solution(object):
+                        def rob(self, nums):
+                            if len(nums) == 1:  # one house: it has no neighbours
+                                return nums[0]
+                            def best_line(houses):  # House Robber on a straight street
+                                prev, cur = 0, 0
+                                for x in houses:
+                                    prev, cur = cur, max(cur, prev + x)  # skip this house, or rob it on top of prev
+                                return cur
+                            return max(best_line(nums[:-1]), best_line(nums[1:]))  # the first and last houses touch: leave out one of them
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"one":[6,7],"answer":[8],"range":[11,12,18],"loop":[13],"choose":[14,15,16]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int rob(std::vector<int>& nums) {
+                            const int n = nums.size();
+                            if (n == 1) return nums[0]; // one house: it has no neighbours
+                            return std::max(bestLine(nums, 0, n - 2), bestLine(nums, 1, n - 1)); // the first and last houses touch: leave out one of them
+                        }
+                    private:
+                        int bestLine(const std::vector<int>& nums, int lo, int hi) { // House Robber on nums[lo..hi], a straight street
+                            int prev = 0, cur = 0;
+                            for (int i = lo; i <= hi; ++i) {
+                                int next = std::max(cur, prev + nums[i]); // skip this house, or rob it on top of prev
+                                prev = cur;
+                                cur = next;
+                            }
+                            return cur;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"one":[3,4],"answer":[5],"range":[7,8,14],"loop":[9],"choose":[10,11,12]}'>
+                    class Solution {
+                        public int rob(int[] nums) {
+                            int n = nums.length;
+                            if (n == 1) return nums[0]; // one house: it has no neighbours
+                            return Math.max(bestLine(nums, 0, n - 2), bestLine(nums, 1, n - 1)); // the first and last houses touch: leave out one of them
+                        }
+                        private int bestLine(int[] nums, int lo, int hi) { // House Robber on nums[lo..hi], a straight street
+                            int prev = 0, cur = 0;
+                            for (int i = lo; i <= hi; i++) {
+                                int next = Math.max(cur, prev + nums[i]); // skip this house, or rob it on top of prev
+                                prev = cur;
+                                cur = next;
+                            }
+                            return cur;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  Nothing built in. Reuse your House Robber function and call it twice:
+                  that's Approach 3.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Recursion with Memo, Twice</th>
+                        <td>Skip or rob, two ranges</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Fresh memo per pass</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">DP Table, Twice</th>
+                        <td>House Robber table per range</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Easy to check by hand</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Two Variables, Twice</th>
+                        <td>prev and cur per range</td>
                         <td>O(n)</td>
                         <td>O(1)</td>
                         <td>Expected answer</td>
@@ -62801,6 +63173,128 @@
         steps.push({ line: "return", note: `Return [${res.join(", ")}]. ${calls} DFS calls in total${hidden ? ` (${hidden} steps not shown)` : ""}.${prune ? " Cut branches are never walked again." : ""}`, view: view() });
         return steps;
       }
+      })();
+    </script>
+    <!-- problems/0213-house-robber-ii/approach1.visual.js -->
+    <script>
+      // Run House Robber twice with a memo: once without the last house, once without the first. Take the better.
+      (function () {
+      DSAViz.register("0213-house-robber-ii/approach1", {
+        inputs: [{ name: "nums", type: "int[]", value: "[2, 7, 9, 3, 1]", minLength: 1, maxLength: 8, minValue: 0, maxValue: 1000 }],
+        trace({ nums }) {
+          const n = nums.length;
+          const steps = [];
+          if (n === 1) {
+            steps.push({ line: ["init", "one"], note: `Return ${nums[0]}. One house has no neighbours: rob it.`, view: [street(nums, 0, 0)] });
+            return steps;
+          }
+          const results = [];
+          const memoView = (memo, lo, hi, mm) => ({ type: "array", label: "memo[i] = best(i), the most from house i to the end of this pass (? = not known yet)", values: nums.map((_, k) => (k < lo || k > hi ? "-" : memo[k] === undefined ? "?" : memo[k])), marks: mm });
+          steps.push({ line: "init", note: "House 0 and the last house touch, so they can't both be robbed. Solve the street twice, each time leaving one of them out.", view: [street(nums, 0, n - 1)] });
+          for (const [lo, hi] of [[0, n - 2], [1, n - 1]]) {
+            const memo = {};
+            steps.push({ line: "range", note: `${passName(lo, n)[0].toUpperCase()}${passName(lo, n).slice(1)}. Start with an empty memo.`, view: [street(nums, lo, hi), memoView(memo, lo, hi, {})] });
+            const best = (i) => {
+              if (i > hi) return 0;
+              if (memo[i] !== undefined) { steps.push({ line: ["call", "memo"], note: `best(${i}) is in the memo: ${memo[i]}.`, view: [street(nums, lo, hi, { [i]: "active" }), memoView(memo, lo, hi, { [i]: "match" })] }); return memo[i]; }
+              const skip = best(i + 1);
+              const take = nums[i] + best(i + 2);
+              memo[i] = Math.max(skip, take);
+              steps.push({ line: ["call", "choose"], note: `best(${i}) = max(skip ${skip}, rob ${nums[i]} + ${take - nums[i]} = ${take}) = ${memo[i]}.`, view: [street(nums, lo, hi, { [i]: take > skip ? "match" : "active" }), memoView(memo, lo, hi, { [i]: "new" })] });
+              return memo[i];
+            };
+            const r = best(lo);
+            results.push(r);
+            steps.push({ line: "range", note: `This pass gives ${r}.`, view: [street(nums, lo, hi), memoView(memo, lo, hi, { [lo]: "match" })] });
+          }
+          const ans = Math.max(...results);
+          steps.push({ line: "answer", note: `Return ${ans} = max(${results[0]}, ${results[1]}). Two House Robber passes: O(n) time, O(n) memo.`, view: [street(nums, 0, n - 1), { type: "vars", items: [{ name: "pass 1", value: results[0], mark: results[0] === ans ? "match" : "" }, { name: "pass 2", value: results[1], mark: results[1] === ans ? "match" : "" }] }] });
+          return steps;
+        },
+      });
+
+      // nums with the left-out house dashed; extra marks on top.
+      const street = (nums, lo, hi, marks = {}, label) => ({ type: "array", label: label || "nums (the street is a circle: house 0 and the last house are neighbours; dashed = left out this pass)", values: nums, marks: { ...Object.fromEntries(nums.map((_, k) => [k, k < lo || k > hi ? "ghost" : ""]).filter(([, v]) => v)), ...marks } });
+      const passName = (lo, n) => (lo === 0 ? `pass 1: houses 0..${n - 2} (leave out the last)` : `pass 2: houses 1..${n - 1} (leave out the first)`);
+      })();
+    </script>
+    <!-- problems/0213-house-robber-ii/approach2.visual.js -->
+    <script>
+      // Two DP tables: one for houses 0..n-2, one for houses 1..n-1. dp[i] = max(dp[i-1], dp[i-2] + house).
+      (function () {
+      DSAViz.register("0213-house-robber-ii/approach2", {
+        inputs: [{ name: "nums", type: "int[]", value: "[2, 7, 9, 3, 1]", minLength: 1, maxLength: 8, minValue: 0, maxValue: 1000 }],
+        trace({ nums }) {
+          const n = nums.length;
+          const steps = [];
+          if (n === 1) {
+            steps.push({ line: ["init", "one"], note: `Return ${nums[0]}. One house has no neighbours: rob it.`, view: [street(nums, 0, 0)] });
+            return steps;
+          }
+          const results = [];
+          steps.push({ line: "init", note: "House 0 and the last house touch. Solve the street once without the last house, once without the first.", view: [street(nums, 0, n - 1)] });
+          for (const [lo, hi] of [[0, n - 2], [1, n - 1]]) {
+            const m = hi - lo + 1;
+            const dp = Array(m + 1).fill(null);
+            dp[0] = 0;
+            dp[1] = nums[lo];
+            const dpView = (mk) => ({ type: "array", label: "dp[i] = the most from the first i houses of this pass", values: dp.map((v) => (v === null ? "" : v)), marks: mk });
+            steps.push({ line: "range", note: `${passName(lo, n)[0].toUpperCase()}${passName(lo, n).slice(1)}. dp[0] = 0, dp[1] = ${nums[lo]}.`, view: [street(nums, lo, hi), dpView({ 1: "new" })] });
+            for (let i = 2; i <= m; i++) {
+              const h = lo + i - 1;
+              const skip = dp[i - 1], take = dp[i - 2] + nums[h];
+              dp[i] = Math.max(skip, take);
+              steps.push({ line: ["loop", "choose"], note: `House ${h} (${nums[h]}): leave it → ${skip}; rob it → dp[${i - 2}] + ${nums[h]} = ${take}. dp[${i}] = ${dp[i]}.`, view: [street(nums, lo, hi, { [h]: take > skip ? "match" : "active" }), dpView({ [i]: "new", [take > skip ? i - 2 : i - 1]: "compare" })] });
+            }
+            results.push(dp[m]);
+            steps.push({ line: "range", note: `This pass gives dp[${m}] = ${dp[m]}.`, view: [street(nums, lo, hi), dpView({ [m]: "match" })] });
+          }
+          const ans = Math.max(...results);
+          steps.push({ line: "answer", note: `Return ${ans} = max(${results[0]}, ${results[1]}). O(n) time, O(n) for each table.`, view: [street(nums, 0, n - 1), { type: "vars", items: [{ name: "pass 1", value: results[0], mark: results[0] === ans ? "match" : "" }, { name: "pass 2", value: results[1], mark: results[1] === ans ? "match" : "" }] }] });
+          return steps;
+        },
+      });
+
+      // nums with the left-out house dashed; extra marks on top.
+      const street = (nums, lo, hi, marks = {}, label) => ({ type: "array", label: label || "nums (the street is a circle: house 0 and the last house are neighbours; dashed = left out this pass)", values: nums, marks: { ...Object.fromEntries(nums.map((_, k) => [k, k < lo || k > hi ? "ghost" : ""]).filter(([, v]) => v)), ...marks } });
+      const passName = (lo, n) => (lo === 0 ? `pass 1: houses 0..${n - 2} (leave out the last)` : `pass 2: houses 1..${n - 1} (leave out the first)`);
+      })();
+    </script>
+    <!-- problems/0213-house-robber-ii/approach3.visual.js -->
+    <script>
+      // Two straight-street passes with just prev and cur: without the last house, then without the first.
+      (function () {
+      DSAViz.register("0213-house-robber-ii/approach3", {
+        inputs: [{ name: "nums", type: "int[]", value: "[2, 7, 9, 3, 1]", minLength: 1, maxLength: 8, minValue: 0, maxValue: 1000 }],
+        trace({ nums }) {
+          const n = nums.length;
+          const steps = [];
+          if (n === 1) {
+            steps.push({ line: "one", note: `Return ${nums[0]}. One house has no neighbours: rob it.`, view: [street(nums, 0, 0)] });
+            return steps;
+          }
+          const results = [];
+          for (const [lo, hi] of [[0, n - 2], [1, n - 1]]) {
+            let prev = 0, cur = 0;
+            const vars = (mark) => ({ type: "vars", items: [{ name: "prev", value: prev }, { name: "cur", value: cur, mark }] });
+            steps.push({ line: "range", note: `${passName(lo, n)[0].toUpperCase()}${passName(lo, n).slice(1)}. prev = cur = 0.`, view: [street(nums, lo, hi), vars("")] });
+            for (let k = lo; k <= hi; k++) {
+              const take = prev + nums[k], old = cur;
+              [prev, cur] = [cur, Math.max(cur, take)];
+              steps.push({ line: ["loop", "choose"], note: `House ${k} (${nums[k]}): skip → ${old}, rob → prev + ${nums[k]} = ${take}. cur = ${cur}.`, view: [street(nums, lo, hi, { [k]: take > old ? "match" : "active" }), vars("new")] });
+            }
+            results.push(cur);
+            steps.push({ line: "range", note: `This pass gives ${cur}.`, view: [street(nums, lo, hi), vars("match")] });
+          }
+          const ans = Math.max(...results);
+          steps.push({ line: "answer", note: `Return ${ans} = max(${results[0]}, ${results[1]}). O(n) time, O(1) space.`, view: [street(nums, 0, n - 1), { type: "vars", items: [{ name: "pass 1", value: results[0], mark: results[0] === ans ? "match" : "" }, { name: "pass 2", value: results[1], mark: results[1] === ans ? "match" : "" }] }] });
+          return steps;
+        },
+      });
+
+      // nums with the left-out house dashed; extra marks on top.
+      const street = (nums, lo, hi, marks = {}, label) => ({ type: "array", label: label || "nums (the street is a circle: house 0 and the last house are neighbours; dashed = left out this pass)", values: nums, marks: { ...Object.fromEntries(nums.map((_, k) => [k, k < lo || k > hi ? "ghost" : ""]).filter(([, v]) => v)), ...marks } });
+      const passName = (lo, n) => (lo === 0 ? `pass 1: houses 0..${n - 2} (leave out the last)` : `pass 2: houses 1..${n - 1} (leave out the first)`);
       })();
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->

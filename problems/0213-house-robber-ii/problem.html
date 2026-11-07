@@ -1,0 +1,199 @@
+<details class="question" data-group="dynamic-programming" data-tags="dynamic programming dp house robber circle circular non-adjacent maximum sum">
+  <summary>
+    <span class="q-title">213. House Robber II</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Dynamic Programming</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> The houses form a circle, so the first and
+      last houses are neighbours and can't both be robbed. Break the circle:
+      solve House Robber once <strong>without the last house</strong> and
+      once <strong>without the first</strong>, and take the bigger answer.
+      One house alone is a special case.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/house-robber-ii/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Same as House Robber, but the houses stand in a circle: house 0 and
+        the last house are next to each other. You can't rob two neighbours.
+        Return the most money you can rob.
+      </p>
+      <ul>
+        <li><code>1 &lt;= nums.length &lt;= 100</code></li>
+        <li><code>0 &lt;= nums[i] &lt;= 1000</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[2,3,2]</code> → <code>3</code>. <code>[1,2,3,1]</code>
+        → <code>4</code>. <code>[1,2,3]</code> → <code>3</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[2,3,2]</code></td>
+              <td><code>3</code></td>
+              <td>Plain House Robber takes both 2s, which are neighbours on the circle: it said <code>4</code>. Wrong on 1469 of 4509 tests.</td>
+            </tr>
+            <tr>
+              <td><code>[5]</code></td>
+              <td><code>5</code></td>
+              <td>Without the special case, both passes get an empty street: it said <code>0</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[3,10]</code></td>
+              <td><code>10</code></td>
+              <td>Leaving out <em>both</em> ends at once is too strict: it said <code>0</code>. Wrong on 3564 tests. Leave out one end per pass.</td>
+            </tr>
+            <tr>
+              <td><code>[2,7,9,3,1]</code></td>
+              <td><code>11</code></td>
+              <td>On a straight street the answer is 2 + 9 + 1 = 12, but houses 0 and 4 touch here.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Recursion with Memo, Twice</h2>
+      <p class="intuition">
+        <code>best(i)</code> = the most from house <code>i</code> to the end of
+        the range: <code>max(best(i + 1), nums[i] + best(i + 2))</code>. Run it
+        on houses <code>0..n − 2</code> and on <code>1..n − 1</code>, each with
+        a fresh memo.
+      </p>
+      <ul>
+        <li>Any valid choice skips house 0 or skips the last house, so one of the two passes covers it.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        At 100 houses: Python 56 µs. Average over 4509 tests: Java 0.32 µs,
+        C++ 0.30 µs.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: DP Table, Twice</h2>
+      <p class="intuition">
+        Build House Robber's table for each range:
+        <code>dp[i] = max(dp[i − 1], dp[i − 2] + house)</code>, where
+        <code>dp[i]</code> covers the first <code>i</code> houses of the
+        range. Return the larger last entry.
+      </p>
+      <ul>
+        <li>Pass the range bounds instead of copying the array.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        At 100 houses: Python 19 µs. Average: Java 0.32 µs, C++ 0.30 µs.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Two Variables, Twice
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        House Robber needs only the last two answers, <code>prev</code> and
+        <code>cur</code>. Run that loop on houses <code>0..n − 2</code> and on
+        <code>1..n − 1</code>, and return the bigger result.
+      </p>
+      <ul>
+        <li>The Python version slices (<code>nums[:-1]</code>, <code>nums[1:]</code>) for clarity; C++ and Java pass bounds, so they use O(1) space.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1) (O(n) for Python's slices)</span>
+      </div>
+      <p class="note">
+        At 100 houses: Python 10 µs. Average: Java 0.23 µs, C++ 0.04 µs, the
+        fastest in every language.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        Nothing built in. Reuse your House Robber function and call it twice:
+        that's Approach 3.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Recursion with Memo, Twice</th>
+              <td>Skip or rob, two ranges</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Fresh memo per pass</td>
+            </tr>
+            <tr>
+              <th scope="row">DP Table, Twice</th>
+              <td>House Robber table per range</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Easy to check by hand</td>
+            </tr>
+            <tr>
+              <th scope="row">Two Variables, Twice</th>
+              <td>prev and cur per range</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
