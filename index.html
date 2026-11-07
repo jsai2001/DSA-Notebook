@@ -25492,7 +25492,7 @@
       <details class="pattern-group" id="g-dynamic-programming">
         <summary>
           <span class="g-name">Dynamic Programming</span>
-          <span class="g-count"><span class="g-total">12 problems</span></span>
+          <span class="g-count"><span class="g-total">13 problems</span></span>
           <span class="g-hint">Reuse the answers to smaller problems</span>
         </summary>
         <div class="g-body">
@@ -30003,6 +30003,384 @@
                         <td><code>dp[i]</code> from <code>dp[i - L]</code></td>
                         <td>O(n · k · L)</td>
                         <td>O(n + m · L)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0152-maximum-product-subarray ===== -->
+          <details class="question" data-group="dynamic-programming" data-tags="array dynamic-programming kadane product subarray negative max min prefix suffix">
+            <summary>
+              <span class="q-title">152. Maximum Product Subarray</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Array</span>
+                <span class="tag">Dynamic Programming</span>
+              </span>
+            </summary>
+
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Like Kadane's algorithm, but keep
+                <strong>two</strong> numbers: the largest and the smallest product of
+                a subarray ending here. A negative number turns the smallest (most
+                negative) into the largest, so swap them before multiplying. Either
+                can also start fresh at the current number. O(n), O(1).
+              </div>
+
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/maximum-product-subarray/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Find the contiguous, non-empty subarray of <code>nums</code> with the
+                  largest product, and return that product.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= nums.length &lt;= 2 × 10⁴</code></li>
+                  <li><code>-10 &lt;= nums[i] &lt;= 10</code></li>
+                  <li>The product of any subarray fits in a 32-bit integer</li>
+                </ul>
+                <p class="note">
+                  Example: <code>[2,3,-2,4]</code> → <code>6</code> ([2,3]).
+                  <code>[-2,0,-1]</code> → <code>0</code>.
+                </p>
+              </section>
+
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[-2,3,-4]</code></td>
+                        <td><code>24</code></td>
+                        <td>Two negatives make a positive. Keeping only the largest product (plain Kadane) said <code>3</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[-2]</code></td>
+                        <td><code>-2</code></td>
+                        <td>The answer can be negative. Starting <code>best</code> at 0 said <code>0</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[-1,-4,-1,2,0]</code></td>
+                        <td><code>8</code></td>
+                        <td>Updating <code>lo</code> with the <strong>new</strong> <code>hi</code> instead of the old one said <code>32</code>: bigger than any real product.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[-3,0,-3,2,-2,1,-2]</code></td>
+                        <td><code>12</code></td>
+                        <td>A zero splits the array. Prefix and suffix products that don't restart after it stay 0: said <code>8</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[-2,0,-1]</code></td>
+                        <td><code>0</code></td>
+                        <td>The best "product" is the zero itself.</td>
+                      </tr>
+                      <tr>
+                        <td>2 × 10⁴ numbers</td>
+                        <td>-</td>
+                        <td>Checking every subarray is 2 × 10⁸ products: 0.2 s in C++; Python took 1.7 s for just 8,000.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Every Subarray</h2>
+                <p class="intuition">
+                  For each start <code>i</code>, extend the end <code>j</code> one step
+                  at a time, keeping a running product, and track the largest.
+                </p>
+                <ul>
+                  <li>The running product avoids recomputing each subarray from scratch.</li>
+                  <li>Start <code>best</code> at <code>nums[0]</code>, not 0.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n²)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  Python: 0.11 s at 2,000, 0.42 s at 4,000, 1.7 s at 8,000 (quadrupling
+                  each time). At n = 2 × 10⁴: C++ 0.2 s, Java 0.2 s. Too slow in
+                  Python.
+                </p>
+                <div class="code-tabs" data-viz="0152-maximum-product-subarray/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"start":[4,5],"extend":[6,7],"best":[8],"return":[9]}'>
+                    class Solution(object):
+                        def maxProduct(self, nums):
+                            best = nums[0]  # not 0: the answer can be negative
+                            for i in range(len(nums)):  # every start
+                                prod = 1
+                                for j in range(i, len(nums)):  # extend to every end, keeping a running product
+                                    prod *= nums[j]
+                                    best = max(best, prod)
+                            return best
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"start":[7,8],"extend":[9,10],"best":[11],"return":[14]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int maxProduct(std::vector<int>& nums) {
+                            int best = nums[0]; // not 0: the answer can be negative
+                            for (size_t i = 0; i < nums.size(); ++i) { // every start
+                                int prod = 1; // every subarray product fits in 32 bits (given)
+                                for (size_t j = i; j < nums.size(); ++j) { // extend to every end, keeping a running product
+                                    prod *= nums[j];
+                                    best = std::max(best, prod);
+                                }
+                            }
+                            return best;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"start":[4,5],"extend":[6,7],"best":[8],"return":[11]}'>
+                    class Solution {
+                        public int maxProduct(int[] nums) {
+                            int best = nums[0]; // not 0: the answer can be negative
+                            for (int i = 0; i < nums.length; i++) { // every start
+                                int prod = 1; // every subarray product fits in 32 bits (given)
+                                for (int j = i; j < nums.length; j++) { // extend to every end, keeping a running product
+                                    prod *= nums[j];
+                                    best = Math.max(best, prod);
+                                }
+                            }
+                            return best;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Prefix and Suffix Products</h2>
+                <p class="intuition">
+                  Between zeros, if the count of negatives is even, the whole stretch
+                  is best. If it's odd, drop everything up to the first negative, or
+                  everything from the last one: the best is a prefix or a suffix. So
+                  scan products from the left and from the right, restarting after
+                  each zero, and take the largest seen.
+                </p>
+                <ul>
+                  <li><code>left = (left or 1) * nums[i]</code>: a 0 restarts the product at the next number.</li>
+                  <li>Both directions in one loop.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  At 2 × 10⁴: Python 2.6 ms, Java 1.4 ms, C++ 0.04 ms. A neat trick, but
+                  it needs the "prefix or suffix" argument to be convincing.
+                </p>
+                <div class="code-tabs" data-viz="0152-maximum-product-subarray/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"scan":[6,8,9],"best":[10],"return":[11]}'>
+                    class Solution(object):
+                        def maxProduct(self, nums):
+                            n = len(nums)
+                            best = nums[0]
+                            left = right = 1
+                            for i in range(n):
+                                # A product restarts after a 0 (multiplying by 0 would stick at 0).
+                                left = (left if left != 0 else 1) * nums[i]  # from the left: the prefix ending at i
+                                right = (right if right != 0 else 1) * nums[n - 1 - i]  # from the right: the suffix starting at n-1-i
+                                best = max(best, left, right)
+                            return best
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8],"scan":[9,11,12],"best":[13],"return":[15]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int maxProduct(std::vector<int>& nums) {
+                            const int n = nums.size();
+                            int best = nums[0];
+                            int left = 1, right = 1;
+                            for (int i = 0; i < n; ++i) {
+                                // A product restarts after a 0 (multiplying by 0 would stick at 0).
+                                left = (left ? left : 1) * nums[i]; // from the left: the prefix ending at i
+                                right = (right ? right : 1) * nums[n - 1 - i]; // from the right: the suffix starting at n-1-i
+                                best = std::max({best, left, right});
+                            }
+                            return best;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5],"scan":[6,8,9],"best":[10],"return":[12]}'>
+                    class Solution {
+                        public int maxProduct(int[] nums) {
+                            int n = nums.length;
+                            int best = nums[0];
+                            int left = 1, right = 1;
+                            for (int i = 0; i < n; i++) {
+                                // A product restarts after a 0 (multiplying by 0 would stick at 0).
+                                left = (left != 0 ? left : 1) * nums[i]; // from the left: the prefix ending at i
+                                right = (right != 0 ? right : 1) * nums[n - 1 - i]; // from the right: the suffix starting at n-1-i
+                                best = Math.max(best, Math.max(left, right));
+                            }
+                            return best;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Largest and Smallest Ending Here
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  For each <code>x</code>: if it's negative, swap <code>hi</code> and
+                  <code>lo</code>. Then <code>hi = max(x, hi * x)</code> and
+                  <code>lo = min(x, lo * x)</code>: extend the best (or worst) subarray
+                  ending at the previous index, or start fresh at <code>x</code>. Keep
+                  the largest <code>hi</code>.
+                </p>
+                <ul>
+                  <li>
+                    The swap is what makes both lines use the <strong>old</strong>
+                    values; otherwise save <code>hi</code> in a temporary first.
+                  </li>
+                  <li>A zero makes both 0; the next number restarts them.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  At 2 × 10⁴: Python 2.3 ms, Java 1.6 ms, C++ 0.07 ms. The expected
+                  answer: the DP idea from Maximum Subarray (53), with one more value
+                  to carry.
+                </p>
+                <div class="code-tabs" data-viz="0152-maximum-product-subarray/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"loop":[4],"swap":[5,6],"update":[7,8],"best":[9],"return":[10]}'>
+                    class Solution(object):
+                        def maxProduct(self, nums):
+                            hi = lo = best = nums[0]  # largest and smallest product of a subarray ending here
+                            for x in nums[1:]:
+                                if x < 0:  # a negative number turns the largest into the smallest, and back
+                                    hi, lo = lo, hi
+                                hi = max(x, hi * x)  # start fresh at x, or extend
+                                lo = min(x, lo * x)
+                                best = max(best, hi)
+                            return best
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7],"loop":[8,9],"swap":[10],"update":[11,12],"best":[13],"return":[15]}'>
+                    #include <algorithm>
+                    #include <utility>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int maxProduct(std::vector<int>& nums) {
+                            int hi = nums[0], lo = nums[0], best = nums[0]; // largest and smallest product ending here
+                            for (size_t i = 1; i < nums.size(); ++i) {
+                                int x = nums[i];
+                                if (x < 0) std::swap(hi, lo); // a negative number turns the largest into the smallest, and back
+                                hi = std::max(x, hi * x); // start fresh at x, or extend
+                                lo = std::min(x, lo * x);
+                                best = std::max(best, hi);
+                            }
+                            return best;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"loop":[4,5],"swap":[6,7,8,9],"update":[11,12],"best":[13],"return":[15]}'>
+                    class Solution {
+                        public int maxProduct(int[] nums) {
+                            int hi = nums[0], lo = nums[0], best = nums[0]; // largest and smallest product ending here
+                            for (int i = 1; i < nums.length; i++) {
+                                int x = nums[i];
+                                if (x < 0) { // a negative number turns the largest into the smallest, and back
+                                    int t = hi;
+                                    hi = lo;
+                                    lo = t;
+                                }
+                                hi = Math.max(x, hi * x); // start fresh at x, or extend
+                                lo = Math.min(x, lo * x);
+                                best = Math.max(best, hi);
+                            }
+                            return best;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  No standard library function finds the best subarray product.
+                  <code>math.prod</code> multiplies one subarray, but calling it on
+                  every subarray is O(n³).
+                </p>
+                <p class="note">
+                  Approach 3 is what you'd write: a loop and three variables.
+                </p>
+              </section>
+
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Every Subarray</th>
+                        <td>Running product from each start</td>
+                        <td>O(n²)</td>
+                        <td>O(1)</td>
+                        <td>1.7 s in Python at 8,000</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Prefix and Suffix Products</th>
+                        <td>Scan both ways, restart after 0</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>Needs the prefix/suffix argument</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Largest and Smallest Ending Here</th>
+                        <td>Swap on a negative, then extend or restart</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
                         <td>Expected answer</td>
                       </tr>
                     </tbody>
@@ -51822,6 +52200,133 @@
         return t;
       }
       })();
+    </script>
+    <!-- problems/0152-maximum-product-subarray/approach1.visual.js -->
+    <script>
+      // Try every subarray: fix a start, extend the end one step at a time with a running product.
+      DSAViz.register("0152-maximum-product-subarray/approach1", {
+        inputs: [{ name: "nums", type: "int[]", value: "[2, 3, -2, 4]", minLength: 1, maxLength: 8, minValue: -10, maxValue: 10 }],
+        trace({ nums }) {
+          const n = nums.length;
+          const steps = [];
+          let best = nums[0];
+          let bestR = [0, 0];
+          let count = 0;
+          const view = (o = {}) => {
+            const marks = {};
+            if (o.r) for (let k = o.r[0]; k <= o.r[1]; k++) marks[k] = "window";
+            if (o.final) for (let k = bestR[0]; k <= bestR[1]; k++) marks[k] = "match";
+            return [
+              { type: "array", label: "nums (outlined = the subarray now; green at the end = the best one)", values: nums, marks, pointers: o.r ? { i: o.r[0], j: o.r[1] } : {} },
+              { type: "vars", items: [...(o.prod !== undefined ? [{ name: "prod", value: o.prod }] : []), { name: "best", value: best, mark: o.better ? "match" : "" }, { name: "subarrays checked", value: count }] },
+            ];
+          };
+          steps.push({ line: "init", note: `best starts at nums[0] = ${nums[0]}, not 0: if every product is negative, the answer is negative.`, view: view() });
+          for (let i = 0; i < n; i++) {
+            let prod = 1;
+            for (let j = i; j < n; j++) {
+              prod *= nums[j];
+              count++;
+              const better = prod > best;
+              if (better) { best = prod; bestR = [i, j]; }
+              steps.push({ line: j === i ? ["start", "extend", "best"] : ["extend", "best"], note: `nums[${i}..${j}]: product ${prod}.${better ? " New best." : ""}`, view: view({ r: [i, j], prod, better }) });
+            }
+          }
+          steps.push({ line: "return", note: `Return ${best}, from nums[${bestR[0]}..${bestR[1]}]. ${count} subarrays: n(n + 1) / 2, so O(n²).`, view: view({ final: true }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0152-maximum-product-subarray/approach2.visual.js -->
+    <script>
+      // The best product is a prefix or a suffix of some zero-free stretch: scan both ways, restarting after zeros.
+      DSAViz.register("0152-maximum-product-subarray/approach2", {
+        inputs: [{ name: "nums", type: "int[]", value: "[2, -5, -2, -4, 3]", minLength: 1, maxLength: 8, minValue: -10, maxValue: 10 }],
+        trace({ nums }) {
+          const n = nums.length;
+          const steps = [];
+          const L = Array(n).fill("");
+          const R = Array(n).fill("");
+          let best = nums[0];
+          let left = 1;
+          let right = 1;
+          const view = (o = {}) => [
+            { type: "array", label: "nums", values: nums, pointers: o.i !== undefined ? { i: o.i, "n-1-i": n - 1 - o.i } : {} },
+            { type: "array", label: "left: product of the prefix ending here (restarts after a 0)", values: L.map(String), marks: o.i !== undefined ? { [o.i]: o.lm || "new" } : {} },
+            { type: "array", label: "right: product of the suffix starting here (restarts after a 0)", values: R.map(String), marks: o.i !== undefined ? { [n - 1 - o.i]: o.rm || "new" } : {} },
+            { type: "vars", items: [{ name: "best", value: best, mark: o.better ? "match" : "" }] },
+          ];
+          steps.push({ line: "init", note: "Between zeros, an even number of negatives means the whole stretch is best; an odd number means drop everything up to the first negative, or from the last one. Both are a prefix or a suffix.", view: view() });
+          for (let i = 0; i < n; i++) {
+            const lFrom = left !== 0 ? String(left) : "1 (restart after a 0)";
+            const rFrom = right !== 0 ? String(right) : "1 (restart after a 0)";
+            left = (left !== 0 ? left : 1) * nums[i];
+            right = (right !== 0 ? right : 1) * nums[n - 1 - i];
+            L[i] = left;
+            R[n - 1 - i] = right;
+            const top = Math.max(left, right);
+            const better = top > best;
+            if (better) best = top;
+            steps.push({
+              line: ["scan", "best"],
+              note: `left = ${lFrom} × ${nums[i]} = ${left}; right = ${rFrom} × ${nums[n - 1 - i]} = ${right}.${better ? ` New best: ${best}.` : ""}`,
+              view: view({ i, better, lm: left === best && better ? "match" : "new", rm: right === best && better ? "match" : "new" }),
+            });
+          }
+          steps.push({ line: "return", note: `Return ${best}. Two products in one pass: O(n) time, O(1) memory.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0152-maximum-product-subarray/approach3.visual.js -->
+    <script>
+      // Keep the largest (hi) and smallest (lo) product ending at each index; a negative number swaps them.
+      DSAViz.register("0152-maximum-product-subarray/approach3", {
+        inputs: [{ name: "nums", type: "int[]", value: "[2, 3, -2, 4, -1]", minLength: 1, maxLength: 8, minValue: -10, maxValue: 10 }],
+        trace({ nums }) {
+          const n = nums.length;
+          const steps = [];
+          const HI = Array(n).fill("");
+          const LO = Array(n).fill("");
+          let hi = nums[0];
+          let lo = nums[0];
+          let best = nums[0];
+          HI[0] = hi;
+          LO[0] = lo;
+          const view = (o = {}) => {
+            const marks = {};
+            if (o.i !== undefined) { marks[`0,${o.i}`] = o.hm || "new"; marks[`1,${o.i}`] = "new"; }
+            return [
+              { type: "array", label: "nums", values: nums, marks: o.i !== undefined ? { [o.i]: "active" } : {}, pointers: o.i !== undefined ? { x: o.i } : {} },
+              { type: "grid", label: "products of subarrays ending at each index", rows: ["hi (largest)", "lo (smallest)"], cols: [...Array(n).keys()], corner: "", cells: [HI.map(String), LO.map(String)], marks },
+              { type: "vars", items: [{ name: "best", value: best, mark: o.better ? "match" : "" }] },
+            ];
+          };
+          steps.push({ line: "init", note: `At index 0 the only subarray is [${nums[0]}]: hi = lo = best = ${nums[0]}.`, view: view({ i: 0 }) });
+          for (let i = 1; i < n; i++) {
+            const x = nums[i];
+            let note = "";
+            const line = ["loop"];
+            if (x < 0) {
+              [hi, lo] = [lo, hi];
+              note = `${x} is negative: multiplying flips the order, so swap hi and lo first (hi = ${hi}, lo = ${lo}). `;
+              line.push("swap");
+            }
+            const pickHi = x >= hi * x ? `start fresh at ${x}` : `extend: ${hi} × ${x} = ${hi * x}`;
+            const pickLo = x <= lo * x ? `start fresh at ${x}` : `extend: ${lo} × ${x} = ${lo * x}`;
+            hi = Math.max(x, hi * x);
+            lo = Math.min(x, lo * x);
+            HI[i] = hi;
+            LO[i] = lo;
+            const better = hi > best;
+            if (better) best = hi;
+            line.push("update", "best");
+            steps.push({ line, note: `${note}hi = ${hi} (${pickHi}); lo = ${lo} (${pickLo}).${better ? ` New best: ${best}.` : ""}`, view: view({ i, better, hm: better ? "match" : "new" }) });
+          }
+          steps.push({ line: "return", note: `Return ${best}. One pass with three numbers: O(n) time, O(1) memory.`, view: view() });
+          return steps;
+        },
+      });
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->
     <script>
