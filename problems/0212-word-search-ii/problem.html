@@ -1,0 +1,207 @@
+<details class="question" data-group="tries" data-tags="trie backtracking dfs grid matrix word search board prune">
+  <summary>
+    <span class="q-title">212. Word Search II</span>
+    <span class="q-meta">
+      <span class="badge hard">Hard</span>
+      <span class="tag">Trie</span>
+      <span class="tag">Backtracking</span>
+      <span class="tag">Matrix</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Don't search the board once per word. Put all
+      the words in a <strong>trie</strong> and run one DFS from every cell,
+      walking the board and the trie together: a path stops as soon as no
+      word continues with its letters. Clear each found word, and cut trie
+      branches that have nothing left.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/word-search-ii/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Given a board of letters and a list of words, return every word that
+        can be spelled by a path of cells joined up, down, left or right,
+        using each cell at most once per word. Any order.
+      </p>
+      <ul>
+        <li><code>1 &lt;= m, n &lt;= 12</code>, lowercase letters</li>
+        <li><code>1 &lt;= words.length &lt;= 3 × 10⁴</code>, each 1 to 10 letters, all different</li>
+      </ul>
+      <p class="note">
+        Example: board <code>["oaan","etae","ihkr","iflv"]</code>, words
+        <code>["oath","pea","eat","rain"]</code> → <code>["eat","oath"]</code>.
+        Board <code>["ab","cd"]</code>, words <code>["abcb"]</code> →
+        <code>[]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>board <code>["a","a"]</code>, words <code>["aa"]</code></td>
+              <td><code>["aa"]</code></td>
+              <td>Two paths spell it. Not clearing a found word from the trie reported it twice; wrong on 1204 of 1505 tests.</td>
+            </tr>
+            <tr>
+              <td>board <code>["a","b"]</code>, words <code>["ab","ba"]</code></td>
+              <td>both</td>
+              <td>Forgetting to unmark a cell on the way back blocks it for later paths: only <code>"ab"</code> was found.</td>
+            </tr>
+            <tr>
+              <td>board <code>["ab","cd"]</code>, words <code>["abcb"]</code></td>
+              <td><code>[]</code></td>
+              <td>The second <code>b</code> would reuse a cell.</td>
+            </tr>
+            <tr>
+              <td>12 × 12 of <code>a</code>, words <code>a</code>…<code>aaaaaaaaaa</code> and <code>aaaaaaaaa</code> + each other letter</td>
+              <td>the 10 all-<code>a</code> words</td>
+              <td>Every path of <code>a</code>s matches a prefix. Searching per word took 23 s in Python; the pruned trie, 0.56 s.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Word Search for Each Word</h2>
+      <p class="intuition">
+        Reuse Word Search (79): for each word, try every cell as the start
+        and DFS letter by letter, marking cells on the path and unmarking them
+        on the way back. Keep the words that are found.
+      </p>
+      <ul>
+        <li>Correct, and fine for a handful of words.</li>
+        <li>Words that share a prefix redo the same walks, and the board is scanned once per word.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(W · m·n · 3ᴸ)</span>
+        <span><strong>Space</strong> O(L) call stack</span>
+      </div>
+      <p class="note">
+        All-<code>a</code> board, 35 words: Python 23 s, Java 268 ms, C++
+        174 ms. A random 12 × 12 board with 3000 words: Python 75 ms.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Trie + DFS From Every Cell</h2>
+      <p class="intuition">
+        Build a trie of all the words. From each cell, DFS while following
+        the trie: a step is only taken if the trie has a child for that
+        cell's letter. When a node holds a word, add it to the answer and
+        clear it.
+      </p>
+      <ul>
+        <li>One walk checks all words with that prefix at once.</li>
+        <li>Marking the cell with <code>"#"</code> also stops the DFS, because no trie node has a <code>"#"</code> child.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n · 3ᴸ)</span>
+        <span><strong>Space</strong> O(total letters in words)</span>
+      </div>
+      <p class="note">
+        All-<code>a</code> board: Python 1.4 s, Java 24 ms, C++ 22 ms, 17 times
+        faster than Approach 1 in Python. Random board, 3000 words: Python
+        6.1 ms.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Trie + DFS + Pruning
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Same as Approach 2, plus one step on the way back: if the child node
+        now has no word and no children, delete it from its parent. Branches
+        whose words are all found disappear, and later paths stop earlier.
+      </p>
+      <ul>
+        <li>C++ and Java keep a child count per node, so the "empty?" check is O(1).</li>
+        <li>The more words are found, the smaller the trie gets.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(m·n · 3ᴸ) at worst, much less in practice</span>
+        <span><strong>Space</strong> O(total letters in words)</span>
+      </div>
+      <p class="note">
+        All-<code>a</code> board: Python 0.56 s, Java 9.3 ms, C++ 8.9 ms,
+        2.5 times faster than Approach 2. Random board: the same as Approach 2
+        (few words are found, so little is cut).
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No library walks a board for you, and none has a trie. Approach 3 is
+        what you'd write.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Word Search for Each Word</th>
+              <td>One board search per word</td>
+              <td>O(W · m·n · 3ᴸ)</td>
+              <td>O(L)</td>
+              <td>23 s in Python on the all-a board</td>
+            </tr>
+            <tr>
+              <th scope="row">Trie + DFS</th>
+              <td>Walk board and trie together</td>
+              <td>O(m·n · 3ᴸ)</td>
+              <td>O(letters)</td>
+              <td>Clear found words</td>
+            </tr>
+            <tr>
+              <th scope="row">Trie + DFS + Pruning</th>
+              <td>Also cut empty branches</td>
+              <td>O(m·n · 3ᴸ)</td>
+              <td>O(letters)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
