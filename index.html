@@ -7260,7 +7260,7 @@
       <details class="pattern-group" id="g-binary-search">
         <summary>
           <span class="g-name">Binary Search</span>
-          <span class="g-count"><span class="g-total">5 problems</span></span>
+          <span class="g-count"><span class="g-total">6 problems</span></span>
           <span class="g-hint">Halve the search space each step</span>
         </summary>
         <div class="g-body">
@@ -9535,6 +9535,326 @@
                         <th scope="row">Iterative Binary Search</th>
                         <td>Move lo or hi past mid</td>
                         <td>O(log n)</td>
+                        <td>O(1)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0875-koko-eating-bananas ===== -->
+          <details class="question" data-group="binary-search" data-tags="binary search on the answer monotonic predicate ceiling division">
+            <summary>
+              <span class="q-title">875. Koko Eating Bananas</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Binary Search</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> If speed <code>k</code> finishes in time,
+                every faster speed does too. That yes/no flips once, so binary search
+                the speed between 1 and <code>max(piles)</code>, checking
+                <code>Σ ceil(p / k) &lt;= h</code> each time. O(n log max).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/koko-eating-bananas/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Each hour Koko picks one pile and eats <code>k</code> bananas from it
+                  (or the whole pile if it has fewer). Return the smallest
+                  <code>k</code> that lets her finish every pile within <code>h</code>
+                  hours.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= piles.length &lt;= 10⁴</code>, <code>piles.length &lt;= h &lt;= 10⁹</code>, <code>1 &lt;= piles[i] &lt;= 10⁹</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>piles = [3,6,7,11], h = 8</code> → <code>4</code>.
+                  <code>piles = [30,11,23,4,20], h = 5</code> → <code>30</code>;
+                  with <code>h = 6</code> → <code>23</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>piles = [10⁹,10⁹,10⁹], h = 3</code></td>
+                        <td><code>1000000000</code></td>
+                        <td>At speed 1 that's 3·10⁹ hours. Summed in an <code>int</code> it wraps to −1,294,967,296, which looks "within 3 hours": a Java linear scan with an <code>int</code> returned 1. Use a 64-bit sum.</td>
+                      </tr>
+                      <tr>
+                        <td><code>piles = [10⁹], h = 2</code></td>
+                        <td><code>500000000</code></td>
+                        <td>The answer is huge: trying speeds one by one from 1 took 148 s in Python.</td>
+                      </tr>
+                      <tr>
+                        <td><code>piles = [3,6,7,11], h = 4</code></td>
+                        <td><code>11</code></td>
+                        <td><code>h</code> equals the number of piles: one pile per hour, so the answer is <code>max(piles)</code>.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Try Every Speed</h2>
+                <p class="intuition">
+                  Try <code>k = 1, 2, 3, …</code> and return the first one where the
+                  hours <code>Σ ceil(p / k)</code> are at most <code>h</code>.
+                </p>
+                <ul>
+                  <li><code>(p + k − 1) // k</code> is <code>ceil(p / k)</code> without floats.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · max(piles))</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  10⁴ piles up to 10⁴, <code>h = 3·10⁴</code> (answer 1998): Python
+                  1.0 s, Java 15 ms, C++ 13 ms.
+                </p>
+                <div class="code-tabs" data-viz="0875-koko-eating-bananas/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"try":[4,5],"return":[6,7],"next":[8]}'>
+                    class Solution(object):
+                        def minEatingSpeed(self, piles, h):
+                            k = 1
+                            while True:  # try every speed, slowest first
+                                hours = sum((p + k - 1) // k for p in piles)  # ceil(p / k) hours per pile
+                                if hours <= h:  # the first speed that's fast enough
+                                    return k
+                                k += 1
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"try":[5,6,7],"next":[5],"return":[8]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int minEatingSpeed(std::vector<int>& piles, int h) {
+                            for (long long k = 1;; ++k) { // try every speed, slowest first
+                                long long hours = 0; // can pass 2^31
+                                for (int p : piles) hours += (p + k - 1) / k; // ceil(p / k) hours per pile
+                                if (hours <= h) return k; // the first speed that's fast enough
+                            }
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"try":[3,4,5],"next":[3],"return":[6]}'>
+                    class Solution {
+                        public int minEatingSpeed(int[] piles, int h) {
+                            for (long k = 1;; k++) { // try every speed, slowest first
+                                long hours = 0; // can pass 2^31
+                                for (int p : piles) hours += (p + k - 1) / k; // ceil(p / k) hours per pile
+                                if (hours <= h) return (int) k; // the first speed that's fast enough
+                            }
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Start at the Lower Bound</h2>
+                <p class="intuition">
+                  In <code>h</code> hours Koko eats at most <code>h · k</code> bananas,
+                  so <code>k</code> is at least <code>ceil(sum / h)</code>. Start the
+                  scan there.
+                </p>
+                <ul>
+                  <li>Often lands close to the answer, but not always.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n · max(piles)) at worst</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  Same input (scan starts at 1668): Python 169 ms, Java 7.2 ms, C++ 2.3
+                  ms. But one pile of 10⁶ and 99 piles of 1 with <code>h = 101</code>:
+                  the bound is 9902, the answer 500000, and Python took 2.6 s.
+                </p>
+                <div class="code-tabs" data-viz="0875-koko-eating-bananas/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"try":[4,5],"return":[6,7],"next":[8]}'>
+                    class Solution(object):
+                        def minEatingSpeed(self, piles, h):
+                            k = (sum(piles) + h - 1) // h  # slower than this can't finish: h hours eat at most h * k bananas
+                            while True:  # try every speed from there up
+                                hours = sum((p + k - 1) // k for p in piles)
+                                if hours <= h:
+                                    return k
+                                k += 1
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7],"try":[7,8,9],"next":[7],"return":[10]}'>
+                    #include <numeric>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int minEatingSpeed(std::vector<int>& piles, int h) {
+                            long long total = std::accumulate(piles.begin(), piles.end(), 0LL);
+                            for (long long k = (total + h - 1) / h;; ++k) { // slower than sum / h can't finish; try every speed from there
+                                long long hours = 0;
+                                for (int p : piles) hours += (p + k - 1) / k;
+                                if (hours <= h) return k;
+                            }
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5],"try":[5,6,7],"next":[5],"return":[8]}'>
+                    class Solution {
+                        public int minEatingSpeed(int[] piles, int h) {
+                            long total = 0;
+                            for (int p : piles) total += p;
+                            for (long k = (total + h - 1) / h;; k++) { // slower than sum / h can't finish; try every speed from there
+                                long hours = 0;
+                                for (int p : piles) hours += (p + k - 1) / k;
+                                if (hours <= h) return (int) k;
+                            }
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Binary Search on the Speed
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Keep the answer in <code>[lo, hi]</code>, starting at
+                  <code>[1, max(piles)]</code>. If the middle speed is fast enough, the
+                  answer is it or slower: <code>hi = k</code>. If not, it's faster:
+                  <code>lo = k + 1</code>. Stop when they meet.
+                </p>
+                <ul>
+                  <li>About 30 rounds for <code>max(piles) = 10⁹</code>.</li>
+                  <li>Same loop shape as 704. Binary Search with <code>lo &lt; hi</code> and <code>hi = mid</code>.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log max(piles))</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  Same input: Python 6.7 ms, Java 0.30 ms, C++ 0.095 ms. 10⁴ piles up
+                  to 10⁹: Python 17 to 24 ms, Java and C++ 0.2 ms, whatever
+                  <code>h</code> is. The 2.6 s case above took under 1 ms.
+                </p>
+                <div class="code-tabs" data-viz="0875-koko-eating-bananas/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"loop":[4],"mid":[5,6],"fast":[7,8],"slow":[9,10],"return":[11]}'>
+                    class Solution(object):
+                        def minEatingSpeed(self, piles, h):
+                            lo, hi = 1, max(piles)  # at max(piles), every pile takes one hour, and h >= len(piles)
+                            while lo < hi:  # the answer is in [lo, hi]
+                                k = (lo + hi) // 2
+                                hours = sum((p + k - 1) // k for p in piles)
+                                if hours <= h:  # k is fast enough: the answer is k or slower
+                                    hi = k
+                                else:  # too slow: the answer is faster than k
+                                    lo = k + 1
+                            return lo
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"loop":[7],"mid":[8,9,10],"fast":[11],"slow":[12],"return":[14]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int minEatingSpeed(std::vector<int>& piles, int h) {
+                            int lo = 1, hi = *std::max_element(piles.begin(), piles.end()); // at max(piles), every pile takes one hour
+                            while (lo < hi) { // the answer is in [lo, hi]
+                                int k = lo + (hi - lo) / 2;
+                                long long hours = 0; // can pass 2^31
+                                for (int p : piles) hours += (p + (long long)k - 1) / k;
+                                if (hours <= h) hi = k; // k is fast enough: the answer is k or slower
+                                else lo = k + 1; // too slow: the answer is faster than k
+                            }
+                            return lo;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4],"loop":[5],"mid":[6,7,8],"fast":[9],"slow":[10],"return":[12]}'>
+                    class Solution {
+                        public int minEatingSpeed(int[] piles, int h) {
+                            int lo = 1, hi = 0;
+                            for (int p : piles) hi = Math.max(hi, p); // at max(piles), every pile takes one hour
+                            while (lo < hi) { // the answer is in [lo, hi]
+                                int k = lo + (hi - lo) / 2;
+                                long hours = 0; // can pass 2^31
+                                for (int p : piles) hours += (p + (long) k - 1) / k;
+                                if (hours <= h) hi = k; // k is fast enough: the answer is k or slower
+                                else lo = k + 1; // too slow: the answer is faster than k
+                            }
+                            return lo;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  Python 3.10+ could use <code>1 + bisect_left(range(1, max(piles) + 1),
+                  True, key=lambda k: hours(k) &lt;= h)</code> (the <code>1 +</code>
+                  turns the index into a speed), but it's the same search. Approach 3 is what you'd write.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Try Every Speed</th>
+                        <td>k = 1, 2, 3, …</td>
+                        <td>O(n · max)</td>
+                        <td>O(1)</td>
+                        <td>148 s on <code>[10⁹], h = 2</code></td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Start at the Lower Bound</th>
+                        <td>Scan from ceil(sum / h)</td>
+                        <td>O(n · max)</td>
+                        <td>O(1)</td>
+                        <td>Can still be far off</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Binary Search</th>
+                        <td>Search the speed</td>
+                        <td>O(n log max)</td>
                         <td>O(1)</td>
                         <td>Expected answer</td>
                       </tr>
@@ -81460,6 +81780,111 @@
             } else steps.push({ line: "car", note: `Car at ${p}: time ${fmt(t)} ≤ ${fmt(slowest)}. It catches the fleet ahead and moves at its speed.`, view: view({ [k]: "visited" }) });
           });
           steps.push({ line: "return", note: `Return ${fleets}. One number instead of a stack. O(n log n) for the sort.`, view: view() });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0875-koko-eating-bananas/approach1.visual.js -->
+    <script>
+      // Try speeds 1, 2, 3, ... and return the first that finishes within h hours.
+      (function () {
+      function check(piles, h) {
+        if (h < piles.length) throw new DSAViz.InputError(`h must be at least ${piles.length}: each pile takes at least one hour.`);
+      }
+      const hoursAt = (piles, k) => piles.reduce((s, p) => s + Math.ceil(p / k), 0);
+      const pview = (piles, k) => ({ type: "array", label: k ? `piles; caption = hours at speed ${k}` : "piles", values: piles, sub: k ? piles.map((p) => String(Math.ceil(p / k))) : undefined });
+      DSAViz.register("0875-koko-eating-bananas/approach1", {
+        inputs: [
+          { name: "piles", type: "int[]", value: "[3, 6, 7, 11]", minLength: 1, maxLength: 10, minValue: 1, maxValue: 100 },
+          { name: "h", type: "int", value: "8", min: 1, max: 1000 },
+        ],
+        trace({ piles, h }) {
+          check(piles, h);
+          const steps = [];
+          let k = 1;
+          steps.push({ line: "init", note: "Start at speed 1.", view: [pview(piles), { type: "vars", items: [{ name: "k", value: k, mark: "active" }, { name: "h", value: h }] }] });
+          let tries = 0;
+          for (;; k++) {
+            tries++;
+            const hrs = hoursAt(piles, k);
+            const ok = hrs <= h;
+            steps.push({ line: ok ? ["try", "return"] : ["try", "next"], note: `Speed ${k}: ${piles.map((p) => Math.ceil(p / k)).join(" + ")} = ${hrs} hours. ${ok ? `That's within ${h}.` : `More than ${h}: try ${k + 1}.`}`, view: [pview(piles, k), { type: "vars", items: [{ name: "k", value: k, mark: ok ? "match" : "cut" }, { name: "hours", value: hrs, mark: ok ? "match" : "cut" }, { name: "h", value: h }] }] });
+            if (ok) break;
+          }
+          steps.push({ line: "return", note: `Return ${k}. ${tries} speed${tries > 1 ? "s" : ""} tried, one pass over the piles each. Up to max(piles) tries: O(n · max).`, view: [pview(piles, k)] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0875-koko-eating-bananas/approach2.visual.js -->
+    <script>
+      // Start at ceil(sum / h): slower can't finish. Then try each speed up from there.
+      (function () {
+      function check(piles, h) {
+        if (h < piles.length) throw new DSAViz.InputError(`h must be at least ${piles.length}: each pile takes at least one hour.`);
+      }
+      const hoursAt = (piles, k) => piles.reduce((s, p) => s + Math.ceil(p / k), 0);
+      const pview = (piles, k) => ({ type: "array", label: k ? `piles; caption = hours at speed ${k}` : "piles", values: piles, sub: k ? piles.map((p) => String(Math.ceil(p / k))) : undefined });
+      DSAViz.register("0875-koko-eating-bananas/approach2", {
+        inputs: [
+          { name: "piles", type: "int[]", value: "[3, 6, 7, 11]", minLength: 1, maxLength: 10, minValue: 1, maxValue: 100 },
+          { name: "h", type: "int", value: "8", min: 1, max: 1000 },
+        ],
+        trace({ piles, h }) {
+          check(piles, h);
+          const steps = [];
+          const total = piles.reduce((s, p) => s + p, 0);
+          let k = Math.ceil(total / h);
+          steps.push({ line: "init", note: `${total} bananas in ${h} hours need at least ${total} / ${h} per hour, so start at k = ${k}.`, view: [pview(piles), { type: "vars", items: [{ name: "k", value: k, mark: "active" }, { name: "h", value: h }] }] });
+          let tries = 0;
+          for (;; k++) {
+            tries++;
+            const hrs = hoursAt(piles, k);
+            const ok = hrs <= h;
+            steps.push({ line: ok ? ["try", "return"] : ["try", "next"], note: `Speed ${k}: ${piles.map((p) => Math.ceil(p / k)).join(" + ")} = ${hrs} hours. ${ok ? `That's within ${h}.` : `More than ${h}: try ${k + 1}.`}`, view: [pview(piles, k), { type: "vars", items: [{ name: "k", value: k, mark: ok ? "match" : "cut" }, { name: "hours", value: hrs, mark: ok ? "match" : "cut" }, { name: "h", value: h }] }] });
+            if (ok) break;
+          }
+          steps.push({ line: "return", note: `Return ${k}. ${tries} speed${tries > 1 ? "s" : ""} tried, one pass over the piles each. Better, but the gap to the answer can still be huge.`, view: [pview(piles, k)] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0875-koko-eating-bananas/approach3.visual.js -->
+    <script>
+      // Binary search on the speed: if k is fast enough, so is anything faster.
+      (function () {
+      function check(piles, h) {
+        if (h < piles.length) throw new DSAViz.InputError(`h must be at least ${piles.length}: each pile takes at least one hour.`);
+      }
+      const hoursAt = (piles, k) => piles.reduce((s, p) => s + Math.ceil(p / k), 0);
+      const pview = (piles, k) => ({ type: "array", label: k ? `piles; caption = hours at speed ${k}` : "piles", values: piles, sub: k ? piles.map((p) => String(Math.ceil(p / k))) : undefined });
+      DSAViz.register("0875-koko-eating-bananas/approach3", {
+        inputs: [
+          { name: "piles", type: "int[]", value: "[30, 11, 23, 4, 20]", minLength: 1, maxLength: 10, minValue: 1, maxValue: 1000000000 },
+          { name: "h", type: "int", value: "6", min: 1, max: 1000000000 },
+        ],
+        trace({ piles, h }) {
+          check(piles, h);
+          let lo = 1, hi = Math.max(...piles);
+          const vars = (k, hrs, mark) => ({ type: "vars", items: [{ name: "lo", value: lo }, { name: "hi", value: hi }, ...(k ? [{ name: "k", value: k, mark: "active" }, { name: "hours", value: hrs, mark }] : []), { name: "h", value: h }] });
+          const steps = [{ line: "init", note: `The answer is between 1 and max(piles) = ${hi}: at ${hi} every pile takes one hour.`, view: [pview(piles), vars()] }];
+          let rounds = 0;
+          while (lo < hi) {
+            rounds++;
+            const k = Math.floor((lo + hi) / 2);
+            const hrs = hoursAt(piles, k);
+            if (hrs <= h) {
+              steps.push({ line: ["loop", "mid", "fast"], note: `k = ${k}: ${hrs} hours ≤ ${h}. Fast enough, so the answer is ${k} or slower: hi = ${k}.`, view: [pview(piles, k), vars(k, hrs, "match")] });
+              hi = k;
+            } else {
+              steps.push({ line: ["loop", "mid", "slow"], note: `k = ${k}: ${hrs} hours > ${h}. Too slow: lo = ${k + 1}.`, view: [pview(piles, k), vars(k, hrs, "cut")] });
+              lo = k + 1;
+            }
+          }
+          steps.push({ line: "return", note: `Return ${lo}. lo = hi after ${rounds} round${rounds === 1 ? "" : "s"}, each a pass over the piles: O(n log max).`, view: [pview(piles, lo), vars()] });
           return steps;
         },
       });

@@ -1,0 +1,196 @@
+<details class="question" data-group="binary-search" data-tags="binary search on the answer monotonic predicate ceiling division">
+  <summary>
+    <span class="q-title">875. Koko Eating Bananas</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Binary Search</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> If speed <code>k</code> finishes in time,
+      every faster speed does too. That yes/no flips once, so binary search
+      the speed between 1 and <code>max(piles)</code>, checking
+      <code>Σ ceil(p / k) &lt;= h</code> each time. O(n log max).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/koko-eating-bananas/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Each hour Koko picks one pile and eats <code>k</code> bananas from it
+        (or the whole pile if it has fewer). Return the smallest
+        <code>k</code> that lets her finish every pile within <code>h</code>
+        hours.
+      </p>
+      <ul>
+        <li><code>1 &lt;= piles.length &lt;= 10⁴</code>, <code>piles.length &lt;= h &lt;= 10⁹</code>, <code>1 &lt;= piles[i] &lt;= 10⁹</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>piles = [3,6,7,11], h = 8</code> → <code>4</code>.
+        <code>piles = [30,11,23,4,20], h = 5</code> → <code>30</code>;
+        with <code>h = 6</code> → <code>23</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>piles = [10⁹,10⁹,10⁹], h = 3</code></td>
+              <td><code>1000000000</code></td>
+              <td>At speed 1 that's 3·10⁹ hours. Summed in an <code>int</code> it wraps to −1,294,967,296, which looks "within 3 hours": a Java linear scan with an <code>int</code> returned 1. Use a 64-bit sum.</td>
+            </tr>
+            <tr>
+              <td><code>piles = [10⁹], h = 2</code></td>
+              <td><code>500000000</code></td>
+              <td>The answer is huge: trying speeds one by one from 1 took 148 s in Python.</td>
+            </tr>
+            <tr>
+              <td><code>piles = [3,6,7,11], h = 4</code></td>
+              <td><code>11</code></td>
+              <td><code>h</code> equals the number of piles: one pile per hour, so the answer is <code>max(piles)</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Try Every Speed</h2>
+      <p class="intuition">
+        Try <code>k = 1, 2, 3, …</code> and return the first one where the
+        hours <code>Σ ceil(p / k)</code> are at most <code>h</code>.
+      </p>
+      <ul>
+        <li><code>(p + k − 1) // k</code> is <code>ceil(p / k)</code> without floats.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · max(piles))</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        10⁴ piles up to 10⁴, <code>h = 3·10⁴</code> (answer 1998): Python
+        1.0 s, Java 15 ms, C++ 13 ms.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Start at the Lower Bound</h2>
+      <p class="intuition">
+        In <code>h</code> hours Koko eats at most <code>h · k</code> bananas,
+        so <code>k</code> is at least <code>ceil(sum / h)</code>. Start the
+        scan there.
+      </p>
+      <ul>
+        <li>Often lands close to the answer, but not always.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n · max(piles)) at worst</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Same input (scan starts at 1668): Python 169 ms, Java 7.2 ms, C++ 2.3
+        ms. But one pile of 10⁶ and 99 piles of 1 with <code>h = 101</code>:
+        the bound is 9902, the answer 500000, and Python took 2.6 s.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Binary Search on the Speed
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Keep the answer in <code>[lo, hi]</code>, starting at
+        <code>[1, max(piles)]</code>. If the middle speed is fast enough, the
+        answer is it or slower: <code>hi = k</code>. If not, it's faster:
+        <code>lo = k + 1</code>. Stop when they meet.
+      </p>
+      <ul>
+        <li>About 30 rounds for <code>max(piles) = 10⁹</code>.</li>
+        <li>Same loop shape as 704. Binary Search with <code>lo &lt; hi</code> and <code>hi = mid</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log max(piles))</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Same input: Python 6.7 ms, Java 0.30 ms, C++ 0.095 ms. 10⁴ piles up
+        to 10⁹: Python 17 to 24 ms, Java and C++ 0.2 ms, whatever
+        <code>h</code> is. The 2.6 s case above took under 1 ms.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        Python 3.10+ could use <code>1 + bisect_left(range(1, max(piles) + 1),
+        True, key=lambda k: hours(k) &lt;= h)</code> (the <code>1 +</code>
+        turns the index into a speed), but it's the same search. Approach 3 is what you'd write.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Try Every Speed</th>
+              <td>k = 1, 2, 3, …</td>
+              <td>O(n · max)</td>
+              <td>O(1)</td>
+              <td>148 s on <code>[10⁹], h = 2</code></td>
+            </tr>
+            <tr>
+              <th scope="row">Start at the Lower Bound</th>
+              <td>Scan from ceil(sum / h)</td>
+              <td>O(n · max)</td>
+              <td>O(1)</td>
+              <td>Can still be far off</td>
+            </tr>
+            <tr>
+              <th scope="row">Binary Search</th>
+              <td>Search the speed</td>
+              <td>O(n log max)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
