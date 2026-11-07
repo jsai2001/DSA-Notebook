@@ -26469,7 +26469,7 @@
       <details class="pattern-group" id="g-graphs">
         <summary>
           <span class="g-name">Graphs</span>
-          <span class="g-count"><span class="g-total">12 problems</span></span>
+          <span class="g-count"><span class="g-total">13 problems</span></span>
           <span class="g-hint">BFS, level by level</span>
         </summary>
         <div class="g-body">
@@ -31350,6 +31350,417 @@
                         <td>~O(n²)</td>
                         <td>O(n²)</td>
                         <td>Uses that heights are 0..n²−1</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0787-cheapest-flights-within-k-stops ===== -->
+          <details class="question" data-group="graphs" data-tags="graph shortest path bellman-ford dijkstra bfs limited stops k flights weighted directed">
+            <summary>
+              <span class="q-title">787. Cheapest Flights Within K Stops</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Graph</span>
+                <span class="tag">Shortest Path</span>
+                <span class="tag">Dynamic Programming</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> "At most k stops" means at most
+                <strong>k + 1 flights</strong>. Run Bellman-Ford for k + 1 rounds,
+                and in each round read only the <em>previous</em> round's prices
+                (work on a copy). Then round r can only add one flight to a route, so
+                after k + 1 rounds you have the cheapest route with at most k + 1
+                flights. O(k·E).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/cheapest-flights-within-k-stops/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  <code>flights[i] = [from, to, price]</code> between cities
+                  <code>0..n−1</code>. Return the cheapest price from
+                  <code>src</code> to <code>dst</code> with at most <code>k</code>
+                  stops in between, or <code>-1</code> if there's no such route.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= n &lt;= 100</code>, <code>0 &lt;= k &lt; n</code>, prices 1 to 10⁴</li>
+                  <li>No repeated flights; <code>src != dst</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>n = 4</code>,
+                  <code>[[0,1,100],[1,2,100],[2,0,100],[1,3,600],[2,3,200]]</code>,
+                  <code>src = 0, dst = 3, k = 1</code> → <code>700</code> (0→1→3; the
+                  cheaper 0→1→2→3 needs 2 stops).
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[[1,0,48],[0,2,9]], src = 1, dst = 2, k = 0</code></td>
+                        <td><code>-1</code></td>
+                        <td>Bellman-Ford without the copy uses prices set earlier in the same round, chaining two flights: it said <code>57</code>. Wrong on 33 of 2005 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[[0,1,1],[0,2,5],[1,2,1],[2,3,1]], src = 0, dst = 3, k = 1</code></td>
+                        <td><code>6</code></td>
+                        <td>Plain Dijkstra marks city 2 done via the cheap 0→1→2, then can't reach 3 in time: it said <code>-1</code>. The pricier 0→2→3 is the answer.</td>
+                      </tr>
+                      <tr>
+                        <td><code>n = 2, flights = []</code></td>
+                        <td><code>-1</code></td>
+                        <td>No flights at all.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: BFS by Number of Flights</h2>
+                <p class="intuition">
+                  Level by level: each level takes one more flight from every city in
+                  the queue. A route only continues when it reaches a city more cheaply
+                  than any route found so far. Stop after k + 1 levels.
+                </p>
+                <ul>
+                  <li>Levels count the flights, so the k limit is easy to enforce.</li>
+                  <li>The pruning keeps the queue small on most inputs.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> usually near O(k·E); a city can be queued more than once per level</span>
+                  <span><strong>Space</strong> O(n + E)</span>
+                </div>
+                <p class="note">
+                  100 cities, 4950 flights, k = 99: Python 1.6 ms, Java 0.57 ms, C++
+                  0.08 ms.
+                </p>
+                <div class="code-tabs" data-viz="0787-cheapest-flights-within-k-stops/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5,6,7,8,9],"level":[10,11],"fly":[12,13,14,15,16],"return":[17]}'>
+                    from collections import deque
+                    class Solution(object):
+                        def findCheapestPrice(self, n, flights, src, dst, k):
+                            out = [[] for _ in range(n)]  # out[u] = (v, price) for each flight from u
+                            for u, v, p in flights:
+                                out[u].append((v, p))
+                            best = [float("inf")] * n  # the cheapest price found to each city so far
+                            best[src] = 0
+                            queue = deque([(src, 0)])  # (city, price paid), one level per flight taken
+                            for _ in range(k + 1):  # at most k stops = at most k + 1 flights
+                                for _ in range(len(queue)):
+                                    u, cost = queue.popleft()
+                                    for v, p in out[u]:
+                                        if cost + p < best[v]:  # only keep going if this is cheaper than any way found before
+                                            best[v] = cost + p
+                                            queue.append((v, cost + p))
+                            return -1 if best[dst] == float("inf") else best[dst]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[8,9,10,11,12,13],"level":[14,15],"fly":[16,17,18,19,20,21],"return":[25]}'>
+                    #include <climits>
+                    #include <queue>
+                    #include <utility>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int findCheapestPrice(int n, std::vector<std::vector<int>>& flights, int src, int dst, int k) {
+                            std::vector<std::vector<std::pair<int, int>>> out(n); // out[u] = (v, price) for each flight from u
+                            for (auto& f : flights) out[f[0]].push_back({f[1], f[2]});
+                            std::vector<int> best(n, INT_MAX); // the cheapest price found to each city so far
+                            best[src] = 0;
+                            std::queue<std::pair<int, int>> queue; // (city, price paid), one level per flight taken
+                            queue.push({src, 0});
+                            for (int level = 0; level <= k && !queue.empty(); ++level) { // at most k stops = at most k + 1 flights
+                                for (int size = queue.size(); size > 0; --size) {
+                                    auto [u, cost] = queue.front();
+                                    queue.pop();
+                                    for (auto [v, p] : out[u])
+                                        if (cost + p < best[v]) { // only keep going if this is cheaper than any way found before
+                                            best[v] = cost + p;
+                                            queue.push({v, cost + p});
+                                        }
+                                }
+                            }
+                            return best[dst] == INT_MAX ? -1 : best[dst];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5,6,7,8,9,10,11],"level":[12,13],"fly":[14,15,16,17,18],"return":[22]}'>
+                    import java.util.*;
+                    class Solution {
+                        public int findCheapestPrice(int n, int[][] flights, int src, int dst, int k) {
+                            List<List<int[]>> out = new ArrayList<>(); // out[u] = (v, price) for each flight from u
+                            for (int i = 0; i < n; i++) out.add(new ArrayList<>());
+                            for (int[] f : flights) out.get(f[0]).add(new int[] {f[1], f[2]});
+                            int[] best = new int[n]; // the cheapest price found to each city so far
+                            Arrays.fill(best, Integer.MAX_VALUE);
+                            best[src] = 0;
+                            ArrayDeque<int[]> queue = new ArrayDeque<>(); // (city, price paid), one level per flight taken
+                            queue.add(new int[] {src, 0});
+                            for (int level = 0; level <= k && !queue.isEmpty(); level++) { // at most k stops = at most k + 1 flights
+                                for (int size = queue.size(); size > 0; size--) {
+                                    int[] cur = queue.poll();
+                                    for (int[] e : out.get(cur[0]))
+                                        if (cur[1] + e[1] < best[e[0]]) { // only keep going if this is cheaper than any way found before
+                                            best[e[0]] = cur[1] + e[1];
+                                            queue.add(new int[] {e[0], cur[1] + e[1]});
+                                        }
+                                }
+                            }
+                            return best[dst] == Integer.MAX_VALUE ? -1 : best[dst];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Dijkstra With a Flight Count</h2>
+                <p class="intuition">
+                  The heap holds <code>(price, city, flights used)</code>. Pop the
+                  cheapest; reaching <code>dst</code> means done. A pop is useless if a
+                  cheaper route already got to that city with no more flights, so keep
+                  <code>fewest[city]</code> and skip those.
+                </p>
+                <ul>
+                  <li>Plain Dijkstra (each city done once) is wrong here: a pricier route with fewer flights may be the only one that fits.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(k·E log(k·E)) at worst</span>
+                  <span><strong>Space</strong> O(k·E)</span>
+                </div>
+                <p class="note">
+                  Same graph: Python 0.91 ms (the fastest in Python), Java 0.40 ms, C++
+                  0.10 ms.
+                </p>
+                <div class="code-tabs" data-viz="0787-cheapest-flights-within-k-stops/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5,6,7,8],"pop":[9,10],"done":[11,12],"skip":[13,14],"push":[15,16,17],"none":[18]}'>
+                    import heapq
+                    class Solution(object):
+                        def findCheapestPrice(self, n, flights, src, dst, k):
+                            out = [[] for _ in range(n)]
+                            for u, v, p in flights:
+                                out[u].append((v, p))
+                            fewest = [float("inf")] * n  # the fewest flights used by any popped route to each city
+                            heap = [(0, src, 0)]  # (price, city, flights used), cheapest first
+                            while heap:
+                                cost, u, used = heapq.heappop(heap)
+                                if u == dst:  # the cheapest route that stays within k stops
+                                    return cost
+                                if used >= fewest[u] or used > k:  # a cheaper route got here with no more flights; or no flights left
+                                    continue
+                                fewest[u] = used
+                                for v, p in out[u]:
+                                    heapq.heappush(heap, (cost + p, v, used + 1))
+                            return -1
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[10,11,12,13,14],"pop":[15,16,17],"done":[18],"skip":[19],"push":[20,21],"none":[23]}'>
+                    #include <array>
+                    #include <climits>
+                    #include <functional>
+                    #include <queue>
+                    #include <utility>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int findCheapestPrice(int n, std::vector<std::vector<int>>& flights, int src, int dst, int k) {
+                            std::vector<std::vector<std::pair<int, int>>> out(n);
+                            for (auto& f : flights) out[f[0]].push_back({f[1], f[2]});
+                            std::vector<int> fewest(n, INT_MAX); // the fewest flights used by any popped route to each city
+                            std::priority_queue<std::array<int, 3>, std::vector<std::array<int, 3>>, std::greater<>> heap; // (price, city, flights used), cheapest first
+                            heap.push({0, src, 0});
+                            while (!heap.empty()) {
+                                auto [cost, u, used] = heap.top();
+                                heap.pop();
+                                if (u == dst) return cost; // the cheapest route that stays within k stops
+                                if (used >= fewest[u] || used > k) continue; // a cheaper route got here with no more flights; or no flights left
+                                fewest[u] = used;
+                                for (auto [v, p] : out[u]) heap.push({cost + p, v, used + 1});
+                            }
+                            return -1;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5,6,7,8,9,10],"pop":[11,12,13],"done":[14],"skip":[15],"push":[16,17],"none":[19]}'>
+                    import java.util.*;
+                    class Solution {
+                        public int findCheapestPrice(int n, int[][] flights, int src, int dst, int k) {
+                            List<List<int[]>> out = new ArrayList<>();
+                            for (int i = 0; i < n; i++) out.add(new ArrayList<>());
+                            for (int[] f : flights) out.get(f[0]).add(new int[] {f[1], f[2]});
+                            int[] fewest = new int[n]; // the fewest flights used by any popped route to each city
+                            Arrays.fill(fewest, Integer.MAX_VALUE);
+                            PriorityQueue<int[]> heap = new PriorityQueue<>((a, b) -> a[0] - b[0]); // (price, city, flights used), cheapest first
+                            heap.add(new int[] {0, src, 0});
+                            while (!heap.isEmpty()) {
+                                int[] top = heap.poll();
+                                int cost = top[0], u = top[1], used = top[2];
+                                if (u == dst) return cost; // the cheapest route that stays within k stops
+                                if (used >= fewest[u] || used > k) continue; // a cheaper route got here with no more flights; or no flights left
+                                fewest[u] = used;
+                                for (int[] e : out.get(u)) heap.add(new int[] {cost + e[1], e[0], used + 1});
+                            }
+                            return -1;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Bellman-Ford, k + 1 Rounds
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Start with <code>price[src] = 0</code>. Each round, copy the prices,
+                  try every flight using the old prices, and write into the copy. After
+                  round r, <code>price[v]</code> is the cheapest route to v with at most
+                  r flights. If a round changes nothing, stop early.
+                </p>
+                <ul>
+                  <li>The copy is the whole trick: without it, one round can chain several flights.</li>
+                  <li>A firm O(k·E) bound, and no heap.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(k·E)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  Same graph: Java 0.20 ms, C++ 0.06 ms, the fastest in both. Python
+                  2.4 ms. Before adding the early stop, Python took 20 ms here.
+                </p>
+                <div class="code-tabs" data-viz="0787-cheapest-flights-within-k-stops/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"round":[6,7,13],"relax":[8,9,10],"stop":[11,12],"return":[14]}'>
+                    class Solution(object):
+                        def findCheapestPrice(self, n, flights, src, dst, k):
+                            INF = float("inf")
+                            price = [INF] * n  # price[v] = the cheapest way to v using at most `round` flights
+                            price[src] = 0
+                            for _ in range(k + 1):  # k stops = k + 1 flights: one round per flight
+                                new = price[:]  # read last round's prices only, so one round adds at most one flight
+                                for u, v, p in flights:
+                                    if price[u] + p < new[v]:
+                                        new[v] = price[u] + p
+                                if new == price:  # nothing got cheaper: more rounds won't help
+                                    break
+                                price = new
+                            return -1 if price[dst] == INF else price[dst]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8],"round":[9,10,11,18],"relax":[12,13,14,15],"stop":[17],"return":[20]}'>
+                    #include <climits>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int findCheapestPrice(int n, std::vector<std::vector<int>>& flights, int src, int dst, int k) {
+                            const int INF = INT_MAX / 2;
+                            std::vector<int> price(n, INF); // price[v] = the cheapest way to v using at most `round` flights
+                            price[src] = 0;
+                            for (int round = 0; round <= k; ++round) { // k stops = k + 1 flights: one round per flight
+                                std::vector<int> next = price; // read last round's prices only, so one round adds at most one flight
+                                bool changed = false;
+                                for (auto& f : flights)
+                                    if (price[f[0]] + f[2] < next[f[1]]) {
+                                        next[f[1]] = price[f[0]] + f[2];
+                                        changed = true;
+                                    }
+                                if (!changed) break; // nothing got cheaper: more rounds won't help
+                                price.swap(next);
+                            }
+                            return price[dst] >= INF ? -1 : price[dst];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5,6,7],"round":[8,9,10,17],"relax":[11,12,13,14],"stop":[16],"return":[19]}'>
+                    import java.util.*;
+                    class Solution {
+                        public int findCheapestPrice(int n, int[][] flights, int src, int dst, int k) {
+                            final int INF = Integer.MAX_VALUE / 2;
+                            int[] price = new int[n]; // price[v] = the cheapest way to v using at most `round` flights
+                            Arrays.fill(price, INF);
+                            price[src] = 0;
+                            for (int round = 0; round <= k; round++) { // k stops = k + 1 flights: one round per flight
+                                int[] next = price.clone(); // read last round's prices only, so one round adds at most one flight
+                                boolean changed = false;
+                                for (int[] f : flights)
+                                    if (price[f[0]] + f[2] < next[f[1]]) {
+                                        next[f[1]] = price[f[0]] + f[2];
+                                        changed = true;
+                                    }
+                                if (!changed) break; // nothing got cheaper: more rounds won't help
+                                price = next;
+                            }
+                            return price[dst] >= INF ? -1 : price[dst];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>Shortest-path libraries don't limit the number of edges. Approach 3 is what you'd write.</p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">BFS by Number of Flights</th>
+                        <td>One level per flight, prune</td>
+                        <td>~O(k·E)</td>
+                        <td>O(n + E)</td>
+                        <td>Easy to see the k limit</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Dijkstra With a Flight Count</th>
+                        <td>Heap of (price, city, flights)</td>
+                        <td>O(k·E log(k·E))</td>
+                        <td>O(k·E)</td>
+                        <td>Fastest in Python here</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Bellman-Ford, k + 1 Rounds</th>
+                        <td>Relax from a copy</td>
+                        <td>O(k·E)</td>
+                        <td>O(n)</td>
+                        <td>Expected answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -73704,6 +74115,148 @@
         while (st.length) { const [r, c] = st.pop(); for (const [x, y] of [[r + 1, c], [r - 1, c], [r, c + 1], [r, c - 1]]) if (x >= 0 && y >= 0 && x < n && y < n && !seen.has(`${x},${y}`) && grid[x][y] <= t) { seen.add(`${x},${y}`); st.push([x, y]); } }
         return seen;
       };
+      })();
+    </script>
+    <!-- problems/0787-cheapest-flights-within-k-stops/approach1.visual.js -->
+    <script>
+      // BFS one flight at a time, for k + 1 levels; a route only continues if it reaches a city cheaper than any route before.
+      (function () {
+      DSAViz.register("0787-cheapest-flights-within-k-stops/approach1", {
+        inputs: [
+          { name: "n", type: "int", value: "4", min: 2, max: 6 },
+          { name: "flights", type: "int[][]", value: "[[0, 1, 100], [1, 2, 100], [2, 0, 100], [1, 3, 600], [2, 3, 200]]", maxRows: 10, maxCols: 3, minValue: 0, maxValue: 10000 },
+          { name: "src", type: "int", value: "0", min: 0, max: 5 },
+          { name: "dst", type: "int", value: "3", min: 0, max: 5 },
+          { name: "k", type: "int", value: "1", min: 0, max: 5 },
+        ],
+        trace({ n, flights, src, dst, k }) {
+          check(n, flights, src, dst, k);
+          const out = Array.from({ length: n }, () => []);
+          flights.forEach(([u, v, p]) => out[u].push([v, p]));
+          const best = Array(n).fill(Infinity);
+          best[src] = 0;
+          let queue = [[src, 0]];
+          const steps = [{ line: "init", note: `Start at city ${src} with price 0. At most k + 1 = ${k + 1} flight${k ? "s" : ""}.`, view: [flightView(flights), priceView(best, { [src]: "match" }, "best[city] (cheapest found so far)"), { type: "array", label: "queue (city: price)", values: queue.map(([c, p]) => `${c}: ${p}`), wide: true }] }];
+          for (let lvl = 0; lvl <= k && queue.length; lvl++) {
+            const next = [];
+            const better = [];
+            const bm = {};
+            for (const [u, cost] of queue) for (const [v, p] of out[u]) if (cost + p < best[v]) { best[v] = cost + p; next.push([v, cost + p]); better.push(`${v} at ${cost + p}`); bm[v] = "new"; }
+            queue = next;
+            steps.push({ line: ["level", "fly"], note: `Flight ${lvl + 1}: from every city in the queue, take each flight.${better.length ? ` Cheaper: ${better.join(", ")}.` : " Nothing gets cheaper."}`, view: [flightView(flights), priceView(best, { ...bm, ...(best[dst] < Infinity ? { [dst]: bm[dst] || "match" } : {}) }, "best[city] (yellow = just got cheaper)"), { type: "array", label: "queue for the next flight", values: queue.map(([c, p]) => `${c}: ${p}`), wide: true }] });
+          }
+          const ans = best[dst] === Infinity ? -1 : best[dst];
+          steps.push({ line: "return", note: ans < 0 ? `Return -1. City ${dst} can't be reached in ${k + 1} flight${k ? "s" : ""}.` : `Return ${ans}. The cheapest price to ${dst} using at most ${k + 1} flight${k ? "s" : ""}.`, view: [priceView(best, { [dst]: ans < 0 ? "cut" : "match" }, "best[city]")] });
+          return steps;
+        },
+      });
+
+      function check(n, flights, src, dst, k) {
+        if (flights.some((f) => f.length !== 3)) throw new DSAViz.InputError("Each flight is [from, to, price], like [[0, 1, 100]].");
+        if (flights.some(([u, v]) => u < 0 || v < 0 || u >= n || v >= n)) throw new DSAViz.InputError(`Cities are 0 to ${n - 1}.`);
+        if (flights.some(([u, v]) => u === v)) throw new DSAViz.InputError("A flight goes between two different cities.");
+        if (flights.some(([, , p]) => p < 1)) throw new DSAViz.InputError("Prices are at least 1.");
+        if (new Set(flights.map(([u, v]) => `${u},${v}`)).size !== flights.length) throw new DSAViz.InputError("Each (from, to) pair appears once.");
+        if (src < 0 || dst < 0 || src >= n || dst >= n || src === dst) throw new DSAViz.InputError(`src and dst must be different cities, 0 to ${n - 1}.`);
+        if (k >= n) throw new DSAViz.InputError(`k must be less than n = ${n}.`);
+      }
+      const fmt = (d) => (d === Infinity ? "∞" : String(d));
+      const flightView = (flights, marks = {}, label = "flights from→to (price)") => ({ type: "array", label, values: flights.map(([u, v, p]) => `${u}→${v} (${p})`), wide: true, marks });
+      const priceView = (p, marks = {}, label) => ({ type: "array", label, values: p.map(fmt), marks });
+      })();
+    </script>
+    <!-- problems/0787-cheapest-flights-within-k-stops/approach2.visual.js -->
+    <script>
+      // Dijkstra on (price, city, flights used). Skip a pop if a cheaper route already reached that city with no more flights.
+      (function () {
+      DSAViz.register("0787-cheapest-flights-within-k-stops/approach2", {
+        inputs: [
+          { name: "n", type: "int", value: "4", min: 2, max: 6 },
+          { name: "flights", type: "int[][]", value: "[[0, 1, 100], [1, 2, 100], [2, 0, 100], [1, 3, 600], [2, 3, 200]]", maxRows: 10, maxCols: 3, minValue: 0, maxValue: 10000 },
+          { name: "src", type: "int", value: "0", min: 0, max: 5 },
+          { name: "dst", type: "int", value: "3", min: 0, max: 5 },
+          { name: "k", type: "int", value: "1", min: 0, max: 5 },
+        ],
+        trace({ n, flights, src, dst, k }) {
+          check(n, flights, src, dst, k);
+          const out = Array.from({ length: n }, () => []);
+          flights.forEach(([u, v, p]) => out[u].push([v, p]));
+          const fewest = Array(n).fill(Infinity);
+          let heap = [[0, src, 0]];
+          const steps = [];
+          const view = (o = {}) => [{ type: "array", label: "heap: price, city, flights used (cheapest first)", values: heap.map(([c, u, f]) => `${c}, city ${u}, ${f}✈`), wide: true }, { type: "array", label: "fewest[city]: fewest flights of any route popped so far", values: fewest.map(fmt), marks: o.u !== undefined ? { [o.u]: o.m } : {} }];
+          steps.push({ line: "init", note: `Push (0, city ${src}, 0 flights).`, view: view() });
+          while (heap.length) {
+            heap.sort((a, b) => a[0] - b[0] || a[2] - b[2] || a[1] - b[1]);
+            const [cost, u, used] = heap.shift();
+            if (u === dst) { steps.push({ line: ["pop", "done"], note: `Return ${cost}. Pop (${cost}, city ${dst}, ${used} flights): the cheapest route to ${dst} that stays within ${k + 1} flights.`, view: view({ u, m: "match" }) }); return steps; }
+            if (used >= fewest[u] || used > k) { steps.push({ line: ["pop", "skip"], note: `Pop (${cost}, city ${u}, ${used}). ${used > k ? `No flights left (${used} > k = ${k}).` : `A cheaper route already reached ${u} with ${fewest[u]} flight${fewest[u] === 1 ? "" : "s"}: this one can't do better.`} Skip.`, view: view({ u, m: "cut" }) }); continue; }
+            fewest[u] = used;
+            const pushed = out[u].map(([v, p]) => { heap.push([cost + p, v, used + 1]); return `(${cost + p}, ${v}, ${used + 1})`; });
+            steps.push({ line: ["pop", "skip", "push"], note: `Pop (${cost}, city ${u}, ${used} flights).${pushed.length ? ` Push ${pushed.join(", ")}.` : " No flights out."}`, view: view({ u, m: "new" }) });
+          }
+          steps.push({ line: "none", note: `Return -1. The heap ran out before reaching city ${dst}.`, view: view() });
+          return steps;
+        },
+      });
+
+      function check(n, flights, src, dst, k) {
+        if (flights.some((f) => f.length !== 3)) throw new DSAViz.InputError("Each flight is [from, to, price], like [[0, 1, 100]].");
+        if (flights.some(([u, v]) => u < 0 || v < 0 || u >= n || v >= n)) throw new DSAViz.InputError(`Cities are 0 to ${n - 1}.`);
+        if (flights.some(([u, v]) => u === v)) throw new DSAViz.InputError("A flight goes between two different cities.");
+        if (flights.some(([, , p]) => p < 1)) throw new DSAViz.InputError("Prices are at least 1.");
+        if (new Set(flights.map(([u, v]) => `${u},${v}`)).size !== flights.length) throw new DSAViz.InputError("Each (from, to) pair appears once.");
+        if (src < 0 || dst < 0 || src >= n || dst >= n || src === dst) throw new DSAViz.InputError(`src and dst must be different cities, 0 to ${n - 1}.`);
+        if (k >= n) throw new DSAViz.InputError(`k must be less than n = ${n}.`);
+      }
+      const fmt = (d) => (d === Infinity ? "∞" : String(d));
+      const flightView = (flights, marks = {}, label = "flights from→to (price)") => ({ type: "array", label, values: flights.map(([u, v, p]) => `${u}→${v} (${p})`), wide: true, marks });
+      const priceView = (p, marks = {}, label) => ({ type: "array", label, values: p.map(fmt), marks });
+      })();
+    </script>
+    <!-- problems/0787-cheapest-flights-within-k-stops/approach3.visual.js -->
+    <script>
+      // Bellman-Ford limited to k + 1 rounds. Each round reads only last round's prices, so it adds at most one flight.
+      (function () {
+      DSAViz.register("0787-cheapest-flights-within-k-stops/approach3", {
+        inputs: [
+          { name: "n", type: "int", value: "4", min: 2, max: 6 },
+          { name: "flights", type: "int[][]", value: "[[0, 1, 100], [1, 2, 100], [2, 0, 100], [1, 3, 600], [2, 3, 200]]", maxRows: 10, maxCols: 3, minValue: 0, maxValue: 10000 },
+          { name: "src", type: "int", value: "0", min: 0, max: 5 },
+          { name: "dst", type: "int", value: "3", min: 0, max: 5 },
+          { name: "k", type: "int", value: "1", min: 0, max: 5 },
+        ],
+        trace({ n, flights, src, dst, k }) {
+          check(n, flights, src, dst, k);
+          let price = Array(n).fill(Infinity);
+          price[src] = 0;
+          const steps = [{ line: "init", note: `price[${src}] = 0, every other city ∞. Round r finds the cheapest routes with at most r flights.`, view: [flightView(flights), priceView(price, { [src]: "match" }, "price after 0 flights")] }];
+          for (let r = 0; r <= k; r++) {
+            const next = price.slice();
+            const em = {}, pm = {}, better = [];
+            flights.forEach(([u, v, p], i) => { if (price[u] + p < next[v]) { next[v] = price[u] + p; em[i] = "new"; pm[v] = "new"; better.push(`city ${v}: ${fmt(price[v])} → ${next[v]} via city ${u}`); } });
+            if (!better.length) { steps.push({ line: ["round", "relax", "stop"], note: `Round ${r + 1}: no price changes, so more rounds can't help. Stop early.`, view: [flightView(flights), priceView(price, {}, `price (final)`)] }); break; }
+            steps.push({ line: ["round", "relax"], note: `Round ${r + 1}: try every flight using last round's prices. ${better.join("; ")}.`, view: [flightView(flights, em, "flights (yellow = gave a cheaper price)"), { type: "array", label: "last round's prices (what this round reads)", values: price.map(fmt) }, priceView(next, pm, `price after ≤ ${r + 1} flight${r ? "s" : ""}`)] });
+            price = next;
+          }
+          const ans = price[dst] === Infinity ? -1 : price[dst];
+          steps.push({ line: "return", note: ans < 0 ? `Return -1. City ${dst} isn't reachable within ${k + 1} flight${k ? "s" : ""}.` : `Return ${ans}. At most k + 1 rounds over all flights: O(k·E).`, view: [priceView(price, { [dst]: ans < 0 ? "cut" : "match" }, "price")] });
+          return steps;
+        },
+      });
+
+      function check(n, flights, src, dst, k) {
+        if (flights.some((f) => f.length !== 3)) throw new DSAViz.InputError("Each flight is [from, to, price], like [[0, 1, 100]].");
+        if (flights.some(([u, v]) => u < 0 || v < 0 || u >= n || v >= n)) throw new DSAViz.InputError(`Cities are 0 to ${n - 1}.`);
+        if (flights.some(([u, v]) => u === v)) throw new DSAViz.InputError("A flight goes between two different cities.");
+        if (flights.some(([, , p]) => p < 1)) throw new DSAViz.InputError("Prices are at least 1.");
+        if (new Set(flights.map(([u, v]) => `${u},${v}`)).size !== flights.length) throw new DSAViz.InputError("Each (from, to) pair appears once.");
+        if (src < 0 || dst < 0 || src >= n || dst >= n || src === dst) throw new DSAViz.InputError(`src and dst must be different cities, 0 to ${n - 1}.`);
+        if (k >= n) throw new DSAViz.InputError(`k must be less than n = ${n}.`);
+      }
+      const fmt = (d) => (d === Infinity ? "∞" : String(d));
+      const flightView = (flights, marks = {}, label = "flights from→to (price)") => ({ type: "array", label, values: flights.map(([u, v, p]) => `${u}→${v} (${p})`), wide: true, marks });
+      const priceView = (p, marks = {}, label) => ({ type: "array", label, values: p.map(fmt), marks });
       })();
     </script>
     <!-- problems/0994-rotting-oranges/approach1.visual.js -->

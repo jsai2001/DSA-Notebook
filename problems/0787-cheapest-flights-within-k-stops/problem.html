@@ -1,0 +1,199 @@
+<details class="question" data-group="graphs" data-tags="graph shortest path bellman-ford dijkstra bfs limited stops k flights weighted directed">
+  <summary>
+    <span class="q-title">787. Cheapest Flights Within K Stops</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Graph</span>
+      <span class="tag">Shortest Path</span>
+      <span class="tag">Dynamic Programming</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> "At most k stops" means at most
+      <strong>k + 1 flights</strong>. Run Bellman-Ford for k + 1 rounds,
+      and in each round read only the <em>previous</em> round's prices
+      (work on a copy). Then round r can only add one flight to a route, so
+      after k + 1 rounds you have the cheapest route with at most k + 1
+      flights. O(k·E).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/cheapest-flights-within-k-stops/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>flights[i] = [from, to, price]</code> between cities
+        <code>0..n−1</code>. Return the cheapest price from
+        <code>src</code> to <code>dst</code> with at most <code>k</code>
+        stops in between, or <code>-1</code> if there's no such route.
+      </p>
+      <ul>
+        <li><code>1 &lt;= n &lt;= 100</code>, <code>0 &lt;= k &lt; n</code>, prices 1 to 10⁴</li>
+        <li>No repeated flights; <code>src != dst</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>n = 4</code>,
+        <code>[[0,1,100],[1,2,100],[2,0,100],[1,3,600],[2,3,200]]</code>,
+        <code>src = 0, dst = 3, k = 1</code> → <code>700</code> (0→1→3; the
+        cheaper 0→1→2→3 needs 2 stops).
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[[1,0,48],[0,2,9]], src = 1, dst = 2, k = 0</code></td>
+              <td><code>-1</code></td>
+              <td>Bellman-Ford without the copy uses prices set earlier in the same round, chaining two flights: it said <code>57</code>. Wrong on 33 of 2005 tests.</td>
+            </tr>
+            <tr>
+              <td><code>[[0,1,1],[0,2,5],[1,2,1],[2,3,1]], src = 0, dst = 3, k = 1</code></td>
+              <td><code>6</code></td>
+              <td>Plain Dijkstra marks city 2 done via the cheap 0→1→2, then can't reach 3 in time: it said <code>-1</code>. The pricier 0→2→3 is the answer.</td>
+            </tr>
+            <tr>
+              <td><code>n = 2, flights = []</code></td>
+              <td><code>-1</code></td>
+              <td>No flights at all.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: BFS by Number of Flights</h2>
+      <p class="intuition">
+        Level by level: each level takes one more flight from every city in
+        the queue. A route only continues when it reaches a city more cheaply
+        than any route found so far. Stop after k + 1 levels.
+      </p>
+      <ul>
+        <li>Levels count the flights, so the k limit is easy to enforce.</li>
+        <li>The pruning keeps the queue small on most inputs.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> usually near O(k·E); a city can be queued more than once per level</span>
+        <span><strong>Space</strong> O(n + E)</span>
+      </div>
+      <p class="note">
+        100 cities, 4950 flights, k = 99: Python 1.6 ms, Java 0.57 ms, C++
+        0.08 ms.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Dijkstra With a Flight Count</h2>
+      <p class="intuition">
+        The heap holds <code>(price, city, flights used)</code>. Pop the
+        cheapest; reaching <code>dst</code> means done. A pop is useless if a
+        cheaper route already got to that city with no more flights, so keep
+        <code>fewest[city]</code> and skip those.
+      </p>
+      <ul>
+        <li>Plain Dijkstra (each city done once) is wrong here: a pricier route with fewer flights may be the only one that fits.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(k·E log(k·E)) at worst</span>
+        <span><strong>Space</strong> O(k·E)</span>
+      </div>
+      <p class="note">
+        Same graph: Python 0.91 ms (the fastest in Python), Java 0.40 ms, C++
+        0.10 ms.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Bellman-Ford, k + 1 Rounds
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Start with <code>price[src] = 0</code>. Each round, copy the prices,
+        try every flight using the old prices, and write into the copy. After
+        round r, <code>price[v]</code> is the cheapest route to v with at most
+        r flights. If a round changes nothing, stop early.
+      </p>
+      <ul>
+        <li>The copy is the whole trick: without it, one round can chain several flights.</li>
+        <li>A firm O(k·E) bound, and no heap.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(k·E)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Same graph: Java 0.20 ms, C++ 0.06 ms, the fastest in both. Python
+        2.4 ms. Before adding the early stop, Python took 20 ms here.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>Shortest-path libraries don't limit the number of edges. Approach 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">BFS by Number of Flights</th>
+              <td>One level per flight, prune</td>
+              <td>~O(k·E)</td>
+              <td>O(n + E)</td>
+              <td>Easy to see the k limit</td>
+            </tr>
+            <tr>
+              <th scope="row">Dijkstra With a Flight Count</th>
+              <td>Heap of (price, city, flights)</td>
+              <td>O(k·E log(k·E))</td>
+              <td>O(k·E)</td>
+              <td>Fastest in Python here</td>
+            </tr>
+            <tr>
+              <th scope="row">Bellman-Ford, k + 1 Rounds</th>
+              <td>Relax from a copy</td>
+              <td>O(k·E)</td>
+              <td>O(n)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
