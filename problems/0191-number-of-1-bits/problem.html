@@ -1,0 +1,203 @@
+<details class="question" data-group="bit-manipulation" data-tags="bit manipulation hamming weight popcount count set bits brian kernighan">
+  <summary>
+    <span class="q-title">191. Number of 1 Bits</span>
+    <span class="q-meta">
+      <span class="badge easy">Easy</span>
+      <span class="tag">Bit Manipulation</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> <code>n &amp; (n − 1)</code> is
+      <code>n</code> with its lowest 1 bit cleared. Repeat until
+      <code>n</code> is 0 and count the rounds: the loop runs once per
+      <strong>1 bit</strong>, not once per bit position.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/number-of-1-bits/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Return how many 1 bits the binary form of the positive integer
+        <code>n</code> has (its Hamming weight).
+      </p>
+      <ul>
+        <li><code>1 &lt;= n &lt;= 2³¹ − 1</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>11</code> (<code>1011</code>) → <code>3</code>.
+        <code>128</code> → <code>1</code>. <code>2147483645</code> →
+        <code>30</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>2147483647</code></td>
+              <td><code>31</code></td>
+              <td>The most 1 bits possible: the worst case for Approach 3 (31 rounds).</td>
+            </tr>
+            <tr>
+              <td><code>1073741824</code> (2³⁰)</td>
+              <td><code>1</code></td>
+              <td>One high bit: Approach 2 still shifts 31 times (1.5 µs in Python), Approach 3 needs 1 round (0.16 µs).</td>
+            </tr>
+            <tr>
+              <td><code>11</code></td>
+              <td><code>3</code></td>
+              <td>In Java, <code>if (n &amp; 1 == 1)</code> doesn't compile: <code>==</code> runs before <code>&amp;</code>. Write <code>(n &amp; 1) == 1</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Test All 32 Bits</h2>
+      <p class="intuition">
+        For <code>i</code> from 0 to 31, <code>(n &gt;&gt; i) &amp; 1</code> is
+        bit <code>i</code>. Add them up.
+      </p>
+      <ul>
+        <li>Always 32 rounds, whatever <code>n</code> is.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(1) (32 rounds)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Average per call over 20,006 inputs: Python 1.6 µs, Java 0.05 µs, C++
+        0.02 µs.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Shift Until Zero</h2>
+      <p class="intuition">
+        Add <code>n &amp; 1</code>, shift <code>n</code> right, and stop when
+        <code>n</code> is 0. The loop ends right after the highest 1 bit.
+      </p>
+      <ul>
+        <li>Fast for small numbers, still up to 31 rounds for big ones.</li>
+        <li>In Java use <code>&gt;&gt;&gt;</code>: with <code>&gt;&gt;</code>, a negative number would never reach 0.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Average per call: Python 1.6 µs, Java 0.06 µs, C++ 0.04 µs. Random
+        inputs are mostly large, so it saves little over Approach 1.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Clear the Lowest 1 (Brian Kernighan)
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Subtracting 1 flips the lowest 1 bit to 0 and every 0 below it to 1.
+        So <code>n &amp; (n − 1)</code> keeps everything above that bit and
+        clears the bit itself. Count how many times you can do this before
+        <code>n</code> is 0.
+      </p>
+      <ul>
+        <li>Rounds = number of 1 bits, so sparse numbers finish almost at once.</li>
+        <li>The same trick checks for a power of two: <code>n &amp; (n − 1) == 0</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(number of 1 bits)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Average per call: Python 0.98 µs, Java 0.06 µs, C++ 0.03 µs. On
+        2147483647 it's no faster (31 rounds, 1.9 µs in Python).
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        Every language has a popcount: <code>bin(n).count("1")</code> or
+        <code>n.bit_count()</code> (Python 3.10+),
+        <code>__builtin_popcount</code> or C++20's <code>std::popcount</code>,
+        and Java's <code>Integer.bitCount</code>. Many CPUs count bits in a
+        single instruction.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(1)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Should pass on LeetCode. Python's version averaged 0.24 µs, 4 times
+        faster than Approach 3, because the counting happens in C.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Test All 32 Bits</th>
+              <td><code>(n &gt;&gt; i) &amp; 1</code> for each i</td>
+              <td>O(1)</td>
+              <td>O(1)</td>
+              <td>Always 32 rounds</td>
+            </tr>
+            <tr>
+              <th scope="row">Shift Until Zero</th>
+              <td>Lowest bit, then shift</td>
+              <td>O(log n)</td>
+              <td>O(1)</td>
+              <td>Stops after the highest 1</td>
+            </tr>
+            <tr>
+              <th scope="row">Clear the Lowest 1</th>
+              <td><code>n &amp;= n − 1</code></td>
+              <td>O(ones)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
