@@ -1,0 +1,205 @@
+<details class="question" data-group="dynamic-programming" data-tags="dynamic programming dp house robber memoization non-adjacent maximum sum">
+  <summary>
+    <span class="q-title">198. House Robber</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Dynamic Programming</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> At each house there are two choices:
+      <strong>skip</strong> it (keep the best so far) or <strong>rob</strong>
+      it (add it to the best from two houses back). So
+      <code>best = max(cur, prev + x)</code>, and only the last two answers are
+      needed: two variables, one pass.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/house-robber/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>nums[i]</code> is the money in house <code>i</code> along a
+        street. You can't rob two houses next to each other. Return the most
+        money you can rob.
+      </p>
+      <ul>
+        <li><code>1 &lt;= nums.length &lt;= 100</code></li>
+        <li><code>0 &lt;= nums[i] &lt;= 400</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[1,2,3,1]</code> → <code>4</code> (houses 0 and 2).
+        <code>[2,7,9,3,1]</code> → <code>12</code> (2 + 9 + 1).
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[2,1,1,2]</code></td>
+              <td><code>4</code></td>
+              <td>The best pick skips two houses in a row. "Even houses or odd houses, whichever sums more" said <code>3</code>; it was wrong on 2360 of 4508 tests.</td>
+            </tr>
+            <tr>
+              <td><code>[1,3,3]</code></td>
+              <td><code>4</code></td>
+              <td>Greedy "rob the richest house left" takes a 3 and blocks the rest: it said <code>3</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[243,193]</code></td>
+              <td><code>243</code></td>
+              <td><code>dp[i] = dp[i − 2] + nums[i − 1]</code> without the <code>max</code> always robs the last house: it said <code>193</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[5]</code></td>
+              <td><code>5</code></td>
+              <td>One house. A DP that reads <code>nums[1]</code> to start would go out of range.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Recursion with Memo</h2>
+      <p class="intuition">
+        <code>best(i)</code> = the most from house <code>i</code> to the end.
+        Either skip house <code>i</code> (<code>best(i + 1)</code>) or rob it
+        and skip its neighbour (<code>nums[i] + best(i + 2)</code>). Remember
+        each answer.
+      </p>
+      <ul>
+        <li>
+          Without the memo the calls double like Fibonacci: 4.4 million calls
+          at 30 houses here, and roughly 10²¹ at 100.
+        </li>
+        <li>With it, each <code>best(i)</code> is worked out once.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        At 100 houses: Python 30 µs, the slowest here because of the function
+        calls. Average over 4508 tests: Java 0.29 µs, C++ 0.16 µs.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: DP Table</h2>
+      <p class="intuition">
+        Build it from the left. <code>dp[i]</code> is the most from the first
+        <code>i</code> houses: <code>dp[0] = 0</code>,
+        <code>dp[1] = nums[0]</code>, and
+        <code>dp[i] = max(dp[i − 1], dp[i − 2] + nums[i − 1])</code>.
+      </p>
+      <ul>
+        <li>Same choice as Approach 1, with a loop instead of calls.</li>
+        <li>The extra <code>dp[0]</code> slot means one house needs no special case.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        At 100 houses: Python 8.9 µs. Average: Java 0.20 µs, C++ 0.14 µs.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Two Variables
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        <code>dp[i]</code> only uses <code>dp[i − 1]</code> and
+        <code>dp[i − 2]</code>. Keep them as <code>cur</code> and
+        <code>prev</code>. For each house <code>x</code>:
+        <code>prev, cur = cur, max(cur, prev + x)</code>.
+      </p>
+      <ul>
+        <li>Update both at once (or use a temporary), so <code>prev</code> gets the old <code>cur</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        At 100 houses: Python 5.0 µs. Average: Java 0.14 µs, C++ 0.03 µs, the
+        fastest in every language.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No library function picks non-adjacent items. Approach 3 is four lines
+        and is what you'd write.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Recursion with Memo</th>
+              <td>Skip or rob, remembered</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Without the memo, ~10²¹ calls</td>
+            </tr>
+            <tr>
+              <th scope="row">DP Table</th>
+              <td><code>dp[i] = max(dp[i−1], dp[i−2] + x)</code></td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Easy to check by hand</td>
+            </tr>
+            <tr>
+              <th scope="row">Two Variables</th>
+              <td>Keep only prev and cur</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

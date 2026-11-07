@@ -28105,7 +28105,7 @@
       <details class="pattern-group" id="g-dynamic-programming">
         <summary>
           <span class="g-name">Dynamic Programming</span>
-          <span class="g-count"><span class="g-total">13 problems</span></span>
+          <span class="g-count"><span class="g-total">14 problems</span></span>
           <span class="g-hint">Reuse the answers to smaller problems</span>
         </summary>
         <div class="g-body">
@@ -32992,6 +32992,338 @@
                       <tr>
                         <th scope="row">Largest and Smallest Ending Here</th>
                         <td>Swap on a negative, then extend or restart</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0198-house-robber ===== -->
+          <details class="question" data-group="dynamic-programming" data-tags="dynamic programming dp house robber memoization non-adjacent maximum sum">
+            <summary>
+              <span class="q-title">198. House Robber</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Array</span>
+                <span class="tag">Dynamic Programming</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> At each house there are two choices:
+                <strong>skip</strong> it (keep the best so far) or <strong>rob</strong>
+                it (add it to the best from two houses back). So
+                <code>best = max(cur, prev + x)</code>, and only the last two answers are
+                needed: two variables, one pass.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/house-robber/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  <code>nums[i]</code> is the money in house <code>i</code> along a
+                  street. You can't rob two houses next to each other. Return the most
+                  money you can rob.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= nums.length &lt;= 100</code></li>
+                  <li><code>0 &lt;= nums[i] &lt;= 400</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>[1,2,3,1]</code> → <code>4</code> (houses 0 and 2).
+                  <code>[2,7,9,3,1]</code> → <code>12</code> (2 + 9 + 1).
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[2,1,1,2]</code></td>
+                        <td><code>4</code></td>
+                        <td>The best pick skips two houses in a row. "Even houses or odd houses, whichever sums more" said <code>3</code>; it was wrong on 2360 of 4508 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,3,3]</code></td>
+                        <td><code>4</code></td>
+                        <td>Greedy "rob the richest house left" takes a 3 and blocks the rest: it said <code>3</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[243,193]</code></td>
+                        <td><code>243</code></td>
+                        <td><code>dp[i] = dp[i − 2] + nums[i − 1]</code> without the <code>max</code> always robs the last house: it said <code>193</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[5]</code></td>
+                        <td><code>5</code></td>
+                        <td>One house. A DP that reads <code>nums[1]</code> to start would go out of range.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Recursion with Memo</h2>
+                <p class="intuition">
+                  <code>best(i)</code> = the most from house <code>i</code> to the end.
+                  Either skip house <code>i</code> (<code>best(i + 1)</code>) or rob it
+                  and skip its neighbour (<code>nums[i] + best(i + 2)</code>). Remember
+                  each answer.
+                </p>
+                <ul>
+                  <li>
+                    Without the memo the calls double like Fibonacci: 4.4 million calls
+                    at 30 houses here, and roughly 10²¹ at 100.
+                  </li>
+                  <li>With it, each <code>best(i)</code> is worked out once.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  At 100 houses: Python 30 µs, the slowest here because of the function
+                  calls. Average over 4508 tests: Java 0.29 µs, C++ 0.16 µs.
+                </p>
+                <div class="code-tabs" data-viz="0198-house-robber/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"call":[4],"base":[5,6],"memo":[7,9],"choose":[8],"answer":[10]}'>
+                    class Solution(object):
+                        def rob(self, nums):
+                            memo = {}  # i -> the most you can take from houses i, i + 1, ...
+                            def best(i):
+                                if i >= len(nums):  # no houses left
+                                    return 0
+                                if i not in memo:
+                                    memo[i] = max(best(i + 1), nums[i] + best(i + 2))  # skip house i, or rob it and skip i + 1
+                                return memo[i]
+                            return best(0)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"answer":[7],"call":[11],"base":[12],"memo":[13,15],"choose":[14]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int rob(std::vector<int>& nums) {
+                            memo.assign(nums.size(), -1); // i -> the most you can take from houses i, i + 1, ... (-1 = not known yet)
+                            return best(nums, 0);
+                        }
+                    private:
+                        std::vector<int> memo;
+                        int best(const std::vector<int>& nums, int i) {
+                            if (i >= (int)nums.size()) return 0; // no houses left
+                            if (memo[i] < 0)
+                                memo[i] = std::max(best(nums, i + 1), nums[i] + best(nums, i + 2)); // skip house i, or rob it and skip i + 1
+                            return memo[i];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[5,6],"answer":[7],"call":[9],"base":[10],"memo":[11,13],"choose":[12]}'>
+                    import java.util.*;
+                    class Solution {
+                        private int[] memo;
+                        public int rob(int[] nums) {
+                            memo = new int[nums.length]; // i -> the most you can take from houses i, i + 1, ... (-1 = not known yet)
+                            Arrays.fill(memo, -1);
+                            return best(nums, 0);
+                        }
+                        private int best(int[] nums, int i) {
+                            if (i >= nums.length) return 0; // no houses left
+                            if (memo[i] < 0)
+                                memo[i] = Math.max(best(nums, i + 1), nums[i] + best(nums, i + 2)); // skip house i, or rob it and skip i + 1
+                            return memo[i];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: DP Table</h2>
+                <p class="intuition">
+                  Build it from the left. <code>dp[i]</code> is the most from the first
+                  <code>i</code> houses: <code>dp[0] = 0</code>,
+                  <code>dp[1] = nums[0]</code>, and
+                  <code>dp[i] = max(dp[i − 1], dp[i − 2] + nums[i − 1])</code>.
+                </p>
+                <ul>
+                  <li>Same choice as Approach 1, with a loop instead of calls.</li>
+                  <li>The extra <code>dp[0]</code> slot means one house needs no special case.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  At 100 houses: Python 8.9 µs. Average: Java 0.20 µs, C++ 0.14 µs.
+                </p>
+                <div class="code-tabs" data-viz="0198-house-robber/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"loop":[6],"choose":[7],"return":[8]}'>
+                    class Solution(object):
+                        def rob(self, nums):
+                            n = len(nums)
+                            dp = [0] * (n + 1)  # dp[i] = the most from the first i houses
+                            dp[1] = nums[0]
+                            for i in range(2, n + 1):
+                                dp[i] = max(dp[i - 1], dp[i - 2] + nums[i - 1])  # leave house i - 1, or rob it on top of dp[i - 2]
+                            return dp[n]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8],"loop":[9],"choose":[10],"return":[11]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int rob(std::vector<int>& nums) {
+                            const int n = nums.size();
+                            std::vector<int> dp(n + 1, 0); // dp[i] = the most from the first i houses
+                            dp[1] = nums[0];
+                            for (int i = 2; i <= n; ++i)
+                                dp[i] = std::max(dp[i - 1], dp[i - 2] + nums[i - 1]); // leave house i - 1, or rob it on top of dp[i - 2]
+                            return dp[n];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5],"loop":[6],"choose":[7],"return":[8]}'>
+                    class Solution {
+                        public int rob(int[] nums) {
+                            int n = nums.length;
+                            int[] dp = new int[n + 1]; // dp[i] = the most from the first i houses
+                            dp[1] = nums[0];
+                            for (int i = 2; i <= n; i++)
+                                dp[i] = Math.max(dp[i - 1], dp[i - 2] + nums[i - 1]); // leave house i - 1, or rob it on top of dp[i - 2]
+                            return dp[n];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Two Variables
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  <code>dp[i]</code> only uses <code>dp[i − 1]</code> and
+                  <code>dp[i − 2]</code>. Keep them as <code>cur</code> and
+                  <code>prev</code>. For each house <code>x</code>:
+                  <code>prev, cur = cur, max(cur, prev + x)</code>.
+                </p>
+                <ul>
+                  <li>Update both at once (or use a temporary), so <code>prev</code> gets the old <code>cur</code>.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  At 100 houses: Python 5.0 µs. Average: Java 0.14 µs, C++ 0.03 µs, the
+                  fastest in every language.
+                </p>
+                <div class="code-tabs" data-viz="0198-house-robber/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"loop":[4],"choose":[5],"return":[6]}'>
+                    class Solution(object):
+                        def rob(self, nums):
+                            prev, cur = 0, 0  # the best up to two houses back, and up to the last house
+                            for x in nums:
+                                prev, cur = cur, max(cur, prev + x)  # skip this house, or rob it on top of prev
+                            return cur
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"loop":[7],"choose":[8,9,10],"return":[12]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int rob(std::vector<int>& nums) {
+                            int prev = 0, cur = 0; // the best up to two houses back, and up to the last house
+                            for (int x : nums) {
+                                int next = std::max(cur, prev + x); // skip this house, or rob it on top of prev
+                                prev = cur;
+                                cur = next;
+                            }
+                            return cur;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"loop":[4],"choose":[5,6,7],"return":[9]}'>
+                    class Solution {
+                        public int rob(int[] nums) {
+                            int prev = 0, cur = 0; // the best up to two houses back, and up to the last house
+                            for (int x : nums) {
+                                int next = Math.max(cur, prev + x); // skip this house, or rob it on top of prev
+                                prev = cur;
+                                cur = next;
+                            }
+                            return cur;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  No library function picks non-adjacent items. Approach 3 is four lines
+                  and is what you'd write.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Recursion with Memo</th>
+                        <td>Skip or rob, remembered</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Without the memo, ~10²¹ calls</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">DP Table</th>
+                        <td><code>dp[i] = max(dp[i−1], dp[i−2] + x)</code></td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Easy to check by hand</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Two Variables</th>
+                        <td>Keep only prev and cur</td>
                         <td>O(n)</td>
                         <td>O(1)</td>
                         <td>Expected answer</td>
@@ -56771,6 +57103,113 @@
       }
       const bit = (x, i) => Math.floor(x / 2 ** i) % 2;
       })();
+    </script>
+    <!-- problems/0198-house-robber/approach1.visual.js -->
+    <script>
+      // best(i) = max(best(i + 1), nums[i] + best(i + 2)), remembered so each i is worked out once.
+      DSAViz.register("0198-house-robber/approach1", {
+        inputs: [{ name: "nums", type: "int[]", value: "[2, 7, 9, 3, 1]", minLength: 1, maxLength: 8, minValue: 0, maxValue: 400 }],
+        trace({ nums }) {
+          const n = nums.length;
+          const steps = [];
+          const memo = Array(n).fill(null);
+          const open = [];
+          const view = (o = {}) => {
+            const hm = {};
+            if (o.i !== undefined && o.i < n) hm[o.i] = o.rob ? "match" : "active";
+            if (o.rob && o.i + 1 < n) hm[o.i + 1] = "ghost";
+            const mm = {};
+            if (o.i !== undefined && o.i < n) mm[o.i] = o.hit ? "match" : o.set ? "new" : "active";
+            return [
+              { type: "array", label: o.rob ? "nums (green = robbed, dashed = its neighbour, skipped)" : "nums (houses; dark = house i)", values: nums, marks: hm },
+              { type: "array", label: "memo[i] = best(i), the most from house i onward (? = not known yet)", values: memo.map((v) => (v === null ? "?" : v)), marks: mm },
+              { type: "array", label: "open calls best(i), outermost first", values: open.map((i) => `best(${i})`), wide: true },
+            ];
+          };
+          steps.push({ line: "init", note: "best(i) = the most you can take from house i to the end. The answer is best(0).", view: view() });
+          const best = (i) => {
+            open.push(i);
+            if (i >= n) {
+              steps.push({ line: ["call", "base"], note: `best(${i}): past the last house. Return 0.`, view: view({ i }) });
+              open.pop();
+              return 0;
+            }
+            if (memo[i] !== null) {
+              steps.push({ line: ["call", "memo"], note: `best(${i}) is already in the memo: ${memo[i]}. No new calls.`, view: view({ i, hit: true }) });
+              open.pop();
+              return memo[i];
+            }
+            steps.push({ line: ["call", "memo"], note: `best(${i}): not known yet. Work out skip = best(${i + 1}) and rob = ${nums[i]} + best(${i + 2}).`, view: view({ i }) });
+            const skip = best(i + 1);
+            const take = nums[i] + best(i + 2);
+            memo[i] = Math.max(skip, take);
+            steps.push({ line: ["choose", "memo"], note: `best(${i}) = max(skip ${skip}, rob ${nums[i]} + ${take - nums[i]} = ${take}) = ${memo[i]}.${take > skip ? ` Robbing house ${i} wins.` : ` Skipping house ${i} is ${take === skip ? "as good" : "better"}.`}`, view: view({ i, set: true, rob: take > skip }) });
+            open.pop();
+            return memo[i];
+          };
+          const ans = best(0);
+          steps.push({ line: "answer", note: `Return ${ans}. Each best(i) is worked out once and asked for at most twice: O(n) time, O(n) memo and call stack.`, view: view() });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0198-house-robber/approach2.visual.js -->
+    <script>
+      // dp[i] = the most from the first i houses = max(dp[i - 1], dp[i - 2] + nums[i - 1]).
+      DSAViz.register("0198-house-robber/approach2", {
+        inputs: [{ name: "nums", type: "int[]", value: "[2, 7, 9, 3, 1]", minLength: 1, maxLength: 8, minValue: 0, maxValue: 400 }],
+        trace({ nums }) {
+          const n = nums.length;
+          const steps = [];
+          const dp = Array(n + 1).fill(null);
+          dp[0] = 0;
+          dp[1] = nums[0];
+          const view = (o = {}) => {
+            const dm = {};
+            if (o.i !== undefined) { dm[o.i - 1] = o.rob ? "" : "compare"; dm[o.i - 2] = o.rob ? "compare" : ""; dm[o.i] = "new"; }
+            if (o.done) dm[n] = "match";
+            return [
+              { type: "array", label: "nums (dark = house i − 1, the one being decided)", values: nums, marks: o.i !== undefined ? { [o.i - 1]: o.rob ? "match" : "active" } : {} },
+              { type: "array", label: "dp[i] = the most from the first i houses (yellow = new, and the value it came from)", values: dp.map((v) => (v === null ? "" : v)), marks: Object.fromEntries(Object.entries(dm).filter(([, v]) => v)) },
+            ];
+          };
+          steps.push({ line: "init", note: `dp[0] = 0 (no houses) and dp[1] = ${nums[0]} (just house 0: rob it).`, view: view() });
+          for (let i = 2; i <= n; i++) {
+            const skip = dp[i - 1];
+            const take = dp[i - 2] + nums[i - 1];
+            dp[i] = Math.max(skip, take);
+            steps.push({ line: ["loop", "choose"], note: `House ${i - 1} (${nums[i - 1]}): leave it → dp[${i - 1}] = ${skip}; rob it → dp[${i - 2}] + ${nums[i - 1]} = ${take}. dp[${i}] = ${dp[i]}.`, view: view({ i, rob: take > skip }) });
+          }
+          steps.push({ line: "return", note: `Return ${dp[n]}. One pass: O(n) time, O(n) for the table.`, view: view({ done: true }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0198-house-robber/approach3.visual.js -->
+    <script>
+      // Only the last two dp values are ever used: keep them in prev and cur.
+      DSAViz.register("0198-house-robber/approach3", {
+        inputs: [{ name: "nums", type: "int[]", value: "[2, 7, 9, 3, 1]", minLength: 1, maxLength: 8, minValue: 0, maxValue: 400 }],
+        trace({ nums }) {
+          const steps = [];
+          let prev = 0;
+          let cur = 0;
+          const view = (o = {}) => [
+            { type: "array", label: "nums (dark = this house, green = robbing it gives more)", values: nums, marks: o.k !== undefined ? { [o.k]: o.rob ? "match" : "active" } : {} },
+            { type: "vars", items: [{ name: "prev", value: prev }, { name: "cur", value: cur, mark: o.k !== undefined ? "new" : o.done ? "match" : "" }] },
+          ];
+          steps.push({ line: "init", note: "prev = best up to two houses back, cur = best up to the last house. Both start at 0.", view: view() });
+          nums.forEach((x, k) => {
+            const take = prev + x;
+            const rob = take > cur;
+            const old = cur;
+            [prev, cur] = [cur, Math.max(cur, take)];
+            steps.push({ line: ["loop", "choose"], note: `House ${k} (${x}): skip → ${old}, rob → prev + ${x} = ${take}. cur = ${cur}, and prev becomes the old cur, ${prev}.`, view: view({ k, rob }) });
+          });
+          steps.push({ line: "return", note: `Return ${cur}. O(n) time, O(1) space: two numbers instead of a table.`, view: view({ done: true }) });
+          return steps;
+        },
+      });
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->
     <script>
