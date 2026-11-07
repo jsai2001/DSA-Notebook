@@ -4774,7 +4774,7 @@
       <details class="pattern-group" id="g-sliding-window">
         <summary>
           <span class="g-name">Sliding Window</span>
-          <span class="g-count"><span class="g-total">4 problems</span></span>
+          <span class="g-count"><span class="g-total">5 problems</span></span>
           <span class="g-hint">A window that grows and shrinks over a string</span>
         </summary>
         <div class="g-body">
@@ -6121,6 +6121,351 @@
                         <td>O(n)</td>
                         <td>O(1)</td>
                         <td>The usual answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0239-sliding-window-maximum ===== -->
+          <details class="question" data-group="sliding-window" data-tags="sliding window monotonic queue deque heap maximum window">
+            <summary>
+              <span class="q-title">239. Sliding Window Maximum</span>
+              <span class="q-meta">
+                <span class="badge hard">Hard</span>
+                <span class="tag">Sliding Window</span>
+                <span class="tag">Monotonic Queue</span>
+                <span class="tag">Heap (Priority Queue)</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Keep a <strong>deque of indexes</strong>
+                whose values go down from front to back. When a new value comes in,
+                pop every smaller (or equal) value from the back: they're older and
+                smaller, so they can never be a max again. Drop the front when it
+                slides out. The front is always the window's max. Each index goes in
+                and out once: O(n).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/sliding-window-maximum/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  A window of size <code>k</code> slides from the left of
+                  <code>nums</code> to the right, one step at a time. Return the largest
+                  value in each window.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= k &lt;= nums.length &lt;= 10⁵</code></li>
+                  <li><code>-10⁴ &lt;= nums[i] &lt;= 10⁴</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>[1,3,-1,-3,5,3,6,7], k = 3</code> →
+                  <code>[3,3,5,5,6,7]</code>. <code>[1], k = 1</code> →
+                  <code>[1]</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[9,11], k = 2</code></td>
+                        <td><code>[11]</code></td>
+                        <td>A deque that never pops smaller values from the back keeps 9 at the front: it said <code>[9]</code>. Wrong on 2165 of 3006 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[7,7,7], k = 2</code></td>
+                        <td><code>[7,7]</code></td>
+                        <td>Equal values. Popping only strictly smaller ones is also correct (all 3006 tests passed); popping equal ones keeps the deque shorter.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1], k = 1</code></td>
+                        <td><code>[1]</code></td>
+                        <td>Every window is one value.</td>
+                      </tr>
+                      <tr>
+                        <td>10⁵ rising values, <code>k = 5·10⁴</code></td>
+                        <td>-</td>
+                        <td>The heap never pops anything until it reaches the top: it grows to 10⁵ entries.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Scan Every Window</h2>
+                <p class="intuition">
+                  For each of the n − k + 1 windows, look at all k values and take the
+                  biggest.
+                </p>
+                <ul>
+                  <li>Fine when k is small; at k ≈ n / 2 it's about n² / 4 steps.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n·k)</span>
+                  <span><strong>Space</strong> O(1) besides the answer</span>
+                </div>
+                <p class="note">
+                  Just 10⁴ values with k = 5000: Python 0.31 s, Java 23 ms, C++ 16 ms.
+                  At 10⁵ it's 100 times more: too slow.
+                </p>
+                <div class="code-tabs" data-viz="0239-sliding-window-maximum/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"window":[4,5],"return":[6]}'>
+                    class Solution(object):
+                        def maxSlidingWindow(self, nums, k):
+                            res = []
+                            for i in range(len(nums) - k + 1):  # every window start
+                                res.append(max(nums[i:i + k]))  # look at all k values again
+                            return res
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"window":[7,8],"return":[9]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> maxSlidingWindow(std::vector<int>& nums, int k) {
+                            std::vector<int> res;
+                            for (int i = 0; i + k <= (int)nums.size(); ++i) // every window start
+                                res.push_back(*std::max_element(nums.begin() + i, nums.begin() + i + k)); // look at all k values again
+                            return res;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"window":[4,5,6,7],"return":[9]}'>
+                    class Solution {
+                        public int[] maxSlidingWindow(int[] nums, int k) {
+                            int[] res = new int[nums.length - k + 1];
+                            for (int i = 0; i + k <= nums.length; i++) { // every window start
+                                int best = nums[i];
+                                for (int j = i + 1; j < i + k; j++) best = Math.max(best, nums[j]); // look at all k values again
+                                res[i] = best;
+                            }
+                            return res;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Max-Heap, Lazy Removal</h2>
+                <p class="intuition">
+                  Push <code>(value, index)</code> for each value. Before reading the
+                  top, pop it while its index is outside the window. Values that slid
+                  out but aren't on top can stay: they're not in the way yet.
+                </p>
+                <ul>
+                  <li>Removing from the middle of a heap is hard; waiting until an old value reaches the top avoids it.</li>
+                  <li>The heap can hold up to n entries.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  10⁵ rising values, k = 5·10⁴: Python 55 ms, Java 6.6 ms, C++ 1.1 ms.
+                </p>
+                <div class="code-tabs" data-viz="0239-sliding-window-maximum/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5],"push":[6,7],"drop":[8,9,10],"top":[11],"return":[12]}'>
+                    import heapq
+                    class Solution(object):
+                        def maxSlidingWindow(self, nums, k):
+                            heap = []  # (-value, index): the biggest value is on top
+                            res = []
+                            for i, x in enumerate(nums):
+                                heapq.heappush(heap, (-x, i))
+                                if i >= k - 1:  # a full window ends at i
+                                    while heap[0][1] <= i - k:  # the top has slid out of the window: throw it away now
+                                        heapq.heappop(heap)
+                                    res.append(-heap[0][0])
+                            return res
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8],"push":[9,10],"drop":[11,12],"top":[13],"return":[16]}'>
+                    #include <queue>
+                    #include <utility>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> maxSlidingWindow(std::vector<int>& nums, int k) {
+                            std::priority_queue<std::pair<int, int>> heap; // (value, index): the biggest value is on top
+                            std::vector<int> res;
+                            for (int i = 0; i < (int)nums.size(); ++i) {
+                                heap.push({nums[i], i});
+                                if (i >= k - 1) { // a full window ends at i
+                                    while (heap.top().second <= i - k) heap.pop(); // the top has slid out of the window: throw it away now
+                                    res.push_back(heap.top().first);
+                                }
+                            }
+                            return res;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5],"push":[6,7],"drop":[8,9],"top":[10],"return":[13]}'>
+                    import java.util.*;
+                    class Solution {
+                        public int[] maxSlidingWindow(int[] nums, int k) {
+                            PriorityQueue<int[]> heap = new PriorityQueue<>((a, b) -> b[0] - a[0]); // (value, index): the biggest value is on top
+                            int[] res = new int[nums.length - k + 1];
+                            for (int i = 0; i < nums.length; i++) {
+                                heap.add(new int[] {nums[i], i});
+                                if (i >= k - 1) { // a full window ends at i
+                                    while (heap.peek()[1] <= i - k) heap.poll(); // the top has slid out of the window: throw it away now
+                                    res[i - k + 1] = heap.peek()[0];
+                                }
+                            }
+                            return res;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Monotonic Deque
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  For each index <code>i</code>: pop from the back while the value there
+                  is ≤ <code>nums[i]</code>; push <code>i</code>; drop the front if it's
+                  out of the window; once the first window is full, record the front's
+                  value.
+                </p>
+                <ul>
+                  <li>Store indexes, not values, so you can tell when the front slides out.</li>
+                  <li>The Java version uses an array with two pointers as the deque, so no index is boxed into an <code>Integer</code>.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(k)</span>
+                </div>
+                <p class="note">
+                  10⁵ rising values, k = 5·10⁴: Python 15 ms, Java 0.29 ms, C++ 0.32 ms,
+                  the fastest in every language and on every input tried.
+                </p>
+                <div class="code-tabs" data-viz="0239-sliding-window-maximum/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5],"step":[6],"pop":[7,8],"push":[9],"out":[10,11],"record":[12,13],"return":[14]}'>
+                    from collections import deque
+                    class Solution(object):
+                        def maxSlidingWindow(self, nums, k):
+                            dq = deque()  # indexes whose values go down from front to back; the front is the window's max
+                            res = []
+                            for i, x in enumerate(nums):
+                                while dq and nums[dq[-1]] <= x:  # smaller values behind x can never be a max again
+                                    dq.pop()
+                                dq.append(i)
+                                if dq[0] <= i - k:  # the front slid out of the window
+                                    dq.popleft()
+                                if i >= k - 1:
+                                    res.append(nums[dq[0]])
+                            return res
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7],"step":[8],"pop":[9],"push":[10],"out":[11],"record":[12],"return":[14]}'>
+                    #include <deque>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        std::vector<int> maxSlidingWindow(std::vector<int>& nums, int k) {
+                            std::deque<int> dq; // indexes whose values go down from front to back; the front is the window's max
+                            std::vector<int> res;
+                            for (int i = 0; i < (int)nums.size(); ++i) {
+                                while (!dq.empty() && nums[dq.back()] <= nums[i]) dq.pop_back(); // smaller values behind can never be a max again
+                                dq.push_back(i);
+                                if (dq.front() <= i - k) dq.pop_front(); // the front slid out of the window
+                                if (i >= k - 1) res.push_back(nums[dq.front()]);
+                            }
+                            return res;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5,6],"step":[7],"pop":[8],"push":[9],"out":[10],"record":[11],"return":[13]}'>
+                    class Solution {
+                        public int[] maxSlidingWindow(int[] nums, int k) {
+                            int n = nums.length;
+                            int[] dq = new int[n]; // a deque of indexes in an array: dq[head..tail)
+                            int head = 0, tail = 0; // values go down from head to tail; the head is the window's max
+                            int[] res = new int[n - k + 1];
+                            for (int i = 0; i < n; i++) {
+                                while (tail > head && nums[dq[tail - 1]] <= nums[i]) tail--; // smaller values behind can never be a max again
+                                dq[tail++] = i;
+                                if (dq[head] <= i - k) head++; // the front slid out of the window
+                                if (i >= k - 1) res[i - k + 1] = nums[dq[head]];
+                            }
+                            return res;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  No standard library has a sliding max. Outside LeetCode, NumPy's
+                  <code>sliding_window_view(nums, k).max(axis=1)</code> works, but it's
+                  still O(n·k) inside.
+                </p>
+                <p class="note">Approach 3 is what you'd write.</p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Scan Every Window</th>
+                        <td>max of each window</td>
+                        <td>O(n·k)</td>
+                        <td>O(1)</td>
+                        <td>0.31 s in Python at 10⁴</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Max-Heap, Lazy Removal</th>
+                        <td>Pop stale tops only</td>
+                        <td>O(n log n)</td>
+                        <td>O(n)</td>
+                        <td>Easy to come up with</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Monotonic Deque</th>
+                        <td>Values falling front to back</td>
+                        <td>O(n)</td>
+                        <td>O(k)</td>
+                        <td>Expected answer</td>
                       </tr>
                     </tbody>
                   </table>
@@ -67852,6 +68197,103 @@
           return steps;
         },
       });
+    </script>
+    <!-- problems/0239-sliding-window-maximum/approach1.visual.js -->
+    <script>
+      // Every window: look at all k values and take the biggest.
+      (function () {
+      const win = (i, k, extra = {}) => ({ ...Object.fromEntries(Array.from({ length: k }, (_, j) => [i + j, "window"])), ...extra });
+      DSAViz.register("0239-sliding-window-maximum/approach1", {
+        inputs: [
+          { name: "nums", type: "int[]", value: "[1, 3, -1, -3, 5, 3, 6, 7]", minLength: 1, maxLength: 10, minValue: -10000, maxValue: 10000 },
+          { name: "k", type: "int", value: "3", min: 1, max: 10 },
+        ],
+        trace({ nums, k }) {
+          if (k > nums.length) throw new DSAViz.InputError(`k must be between 1 and ${nums.length} (the length of nums).`);
+          const res = [];
+          const steps = [];
+          steps.push({ line: "init", note: `${nums.length - k + 1} windows of size ${k}.`, view: [{ type: "array", label: "nums", values: nums }, { type: "array", label: "res", values: [] }] });
+          for (let i = 0; i + k <= nums.length; i++) {
+            const m = Math.max(...nums.slice(i, i + k));
+            res.push(m);
+            steps.push({ line: "window", note: `Window ${i}..${i + k - 1}: scan all ${k} values. The biggest is ${m}.`, view: [{ type: "array", label: "nums (outlined = the window, green = its max)", values: nums, marks: win(i, k, { [i + nums.slice(i, i + k).indexOf(m)]: "match" }) }, { type: "array", label: "res", values: res.slice(), marks: { [res.length - 1]: "new" } }] });
+          }
+          steps.push({ line: "return", note: `Return [${res.join(", ")}]. Each window is scanned again from scratch: O(n·k).`, view: [{ type: "array", label: "nums", values: nums }, { type: "array", label: "res", values: res }] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0239-sliding-window-maximum/approach2.visual.js -->
+    <script>
+      // A max-heap of (value, index). Old tops whose index left the window are thrown away only when they reach the top.
+      (function () {
+      const win = (i, k, extra = {}) => ({ ...Object.fromEntries(Array.from({ length: k }, (_, j) => [i + j, "window"])), ...extra });
+      DSAViz.register("0239-sliding-window-maximum/approach2", {
+        inputs: [
+          { name: "nums", type: "int[]", value: "[1, 3, -1, -3, 5, 3, 6, 7]", minLength: 1, maxLength: 10, minValue: -10000, maxValue: 10000 },
+          { name: "k", type: "int", value: "3", min: 1, max: 10 },
+        ],
+        trace({ nums, k }) {
+          if (k > nums.length) throw new DSAViz.InputError(`k must be between 1 and ${nums.length} (the length of nums).`);
+          let heap = [];
+          const res = [];
+          const steps = [];
+          const view = (i, o = {}) => [{ type: "array", label: "nums (outlined = the window ending at i)", values: nums, marks: i >= k - 1 ? win(i - k + 1, k, { [i]: "active" }) : { [i]: "active" }, pointers: { i } }, { type: "array", label: "heap, biggest first (value @ index; red = slid out, thrown away)", values: (o.show || heap).map(([v, j]) => `${v} @ ${j}`), wide: true, marks: o.hm || {} }, { type: "array", label: "res", values: res.slice(), marks: o.rec ? { [res.length - 1]: "new" } : {} }];
+          const sort = () => heap.sort((a, b) => b[0] - a[0] || b[1] - a[1]);
+          nums.forEach((x, i) => {
+            heap.push([x, i]);
+            sort();
+            if (i < k - 1) { steps.push({ line: "push", note: `Push ${x} @ ${i}. The first window isn't full yet.`, view: view(i) }); return; }
+            const dropped = [];
+            const before = heap.slice();
+            while (heap[0][1] <= i - k) dropped.push(heap.shift());
+            res.push(heap[0][0]);
+            steps.push({ line: ["push", "drop", "top"], note: `Push ${x} @ ${i}.${dropped.length ? ` The top ${dropped.map(([v, j]) => `${v} @ ${j}`).join(", ")} is outside the window (index ≤ ${i - k}): pop it.` : ""} The top, ${heap[0][0]}, is the max.`, view: view(i, { show: before, hm: { ...Object.fromEntries(dropped.map((_, j) => [j, "cut"])), [dropped.length]: "match" }, rec: true }) });
+          });
+          steps.push({ line: "return", note: `Return [${res.join(", ")}]. Old values stay in the heap until they reach the top, so it can hold up to n entries: O(n log n).`, view: view(nums.length - 1) });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0239-sliding-window-maximum/approach3.visual.js -->
+    <script>
+      // Monotonic deque of indexes: values go down from front to back, so the front is always the window's max.
+      (function () {
+      const win = (i, k, extra = {}) => ({ ...Object.fromEntries(Array.from({ length: k }, (_, j) => [i + j, "window"])), ...extra });
+      DSAViz.register("0239-sliding-window-maximum/approach3", {
+        inputs: [
+          { name: "nums", type: "int[]", value: "[1, 3, -1, -3, 5, 3, 6, 7]", minLength: 1, maxLength: 10, minValue: -10000, maxValue: 10000 },
+          { name: "k", type: "int", value: "3", min: 1, max: 10 },
+        ],
+        trace({ nums, k }) {
+          if (k > nums.length) throw new DSAViz.InputError(`k must be between 1 and ${nums.length} (the length of nums).`);
+          const dq = [];
+          const res = [];
+          const steps = [];
+          const view = (i, o = {}) => [{ type: "array", label: "nums (outlined = the window, dark = i)", values: nums, marks: i === undefined ? {} : i >= k - 1 ? win(i - k + 1, k, { [i]: "active" }) : { [i]: "active" }, pointers: i === undefined ? {} : { i } }, { type: "array", label: "deque: value @ index, front on the left (green = front = max)", values: dq.map((j) => `${nums[j]} @ ${j}`), wide: true, marks: dq.length && o.rec ? { 0: "match" } : {} }, { type: "array", label: "res", values: res.slice(), marks: o.rec ? { [res.length - 1]: "new" } : {} }];
+          steps.push({ line: "init", note: "An empty deque. It keeps only values that could still become a window's max.", view: view() });
+          nums.forEach((x, i) => {
+            const popped = [];
+            while (dq.length && nums[dq[dq.length - 1]] <= x) popped.push(dq.pop());
+            dq.push(i);
+            let out = null;
+            if (dq[0] <= i - k) out = dq.shift();
+            const rec = i >= k - 1;
+            if (rec) res.push(nums[dq[0]]);
+            const parts = [`nums[${i}] = ${x}.`];
+            if (popped.length) parts.push(`Pop ${popped.map((j) => nums[j]).join(", ")} from the back: smaller than or equal to ${x} and older, so never a max again.`);
+            parts.push(`Push ${x} @ ${i}.`);
+            if (out !== null) parts.push(`The front (index ${out}) slid out of the window: drop it.`);
+            if (rec) parts.push(`Max = the front, ${nums[dq[0]]}.`);
+            steps.push({ line: ["step", "pop", "push", "out", "record"], note: parts.join(" "), view: view(i, { rec }) });
+          });
+          steps.push({ line: "return", note: `Return [${res.join(", ")}]. Each index is pushed once and popped at most once: O(n) time, O(k) space.`, view: view() });
+          return steps;
+        },
+      });
+      })();
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->
     <script>

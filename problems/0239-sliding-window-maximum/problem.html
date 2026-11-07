@@ -1,0 +1,204 @@
+<details class="question" data-group="sliding-window" data-tags="sliding window monotonic queue deque heap maximum window">
+  <summary>
+    <span class="q-title">239. Sliding Window Maximum</span>
+    <span class="q-meta">
+      <span class="badge hard">Hard</span>
+      <span class="tag">Sliding Window</span>
+      <span class="tag">Monotonic Queue</span>
+      <span class="tag">Heap (Priority Queue)</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Keep a <strong>deque of indexes</strong>
+      whose values go down from front to back. When a new value comes in,
+      pop every smaller (or equal) value from the back: they're older and
+      smaller, so they can never be a max again. Drop the front when it
+      slides out. The front is always the window's max. Each index goes in
+      and out once: O(n).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/sliding-window-maximum/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        A window of size <code>k</code> slides from the left of
+        <code>nums</code> to the right, one step at a time. Return the largest
+        value in each window.
+      </p>
+      <ul>
+        <li><code>1 &lt;= k &lt;= nums.length &lt;= 10⁵</code></li>
+        <li><code>-10⁴ &lt;= nums[i] &lt;= 10⁴</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[1,3,-1,-3,5,3,6,7], k = 3</code> →
+        <code>[3,3,5,5,6,7]</code>. <code>[1], k = 1</code> →
+        <code>[1]</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[9,11], k = 2</code></td>
+              <td><code>[11]</code></td>
+              <td>A deque that never pops smaller values from the back keeps 9 at the front: it said <code>[9]</code>. Wrong on 2165 of 3006 tests.</td>
+            </tr>
+            <tr>
+              <td><code>[7,7,7], k = 2</code></td>
+              <td><code>[7,7]</code></td>
+              <td>Equal values. Popping only strictly smaller ones is also correct (all 3006 tests passed); popping equal ones keeps the deque shorter.</td>
+            </tr>
+            <tr>
+              <td><code>[1], k = 1</code></td>
+              <td><code>[1]</code></td>
+              <td>Every window is one value.</td>
+            </tr>
+            <tr>
+              <td>10⁵ rising values, <code>k = 5·10⁴</code></td>
+              <td>-</td>
+              <td>The heap never pops anything until it reaches the top: it grows to 10⁵ entries.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Scan Every Window</h2>
+      <p class="intuition">
+        For each of the n − k + 1 windows, look at all k values and take the
+        biggest.
+      </p>
+      <ul>
+        <li>Fine when k is small; at k ≈ n / 2 it's about n² / 4 steps.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n·k)</span>
+        <span><strong>Space</strong> O(1) besides the answer</span>
+      </div>
+      <p class="note">
+        Just 10⁴ values with k = 5000: Python 0.31 s, Java 23 ms, C++ 16 ms.
+        At 10⁵ it's 100 times more: too slow.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Max-Heap, Lazy Removal</h2>
+      <p class="intuition">
+        Push <code>(value, index)</code> for each value. Before reading the
+        top, pop it while its index is outside the window. Values that slid
+        out but aren't on top can stay: they're not in the way yet.
+      </p>
+      <ul>
+        <li>Removing from the middle of a heap is hard; waiting until an old value reaches the top avoids it.</li>
+        <li>The heap can hold up to n entries.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        10⁵ rising values, k = 5·10⁴: Python 55 ms, Java 6.6 ms, C++ 1.1 ms.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Monotonic Deque
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        For each index <code>i</code>: pop from the back while the value there
+        is ≤ <code>nums[i]</code>; push <code>i</code>; drop the front if it's
+        out of the window; once the first window is full, record the front's
+        value.
+      </p>
+      <ul>
+        <li>Store indexes, not values, so you can tell when the front slides out.</li>
+        <li>The Java version uses an array with two pointers as the deque, so no index is boxed into an <code>Integer</code>.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(k)</span>
+      </div>
+      <p class="note">
+        10⁵ rising values, k = 5·10⁴: Python 15 ms, Java 0.29 ms, C++ 0.32 ms,
+        the fastest in every language and on every input tried.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        No standard library has a sliding max. Outside LeetCode, NumPy's
+        <code>sliding_window_view(nums, k).max(axis=1)</code> works, but it's
+        still O(n·k) inside.
+      </p>
+      <p class="note">Approach 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Scan Every Window</th>
+              <td>max of each window</td>
+              <td>O(n·k)</td>
+              <td>O(1)</td>
+              <td>0.31 s in Python at 10⁴</td>
+            </tr>
+            <tr>
+              <th scope="row">Max-Heap, Lazy Removal</th>
+              <td>Pop stale tops only</td>
+              <td>O(n log n)</td>
+              <td>O(n)</td>
+              <td>Easy to come up with</td>
+            </tr>
+            <tr>
+              <th scope="row">Monotonic Deque</th>
+              <td>Values falling front to back</td>
+              <td>O(n)</td>
+              <td>O(k)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
