@@ -1,0 +1,211 @@
+<details class="question" data-group="trees" data-tags="tree binary tree serialize deserialize preorder bfs level order design string encoding">
+  <summary>
+    <span class="q-title">297. Serialize and Deserialize Binary Tree</span>
+    <span class="q-meta">
+      <span class="badge hard">Hard</span>
+      <span class="tag">Tree</span>
+      <span class="tag">Design</span>
+      <span class="tag">Depth-First Search</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Write the values in <strong>pre-order</strong>
+      (node, left subtree, right subtree) and mark every empty spot with
+      <code>"#"</code>. The markers tell exactly where each subtree ends, so
+      reading the tokens back in the same order rebuilds the same tree.
+      O(n) both ways. Use a stack instead of recursion so a 10⁴-deep tree
+      is fine.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/serialize-and-deserialize-binary-tree/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Build a <code>Codec</code> whose <code>serialize(root)</code> turns a
+        binary tree into a string, and whose <code>deserialize(data)</code>
+        turns that string back into the same tree. Any format works, as long
+        as the round trip is exact.
+      </p>
+      <ul>
+        <li>The number of nodes is in <code>[0, 10⁴]</code></li>
+        <li><code>-1000 &lt;= Node.val &lt;= 1000</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[1,2,3,null,null,4,5]</code> → (any string) → the same
+        tree. <code>[]</code> → the empty tree.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[1,2]</code> and <code>[1,null,2]</code></td>
+              <td>two different strings</td>
+              <td>Writing only the values, level by level, gives <code>1,2</code> for both: you can't tell left from right. Empty spots must be written too.</td>
+            </tr>
+            <tr>
+              <td>10⁴ nodes in one chain</td>
+              <td>-</td>
+              <td>The recursive version hit <code>RecursionError</code> in Python at the default limit of 1000, so it raises the limit. The stack version needs nothing.</td>
+            </tr>
+            <tr>
+              <td><code>[]</code></td>
+              <td><code>[]</code></td>
+              <td>An empty tree must survive the round trip too.</td>
+            </tr>
+            <tr>
+              <td><code>[-1000,1000]</code></td>
+              <td>the same</td>
+              <td>Negative values: separate tokens with commas instead of relying on fixed widths.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Level Order With "null"</h2>
+      <p class="intuition">
+        Write the tree level by level, with <code>"null"</code> for each
+        missing child, and drop trailing nulls (this is LeetCode's own
+        format). To rebuild, keep a queue of parents: each parent takes the
+        next two tokens as its left and right child.
+      </p>
+      <ul>
+        <li>The string is easy to read and matches how LeetCode shows trees.</li>
+        <li>No recursion either way.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        10⁴ random nodes, round trip: Python 7.2 ms, Java 3.0 ms, C++ 1.6 ms.
+        93,856 characters: "null" is longer than "#".
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Recursive Pre-order With "#"</h2>
+      <p class="intuition">
+        <code>walk(node)</code> writes <code>"#"</code> for None, or the value
+        followed by <code>walk(left)</code> and <code>walk(right)</code>. To
+        rebuild, <code>build()</code> reads one token: <code>"#"</code> means
+        None; otherwise make the node, then <code>build()</code> its left and
+        its right.
+      </p>
+      <ul>
+        <li>The two functions mirror each other, which makes it easy to get right.</li>
+        <li>One call per node and per "#": Python needs a higher recursion limit for deep trees.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(height) call stack</span>
+      </div>
+      <p class="note">
+        10⁴ random nodes, round trip: Python 6.2 ms, Java 1.9 ms, C++ 1.3 ms,
+        the fastest in Python and Java. 63,863 characters, a third shorter
+        than Approach 1.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Pre-order With a Stack
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        The same string as Approach 2, made with a stack (push right, then
+        left). To rebuild, keep a stack of nodes still missing a child, with a
+        count of children given. Each token becomes the top node's next
+        child; a node with both children set is popped, and a real new node is
+        pushed.
+      </p>
+      <ul>
+        <li>No recursion, so a 10⁴-node chain needs no special setup in any language.</li>
+        <li>The stack holds at most one root-to-leaf path.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(height)</span>
+      </div>
+      <p class="note">
+        10⁴ random nodes, round trip: Python 9.2 ms, Java 2.9 ms, C++ 1.3 ms
+        (the fastest in C++). A little slower than Approach 2 in Python and
+        Java, in exchange for not depending on the recursion limit.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>
+        Outside LeetCode you'd usually pick an existing format such as JSON.
+        Here you write the format yourself; Approach 2 or 3 is what you'd write.
+      </p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Level Order With "null"</th>
+              <td>BFS; parents take the next two tokens</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>LeetCode's own format</td>
+            </tr>
+            <tr>
+              <th scope="row">Recursive Pre-order</th>
+              <td>walk / build mirror each other</td>
+              <td>O(n)</td>
+              <td>O(height)</td>
+              <td>Needs a higher limit in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">Pre-order With a Stack</th>
+              <td>Same string, no recursion</td>
+              <td>O(n)</td>
+              <td>O(height)</td>
+              <td>Safe for any depth</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

@@ -17295,7 +17295,7 @@
       <details class="pattern-group" id="g-trees">
         <summary>
           <span class="g-name">Trees</span>
-          <span class="g-count"><span class="g-total">14 problems</span></span>
+          <span class="g-count"><span class="g-total">15 problems</span></span>
           <span class="g-hint">A DFS that returns something to the parent</span>
         </summary>
         <div class="g-body">
@@ -22602,6 +22602,624 @@
                         <td>O(h)</td>
                         <td>O(1)</td>
                         <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0297-serialize-and-deserialize-binary-tree ===== -->
+          <details class="question" data-group="trees" data-tags="tree binary tree serialize deserialize preorder bfs level order design string encoding">
+            <summary>
+              <span class="q-title">297. Serialize and Deserialize Binary Tree</span>
+              <span class="q-meta">
+                <span class="badge hard">Hard</span>
+                <span class="tag">Tree</span>
+                <span class="tag">Design</span>
+                <span class="tag">Depth-First Search</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Write the values in <strong>pre-order</strong>
+                (node, left subtree, right subtree) and mark every empty spot with
+                <code>"#"</code>. The markers tell exactly where each subtree ends, so
+                reading the tokens back in the same order rebuilds the same tree.
+                O(n) both ways. Use a stack instead of recursion so a 10⁴-deep tree
+                is fine.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/serialize-and-deserialize-binary-tree/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Build a <code>Codec</code> whose <code>serialize(root)</code> turns a
+                  binary tree into a string, and whose <code>deserialize(data)</code>
+                  turns that string back into the same tree. Any format works, as long
+                  as the round trip is exact.
+                </p>
+                <ul>
+                  <li>The number of nodes is in <code>[0, 10⁴]</code></li>
+                  <li><code>-1000 &lt;= Node.val &lt;= 1000</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>[1,2,3,null,null,4,5]</code> → (any string) → the same
+                  tree. <code>[]</code> → the empty tree.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[1,2]</code> and <code>[1,null,2]</code></td>
+                        <td>two different strings</td>
+                        <td>Writing only the values, level by level, gives <code>1,2</code> for both: you can't tell left from right. Empty spots must be written too.</td>
+                      </tr>
+                      <tr>
+                        <td>10⁴ nodes in one chain</td>
+                        <td>-</td>
+                        <td>The recursive version hit <code>RecursionError</code> in Python at the default limit of 1000, so it raises the limit. The stack version needs nothing.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[]</code></td>
+                        <td><code>[]</code></td>
+                        <td>An empty tree must survive the round trip too.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[-1000,1000]</code></td>
+                        <td>the same</td>
+                        <td>Negative values: separate tokens with commas instead of relying on fixed widths.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Level Order With "null"</h2>
+                <p class="intuition">
+                  Write the tree level by level, with <code>"null"</code> for each
+                  missing child, and drop trailing nulls (this is LeetCode's own
+                  format). To rebuild, keep a queue of parents: each parent takes the
+                  next two tokens as its left and right child.
+                </p>
+                <ul>
+                  <li>The string is easy to read and matches how LeetCode shows trees.</li>
+                  <li>No recursion either way.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  10⁴ random nodes, round trip: Python 7.2 ms, Java 3.0 ms, C++ 1.6 ms.
+                  93,856 characters: "null" is longer than "#".
+                </p>
+                <div class="code-tabs" data-viz="0297-serialize-and-deserialize-binary-tree/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"ser":[10,11,12,13,14,15,16,17,18,19],"trim":[20,21,22],"empty":[24,25],"root":[26,27,28,29],"link":[30,31,32,33,34,35,36,37],"return":[38]}'>
+                    from collections import deque
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, x):
+                    #         self.val = x
+                    #         self.left = None
+                    #         self.right = None
+                    class Codec:
+                        def serialize(self, root):
+                            out = []  # level by level, "null" for every missing child
+                            queue = deque([root])
+                            while queue:
+                                node = queue.popleft()
+                                if node:
+                                    out.append(str(node.val))
+                                    queue.append(node.left)
+                                    queue.append(node.right)
+                                else:
+                                    out.append("null")
+                            while out and out[-1] == "null":  # trailing nulls carry no information
+                                out.pop()
+                            return ",".join(out)
+                        def deserialize(self, data):
+                            if not data:
+                                return None
+                            vals = data.split(",")
+                            root = TreeNode(int(vals[0]))
+                            queue = deque([root])  # parents waiting for their two children, in order
+                            i = 1
+                            while queue and i < len(vals):
+                                node = queue.popleft()  # the next two tokens are its left and right child
+                                for side in ("left", "right"):
+                                    if i < len(vals) and vals[i] != "null":
+                                        child = TreeNode(int(vals[i]))
+                                        setattr(node, side, child)
+                                        queue.append(child)
+                                    i += 1
+                            return root
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"ser":[17,18,19,20,21,22,23,24,25,26,27],"trim":[29,30,31,32],"empty":[35],"root":[36,37,38,39,40,41,42],"link":[43,44,45,46,47,48,49,51],"return":[54]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+                     * };
+                     */
+                    #include <queue>
+                    #include <sstream>
+                    #include <string>
+                    #include <vector>
+                    class Codec {
+                    public:
+                        std::string serialize(TreeNode* root) {
+                            std::vector<std::string> out; // level by level, "null" for every missing child
+                            std::queue<TreeNode*> queue;
+                            queue.push(root);
+                            while (!queue.empty()) {
+                                TreeNode* node = queue.front();
+                                queue.pop();
+                                if (node) {
+                                    out.push_back(std::to_string(node->val));
+                                    queue.push(node->left);
+                                    queue.push(node->right);
+                                } else out.push_back("null");
+                            }
+                            while (!out.empty() && out.back() == "null") out.pop_back(); // trailing nulls carry no information
+                            std::string s;
+                            for (size_t i = 0; i < out.size(); ++i) s += (i ? "," : "") + out[i];
+                            return s;
+                        }
+                        TreeNode* deserialize(std::string data) {
+                            if (data.empty()) return nullptr;
+                            std::vector<std::string> vals;
+                            std::stringstream ss(data);
+                            for (std::string t; std::getline(ss, t, ',');) vals.push_back(t);
+                            TreeNode* root = new TreeNode(std::stoi(vals[0]));
+                            std::queue<TreeNode*> queue; // parents waiting for their two children, in order
+                            queue.push(root);
+                            size_t i = 1;
+                            while (!queue.empty() && i < vals.size()) {
+                                TreeNode* node = queue.front(); // the next two tokens are its left and right child
+                                queue.pop();
+                                for (TreeNode** side : {&node->left, &node->right}) {
+                                    if (i < vals.size() && vals[i] != "null") {
+                                        *side = new TreeNode(std::stoi(vals[i]));
+                                        queue.push(*side);
+                                    }
+                                    ++i;
+                                }
+                            }
+                            return root;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"ser":[13,14,15,16,17,18,19,20,21,22],"trim":[24,25],"empty":[28],"root":[29,30,31,32,33],"link":[34,35,36,37,38,40,41,42,43,45],"return":[47]}'>
+                    import java.util.*;
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode(int x) { val = x; }
+                     * }
+                     */
+                    public class Codec {
+                        public String serialize(TreeNode root) {
+                            List<String> out = new ArrayList<>(); // level by level, "null" for every missing child
+                            List<TreeNode> q = new ArrayList<>(); // the queue, as a list: ArrayDeque can't hold null
+                            q.add(root);
+                            for (int k = 0; k < q.size(); k++) {
+                                TreeNode node = q.get(k);
+                                if (node != null) {
+                                    out.add(String.valueOf(node.val));
+                                    q.add(node.left);
+                                    q.add(node.right);
+                                } else out.add("null");
+                            }
+                            while (!out.isEmpty() && out.get(out.size() - 1).equals("null")) out.remove(out.size() - 1); // trailing nulls carry no information
+                            return String.join(",", out);
+                        }
+                        public TreeNode deserialize(String data) {
+                            if (data.isEmpty()) return null;
+                            String[] vals = data.split(",");
+                            TreeNode root = new TreeNode(Integer.parseInt(vals[0]));
+                            ArrayDeque<TreeNode> queue = new ArrayDeque<>(); // parents waiting for their two children, in order
+                            queue.add(root);
+                            int i = 1;
+                            while (!queue.isEmpty() && i < vals.length) {
+                                TreeNode node = queue.poll(); // the next two tokens are its left and right child
+                                if (i < vals.length && !vals[i].equals("null")) {
+                                    node.left = new TreeNode(Integer.parseInt(vals[i]));
+                                    queue.add(node.left);
+                                }
+                                i++;
+                                if (i < vals.length && !vals[i].equals("null")) {
+                                    node.right = new TreeNode(Integer.parseInt(vals[i]));
+                                    queue.add(node.right);
+                                }
+                                i++;
+                            }
+                            return root;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Recursive Pre-order With "#"</h2>
+                <p class="intuition">
+                  <code>walk(node)</code> writes <code>"#"</code> for None, or the value
+                  followed by <code>walk(left)</code> and <code>walk(right)</code>. To
+                  rebuild, <code>build()</code> reads one token: <code>"#"</code> means
+                  None; otherwise make the node, then <code>build()</code> its left and
+                  its right.
+                </p>
+                <ul>
+                  <li>The two functions mirror each other, which makes it easy to get right.</li>
+                  <li>One call per node and per "#": Python needs a higher recursion limit for deep trees.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(height) call stack</span>
+                </div>
+                <p class="note">
+                  10⁴ random nodes, round trip: Python 6.2 ms, Java 1.9 ms, C++ 1.3 ms,
+                  the fastest in Python and Java. 63,863 characters, a third shorter
+                  than Approach 1.
+                </p>
+                <div class="code-tabs" data-viz="0297-serialize-and-deserialize-binary-tree/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"ser":[11,12,13,14,15,16,17,18,19],"trim":[20],"root":[22],"link":[23,24,27,28,29,30],"empty":[25,26],"return":[31]}'>
+                    import sys
+                    sys.setrecursionlimit(30000)  # a chain of 10^4 nodes is 10^4 calls deep
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, x):
+                    #         self.val = x
+                    #         self.left = None
+                    #         self.right = None
+                    class Codec:
+                        def serialize(self, root):
+                            out = []  # pre-order: node, left subtree, right subtree; "#" for None
+                            def walk(node):
+                                if not node:
+                                    out.append("#")
+                                    return
+                                out.append(str(node.val))
+                                walk(node.left)
+                                walk(node.right)
+                            walk(root)
+                            return ",".join(out)
+                        def deserialize(self, data):
+                            tokens = iter(data.split(","))  # read the tokens in the same order they were written
+                            def build():
+                                t = next(tokens)
+                                if t == "#":
+                                    return None
+                                node = TreeNode(int(t))
+                                node.left = build()  # the left subtree's tokens come right after the node
+                                node.right = build()
+                                return node
+                            return build()
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"ser":[15,16,25,26,27,28,29],"trim":[17,18],"root":[21],"return":[22],"link":[31,32,33,35,36,37,38],"empty":[34]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+                     * };
+                     */
+                    #include <sstream>
+                    #include <string>
+                    class Codec {
+                    public:
+                        std::string serialize(TreeNode* root) {
+                            std::string out; // pre-order: node, left subtree, right subtree; "#" for null
+                            walk(root, out);
+                            out.pop_back(); // drop the last comma
+                            return out;
+                        }
+                        TreeNode* deserialize(std::string data) {
+                            std::stringstream ss(data); // read the tokens in the same order they were written
+                            return build(ss);
+                        }
+                    private:
+                        void walk(TreeNode* node, std::string& out) {
+                            if (!node) { out += "#,"; return; }
+                            out += std::to_string(node->val) + ",";
+                            walk(node->left, out);
+                            walk(node->right, out);
+                        }
+                        TreeNode* build(std::stringstream& ss) {
+                            std::string t;
+                            std::getline(ss, t, ',');
+                            if (t == "#") return nullptr;
+                            TreeNode* node = new TreeNode(std::stoi(t));
+                            node->left = build(ss); // the left subtree's tokens come right after the node
+                            node->right = build(ss);
+                            return node;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"ser":[14,15,24,25,26,27,28],"trim":[16,17],"root":[20,21],"return":[22],"link":[30,31,33,34,35,36],"empty":[32]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode(int x) { val = x; }
+                     * }
+                     */
+                    public class Codec {
+                        private String[] tokens;
+                        private int pos;
+                        public String serialize(TreeNode root) {
+                            StringBuilder out = new StringBuilder(); // pre-order: node, left subtree, right subtree; "#" for null
+                            walk(root, out);
+                            out.setLength(out.length() - 1); // drop the last comma
+                            return out.toString();
+                        }
+                        public TreeNode deserialize(String data) {
+                            tokens = data.split(","); // read the tokens in the same order they were written
+                            pos = 0;
+                            return build();
+                        }
+                        private void walk(TreeNode node, StringBuilder out) {
+                            if (node == null) { out.append("#,"); return; }
+                            out.append(node.val).append(',');
+                            walk(node.left, out);
+                            walk(node.right, out);
+                        }
+                        private TreeNode build() {
+                            String t = tokens[pos++];
+                            if (t.equals("#")) return null;
+                            TreeNode node = new TreeNode(Integer.parseInt(t));
+                            node.left = build(); // the left subtree's tokens come right after the node
+                            node.right = build();
+                            return node;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Pre-order With a Stack
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  The same string as Approach 2, made with a stack (push right, then
+                  left). To rebuild, keep a stack of nodes still missing a child, with a
+                  count of children given. Each token becomes the top node's next
+                  child; a node with both children set is popped, and a real new node is
+                  pushed.
+                </p>
+                <ul>
+                  <li>No recursion, so a 10⁴-node chain needs no special setup in any language.</li>
+                  <li>The stack holds at most one root-to-leaf path.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(height)</span>
+                </div>
+                <p class="note">
+                  10⁴ random nodes, round trip: Python 9.2 ms, Java 2.9 ms, C++ 1.3 ms
+                  (the fastest in C++). A little slower than Approach 2 in Python and
+                  Java, in exchange for not depending on the recursion limit.
+                </p>
+                <div class="code-tabs" data-viz="0297-serialize-and-deserialize-binary-tree/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"ser":[9,10,11,12,13,14,15,16,17,18],"trim":[19],"root":[21,24,25],"empty":[22,23],"link":[26,27,28,29,30,31,32,33,34,35,36,37],"return":[38]}'>
+                    # Definition for a binary tree node.
+                    # class TreeNode(object):
+                    #     def __init__(self, x):
+                    #         self.val = x
+                    #         self.left = None
+                    #         self.right = None
+                    class Codec:
+                        def serialize(self, root):
+                            out = []  # pre-order with "#" for None, but with a stack instead of recursion
+                            stack = [root]
+                            while stack:
+                                node = stack.pop()
+                                if not node:
+                                    out.append("#")
+                                    continue
+                                out.append(str(node.val))
+                                stack.append(node.right)  # push right first, so left comes out first
+                                stack.append(node.left)
+                            return ",".join(out)
+                        def deserialize(self, data):
+                            tokens = data.split(",")
+                            if tokens[0] == "#":
+                                return None
+                            root = TreeNode(int(tokens[0]))
+                            stack = [[root, 0]]  # (node, how many children it has been given so far)
+                            for t in tokens[1:]:  # each token is the next missing child of the node on top
+                                parent = stack[-1]
+                                child = None if t == "#" else TreeNode(int(t))
+                                if parent[1] == 0:
+                                    parent[0].left = child
+                                else:
+                                    parent[0].right = child
+                                parent[1] += 1
+                                while stack and stack[-1][1] == 2:  # both children set: this node is done
+                                    stack.pop()
+                                if child:  # a real node: its own children come next
+                                    stack.append([child, 0])
+                            return root
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"ser":[16,17,18,19,20,21,22,23,24],"trim":[26,27],"root":[30,31,32,33,34,37,38],"empty":[36],"link":[39,40,41,42,43,44,45],"return":[47]}'>
+                    /**
+                     * Definition for a binary tree node.
+                     * struct TreeNode {
+                     *     int val;
+                     *     TreeNode *left;
+                     *     TreeNode *right;
+                     *     TreeNode(int x) : val(x), left(NULL), right(NULL) {}
+                     * };
+                     */
+                    #include <string>
+                    #include <utility>
+                    #include <vector>
+                    class Codec {
+                    public:
+                        std::string serialize(TreeNode* root) {
+                            std::string out; // pre-order with "#" for null, but with a stack instead of recursion
+                            std::vector<TreeNode*> stack{root};
+                            while (!stack.empty()) {
+                                TreeNode* node = stack.back();
+                                stack.pop_back();
+                                if (!node) { out += "#,"; continue; }
+                                out += std::to_string(node->val) + ",";
+                                stack.push_back(node->right); // push right first, so left comes out first
+                                stack.push_back(node->left);
+                            }
+                            out.pop_back(); // drop the last comma
+                            return out;
+                        }
+                        TreeNode* deserialize(std::string data) {
+                            std::vector<std::string> tokens;
+                            for (size_t a = 0, b; a <= data.size(); a = b + 1) {
+                                b = data.find(',', a);
+                                if (b == std::string::npos) b = data.size();
+                                tokens.push_back(data.substr(a, b - a));
+                            }
+                            if (tokens[0] == "#") return nullptr;
+                            TreeNode* root = new TreeNode(std::stoi(tokens[0]));
+                            std::vector<std::pair<TreeNode*, int>> stack{{root, 0}}; // (node, how many children it has been given so far)
+                            for (size_t k = 1; k < tokens.size(); ++k) { // each token is the next missing child of the node on top
+                                auto& parent = stack.back();
+                                TreeNode* child = tokens[k] == "#" ? nullptr : new TreeNode(std::stoi(tokens[k]));
+                                (parent.second == 0 ? parent.first->left : parent.first->right) = child;
+                                ++parent.second;
+                                while (!stack.empty() && stack.back().second == 2) stack.pop_back(); // both children set: this node is done
+                                if (child) stack.push_back({child, 0}); // a real node: its own children come next
+                            }
+                            return root;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"ser":[13,14,15,16,17,18,19,20,21],"trim":[23,24],"root":[27,29,30,31,32,33],"empty":[28],"link":[34,35,36,37,38,39,40,41],"return":[43]}'>
+                    import java.util.*;
+                    /**
+                     * Definition for a binary tree node.
+                     * public class TreeNode {
+                     *     int val;
+                     *     TreeNode left;
+                     *     TreeNode right;
+                     *     TreeNode(int x) { val = x; }
+                     * }
+                     */
+                    public class Codec {
+                        public String serialize(TreeNode root) {
+                            StringBuilder out = new StringBuilder(); // pre-order with "#" for null, but with a stack instead of recursion
+                            List<TreeNode> stack = new ArrayList<>(); // a list as the stack: ArrayDeque can't hold null
+                            stack.add(root);
+                            while (!stack.isEmpty()) {
+                                TreeNode node = stack.remove(stack.size() - 1);
+                                if (node == null) { out.append("#,"); continue; }
+                                out.append(node.val).append(',');
+                                stack.add(node.right); // push right first, so left comes out first
+                                stack.add(node.left);
+                            }
+                            out.setLength(out.length() - 1); // drop the last comma
+                            return out.toString();
+                        }
+                        public TreeNode deserialize(String data) {
+                            String[] tokens = data.split(",");
+                            if (tokens[0].equals("#")) return null;
+                            TreeNode root = new TreeNode(Integer.parseInt(tokens[0]));
+                            ArrayDeque<TreeNode> nodes = new ArrayDeque<>(); // nodes still missing a child
+                            ArrayDeque<Integer> given = new ArrayDeque<>(); // how many children each has been given
+                            nodes.push(root);
+                            given.push(0);
+                            for (int k = 1; k < tokens.length; k++) { // each token is the next missing child of the node on top
+                                TreeNode parent = nodes.peek();
+                                TreeNode child = tokens[k].equals("#") ? null : new TreeNode(Integer.parseInt(tokens[k]));
+                                int g = given.pop();
+                                if (g == 0) parent.left = child; else parent.right = child;
+                                given.push(g + 1);
+                                while (!nodes.isEmpty() && given.peek() == 2) { nodes.pop(); given.pop(); } // both children set: this node is done
+                                if (child != null) { nodes.push(child); given.push(0); } // a real node: its own children come next
+                            }
+                            return root;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>
+                  Outside LeetCode you'd usually pick an existing format such as JSON.
+                  Here you write the format yourself; Approach 2 or 3 is what you'd write.
+                </p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Level Order With "null"</th>
+                        <td>BFS; parents take the next two tokens</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>LeetCode's own format</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Recursive Pre-order</th>
+                        <td>walk / build mirror each other</td>
+                        <td>O(n)</td>
+                        <td>O(height)</td>
+                        <td>Needs a higher limit in Python</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Pre-order With a Stack</th>
+                        <td>Same string, no recursion</td>
+                        <td>O(n)</td>
+                        <td>O(height)</td>
+                        <td>Safe for any depth</td>
                       </tr>
                     </tbody>
                   </table>
@@ -71916,6 +72534,160 @@
       }
       const median = (s) => { const n = s.length; return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2; };
       const show = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));
+      })();
+    </script>
+    <!-- problems/0297-serialize-and-deserialize-binary-tree/approach1.visual.js -->
+    <script>
+      // Level order: write each level left to right, "null" for missing children. Rebuild by giving each parent the next two tokens.
+      (function () {
+      DSAViz.register("0297-serialize-and-deserialize-binary-tree/approach1", {
+        inputs: [{ name: "root", type: "tree", value: "[1, 2, 3, null, null, 4, 5]", maxLength: 15, minValue: -1000, maxValue: 1000 }],
+        trace({ root: values }) {
+          const root = objTree(values);
+          const steps = [];
+          const toks = [];
+          const q = [root];
+          while (q.length) { const n = q.shift(); if (n) { toks.push(String(n.val)); q.push(n.left, n.right); } else toks.push("null"); }
+          const full = toks.slice();
+          while (toks.length && toks[toks.length - 1] === "null") toks.pop();
+          steps.push({ line: "ser", note: `serialize: read the tree level by level, writing "null" for each missing child: ${full.length} tokens.`, view: [{ type: "tree", label: "the tree", values }, tokView(full, Object.fromEntries(full.map((t, i) => [i, t === "null" ? "ghost" : ""]).filter(([, m]) => m)))] });
+          steps.push({ line: "trim", note: `Drop the ${full.length - toks.length} trailing "null"s: they say nothing. The string is "${toks.join(",")}".`, view: [tokView(toks)] });
+          if (!toks.length) { steps.push({ line: ["empty", "return"], note: 'Return []. The string is empty, so deserialize returns None.', view: [tokView(toks)] }); return steps; }
+          const built = { val: Number(toks[0]), left: null, right: null };
+          const parents = [built];
+          let i = 1;
+          steps.push({ line: "root", note: `deserialize: the first token, ${toks[0]}, is the root. It waits for its two children.`, view: [{ type: "tree", label: "rebuilt so far", values: levelList(built) }, tokView(toks, { 0: "match" })] });
+          while (parents.length && i < toks.length) {
+            const p = parents.shift(); const got = [];
+            for (const side of ["left", "right"]) { if (i < toks.length && toks[i] !== "null") { p[side] = { val: Number(toks[i]), left: null, right: null }; parents.push(p[side]); got.push(`${side} = ${toks[i]}`); } else if (i < toks.length) got.push(`${side} = None`); i++; }
+            steps.push({ line: "link", note: `The next two tokens are ${p.val}'s children: ${got.join(", ")}.`, view: [{ type: "tree", label: "rebuilt so far", values: levelList(built) }, tokView(toks, Object.fromEntries(toks.map((_, k) => [k, k < i - 2 ? "match" : k < i ? "new" : ""]).filter(([, m]) => m)))] });
+          }
+          steps.push({ line: "return", note: `Return ${show(levelList(built))}. The same tree as the input. O(n) both ways.`, view: [{ type: "tree", label: "rebuilt tree", values: levelList(built) }] });
+          return steps;
+        },
+      });
+
+      // Level-order list (with nulls) of a tree built from {val,left,right} objects.
+      function levelList(root) {
+        const out = []; const q = [root];
+        while (q.length) { const n = q.shift(); if (!n) { out.push(null); continue; } out.push(n.val); q.push(n.left, n.right); }
+        while (out.length && out[out.length - 1] === null) out.pop();
+        return out;
+      }
+      function objTree(values) {
+        const { root, nodes } = DSAViz.buildTree(values);
+        const o = {};
+        Object.keys(nodes).forEach((id) => (o[id] = { val: nodes[id].val, left: null, right: null, id: Number(id) }));
+        Object.keys(nodes).forEach((id) => { if (nodes[id].left >= 0) o[id].left = o[nodes[id].left]; if (nodes[id].right >= 0) o[id].right = o[nodes[id].right]; });
+        return root < 0 ? null : o[root];
+      }
+      const show = (v) => `[${v.map((x) => (x === null ? "null" : x)).join(", ")}]`;
+      const tokView = (toks, marks = {}, label = "the string, as tokens") => ({ type: "array", label, values: toks, wide: true, marks });
+      })();
+    </script>
+    <!-- problems/0297-serialize-and-deserialize-binary-tree/approach2.visual.js -->
+    <script>
+      // Pre-order with "#" for empty: node, left subtree, right subtree. Rebuild recursively in the same order.
+      (function () {
+      DSAViz.register("0297-serialize-and-deserialize-binary-tree/approach2", {
+        inputs: [{ name: "root", type: "tree", value: "[1, 2, 3, null, null, 4, 5]", maxLength: 15, minValue: -1000, maxValue: 1000 }],
+        trace({ root: values }) {
+          const root = objTree(values);
+          const steps = [];
+          const toks = [];
+          const walk = (n) => { if (!n) { toks.push("#"); return; } toks.push(String(n.val)); walk(n.left); walk(n.right); };
+          walk(root);
+          steps.push({ line: "ser", note: `serialize (with recursion): write each node, then its left subtree, then its right; "#" marks an empty spot. ${toks.length} tokens.`, view: [{ type: "tree", label: "the tree", values }, tokView(toks, Object.fromEntries(toks.map((t, i) => [i, t === "#" ? "ghost" : ""]).filter(([, m]) => m)))] });
+          steps.push({ line: "trim", note: `The string is "${toks.join(",")}". A "#" after every leaf is what lets deserialize tell where each subtree ends.`, view: [tokView(toks)] });
+          if (toks[0] === "#") { steps.push({ line: ["root", "empty", "return"], note: "Return []. The first token is #, so the tree is empty.", view: [tokView(toks, { 0: "ghost" })] }); return steps; }
+          let pos = 0;
+          let built = null;
+          const build = (attach) => {
+            const t = toks[pos++];
+            if (t === "#") return null;
+            const node = { val: Number(t), left: null, right: null };
+            if (attach) attach(node); else built = node;
+            steps.push({ line: "link", note: `Token ${pos - 1} is ${t}: a new node. Its left subtree's tokens come next, then its right's.`, view: [{ type: "tree", label: "rebuilt so far", values: levelList(built) }, tokView(toks, Object.fromEntries(toks.map((_, k) => [k, k < pos - 1 ? "match" : k === pos - 1 ? "new" : ""]).filter(([, m]) => m)))] });
+            build((c) => (node.left = c));
+            build((c) => (node.right = c));
+            return node;
+          };
+          steps.push({ line: "root", note: "deserialize: read the tokens in the same order.", view: [tokView(toks)] });
+          build(null);
+          steps.push({ line: "return", note: `Return ${show(levelList(built))}. The same tree. O(n) both ways${2 === 2 ? ", and O(height) call stack" : ", and the stack holds at most one path"}.`, view: [{ type: "tree", label: "rebuilt tree", values: levelList(built) }] });
+          return steps;
+        },
+      });
+
+      // Level-order list (with nulls) of a tree built from {val,left,right} objects.
+      function levelList(root) {
+        const out = []; const q = [root];
+        while (q.length) { const n = q.shift(); if (!n) { out.push(null); continue; } out.push(n.val); q.push(n.left, n.right); }
+        while (out.length && out[out.length - 1] === null) out.pop();
+        return out;
+      }
+      function objTree(values) {
+        const { root, nodes } = DSAViz.buildTree(values);
+        const o = {};
+        Object.keys(nodes).forEach((id) => (o[id] = { val: nodes[id].val, left: null, right: null, id: Number(id) }));
+        Object.keys(nodes).forEach((id) => { if (nodes[id].left >= 0) o[id].left = o[nodes[id].left]; if (nodes[id].right >= 0) o[id].right = o[nodes[id].right]; });
+        return root < 0 ? null : o[root];
+      }
+      const show = (v) => `[${v.map((x) => (x === null ? "null" : x)).join(", ")}]`;
+      const tokView = (toks, marks = {}, label = "the string, as tokens") => ({ type: "array", label, values: toks, wide: true, marks });
+      })();
+    </script>
+    <!-- problems/0297-serialize-and-deserialize-binary-tree/approach3.visual.js -->
+    <script>
+      // The same pre-order string, built and read with a stack, so a 10^4-deep tree needs no recursion.
+      (function () {
+      DSAViz.register("0297-serialize-and-deserialize-binary-tree/approach3", {
+        inputs: [{ name: "root", type: "tree", value: "[1, 2, 3, null, null, 4, 5]", maxLength: 15, minValue: -1000, maxValue: 1000 }],
+        trace({ root: values }) {
+          const root = objTree(values);
+          const steps = [];
+          const toks = [];
+          const walk = (n) => { if (!n) { toks.push("#"); return; } toks.push(String(n.val)); walk(n.left); walk(n.right); };
+          walk(root);
+          steps.push({ line: "ser", note: `serialize (with a stack): write each node, then its left subtree, then its right; "#" marks an empty spot. ${toks.length} tokens.`, view: [{ type: "tree", label: "the tree", values }, tokView(toks, Object.fromEntries(toks.map((t, i) => [i, t === "#" ? "ghost" : ""]).filter(([, m]) => m)))] });
+          steps.push({ line: "trim", note: `The string is "${toks.join(",")}". A "#" after every leaf is what lets deserialize tell where each subtree ends.`, view: [tokView(toks)] });
+          if (toks[0] === "#") { steps.push({ line: ["root", "empty", "return"], note: "Return []. The first token is #, so the tree is empty.", view: [tokView(toks, { 0: "ghost" })] }); return steps; }
+          const built = { val: Number(toks[0]), left: null, right: null };
+          const stack = [[built, 0]];
+          const sv = () => ({ type: "array", label: "stack: node (children given so far), top on the right", values: stack.map(([n, g]) => `${n.val} (${g})`), wide: true });
+          steps.push({ line: "root", note: `deserialize: token 0, ${toks[0]}, is the root. Push it with 0 children given.`, view: [{ type: "tree", label: "rebuilt so far", values: levelList(built) }, tokView(toks, { 0: "match" }), sv()] });
+          for (let k = 1; k < toks.length; k++) {
+            const parent = stack[stack.length - 1];
+            const child = toks[k] === "#" ? null : { val: Number(toks[k]), left: null, right: null };
+            const side = parent[1] === 0 ? "left" : "right";
+            parent[0][side] = child;
+            parent[1]++;
+            const done = [];
+            while (stack.length && stack[stack.length - 1][1] === 2) done.push(stack.pop()[0].val);
+            if (child) stack.push([child, 0]);
+            steps.push({ line: "link", note: `Token ${k} (${toks[k]}) is ${parent[0].val}'s ${side} child${child ? "" : ": empty"}.${done.length ? ` ${done.join(", ")} now ${done.length > 1 ? "have" : "has"} both children: pop.` : ""}${child ? ` Push ${child.val}: its children come next.` : ""}`, view: [{ type: "tree", label: "rebuilt so far", values: levelList(built) }, tokView(toks, Object.fromEntries(toks.map((_, j) => [j, j < k ? "match" : j === k ? "new" : ""]).filter(([, m]) => m))), sv()] });
+          }
+          steps.push({ line: "return", note: `Return ${show(levelList(built))}. The same tree. O(n) both ways${3 === 2 ? ", and O(height) call stack" : ", and the stack holds at most one path"}.`, view: [{ type: "tree", label: "rebuilt tree", values: levelList(built) }] });
+          return steps;
+        },
+      });
+
+      // Level-order list (with nulls) of a tree built from {val,left,right} objects.
+      function levelList(root) {
+        const out = []; const q = [root];
+        while (q.length) { const n = q.shift(); if (!n) { out.push(null); continue; } out.push(n.val); q.push(n.left, n.right); }
+        while (out.length && out[out.length - 1] === null) out.pop();
+        return out;
+      }
+      function objTree(values) {
+        const { root, nodes } = DSAViz.buildTree(values);
+        const o = {};
+        Object.keys(nodes).forEach((id) => (o[id] = { val: nodes[id].val, left: null, right: null, id: Number(id) }));
+        Object.keys(nodes).forEach((id) => { if (nodes[id].left >= 0) o[id].left = o[nodes[id].left]; if (nodes[id].right >= 0) o[id].right = o[nodes[id].right]; });
+        return root < 0 ? null : o[root];
+      }
+      const show = (v) => `[${v.map((x) => (x === null ? "null" : x)).join(", ")}]`;
+      const tokView = (toks, marks = {}, label = "the string, as tokens") => ({ type: "array", label, values: toks, wide: true, marks });
       })();
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->
