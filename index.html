@@ -5542,7 +5542,7 @@
       <details class="pattern-group" id="g-binary-search">
         <summary>
           <span class="g-name">Binary Search</span>
-          <span class="g-count"><span class="g-total">3 problems</span></span>
+          <span class="g-count"><span class="g-total">4 problems</span></span>
           <span class="g-hint">Halve the search space each step</span>
         </summary>
         <div class="g-body">
@@ -7065,6 +7065,405 @@
                         <th scope="row">Binary Search the Flattened Matrix</th>
                         <td>Position p → (p // n, p % n)</td>
                         <td>O(log(m·n))</td>
+                        <td>O(1)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0153-find-minimum-in-rotated-sorted-array ===== -->
+          <details class="question" data-group="binary-search" data-tags="array binary-search rotated sorted minimum pivot">
+            <summary>
+              <span class="q-title">153. Find Minimum in Rotated Sorted Array</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Array</span>
+                <span class="tag">Binary Search</span>
+              </span>
+            </summary>
+
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Binary search, comparing
+                <code>nums[mid]</code> with <code>nums[hi]</code>. If
+                <code>nums[mid] &gt; nums[hi]</code>, the drop (and the minimum) is to
+                the right of mid: <code>lo = mid + 1</code>. Otherwise mid..hi is
+                sorted and the minimum is mid or left of it: <code>hi = mid</code>.
+                Stop when <code>lo == hi</code>. O(log n).
+              </div>
+
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  A sorted array of different numbers was rotated some number of times
+                  (moving the last number to the front each time), maybe zero times.
+                  Return the smallest number, in O(log n) time.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= n &lt;= 5000</code></li>
+                  <li><code>-5000 &lt;= nums[i] &lt;= 5000</code>, all different</li>
+                </ul>
+                <p class="note">
+                  Example: <code>[3,4,5,1,2]</code> → <code>1</code>.
+                  <code>[4,5,6,7,0,1,2]</code> → <code>0</code>.
+                  <code>[11,13,15,17]</code> → <code>11</code> (not rotated).
+                </p>
+              </section>
+
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[3,1,2]</code></td>
+                        <td><code>1</code></td>
+                        <td><code>hi = mid - 1</code> throws away mid, which can be the minimum: said <code>3</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[2,1]</code></td>
+                        <td><code>1</code></td>
+                        <td>Looping on <code>lo &lt;= hi</code> while setting <code>hi = mid</code> never ends: stuck here after 1,000 rounds.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1,2,3,4]</code></td>
+                        <td><code>1</code></td>
+                        <td>Not rotated. Searching for "the first number smaller than <code>nums[0]</code>" without a separate check said <code>4</code>. Comparing mid with <code>nums[lo]</code> instead of <code>nums[hi]</code> said <code>3</code>.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1]</code></td>
+                        <td><code>1</code></td>
+                        <td>One number: the loop doesn't run.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[2,3,4,5,1]</code></td>
+                        <td><code>1</code></td>
+                        <td>The minimum is last.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[5,1,2,3,4]</code></td>
+                        <td><code>1</code></td>
+                        <td>The minimum is second: the drop is right at the start.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Look at Every Number</h2>
+                <p class="intuition">
+                  Scan the array and keep the smallest number.
+                </p>
+                <ul>
+                  <li>Always right, but ignores that the array is sorted.</li>
+                  <li>Doesn't meet the O(log n) requirement.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  At n = 5000, averaged over 1,000 arrays: Python 70 µs, Java 3.5 µs,
+                  C++ 0.3 µs per call.
+                </p>
+                <div class="code-tabs" data-viz="0153-find-minimum-in-rotated-sorted-array/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"scan":[4,5,6],"return":[7]}'>
+                    class Solution(object):
+                        def findMin(self, nums):
+                            best = nums[0]
+                            for x in nums:  # look at every number
+                                if x < best:
+                                    best = x
+                            return best
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"scan":[6,7],"return":[9]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int findMin(std::vector<int>& nums) {
+                            int best = nums[0];
+                            for (int x : nums) { // look at every number
+                                if (x < best) best = x;
+                            }
+                            return best;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"scan":[4,5],"return":[7]}'>
+                    class Solution {
+                        public int findMin(int[] nums) {
+                            int best = nums[0];
+                            for (int x : nums) { // look at every number
+                                if (x < best) best = x;
+                            }
+                            return best;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Binary Search Against nums[0]</h2>
+                <p class="intuition">
+                  If <code>nums[0] &lt;= nums[-1]</code>, the array isn't rotated:
+                  return <code>nums[0]</code>. Otherwise everything before the drop is
+                  ≥ <code>nums[0]</code> and everything after is smaller, so binary
+                  search for the first number smaller than <code>nums[0]</code>.
+                </p>
+                <ul>
+                  <li>A clear "yes/no" split, the kind binary search is built for.</li>
+                  <li>The not-rotated check is required: there's no number smaller than <code>nums[0]</code> then.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(log n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  At n = 5000: Python 13 µs, Java 0.6 µs, C++ 0.1 µs per call, 5× faster
+                  than the scan in Python. About 13 comparisons instead of 5000.
+                </p>
+                <div class="code-tabs" data-viz="0153-find-minimum-in-rotated-sorted-array/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"sorted":[3,4],"init":[7],"loop":[8],"mid":[9],"right":[10,11],"left":[12,13],"return":[14]}'>
+                    class Solution(object):
+                        def findMin(self, nums):
+                            if nums[0] <= nums[-1]:  # not rotated (or one number): the first is smallest
+                                return nums[0]
+                            # Rotated: numbers before the drop are >= nums[0], numbers after it are < nums[0].
+                            # The minimum is the first number smaller than nums[0].
+                            lo, hi = 1, len(nums) - 1
+                            while lo < hi:
+                                mid = (lo + hi) // 2
+                                if nums[mid] >= nums[0]:  # still in the left part: the drop is after mid
+                                    lo = mid + 1
+                                else:  # mid is after the drop: the minimum is mid or before it
+                                    hi = mid
+                            return nums[lo]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"sorted":[5],"init":[7],"loop":[8],"mid":[9],"right":[10,11],"left":[12,13],"return":[16]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int findMin(std::vector<int>& nums) {
+                            if (nums.front() <= nums.back()) return nums[0]; // not rotated (or one number): the first is smallest
+                            // Rotated: the minimum is the first number smaller than nums[0].
+                            int lo = 1, hi = static_cast<int>(nums.size()) - 1;
+                            while (lo < hi) {
+                                int mid = lo + (hi - lo) / 2;
+                                if (nums[mid] >= nums[0]) { // still in the left part: the drop is after mid
+                                    lo = mid + 1;
+                                } else { // mid is after the drop: the minimum is mid or before it
+                                    hi = mid;
+                                }
+                            }
+                            return nums[lo];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"sorted":[3],"init":[5],"loop":[6],"mid":[7],"right":[8,9],"left":[10,11],"return":[14]}'>
+                    class Solution {
+                        public int findMin(int[] nums) {
+                            if (nums[0] <= nums[nums.length - 1]) return nums[0]; // not rotated (or one number): the first is smallest
+                            // Rotated: the minimum is the first number smaller than nums[0].
+                            int lo = 1, hi = nums.length - 1;
+                            while (lo < hi) {
+                                int mid = lo + (hi - lo) / 2;
+                                if (nums[mid] >= nums[0]) { // still in the left part: the drop is after mid
+                                    lo = mid + 1;
+                                } else { // mid is after the drop: the minimum is mid or before it
+                                    hi = mid;
+                                }
+                            }
+                            return nums[lo];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Binary Search Against nums[hi]
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Compare <code>nums[mid]</code> with <code>nums[hi]</code>. Bigger: the
+                  array drops somewhere after mid, so <code>lo = mid + 1</code>.
+                  Smaller: mid..hi is sorted, so the minimum is mid or left of it,
+                  <code>hi = mid</code>. When one number is left, it's the minimum.
+                </p>
+                <ul>
+                  <li>No special case: a not-rotated array just keeps moving <code>hi</code> left.</li>
+                  <li>
+                    <code>hi = mid</code> with <code>while lo &lt; hi</code> go together;
+                    mixing in <code>mid - 1</code> or <code>lo &lt;= hi</code> breaks it.
+                  </li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(log n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  At n = 5000: Python 11 µs, Java 1.0 µs, C++ 0.15 µs per call. The
+                  expected answer. With duplicates allowed (problem 154), equal values
+                  need <code>hi -= 1</code>, and the worst case becomes O(n).
+                </p>
+                <div class="code-tabs" data-viz="0153-find-minimum-in-rotated-sorted-array/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"loop":[4],"mid":[5],"right":[6,7],"left":[8,9],"return":[10]}'>
+                    class Solution(object):
+                        def findMin(self, nums):
+                            lo, hi = 0, len(nums) - 1
+                            while lo < hi:  # stop when one number is left: that's the minimum
+                                mid = (lo + hi) // 2
+                                if nums[mid] > nums[hi]:  # the drop is between mid and hi, so the minimum is after mid
+                                    lo = mid + 1
+                                else:  # mid..hi is sorted, so the minimum is mid or to its left
+                                    hi = mid  # not mid - 1: mid itself may be the minimum
+                            return nums[lo]
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[5],"loop":[6],"mid":[7],"right":[8,9],"left":[10,11],"return":[14]}'>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int findMin(std::vector<int>& nums) {
+                            int lo = 0, hi = static_cast<int>(nums.size()) - 1;
+                            while (lo < hi) { // stop when one number is left: that's the minimum
+                                int mid = lo + (hi - lo) / 2;
+                                if (nums[mid] > nums[hi]) { // the drop is between mid and hi, so the minimum is after mid
+                                    lo = mid + 1;
+                                } else { // mid..hi is sorted, so the minimum is mid or to its left
+                                    hi = mid; // not mid - 1: mid itself may be the minimum
+                                }
+                            }
+                            return nums[lo];
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"loop":[4],"mid":[5],"right":[6,7],"left":[8,9],"return":[12]}'>
+                    class Solution {
+                        public int findMin(int[] nums) {
+                            int lo = 0, hi = nums.length - 1;
+                            while (lo < hi) { // stop when one number is left: that's the minimum
+                                int mid = lo + (hi - lo) / 2;
+                                if (nums[mid] > nums[hi]) { // the drop is between mid and hi, so the minimum is after mid
+                                    lo = mid + 1;
+                                } else { // mid..hi is sorted, so the minimum is mid or to its left
+                                    hi = mid; // not mid - 1: mid itself may be the minimum
+                                }
+                            }
+                            return nums[lo];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">Built-ins</span></h2>
+                <p>
+                  <code>min(nums)</code> in Python, <code>std::min_element</code> in
+                  C++, <code>Arrays.stream(nums).min()</code> in Java. All scan the
+                  whole array.
+                </p>
+                <div class="code-tabs">
+                  <script type="text/plain" data-lang="Python">
+                    class Solution(object):
+                        def findMin(self, nums):
+                            return min(nums)  # scans everything: O(n)
+                  </script>
+                  <script type="text/plain" data-lang="C++">
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int findMin(std::vector<int>& nums) {
+                            return *std::min_element(nums.begin(), nums.end()); // scans everything: O(n)
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java">
+                    import java.util.Arrays;
+
+                    class Solution {
+                        public int findMin(int[] nums) {
+                            return Arrays.stream(nums).min().getAsInt(); // scans everything: O(n)
+                        }
+                    }
+                  </script>
+                </div>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  Python 70 µs, Java 19 µs, C++ 3.3 µs per call at n = 5000 here: fine
+                  for everyday code, but it's Approach 1, so it misses the point of
+                  the problem.
+                </p>
+              </section>
+
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Look at Every Number</th>
+                        <td>Linear scan</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
+                        <td>Ignores the order</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Binary Search Against nums[0]</th>
+                        <td>First number smaller than nums[0]</td>
+                        <td>O(log n)</td>
+                        <td>O(1)</td>
+                        <td>Needs a not-rotated check</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Binary Search Against nums[hi]</th>
+                        <td>Bigger than nums[hi]: go right</td>
+                        <td>O(log n)</td>
                         <td>O(1)</td>
                         <td>Expected answer</td>
                       </tr>
@@ -52327,6 +52726,154 @@
           return steps;
         },
       });
+    </script>
+    <!-- problems/0153-find-minimum-in-rotated-sorted-array/approach1.visual.js -->
+    <script>
+      // Look at every number and keep the smallest.
+      (function () {
+      DSAViz.register("0153-find-minimum-in-rotated-sorted-array/approach1", {
+        inputs: [{ name: "nums", type: "int[]", value: "[4, 5, 6, 7, 0, 1, 2]", minLength: 1, maxLength: 12, minValue: -99, maxValue: 99 }],
+        trace({ nums }) {
+          checkRotated(nums);
+          const steps = [];
+          let best = nums[0];
+          let at = 0;
+          steps.push({ line: "init", note: `best starts at nums[0] = ${best}.`, view: [{ type: "array", label: "nums", values: nums, marks: { 0: "match" } }, { type: "vars", items: [{ name: "best", value: best }] }] });
+          nums.forEach((x, i) => {
+            const better = x < best;
+            if (better) { best = x; at = i; }
+            const marks = {};
+            for (let k = 0; k < i; k++) marks[k] = "visited";
+            marks[at] = "match";
+            if (i !== at) marks[i] = "active";
+            steps.push({ line: "scan", note: `nums[${i}] = ${x}${better ? `: smaller, best = ${x}` : ""}.`, view: [{ type: "array", label: "nums (green = smallest so far)", values: nums, marks, pointers: { i } }, { type: "vars", items: [{ name: "best", value: best, mark: better ? "new" : "" }, { name: "numbers looked at", value: i + 1 }] }] });
+          });
+          steps.push({ line: "return", note: `Return ${best}. All ${nums.length} numbers were checked: O(n), and it never used the sorted order.`, view: [{ type: "array", label: "nums", values: nums, marks: { [at]: "match" } }] });
+          return steps;
+        },
+      });
+
+      // The input must be a sorted list of different numbers, rotated (possibly 0 times).
+      function checkRotated(nums) {
+        const n = nums.length;
+        if (new Set(nums).size !== n) throw new DSAViz.InputError("The numbers must all be different.");
+        let drops = 0;
+        for (let i = 0; i < n; i++) if (nums[i] > nums[(i + 1) % n]) drops++;
+        if (n > 1 && drops !== 1) throw new DSAViz.InputError("Use a sorted list that was rotated, like [4, 5, 6, 7, 0, 1, 2].");
+      }
+      })();
+    </script>
+    <!-- problems/0153-find-minimum-in-rotated-sorted-array/approach2.visual.js -->
+    <script>
+      // Binary search for the first number smaller than nums[0] (after a check for "not rotated").
+      (function () {
+      DSAViz.register("0153-find-minimum-in-rotated-sorted-array/approach2", {
+        inputs: [{ name: "nums", type: "int[]", value: "[4, 5, 6, 7, 0, 1, 2]", minLength: 1, maxLength: 12, minValue: -99, maxValue: 99 }],
+        trace({ nums }) {
+          checkRotated(nums);
+          const n = nums.length;
+          const steps = [];
+          let cmp = 1;
+          const LABEL = "nums (outlined = still searched; yellow = nums[0], compared against)";
+
+          const view = (lo, hi, mid, o = {}) => {
+            const marks = {};
+            nums.forEach((_, k) => { if (k < lo || k > hi) marks[k] = "ghost"; else marks[k] = "window"; });
+            if (mid !== undefined) marks[mid] = "active";
+            if (o.ref !== undefined) marks[o.ref] = marks[o.ref] === "active" ? "active" : "compare";
+            if (o.found !== undefined) marks[o.found] = "match";
+            const pointers = {};
+            if (lo <= hi) { pointers.lo = lo; pointers.hi = hi; }
+            if (mid !== undefined) pointers.mid = mid;
+            return [{ type: "array", label: LABEL, values: nums, marks, pointers }, { type: "vars", items: [{ name: "comparisons", value: cmp }] }];
+          };
+
+          if (nums[0] <= nums[n - 1]) {
+            steps.push({ line: "sorted", note: `nums[0] = ${nums[0]} ≤ nums[${n - 1}] = ${nums[n - 1]}: not rotated${n === 1 ? " (one number)" : ""}, so the first number is the smallest. Return ${nums[0]}.`, view: view(0, n - 1, undefined, { found: 0 }) });
+            return steps;
+          }
+          let lo = 1;
+          let hi = n - 1;
+          steps.push({ line: ["sorted", "init"], note: `nums[0] = ${nums[0]} > nums[${n - 1}] = ${nums[n - 1]}: rotated. Everything before the drop is ≥ nums[0], everything after is smaller. Find the first number smaller than ${nums[0]}.`, view: view(lo, hi, undefined, { ref: 0 }) });
+          while (lo < hi) {
+            const mid = Math.floor((lo + hi) / 2);
+            cmp++;
+            if (nums[mid] >= nums[0]) {
+              steps.push({ line: ["loop", "mid", "right"], note: `nums[${mid}] = ${nums[mid]} ≥ ${nums[0]}: mid is before the drop. lo = ${mid + 1}.`, view: view(lo, hi, mid, { ref: 0 }) });
+              lo = mid + 1;
+            } else {
+              steps.push({ line: ["loop", "mid", "left"], note: `nums[${mid}] = ${nums[mid]} < ${nums[0]}: mid is after the drop, so the minimum is mid or earlier. hi = ${mid}.`, view: view(lo, hi, mid, { ref: 0 }) });
+              hi = mid;
+            }
+          }
+          steps.push({ line: "return", note: `lo = hi = ${lo}. Return ${nums[lo]}. ${cmp} comparisons: O(log n).`, view: view(lo, hi, undefined, { found: lo }) });
+          return steps;
+        },
+      });
+
+      // The input must be a sorted list of different numbers, rotated (possibly 0 times).
+      function checkRotated(nums) {
+        const n = nums.length;
+        if (new Set(nums).size !== n) throw new DSAViz.InputError("The numbers must all be different.");
+        let drops = 0;
+        for (let i = 0; i < n; i++) if (nums[i] > nums[(i + 1) % n]) drops++;
+        if (n > 1 && drops !== 1) throw new DSAViz.InputError("Use a sorted list that was rotated, like [4, 5, 6, 7, 0, 1, 2].");
+      }
+      })();
+    </script>
+    <!-- problems/0153-find-minimum-in-rotated-sorted-array/approach3.visual.js -->
+    <script>
+      // Binary search comparing nums[mid] with nums[hi]: the half that isn't sorted holds the minimum.
+      (function () {
+      DSAViz.register("0153-find-minimum-in-rotated-sorted-array/approach3", {
+        inputs: [{ name: "nums", type: "int[]", value: "[4, 5, 6, 7, 0, 1, 2]", minLength: 1, maxLength: 12, minValue: -99, maxValue: 99 }],
+        trace({ nums }) {
+          checkRotated(nums);
+          const n = nums.length;
+          const steps = [];
+          let cmp = 0;
+          const LABEL = "nums (outlined = still searched; yellow = nums[hi], compared against)";
+
+          const view = (lo, hi, mid, o = {}) => {
+            const marks = {};
+            nums.forEach((_, k) => { if (k < lo || k > hi) marks[k] = "ghost"; else marks[k] = "window"; });
+            if (mid !== undefined) marks[mid] = "active";
+            if (o.ref !== undefined) marks[o.ref] = marks[o.ref] === "active" ? "active" : "compare";
+            if (o.found !== undefined) marks[o.found] = "match";
+            const pointers = {};
+            if (lo <= hi) { pointers.lo = lo; pointers.hi = hi; }
+            if (mid !== undefined) pointers.mid = mid;
+            return [{ type: "array", label: LABEL, values: nums, marks, pointers }, { type: "vars", items: [{ name: "comparisons", value: cmp }] }];
+          };
+
+          let lo = 0;
+          let hi = n - 1;
+          steps.push({ line: "init", note: `Search all of nums: lo = 0, hi = ${hi}. The minimum is the only number smaller than the one before it.`, view: view(lo, hi) });
+          while (lo < hi) {
+            const mid = Math.floor((lo + hi) / 2);
+            cmp++;
+            if (nums[mid] > nums[hi]) {
+              steps.push({ line: ["loop", "mid", "right"], note: `nums[${mid}] = ${nums[mid]} > nums[hi] = ${nums[hi]}: going from mid to hi it drops somewhere, so the minimum is after mid. lo = ${mid + 1}.`, view: view(lo, hi, mid, { ref: hi }) });
+              lo = mid + 1;
+            } else {
+              steps.push({ line: ["loop", "mid", "left"], note: `nums[${mid}] = ${nums[mid]} < nums[hi] = ${nums[hi]}: mid..hi is sorted, so the minimum is mid or to its left. hi = ${mid} (not ${mid} - 1: mid may be it).`, view: view(lo, hi, mid, { ref: hi }) });
+              hi = mid;
+            }
+          }
+          steps.push({ line: ["loop", "return"], note: `lo = hi = ${lo}: one number left. Return ${nums[lo]}. ${cmp} comparison${cmp === 1 ? "" : "s"}: O(log n).`, view: view(lo, hi, undefined, { found: lo }) });
+          return steps;
+        },
+      });
+
+      // The input must be a sorted list of different numbers, rotated (possibly 0 times).
+      function checkRotated(nums) {
+        const n = nums.length;
+        if (new Set(nums).size !== n) throw new DSAViz.InputError("The numbers must all be different.");
+        let drops = 0;
+        for (let i = 0; i < n; i++) if (nums[i] > nums[(i + 1) % n]) drops++;
+        if (n > 1 && drops !== 1) throw new DSAViz.InputError("Use a sorted list that was rotated, like [4, 5, 6, 7, 0, 1, 2].");
+      }
+      })();
     </script>
     <!-- problems/0518-coin-change-ii/approach1.visual.js -->
     <script>

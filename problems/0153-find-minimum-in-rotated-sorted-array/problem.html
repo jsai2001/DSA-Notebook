@@ -1,0 +1,236 @@
+<details class="question" data-group="binary-search" data-tags="array binary-search rotated sorted minimum pivot">
+  <summary>
+    <span class="q-title">153. Find Minimum in Rotated Sorted Array</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Array</span>
+      <span class="tag">Binary Search</span>
+    </span>
+  </summary>
+
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Binary search, comparing
+      <code>nums[mid]</code> with <code>nums[hi]</code>. If
+      <code>nums[mid] &gt; nums[hi]</code>, the drop (and the minimum) is to
+      the right of mid: <code>lo = mid + 1</code>. Otherwise mid..hi is
+      sorted and the minimum is mid or left of it: <code>hi = mid</code>.
+      Stop when <code>lo == hi</code>. O(log n).
+    </div>
+
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/find-minimum-in-rotated-sorted-array/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        A sorted array of different numbers was rotated some number of times
+        (moving the last number to the front each time), maybe zero times.
+        Return the smallest number, in O(log n) time.
+      </p>
+      <ul>
+        <li><code>1 &lt;= n &lt;= 5000</code></li>
+        <li><code>-5000 &lt;= nums[i] &lt;= 5000</code>, all different</li>
+      </ul>
+      <p class="note">
+        Example: <code>[3,4,5,1,2]</code> → <code>1</code>.
+        <code>[4,5,6,7,0,1,2]</code> → <code>0</code>.
+        <code>[11,13,15,17]</code> → <code>11</code> (not rotated).
+      </p>
+    </section>
+
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[3,1,2]</code></td>
+              <td><code>1</code></td>
+              <td><code>hi = mid - 1</code> throws away mid, which can be the minimum: said <code>3</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[2,1]</code></td>
+              <td><code>1</code></td>
+              <td>Looping on <code>lo &lt;= hi</code> while setting <code>hi = mid</code> never ends: stuck here after 1,000 rounds.</td>
+            </tr>
+            <tr>
+              <td><code>[1,2,3,4]</code></td>
+              <td><code>1</code></td>
+              <td>Not rotated. Searching for "the first number smaller than <code>nums[0]</code>" without a separate check said <code>4</code>. Comparing mid with <code>nums[lo]</code> instead of <code>nums[hi]</code> said <code>3</code>.</td>
+            </tr>
+            <tr>
+              <td><code>[1]</code></td>
+              <td><code>1</code></td>
+              <td>One number: the loop doesn't run.</td>
+            </tr>
+            <tr>
+              <td><code>[2,3,4,5,1]</code></td>
+              <td><code>1</code></td>
+              <td>The minimum is last.</td>
+            </tr>
+            <tr>
+              <td><code>[5,1,2,3,4]</code></td>
+              <td><code>1</code></td>
+              <td>The minimum is second: the drop is right at the start.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Look at Every Number</h2>
+      <p class="intuition">
+        Scan the array and keep the smallest number.
+      </p>
+      <ul>
+        <li>Always right, but ignores that the array is sorted.</li>
+        <li>Doesn't meet the O(log n) requirement.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        At n = 5000, averaged over 1,000 arrays: Python 70 µs, Java 3.5 µs,
+        C++ 0.3 µs per call.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Binary Search Against nums[0]</h2>
+      <p class="intuition">
+        If <code>nums[0] &lt;= nums[-1]</code>, the array isn't rotated:
+        return <code>nums[0]</code>. Otherwise everything before the drop is
+        ≥ <code>nums[0]</code> and everything after is smaller, so binary
+        search for the first number smaller than <code>nums[0]</code>.
+      </p>
+      <ul>
+        <li>A clear "yes/no" split, the kind binary search is built for.</li>
+        <li>The not-rotated check is required: there's no number smaller than <code>nums[0]</code> then.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        At n = 5000: Python 13 µs, Java 0.6 µs, C++ 0.1 µs per call, 5× faster
+        than the scan in Python. About 13 comparisons instead of 5000.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Binary Search Against nums[hi]
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Compare <code>nums[mid]</code> with <code>nums[hi]</code>. Bigger: the
+        array drops somewhere after mid, so <code>lo = mid + 1</code>.
+        Smaller: mid..hi is sorted, so the minimum is mid or left of it,
+        <code>hi = mid</code>. When one number is left, it's the minimum.
+      </p>
+      <ul>
+        <li>No special case: a not-rotated array just keeps moving <code>hi</code> left.</li>
+        <li>
+          <code>hi = mid</code> with <code>while lo &lt; hi</code> go together;
+          mixing in <code>mid - 1</code> or <code>lo &lt;= hi</code> breaks it.
+        </li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(log n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        At n = 5000: Python 11 µs, Java 1.0 µs, C++ 0.15 µs per call. The
+        expected answer. With duplicates allowed (problem 154), equal values
+        need <code>hi -= 1</code>, and the worst case becomes O(n).
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">Built-ins</span></h2>
+      <p>
+        <code>min(nums)</code> in Python, <code>std::min_element</code> in
+        C++, <code>Arrays.stream(nums).min()</code> in Java. All scan the
+        whole array.
+      </p>
+      <div class="code-tabs" data-src="builtin"></div>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        Python 70 µs, Java 19 µs, C++ 3.3 µs per call at n = 5000 here: fine
+        for everyday code, but it's Approach 1, so it misses the point of
+        the problem.
+      </p>
+    </section>
+
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Look at Every Number</th>
+              <td>Linear scan</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Ignores the order</td>
+            </tr>
+            <tr>
+              <th scope="row">Binary Search Against nums[0]</th>
+              <td>First number smaller than nums[0]</td>
+              <td>O(log n)</td>
+              <td>O(1)</td>
+              <td>Needs a not-rotated check</td>
+            </tr>
+            <tr>
+              <th scope="row">Binary Search Against nums[hi]</th>
+              <td>Bigger than nums[hi]: go right</td>
+              <td>O(log n)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>
