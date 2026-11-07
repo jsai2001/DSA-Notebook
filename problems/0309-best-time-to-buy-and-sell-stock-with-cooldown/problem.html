@@ -1,0 +1,200 @@
+<details class="question" data-group="dynamic-programming" data-tags="dynamic programming dp state machine stock buy sell cooldown hold sold rest">
+  <summary>
+    <span class="q-title">309. Best Time to Buy and Sell Stock with Cooldown</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Dynamic Programming</span>
+      <span class="tag">Array</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> Each day you're in one of three states:
+      <strong>hold</strong> (you own a share), <strong>sold</strong> (you
+      sold today, so tomorrow is a cooldown), or <strong>rest</strong>
+      (free to buy). Track the best money for each:
+      <code>hold = max(hold, rest − p)</code>,
+      <code>sold = hold + p</code>, <code>rest = max(rest, sold)</code>, all
+      from yesterday's values. Buying only from <code>rest</code> is what
+      enforces the cooldown. O(n) time, O(1) space.
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        <code>prices[i]</code> is the stock price on day <code>i</code>. Buy
+        and sell as many times as you like, holding at most one share at a
+        time. After a sale you can't buy on the next day (cooldown). Return
+        the most profit.
+      </p>
+      <ul>
+        <li><code>1 &lt;= prices.length &lt;= 5000</code>, <code>0 &lt;= prices[i] &lt;= 1000</code></li>
+      </ul>
+      <p class="note">
+        Example: <code>[1,2,3,0,2]</code> → <code>3</code> (buy 1, sell 2,
+        cool down, buy 0, sell 2). <code>[1]</code> → <code>0</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[1,63,5,416]</code></td>
+              <td><code>415</code></td>
+              <td>
+                Taking every rise (Stock II) needs a buy right after a sale: it
+                said <code>473</code>. Updating the three states in place, so
+                the buy reads today's <code>rest</code>, gives the same wrong
+                answer. Both were wrong on 1375 of 3007 tests.
+              </td>
+            </tr>
+            <tr>
+              <td><code>[2,1]</code></td>
+              <td><code>0</code></td>
+              <td>Prices only fall: never buy.</td>
+            </tr>
+            <tr>
+              <td><code>[1]</code></td>
+              <td><code>0</code></td>
+              <td>One day: nothing to sell.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Recursion with Memo</h2>
+      <p class="intuition">
+        <code>best(i, holding)</code> = the most profit from day
+        <code>i</code> on. Not holding: buy today or wait. Holding: sell today
+        and jump to <code>i + 2</code> (the cooldown), or keep the share.
+      </p>
+      <ul>
+        <li>The cooldown is just "skip a day after selling".</li>
+        <li>One call per day can stack up 5000 deep: Python raises its recursion limit.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        5000 days: Python 5.4 ms, Java 0.17 ms, C++ 0.14 ms.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Three State Arrays</h2>
+      <p class="intuition">
+        Fill <code>hold[i]</code>, <code>sold[i]</code> and
+        <code>rest[i]</code> day by day. You can only buy from yesterday's
+        <code>rest</code>, and today's <code>rest</code> comes from
+        yesterday's <code>sold</code>, so a sale is always followed by a day
+        off.
+      </p>
+      <ul>
+        <li>Draw the three states with arrows between them; the formulas fall out.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        5000 days: Python 1.0 ms, Java 0.05 ms, C++ 0.009 ms.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Three Variables
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Day <code>i</code> only uses day <code>i − 1</code>, so keep three
+        numbers. Compute all three new values from the old ones before
+        assigning any (one tuple assignment in Python, temporaries in C++ and
+        Java).
+      </p>
+      <ul>
+        <li>Updating one in place before the others are computed is the classic bug here.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n)</span>
+        <span><strong>Space</strong> O(1)</span>
+      </div>
+      <p class="note">
+        5000 days: Python 0.50 ms, Java 0.004 ms, C++ 0.007 ms, the fastest in
+        every language.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>Nothing built in. Approach 3 is what you'd write.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Recursion with Memo</th>
+              <td>best(i, holding)</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Selling jumps to i + 2</td>
+            </tr>
+            <tr>
+              <th scope="row">Three State Arrays</th>
+              <td>hold / sold / rest per day</td>
+              <td>O(n)</td>
+              <td>O(n)</td>
+              <td>Easy to check by hand</td>
+            </tr>
+            <tr>
+              <th scope="row">Three Variables</th>
+              <td>Update all from yesterday</td>
+              <td>O(n)</td>
+              <td>O(1)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

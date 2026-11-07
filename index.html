@@ -38448,7 +38448,7 @@
       <details class="pattern-group" id="g-dynamic-programming">
         <summary>
           <span class="g-name">Dynamic Programming</span>
-          <span class="g-count"><span class="g-total">18 problems</span></span>
+          <span class="g-count"><span class="g-total">19 problems</span></span>
           <span class="g-hint">Reuse the answers to smaller problems</span>
         </summary>
         <div class="g-body">
@@ -44387,6 +44387,358 @@
                         <td>Smallest tail per length</td>
                         <td>O(n log n)</td>
                         <td>O(n)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0309-best-time-to-buy-and-sell-stock-with-cooldown ===== -->
+          <details class="question" data-group="dynamic-programming" data-tags="dynamic programming dp state machine stock buy sell cooldown hold sold rest">
+            <summary>
+              <span class="q-title">309. Best Time to Buy and Sell Stock with Cooldown</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Dynamic Programming</span>
+                <span class="tag">Array</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> Each day you're in one of three states:
+                <strong>hold</strong> (you own a share), <strong>sold</strong> (you
+                sold today, so tomorrow is a cooldown), or <strong>rest</strong>
+                (free to buy). Track the best money for each:
+                <code>hold = max(hold, rest − p)</code>,
+                <code>sold = hold + p</code>, <code>rest = max(rest, sold)</code>, all
+                from yesterday's values. Buying only from <code>rest</code> is what
+                enforces the cooldown. O(n) time, O(1) space.
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/best-time-to-buy-and-sell-stock-with-cooldown/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  <code>prices[i]</code> is the stock price on day <code>i</code>. Buy
+                  and sell as many times as you like, holding at most one share at a
+                  time. After a sale you can't buy on the next day (cooldown). Return
+                  the most profit.
+                </p>
+                <ul>
+                  <li><code>1 &lt;= prices.length &lt;= 5000</code>, <code>0 &lt;= prices[i] &lt;= 1000</code></li>
+                </ul>
+                <p class="note">
+                  Example: <code>[1,2,3,0,2]</code> → <code>3</code> (buy 1, sell 2,
+                  cool down, buy 0, sell 2). <code>[1]</code> → <code>0</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>[1,63,5,416]</code></td>
+                        <td><code>415</code></td>
+                        <td>
+                          Taking every rise (Stock II) needs a buy right after a sale: it
+                          said <code>473</code>. Updating the three states in place, so
+                          the buy reads today's <code>rest</code>, gives the same wrong
+                          answer. Both were wrong on 1375 of 3007 tests.
+                        </td>
+                      </tr>
+                      <tr>
+                        <td><code>[2,1]</code></td>
+                        <td><code>0</code></td>
+                        <td>Prices only fall: never buy.</td>
+                      </tr>
+                      <tr>
+                        <td><code>[1]</code></td>
+                        <td><code>0</code></td>
+                        <td>One day: nothing to sell.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Recursion with Memo</h2>
+                <p class="intuition">
+                  <code>best(i, holding)</code> = the most profit from day
+                  <code>i</code> on. Not holding: buy today or wait. Holding: sell today
+                  and jump to <code>i + 2</code> (the cooldown), or keep the share.
+                </p>
+                <ul>
+                  <li>The cooldown is just "skip a day after selling".</li>
+                  <li>One call per day can stack up 5000 deep: Python raises its recursion limit.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  5000 days: Python 5.4 ms, Java 0.17 ms, C++ 0.14 ms.
+                </p>
+                <div class="code-tabs" data-viz="0309-best-time-to-buy-and-sell-stock-with-cooldown/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[5,6],"call":[7],"base":[8,9],"memo":[10,15],"sell":[11,12],"buy":[13,14],"return":[16]}'>
+                    import sys
+                    sys.setrecursionlimit(20000)  # one call per day: up to 5000 deep
+                    class Solution(object):
+                        def maxProfit(self, prices):
+                            n = len(prices)
+                            memo = {}
+                            def best(i, holding):  # the most profit from day i on, holding a share or not
+                                if i >= n:  # no days left
+                                    return 0
+                                if (i, holding) not in memo:
+                                    if holding:  # sell today (then cool down: skip to i + 2), or keep holding
+                                        memo[(i, holding)] = max(prices[i] + best(i + 2, False), best(i + 1, True))
+                                    else:  # buy today, or wait
+                                        memo[(i, holding)] = max(-prices[i] + best(i + 1, True), best(i + 1, False))
+                                return memo[(i, holding)]
+                            return best(0, False)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"return":[7],"call":[11],"base":[12],"memo":[13,14,17],"sell":[15],"buy":[16]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int maxProfit(std::vector<int>& prices) {
+                            memo.assign(prices.size(), {-1, -1}); // memo[i][holding], -1 = not yet
+                            return best(prices, 0, 0);
+                        }
+                    private:
+                        std::vector<std::vector<int>> memo;
+                        int best(const std::vector<int>& p, int i, int holding) { // the most profit from day i on, holding a share or not
+                            if (i >= (int)p.size()) return 0; // no days left
+                            int& m = memo[i][holding];
+                            if (m >= 0) return m;
+                            if (holding) m = std::max(p[i] + best(p, i + 2, 0), best(p, i + 1, 1)); // sell today (then cool down: skip to i + 2), or keep holding
+                            else m = std::max(-p[i] + best(p, i + 1, 1), best(p, i + 1, 0)); // buy today, or wait
+                            return m;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[6,7,8],"return":[9],"call":[11],"base":[12],"memo":[13,16],"sell":[14],"buy":[15]}'>
+                    import java.util.*;
+                    class Solution {
+                        private int[][] memo;
+                        private int[] p;
+                        public int maxProfit(int[] prices) {
+                            p = prices;
+                            memo = new int[prices.length][2]; // memo[i][holding], -1 = not yet
+                            for (int[] row : memo) Arrays.fill(row, -1);
+                            return best(0, 0);
+                        }
+                        private int best(int i, int holding) { // the most profit from day i on, holding a share or not
+                            if (i >= p.length) return 0; // no days left
+                            if (memo[i][holding] >= 0) return memo[i][holding];
+                            if (holding == 1) memo[i][1] = Math.max(p[i] + best(i + 2, 0), best(i + 1, 1)); // sell today (then cool down: skip to i + 2), or keep holding
+                            else memo[i][0] = Math.max(-p[i] + best(i + 1, 1), best(i + 1, 0)); // buy today, or wait
+                            return memo[i][holding];
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Three State Arrays</h2>
+                <p class="intuition">
+                  Fill <code>hold[i]</code>, <code>sold[i]</code> and
+                  <code>rest[i]</code> day by day. You can only buy from yesterday's
+                  <code>rest</code>, and today's <code>rest</code> comes from
+                  yesterday's <code>sold</code>, so a sale is always followed by a day
+                  off.
+                </p>
+                <ul>
+                  <li>Draw the three states with arrows between them; the formulas fall out.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  5000 days: Python 1.0 ms, Java 0.05 ms, C++ 0.009 ms.
+                </p>
+                <div class="code-tabs" data-viz="0309-best-time-to-buy-and-sell-stock-with-cooldown/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5,6,7],"day":[8,9,10,11],"return":[12]}'>
+                    class Solution(object):
+                        def maxProfit(self, prices):
+                            n = len(prices)
+                            hold = [0] * n  # the best money at the end of day i while holding a share
+                            sold = [0] * n  # ... having sold today (so tomorrow is a cooldown)
+                            rest = [0] * n  # ... holding nothing, free to buy tomorrow
+                            hold[0] = -prices[0]
+                            for i in range(1, n):
+                                hold[i] = max(hold[i - 1], rest[i - 1] - prices[i])  # keep holding, or buy today (only from rest)
+                                sold[i] = hold[i - 1] + prices[i]  # sell what you held
+                                rest[i] = max(rest[i - 1], sold[i - 1])  # stay out, or yesterday was the sale (cooldown ends)
+                            return max(sold[-1], rest[-1])  # end without a share
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8],"day":[9,10,11,12],"return":[14]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int maxProfit(std::vector<int>& prices) {
+                            const int n = prices.size();
+                            std::vector<int> hold(n), sold(n), rest(n); // the best money at the end of day i: holding / just sold / free
+                            hold[0] = -prices[0];
+                            for (int i = 1; i < n; ++i) {
+                                hold[i] = std::max(hold[i - 1], rest[i - 1] - prices[i]); // keep holding, or buy today (only from rest)
+                                sold[i] = hold[i - 1] + prices[i]; // sell what you held
+                                rest[i] = std::max(rest[i - 1], sold[i - 1]); // stay out, or yesterday was the sale (cooldown ends)
+                            }
+                            return std::max(sold[n - 1], rest[n - 1]); // end without a share
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3,4,5],"day":[6,7,8,9],"return":[11]}'>
+                    class Solution {
+                        public int maxProfit(int[] prices) {
+                            int n = prices.length;
+                            int[] hold = new int[n], sold = new int[n], rest = new int[n]; // the best money at the end of day i: holding / just sold / free
+                            hold[0] = -prices[0];
+                            for (int i = 1; i < n; i++) {
+                                hold[i] = Math.max(hold[i - 1], rest[i - 1] - prices[i]); // keep holding, or buy today (only from rest)
+                                sold[i] = hold[i - 1] + prices[i]; // sell what you held
+                                rest[i] = Math.max(rest[i - 1], sold[i - 1]); // stay out, or yesterday was the sale (cooldown ends)
+                            }
+                            return Math.max(sold[n - 1], rest[n - 1]); // end without a share
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Three Variables
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Day <code>i</code> only uses day <code>i − 1</code>, so keep three
+                  numbers. Compute all three new values from the old ones before
+                  assigning any (one tuple assignment in Python, temporaries in C++ and
+                  Java).
+                </p>
+                <ul>
+                  <li>Updating one in place before the others are computed is the classic bug here.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n)</span>
+                  <span><strong>Space</strong> O(1)</span>
+                </div>
+                <p class="note">
+                  5000 days: Python 0.50 ms, Java 0.004 ms, C++ 0.007 ms, the fastest in
+                  every language.
+                </p>
+                <div class="code-tabs" data-viz="0309-best-time-to-buy-and-sell-stock-with-cooldown/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3],"day":[4,5],"return":[6]}'>
+                    class Solution(object):
+                        def maxProfit(self, prices):
+                            hold, sold, rest = -prices[0], 0, 0  # the three states after day 0
+                            for p in prices[1:]:
+                                hold, sold, rest = max(hold, rest - p), hold + p, max(rest, sold)  # all from yesterday's values
+                            return max(sold, rest)
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6],"day":[7,8,9,10,11,12],"return":[14]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        int maxProfit(std::vector<int>& prices) {
+                            int hold = -prices[0], sold = 0, rest = 0; // the three states after day 0
+                            for (size_t i = 1; i < prices.size(); ++i) {
+                                int h = std::max(hold, rest - prices[i]); // all from yesterday's values
+                                int s = hold + prices[i];
+                                rest = std::max(rest, sold);
+                                hold = h;
+                                sold = s;
+                            }
+                            return std::max(sold, rest);
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[3],"day":[4,5,6,7,8,9],"return":[11]}'>
+                    class Solution {
+                        public int maxProfit(int[] prices) {
+                            int hold = -prices[0], sold = 0, rest = 0; // the three states after day 0
+                            for (int i = 1; i < prices.length; i++) {
+                                int h = Math.max(hold, rest - prices[i]); // all from yesterday's values
+                                int s = hold + prices[i];
+                                rest = Math.max(rest, sold);
+                                hold = h;
+                                sold = s;
+                            }
+                            return Math.max(sold, rest);
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>Nothing built in. Approach 3 is what you'd write.</p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Recursion with Memo</th>
+                        <td>best(i, holding)</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Selling jumps to i + 2</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Three State Arrays</th>
+                        <td>hold / sold / rest per day</td>
+                        <td>O(n)</td>
+                        <td>O(n)</td>
+                        <td>Easy to check by hand</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Three Variables</th>
+                        <td>Update all from yesterday</td>
+                        <td>O(n)</td>
+                        <td>O(1)</td>
                         <td>Expected answer</td>
                       </tr>
                     </tbody>
@@ -73103,6 +73455,80 @@
             steps.push({ line: ext ? ["each", "search", "extend"] : ["each", "search", "replace"], note: ext ? `${x} is bigger than every tail: append it. There's now an increasing subsequence of length ${tails.length}.` : `The first tail ≥ ${x} is ${old}, at index ${lo}. Replace it: a length-${lo + 1} subsequence can now end at the smaller ${x}.`, view: [{ type: "array", label: "nums (dark = this value)", values: nums, marks: { [i]: "active" } }, { type: "array", label: "tails (always sorted; yellow = changed)", values: tails.slice(), marks: { [lo]: "new" } }] });
           });
           steps.push({ line: "return", note: `Return ${tails.length}. tails isn't always a real subsequence, but its length is the answer. n binary searches: O(n log n).`, view: [{ type: "array", label: "tails", values: tails, marks: Object.fromEntries(tails.map((_, k) => [k, "match"])) }] });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0309-best-time-to-buy-and-sell-stock-with-cooldown/approach1.visual.js -->
+    <script>
+      // best(i, holding): on day i, buy or wait (not holding); sell (then skip a day) or keep (holding). Remembered.
+      DSAViz.register("0309-best-time-to-buy-and-sell-stock-with-cooldown/approach1", {
+        inputs: [{ name: "prices", type: "int[]", value: "[1, 2, 3, 0, 2]", minLength: 1, maxLength: 9, minValue: 0, maxValue: 1000 }],
+        trace({ prices }) {
+          const n = prices.length;
+          const memo = [Array(n).fill(null), Array(n).fill(null)];
+          const steps = [];
+          const MAX = 100; let hidden = 0;
+          const push = (s) => (steps.length < MAX ? steps.push(s) : hidden++);
+          const view = (i, h, o = {}) => [{ type: "array", label: "prices (dark = day i)", values: prices, marks: i !== undefined && i < n ? { [i]: "active" } : {} }, { type: "grid", label: "memo: best profit from day i on (blank = not known yet)", rows: ["not holding", "holding"], cols: prices.map((_, k) => k), corner: "", cells: memo.map((r) => r.map((v) => (v === null ? "" : v))), marks: i !== undefined && i < n ? { [`${h},${i}`]: o.hit ? "match" : "new" } : {} }];
+          push({ line: "init", note: "best(0, not holding): start with no share.", view: view() });
+          const best = (i, h) => {
+            if (i >= n) return 0;
+            if (memo[h][i] !== null) { push({ line: ["call", "memo"], note: `best(${i}, ${h ? "holding" : "not holding"}) is known: ${memo[h][i]}.`, view: view(i, h, { hit: true }) }); return memo[h][i]; }
+            let v, note;
+            if (h) { const a = prices[i] + best(i + 2, 0), b = best(i + 1, 1); v = Math.max(a, b); note = `Day ${i}, holding: sell for ${prices[i]} and skip day ${i + 1} → ${a}, or keep → ${b}. Best ${v}.`; }
+            else { const a = -prices[i] + best(i + 1, 1), b = best(i + 1, 0); v = Math.max(a, b); note = `Day ${i}, not holding: buy for ${prices[i]} → ${a}, or wait → ${b}. Best ${v}.`; }
+            memo[h][i] = v;
+            push({ line: ["call", "memo", h ? "sell" : "buy"], note, view: view(i, h) });
+            return v;
+          };
+          const ans = best(0, 0);
+          steps.push({ line: "return", note: `Return ${ans}${hidden ? ` (${hidden} steps not shown)` : ""}. 2n states, each worked out once: O(n).`, view: view(0, 0, { hit: true }) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0309-best-time-to-buy-and-sell-stock-with-cooldown/approach2.visual.js -->
+    <script>
+      // Three money columns per day: hold (have a share), sold (sold today), rest (free to buy). Each comes from yesterday's.
+      DSAViz.register("0309-best-time-to-buy-and-sell-stock-with-cooldown/approach2", {
+        inputs: [{ name: "prices", type: "int[]", value: "[1, 2, 3, 0, 2]", minLength: 1, maxLength: 9, minValue: 0, maxValue: 1000 }],
+        trace({ prices }) {
+          const n = prices.length;
+          const hold = Array(n).fill(null), sold = Array(n).fill(null), rest = Array(n).fill(null);
+          hold[0] = -prices[0]; sold[0] = 0; rest[0] = 0;
+          const show = (a) => a.map((v) => (v === null ? "" : v));
+          const view = (i) => [{ type: "array", label: "prices (dark = today)", values: prices, marks: { [i]: "active" } }, { type: "grid", label: "money at the end of each day (yellow = today)", rows: ["hold", "sold", "rest"], cols: prices.map((_, k) => k), corner: "", cells: [show(hold), show(sold), show(rest)], marks: { [`0,${i}`]: "new", [`1,${i}`]: "new", [`2,${i}`]: "new" } }];
+          const steps = [{ line: "init", note: `Day 0: buy (hold = −${prices[0]}) or do nothing (rest = 0). Nothing to sell yet.`, view: view(0) }];
+          for (let i = 1; i < n; i++) {
+            hold[i] = Math.max(hold[i - 1], rest[i - 1] - prices[i]);
+            sold[i] = hold[i - 1] + prices[i];
+            rest[i] = Math.max(rest[i - 1], sold[i - 1]);
+            steps.push({ line: "day", note: `Day ${i} (${prices[i]}): hold = max(keep ${hold[i - 1]}, buy from rest ${rest[i - 1]} − ${prices[i]}) = ${hold[i]}. sold = ${hold[i - 1]} + ${prices[i]} = ${sold[i]}. rest = max(${rest[i - 1]}, yesterday's sold ${sold[i - 1]}) = ${rest[i]}.`, view: view(i) });
+          }
+          const ans = Math.max(sold[n - 1], rest[n - 1]);
+          steps.push({ line: "return", note: `Return ${ans} = max(sold, rest) on the last day: you should end without a share. O(n) time and space.`, view: view(n - 1) });
+          return steps;
+        },
+      });
+    </script>
+    <!-- problems/0309-best-time-to-buy-and-sell-stock-with-cooldown/approach3.visual.js -->
+    <script>
+      // The same three states, kept in three variables. Buying only from rest is what enforces the cooldown.
+      DSAViz.register("0309-best-time-to-buy-and-sell-stock-with-cooldown/approach3", {
+        inputs: [{ name: "prices", type: "int[]", value: "[1, 2, 3, 0, 2]", minLength: 1, maxLength: 9, minValue: 0, maxValue: 1000 }],
+        trace({ prices }) {
+          let hold = -prices[0], sold = 0, rest = 0;
+          const vars = (mark) => ({ type: "vars", items: [{ name: "hold", value: hold, mark }, { name: "sold", value: sold, mark }, { name: "rest", value: rest, mark }] });
+          const steps = [{ line: "init", note: `After day 0: hold = −${prices[0]} (bought), sold = 0, rest = 0.`, view: [{ type: "array", label: "prices", values: prices, marks: { 0: "active" } }, vars("")] }];
+          for (let i = 1; i < prices.length; i++) {
+            const p = prices[i];
+            const nh = Math.max(hold, rest - p), ns = hold + p, nr = Math.max(rest, sold);
+            const why = `hold = max(${hold}, ${rest} − ${p}), sold = ${hold} + ${p}, rest = max(${rest}, ${sold})`;
+            [hold, sold, rest] = [nh, ns, nr];
+            steps.push({ line: "day", note: `Day ${i} (${p}): ${why}. All three read yesterday's values.`, view: [{ type: "array", label: "prices (dark = today)", values: prices, marks: { [i]: "active" } }, vars("new")] });
+          }
+          steps.push({ line: "return", note: `Return ${Math.max(sold, rest)}. O(n) time, O(1) space.`, view: [{ type: "array", label: "prices", values: prices }, vars("match")] });
           return steps;
         },
       });
