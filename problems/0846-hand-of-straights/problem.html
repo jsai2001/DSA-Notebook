@@ -1,0 +1,198 @@
+<details class="question" data-group="greedy" data-tags="greedy hash map counting sorting heap consecutive groups">
+  <summary>
+    <span class="q-title">846. Hand of Straights</span>
+    <span class="q-meta">
+      <span class="badge medium">Medium</span>
+      <span class="tag">Greedy</span>
+      <span class="tag">Hash Map</span>
+      <span class="tag">Sorting</span>
+    </span>
+  </summary>
+  <div class="q-body">
+    <!-- KEY IDEA: what to remember at a glance -->
+    <div class="key-idea">
+      <strong>Key idea:</strong> The smallest card left has nothing smaller
+      to go before it, so it must <strong>start</strong> a group. Count the
+      cards and go through the different cards in sorted order: if
+      <code>x</code> has <code>c</code> copies left, start <code>c</code>
+      groups at once and take <code>c</code> of each card from <code>x</code>
+      to <code>x + groupSize − 1</code>. O(n log n).
+    </div>
+    <!-- PROBLEM -->
+    <section class="q-section">
+      <h2>
+        Problem
+        <a
+          class="problem-link"
+          href="https://leetcode.com/problems/hand-of-straights/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+        >
+      </h2>
+      <p>
+        Can the cards in <code>hand</code> be split into groups of
+        <code>groupSize</code> cards, each group being consecutive numbers?
+      </p>
+      <ul>
+        <li><code>1 &lt;= hand.length &lt;= 10⁴</code>, <code>0 &lt;= hand[i] &lt;= 10⁹</code>, <code>1 &lt;= groupSize &lt;= hand.length</code></li>
+        <li>Same problem as 1296. Divide Array in Sets of K Consecutive Numbers.</li>
+      </ul>
+      <p class="note">
+        Example: <code>hand = [1,2,3,6,2,3,4,7,8], groupSize = 3</code> →
+        <code>true</code> (<code>[1,2,3]</code>, <code>[2,3,4]</code>,
+        <code>[6,7,8]</code>). <code>hand = [1,2,3,4,5], groupSize = 4</code> →
+        <code>false</code>.
+      </p>
+    </section>
+    <!-- EDGE CASES: inputs to test before reading the approaches -->
+    <section class="q-section edge-cases">
+      <h2>Edge cases</h2>
+      <p class="note">Try these against your solution before reading the approaches.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Expected</th>
+              <th scope="col">Why it's tricky</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>hand = [8,7], groupSize = 2</code></td>
+              <td><code>true</code></td>
+              <td>Go through the cards in sorted order. Going in hash map order started a group at 8 and gave <code>false</code>; that bug was wrong on 1,009 of 3,009 tests.</td>
+            </tr>
+            <tr>
+              <td><code>hand = [1,2,3,4,5], groupSize = 4</code></td>
+              <td><code>false</code></td>
+              <td>5 cards don't split into groups of 4. Check <code>n % groupSize</code> first.</td>
+            </tr>
+            <tr>
+              <td><code>hand = [1,1,2,2,3,3], groupSize = 3</code></td>
+              <td><code>true</code></td>
+              <td>Two copies of 1 start two groups at once.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <!-- APPROACH 1 -->
+    <section class="approach">
+      <h2>Approach 1: Sort and Remove</h2>
+      <p class="intuition">
+        Sort the cards. Take the smallest card left, then find and remove
+        <code>start</code>, <code>start + 1</code>, … from the list. If one
+        is missing, it's impossible.
+      </p>
+      <ul>
+        <li>Correct, but every search and removal in a list is O(n).</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n²)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        10⁴ cards in groups of 100: Python 425 ms, Java 26 ms, C++ 9.2 ms.
+      </p>
+      <div class="code-tabs" data-src="approach1"></div>
+    </section>
+    <!-- APPROACH 2 -->
+    <section class="approach">
+      <h2>Approach 2: Count + Min-Heap</h2>
+      <p class="intuition">
+        Count each card and put the different cards in a min-heap. The heap
+        top starts the next group; take one of each card in the run. When a
+        card runs out, it must be the heap top, so pop it. If a smaller card
+        is still left, it can't be finished, so stop early.
+      </p>
+      <ul>
+        <li>One group at a time, one card at a time.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        10⁴ cards in groups of 100, average of 40 runs: Python 1.4 ms, Java
+        0.24 ms, C++ 0.065 ms. 5,000 pairs spread far apart: Python 5.3 ms,
+        Java 1.6 ms, C++ 0.95 ms.
+      </p>
+      <div class="code-tabs" data-src="approach2"></div>
+    </section>
+    <!-- APPROACH 3 -->
+    <section class="approach">
+      <h2>
+        Approach 3: Count + Sorted Cards, Whole Batches
+        <span class="label optimal">Optimal</span>
+      </h2>
+      <p class="intuition">
+        Count each card and sort the different cards. Walk them smallest
+        first. If <code>x</code> still has <code>c</code> copies, all of them
+        must start groups, so take <code>c</code> of each card from
+        <code>x</code> to <code>x + groupSize − 1</code>. If any has fewer
+        than <code>c</code>, it's impossible.
+      </p>
+      <ul>
+        <li>No heap: a card with 0 copies left is just skipped.</li>
+        <li>Use a hash map plus one sort of the keys. A sorted map (<code>std::map</code>, <code>TreeMap</code>) also works, but was 1.8 to 5.8 times slower here.</li>
+      </ul>
+      <div class="complexity">
+        <span><strong>Time</strong> O(n log n)</span>
+        <span><strong>Space</strong> O(n)</span>
+      </div>
+      <p class="note">
+        Groups of 100: Python 0.53 ms, Java 0.15 ms, C++ 0.042 ms. Spread
+        pairs: Python 3.1 ms, Java 0.98 ms, C++ 0.83 ms. The fastest in every
+        language on both.
+      </p>
+      <div class="code-tabs" data-src="approach3"></div>
+    </section>
+    <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+    <section class="q-section in-practice">
+      <h2>In practice <span class="label">No shortcut</span></h2>
+      <p>Nothing built in. Approach 3, with <code>Counter</code> in Python.</p>
+    </section>
+    <!-- COMPARISON -->
+    <section class="q-section">
+      <h2>Comparison</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Approach</th>
+              <th scope="col">Technique</th>
+              <th scope="col">Time</th>
+              <th scope="col">Space</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Sort and Remove</th>
+              <td>Remove each run from a list</td>
+              <td>O(n²)</td>
+              <td>O(n)</td>
+              <td>425 ms in Python</td>
+            </tr>
+            <tr>
+              <th scope="row">Count + Min-Heap</th>
+              <td>Heap top starts the next group</td>
+              <td>O(n log n)</td>
+              <td>O(n)</td>
+              <td>One card at a time</td>
+            </tr>
+            <tr>
+              <th scope="row">Count + Sorted Cards</th>
+              <td>Start all c groups at once</td>
+              <td>O(n log n)</td>
+              <td>O(n)</td>
+              <td>Expected answer</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</details>

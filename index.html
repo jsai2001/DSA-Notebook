@@ -48799,7 +48799,7 @@
       <details class="pattern-group" id="g-greedy">
         <summary>
           <span class="g-name">Greedy</span>
-          <span class="g-count"><span class="g-total">7 problems</span></span>
+          <span class="g-count"><span class="g-total">8 problems</span></span>
           <span class="g-hint">Take the best step you can see</span>
         </summary>
         <div class="g-body">
@@ -51240,6 +51240,406 @@
                         <td>Cut when i == end</td>
                         <td>O(n)</td>
                         <td>O(1)</td>
+                        <td>Expected answer</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          </details>
+
+          <!-- ===== problems/0846-hand-of-straights ===== -->
+          <details class="question" data-group="greedy" data-tags="greedy hash map counting sorting heap consecutive groups">
+            <summary>
+              <span class="q-title">846. Hand of Straights</span>
+              <span class="q-meta">
+                <span class="badge medium">Medium</span>
+                <span class="tag">Greedy</span>
+                <span class="tag">Hash Map</span>
+                <span class="tag">Sorting</span>
+              </span>
+            </summary>
+            <div class="q-body">
+              <!-- KEY IDEA: what to remember at a glance -->
+              <div class="key-idea">
+                <strong>Key idea:</strong> The smallest card left has nothing smaller
+                to go before it, so it must <strong>start</strong> a group. Count the
+                cards and go through the different cards in sorted order: if
+                <code>x</code> has <code>c</code> copies left, start <code>c</code>
+                groups at once and take <code>c</code> of each card from <code>x</code>
+                to <code>x + groupSize − 1</code>. O(n log n).
+              </div>
+              <!-- PROBLEM -->
+              <section class="q-section">
+                <h2>
+                  Problem
+                  <a
+                    class="problem-link"
+                    href="https://leetcode.com/problems/hand-of-straights/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >View on LeetCode<span class="visually-hidden"> (opens in a new tab)</span> ↗</a
+                  >
+                </h2>
+                <p>
+                  Can the cards in <code>hand</code> be split into groups of
+                  <code>groupSize</code> cards, each group being consecutive numbers?
+                </p>
+                <ul>
+                  <li><code>1 &lt;= hand.length &lt;= 10⁴</code>, <code>0 &lt;= hand[i] &lt;= 10⁹</code>, <code>1 &lt;= groupSize &lt;= hand.length</code></li>
+                  <li>Same problem as 1296. Divide Array in Sets of K Consecutive Numbers.</li>
+                </ul>
+                <p class="note">
+                  Example: <code>hand = [1,2,3,6,2,3,4,7,8], groupSize = 3</code> →
+                  <code>true</code> (<code>[1,2,3]</code>, <code>[2,3,4]</code>,
+                  <code>[6,7,8]</code>). <code>hand = [1,2,3,4,5], groupSize = 4</code> →
+                  <code>false</code>.
+                </p>
+              </section>
+              <!-- EDGE CASES: inputs to test before reading the approaches -->
+              <section class="q-section edge-cases">
+                <h2>Edge cases</h2>
+                <p class="note">Try these against your solution before reading the approaches.</p>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Input</th>
+                        <th scope="col">Expected</th>
+                        <th scope="col">Why it's tricky</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><code>hand = [8,7], groupSize = 2</code></td>
+                        <td><code>true</code></td>
+                        <td>Go through the cards in sorted order. Going in hash map order started a group at 8 and gave <code>false</code>; that bug was wrong on 1,009 of 3,009 tests.</td>
+                      </tr>
+                      <tr>
+                        <td><code>hand = [1,2,3,4,5], groupSize = 4</code></td>
+                        <td><code>false</code></td>
+                        <td>5 cards don't split into groups of 4. Check <code>n % groupSize</code> first.</td>
+                      </tr>
+                      <tr>
+                        <td><code>hand = [1,1,2,2,3,3], groupSize = 3</code></td>
+                        <td><code>true</code></td>
+                        <td>Two copies of 1 start two groups at once.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+              <!-- APPROACH 1 -->
+              <section class="approach">
+                <h2>Approach 1: Sort and Remove</h2>
+                <p class="intuition">
+                  Sort the cards. Take the smallest card left, then find and remove
+                  <code>start</code>, <code>start + 1</code>, … from the list. If one
+                  is missing, it's impossible.
+                </p>
+                <ul>
+                  <li>Correct, but every search and removal in a list is O(n).</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n²)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  10⁴ cards in groups of 100: Python 425 ms, Java 26 ms, C++ 9.2 ms.
+                </p>
+                <div class="code-tabs" data-viz="0846-hand-of-straights/approach1">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5],"group":[6,7],"take":[8,11],"fail":[9,10],"return":[12]}'>
+                    class Solution(object):
+                        def isNStraightHand(self, hand, groupSize):
+                            if len(hand) % groupSize:  # the cards must split evenly
+                                return False
+                            hand = sorted(hand)
+                            while hand:
+                                start = hand[0]  # the smallest card left must start a group
+                                for x in range(start, start + groupSize):
+                                    if x not in hand:  # a missing card breaks the run
+                                        return False
+                                    hand.remove(x)  # removes the first x: O(n)
+                            return True
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[6,7,8],"group":[9,10],"take":[11,14],"fail":[12,13],"return":[17]}'>
+                    #include <algorithm>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool isNStraightHand(std::vector<int>& hand, int groupSize) {
+                            if (hand.size() % groupSize) return false; // the cards must split evenly
+                            std::vector<int> h(hand);
+                            std::sort(h.begin(), h.end());
+                            while (!h.empty()) {
+                                long long start = h[0]; // the smallest card left must start a group
+                                for (long long x = start; x < start + groupSize; ++x) {
+                                    auto it = std::find(h.begin(), h.end(), x);
+                                    if (it == h.end()) return false; // a missing card breaks the run
+                                    h.erase(it); // O(n)
+                                }
+                            }
+                            return true;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5,6,7],"group":[8,9],"take":[10,13],"fail":[11,12],"return":[16]}'>
+                    import java.util.*;
+                    class Solution {
+                        public boolean isNStraightHand(int[] hand, int groupSize) {
+                            if (hand.length % groupSize != 0) return false; // the cards must split evenly
+                            List<Integer> h = new ArrayList<>();
+                            for (int x : hand) h.add(x);
+                            Collections.sort(h);
+                            while (!h.isEmpty()) {
+                                long start = h.get(0); // the smallest card left must start a group
+                                for (long x = start; x < start + groupSize; x++) {
+                                    int i = x > Integer.MAX_VALUE ? -1 : h.indexOf((int) x);
+                                    if (i < 0) return false; // a missing card breaks the run
+                                    h.remove(i); // O(n)
+                                }
+                            }
+                            return true;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 2 -->
+              <section class="approach">
+                <h2>Approach 2: Count + Min-Heap</h2>
+                <p class="intuition">
+                  Count each card and put the different cards in a min-heap. The heap
+                  top starts the next group; take one of each card in the run. When a
+                  card runs out, it must be the heap top, so pop it. If a smaller card
+                  is still left, it can't be finished, so stop early.
+                </p>
+                <ul>
+                  <li>One group at a time, one card at a time.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  10⁴ cards in groups of 100, average of 40 runs: Python 1.4 ms, Java
+                  0.24 ms, C++ 0.065 ms. 5,000 pairs spread far apart: Python 5.3 ms,
+                  Java 1.6 ms, C++ 0.95 ms.
+                </p>
+                <div class="code-tabs" data-viz="0846-hand-of-straights/approach2">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[4,5,6,7,8,9,10],"group":[11,12],"take":[13,16],"fail":[14,15,18,19],"pop":[17,20],"return":[21]}'>
+                    import heapq
+                    class Solution(object):
+                        def isNStraightHand(self, hand, groupSize):
+                            if len(hand) % groupSize:  # the cards must split evenly
+                                return False
+                            count = {}  # card -> copies left
+                            for x in hand:
+                                count[x] = count.get(x, 0) + 1
+                            heap = list(count)  # the different cards; the smallest left is on top
+                            heapq.heapify(heap)
+                            while heap:
+                                start = heap[0]  # the smallest card left must start a group
+                                for x in range(start, start + groupSize):
+                                    if count.get(x, 0) == 0:  # a missing card breaks the run
+                                        return False
+                                    count[x] -= 1
+                                    if count[x] == 0:  # x is used up
+                                        if x != heap[0]:  # a smaller card is still left, and now it can never be in a group
+                                            return False
+                                        heapq.heappop(heap)
+                            return True
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[8,9,10,11,12],"group":[13,14],"take":[15,18],"fail":[16,17,19],"pop":[18,20],"return":[24]}'>
+                    #include <functional>
+                    #include <queue>
+                    #include <unordered_map>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool isNStraightHand(std::vector<int>& hand, int groupSize) {
+                            if (hand.size() % groupSize) return false; // the cards must split evenly
+                            std::unordered_map<long long, int> count; // card -> copies left
+                            for (int x : hand) ++count[x];
+                            std::priority_queue<long long, std::vector<long long>, std::greater<long long>> heap; // the smallest card left on top
+                            for (auto& [x, c] : count) heap.push(x);
+                            while (!heap.empty()) {
+                                long long start = heap.top(); // the smallest card left must start a group
+                                for (long long x = start; x < start + groupSize; ++x) {
+                                    auto it = count.find(x);
+                                    if (it == count.end() || it->second == 0) return false; // a missing card breaks the run
+                                    if (--it->second == 0) { // x is used up
+                                        if (x != heap.top()) return false; // a smaller card is still left, and now it can never be in a group
+                                        heap.pop();
+                                    }
+                                }
+                            }
+                            return true;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5,6,7],"group":[8,9],"take":[10,13],"fail":[11,12,15],"pop":[14,16],"return":[20]}'>
+                    import java.util.*;
+                    class Solution {
+                        public boolean isNStraightHand(int[] hand, int groupSize) {
+                            if (hand.length % groupSize != 0) return false; // the cards must split evenly
+                            Map<Long, Integer> count = new HashMap<>(); // card -> copies left
+                            for (int x : hand) count.merge((long) x, 1, Integer::sum);
+                            PriorityQueue<Long> heap = new PriorityQueue<>(count.keySet()); // the smallest card left on top
+                            while (!heap.isEmpty()) {
+                                long start = heap.peek(); // the smallest card left must start a group
+                                for (long x = start; x < start + groupSize; x++) {
+                                    int c = count.getOrDefault(x, 0);
+                                    if (c == 0) return false; // a missing card breaks the run
+                                    count.put(x, c - 1);
+                                    if (c - 1 == 0) { // x is used up
+                                        if (x != heap.peek()) return false; // a smaller card is still left, and now it can never be in a group
+                                        heap.poll();
+                                    }
+                                }
+                            }
+                            return true;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- APPROACH 3 -->
+              <section class="approach">
+                <h2>
+                  Approach 3: Count + Sorted Cards, Whole Batches
+                  <span class="label optimal">Optimal</span>
+                </h2>
+                <p class="intuition">
+                  Count each card and sort the different cards. Walk them smallest
+                  first. If <code>x</code> still has <code>c</code> copies, all of them
+                  must start groups, so take <code>c</code> of each card from
+                  <code>x</code> to <code>x + groupSize − 1</code>. If any has fewer
+                  than <code>c</code>, it's impossible.
+                </p>
+                <ul>
+                  <li>No heap: a card with 0 copies left is just skipped.</li>
+                  <li>Use a hash map plus one sort of the keys. A sorted map (<code>std::map</code>, <code>TreeMap</code>) also works, but was 1.8 to 5.8 times slower here.</li>
+                </ul>
+                <div class="complexity">
+                  <span><strong>Time</strong> O(n log n)</span>
+                  <span><strong>Space</strong> O(n)</span>
+                </div>
+                <p class="note">
+                  Groups of 100: Python 0.53 ms, Java 0.15 ms, C++ 0.042 ms. Spread
+                  pairs: Python 3.1 ms, Java 0.98 ms, C++ 0.83 ms. The fastest in every
+                  language on both.
+                </p>
+                <div class="code-tabs" data-viz="0846-hand-of-straights/approach3">
+                  <script type="text/plain" data-lang="Python" data-viz-lines='{"init":[3,4,5,6,7],"group":[8,9,10],"take":[11,14],"fail":[12,13],"return":[15]}'>
+                    class Solution(object):
+                        def isNStraightHand(self, hand, groupSize):
+                            if len(hand) % groupSize:  # the cards must split evenly
+                                return False
+                            count = {}  # card -> copies left
+                            for x in hand:
+                                count[x] = count.get(x, 0) + 1
+                            for x in sorted(count):  # smallest card first
+                                c = count[x]  # every copy of x left must start its own group
+                                if c:
+                                    for y in range(x, x + groupSize):  # start all c groups at once
+                                        if count.get(y, 0) < c:  # not enough y to go on
+                                            return False
+                                        count[y] -= c
+                            return True
+                  </script>
+                  <script type="text/plain" data-lang="C++" data-viz-lines='{"init":[7,8,9],"group":[10,11,12,13,14,15],"take":[16,19],"fail":[17,18],"return":[22]}'>
+                    #include <algorithm>
+                    #include <unordered_map>
+                    #include <vector>
+                    class Solution {
+                    public:
+                        bool isNStraightHand(std::vector<int>& hand, int groupSize) {
+                            if (hand.size() % groupSize) return false; // the cards must split evenly
+                            std::unordered_map<long long, int> count; // card -> copies left
+                            for (int x : hand) ++count[x];
+                            std::vector<long long> keys;
+                            for (auto& [x, c] : count) keys.push_back(x);
+                            std::sort(keys.begin(), keys.end()); // smallest card first
+                            for (long long x : keys) {
+                                int c = count[x]; // every copy of x left must start its own group
+                                if (c == 0) continue;
+                                for (long long y = x; y < x + groupSize; ++y) { // start all c groups at once
+                                    auto it = count.find(y);
+                                    if (it == count.end() || it->second < c) return false; // not enough y to go on
+                                    it->second -= c;
+                                }
+                            }
+                            return true;
+                        }
+                    };
+                  </script>
+                  <script type="text/plain" data-lang="Java" data-viz-lines='{"init":[4,5,6],"group":[7,8,9,10,11,12,13],"take":[14,17],"fail":[15,16],"return":[20]}'>
+                    import java.util.*;
+                    class Solution {
+                        public boolean isNStraightHand(int[] hand, int groupSize) {
+                            if (hand.length % groupSize != 0) return false; // the cards must split evenly
+                            Map<Long, Integer> count = new HashMap<>(); // card -> copies left
+                            for (int x : hand) count.merge((long) x, 1, Integer::sum);
+                            long[] keys = new long[count.size()];
+                            int n = 0;
+                            for (long x : count.keySet()) keys[n++] = x;
+                            Arrays.sort(keys); // smallest card first
+                            for (long x : keys) {
+                                int c = count.get(x); // every copy of x left must start its own group
+                                if (c == 0) continue;
+                                for (long y = x; y < x + groupSize; y++) { // start all c groups at once
+                                    int have = count.getOrDefault(y, 0);
+                                    if (have < c) return false; // not enough y to go on
+                                    count.put(y, have - c);
+                                }
+                            }
+                            return true;
+                        }
+                    }
+                  </script>
+                </div>
+              </section>
+              <!-- IN PRACTICE: what you'd write day to day with built-ins -->
+              <section class="q-section in-practice">
+                <h2>In practice <span class="label">No shortcut</span></h2>
+                <p>Nothing built in. Approach 3, with <code>Counter</code> in Python.</p>
+              </section>
+              <!-- COMPARISON -->
+              <section class="q-section">
+                <h2>Comparison</h2>
+                <div class="table-wrap">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th scope="col">Approach</th>
+                        <th scope="col">Technique</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Space</th>
+                        <th scope="col">Notes</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">Sort and Remove</th>
+                        <td>Remove each run from a list</td>
+                        <td>O(n²)</td>
+                        <td>O(n)</td>
+                        <td>425 ms in Python</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Count + Min-Heap</th>
+                        <td>Heap top starts the next group</td>
+                        <td>O(n log n)</td>
+                        <td>O(n)</td>
+                        <td>One card at a time</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Count + Sorted Cards</th>
+                        <td>Start all c groups at once</td>
+                        <td>O(n log n)</td>
+                        <td>O(n)</td>
                         <td>Expected answer</td>
                       </tr>
                     </tbody>
@@ -80045,6 +80445,137 @@
       const fmt = (d) => (d === Infinity ? "∞" : String(d));
       const flightView = (flights, marks = {}, label = "flights from→to (price)") => ({ type: "array", label, values: flights.map(([u, v, p]) => `${u}→${v} (${p})`), wide: true, marks });
       const priceView = (p, marks = {}, label) => ({ type: "array", label, values: p.map(fmt), marks });
+      })();
+    </script>
+    <!-- problems/0846-hand-of-straights/approach1.visual.js -->
+    <script>
+      // Sort; the smallest card left must start a group, so remove start, start + 1, ... from the list.
+      (function () {
+      DSAViz.register("0846-hand-of-straights/approach1", {
+        inputs: [
+          { name: "hand", type: "int[]", value: "[1, 2, 3, 6, 2, 3, 4, 7, 8]", minLength: 1, maxLength: 12, minValue: 0, maxValue: 99 },
+          { name: "groupSize", type: "int", value: "3", min: 1, max: 12 },
+        ],
+        trace({ hand, groupSize: g }) {
+          const steps = [];
+          const groups = [];
+          const gview = () => ({ type: "array", label: "groups made", values: groups.length ? groups.map((x) => x.join(" ")) : ["—"], wide: true, marks: groups.length ? { [groups.length - 1]: "new" } : { 0: "ghost" } });
+          if (hand.length % g) {
+            steps.push({ line: "init", note: `${hand.length} cards don't split into groups of ${g}. Return false.`, view: [{ type: "array", label: "hand", values: hand }] });
+            return steps;
+          }
+          const h = [...hand].sort((a, b) => a - b);
+          const hview = (marks = {}) => ({ type: "array", label: "cards left, sorted", values: h.length ? [...h] : ["—"], marks: h.length ? marks : { 0: "ghost" } });
+          steps.push({ line: "init", note: `Sort the ${hand.length} cards.`, view: [hview(), gview()] });
+          while (h.length) {
+            const s = h[0];
+            steps.push({ line: "group", note: `The smallest card left is ${s}. Nothing smaller is left to go before it, so it must start a group: ${Array.from({ length: g }, (_, i) => s + i).join(", ")}.`, view: [hview({ 0: "active" }), gview()] });
+            const got = [];
+            for (let x = s; x < s + g; x++) {
+              const i = h.indexOf(x);
+              if (i < 0) {
+                steps.push({ line: "fail", note: `No ${x} left, so ${s} can't start a full group. Return false.`, view: [hview(), { type: "array", label: "this group so far", values: got.length ? [...got, `${x}?`] : [`${x}?`], marks: { [got.length]: "cut" } }, gview()] });
+                return steps;
+              }
+              h.splice(i, 1);
+              got.push(x);
+            }
+            groups.push(got);
+            steps.push({ line: "take", note: `Found and removed ${got.join(", ")}. Each removal searches the list: O(n).`, view: [hview(), gview()] });
+          }
+          steps.push({ line: "return", note: `Return true. Every card is in a group. O(n²) from the list removals.`, view: [gview()] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0846-hand-of-straights/approach2.visual.js -->
+    <script>
+      // Count the cards; a min-heap gives the smallest card left, which must start the next group.
+      (function () {
+      DSAViz.register("0846-hand-of-straights/approach2", {
+        inputs: [
+          { name: "hand", type: "int[]", value: "[1, 2, 3, 6, 2, 3, 4, 7, 8]", minLength: 1, maxLength: 12, minValue: 0, maxValue: 99 },
+          { name: "groupSize", type: "int", value: "3", min: 1, max: 12 },
+        ],
+        trace({ hand, groupSize: g }) {
+          const steps = [];
+          if (hand.length % g) {
+            steps.push({ line: "init", note: `${hand.length} cards don't split into groups of ${g}. Return false.`, view: [{ type: "array", label: "hand", values: hand }] });
+            return steps;
+          }
+          const count = new Map();
+          for (const x of hand) count.set(x, (count.get(x) || 0) + 1);
+          const heap = [...count.keys()].sort((a, b) => a - b); // a sorted array is a valid min-heap; popping keeps it sorted
+          const cview = (marks = {}) => ({ type: "map", label: "copies left", columns: ["card", "copies"], entries: [...count.keys()].sort((a, b) => a - b).map((x) => [x, count.get(x)]), marks });
+          const hview = (marks = {}) => ({ type: "tree", label: "min-heap of cards still left", values: [...heap], marks });
+          steps.push({ line: "init", note: `Count each card. Put the ${heap.length} different cards in a min-heap.`, view: [cview(), hview()] });
+          while (heap.length) {
+            const s = heap[0];
+            steps.push({ line: "group", note: `Heap top: ${s}, the smallest card left. It must start a group: ${Array.from({ length: g }, (_, i) => s + i).join(", ")}.`, view: [cview({ [s]: "active" }), hview({ 0: "active" })] });
+            for (let x = s; x < s + g; x++) {
+              if (!count.get(x)) {
+                steps.push({ line: "fail", note: `No ${x} left. Return false.`, view: [cview(), hview()] });
+                return steps;
+              }
+              count.set(x, count.get(x) - 1);
+              if (count.get(x) === 0) {
+                if (x !== heap[0]) {
+                  steps.push({ line: ["take", "pop", "fail"], note: `Take ${x}; that was its last copy. But ${heap[0]} is still left and smaller, and every group starting at ${heap[0]} needs ${x}. Return false.`, view: [cview({ [x]: "cut", [heap[0]]: "cut" }), hview({ 0: "cut" })] });
+                  return steps;
+                }
+                heap.shift();
+                steps.push({ line: ["take", "pop"], note: `Take ${x}; that was its last copy, and it's the heap top. Pop it.`, view: [cview({ [x]: "visited" }), hview()] });
+              } else steps.push({ line: "take", note: `Take ${x}: ${count.get(x)} left.`, view: [cview({ [x]: "new" }), hview()] });
+            }
+          }
+          steps.push({ line: "return", note: "Return true. The heap emptied with every group complete. O(n log n).", view: [cview(), hview()] });
+          return steps;
+        },
+      });
+      })();
+    </script>
+    <!-- problems/0846-hand-of-straights/approach3.visual.js -->
+    <script>
+      // Count the cards; go through the different cards smallest first. All c copies of x left start c groups at once.
+      (function () {
+      DSAViz.register("0846-hand-of-straights/approach3", {
+        inputs: [
+          { name: "hand", type: "int[]", value: "[1, 2, 3, 6, 2, 3, 4, 7, 8]", minLength: 1, maxLength: 12, minValue: 0, maxValue: 99 },
+          { name: "groupSize", type: "int", value: "3", min: 1, max: 12 },
+        ],
+        trace({ hand, groupSize: g }) {
+          const steps = [];
+          if (hand.length % g) {
+            steps.push({ line: "init", note: `${hand.length} cards don't split into groups of ${g}. Return false.`, view: [{ type: "array", label: "hand", values: hand }] });
+            return steps;
+          }
+          const count = new Map();
+          for (const x of hand) count.set(x, (count.get(x) || 0) + 1);
+          const keys = [...count.keys()].sort((a, b) => a - b);
+          const kview = (marks = {}, ptr) => ({ type: "array", label: "different cards, sorted; caption = copies left", values: keys, sub: keys.map((x) => `×${count.get(x)}`), marks, pointers: ptr === undefined ? {} : { x: ptr } });
+          steps.push({ line: "init", note: `Count each card: ${keys.length} different cards.`, view: [kview()] });
+          for (let i = 0; i < keys.length; i++) {
+            const x = keys[i], c = count.get(x);
+            if (!c) { steps.push({ line: "group", note: `${x}: no copies left (all used by earlier groups). Skip.`, view: [kview({ [i]: "visited" }, i)] }); continue; }
+            const marks = { [i]: "active" };
+            for (let y = x; y < x + g; y++) {
+              const j = keys.indexOf(y);
+              const have = count.get(y) || 0;
+              if (have < c) {
+                if (j >= 0) marks[j] = "cut";
+                steps.push({ line: ["group", "take", "fail"], note: `${x} has ${c} cop${c > 1 ? "ies" : "y"} left, so ${c} group${c > 1 ? "s start" : " starts"} here and ${c > 1 ? "each" : "it"} needs ${y}. ${have ? `Only ${have} ${y} left` : `No ${y} left`}. Return false.`, view: [kview(marks, i)] });
+                return steps;
+              }
+              count.set(y, have - c);
+              if (j >= 0 && y !== x) marks[j] = "new";
+            }
+            steps.push({ line: ["group", "take"], note: `${x} had ${c} cop${c > 1 ? "ies" : "y"} left: start ${c} group${c > 1 ? "s" : ""} ${x}…${x + g - 1} at once. Take ${c} of each card from ${x} to ${x + g - 1}.`, view: [kview(marks, i)] });
+          }
+          steps.push({ line: "return", note: `Return true. Every card is used. O(n log n) for sorting the different cards; the rest is O(n) hash lookups.`, view: [kview(Object.fromEntries(keys.map((_, i) => [i, "match"])))] });
+          return steps;
+        },
+      });
       })();
     </script>
     <!-- problems/0994-rotting-oranges/approach1.visual.js -->
