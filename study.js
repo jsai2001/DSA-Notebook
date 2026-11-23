@@ -65,17 +65,24 @@
       /* storage unavailable: progress lasts for this visit only */
     }
   }
-  // Progress of one course: { shuffle, pile: [card ids left, top first], got: {id: 1}, tricky: {id: 1}, hist: [...] }
+  // Progress of one course: { shuffle, pile: [card ids left, top first], read: {id: 1}, got: {id: 1}, tricky: {id: 1}, hist: [...] }
+  // `read` = cards you have turned over at least once (the number the progress bar shows); `got` = cards you marked Got it.
   function stateOf(course) {
     let st = saved[course.id];
     const known = new Set(course.cards.map((c) => c.id));
     if (!st || !Array.isArray(st.pile)) {
-      st = saved[course.id] = { shuffle: false, pile: [], got: {}, tricky: {}, hist: [], started: false };
+      st = saved[course.id] = { shuffle: false, pile: [], read: {}, got: {}, tricky: {}, hist: [], started: false };
       st.pile = orderIds(course, course.cards.map((c) => c.id), false);
       persist();
     }
+    // Progress saved before `read` existed: a card you marked, either way, counts as read.
+    if (!st.read) {
+      st.read = { ...st.got };
+      Object.keys(st.tricky).forEach((id) => (st.read[id] = 1));
+    }
     // The notes may have changed since the progress was saved: drop cards that are gone, add new ones.
     st.pile = st.pile.filter((id) => known.has(id));
+    Object.keys(st.read).forEach((id) => !known.has(id) && delete st.read[id]);
     Object.keys(st.got).forEach((id) => !known.has(id) && delete st.got[id]);
     Object.keys(st.tricky).forEach((id) => !known.has(id) && delete st.tricky[id]);
     const seen = new Set([...st.pile, ...Object.keys(st.got)]);
@@ -114,7 +121,8 @@
     if (!st.pile.length) return;
     const id = st.pile[0];
     st.started = true;
-    const entry = { id, kind, wasGot: !!st.got[id], wasTricky: !!st.tricky[id], at: -1 };
+    const entry = { id, kind, wasGot: !!st.got[id], wasTricky: !!st.tricky[id], wasRead: !!st.read[id], at: -1 };
+    st.read[id] = 1; // turning a card over, either way, counts as reading it
     st.pile.shift();
     if (kind === "got") {
       st.got[id] = 1;
@@ -139,6 +147,7 @@
       if (at >= 0) st.pile.splice(at, 1);
     }
     if (!entry.wasTricky) delete st.tricky[entry.id];
+    if (!entry.wasRead) delete st.read[entry.id];
     st.pile.unshift(entry.id);
     persist();
   }
@@ -147,12 +156,15 @@
     const st = stateOf(course);
     const ids = mode === "tricky" ? Object.keys(st.tricky) : course.cards.map((c) => c.id);
     st.got = {};
+    st.read = {};
     st.tricky = {};
     st.hist = [];
     st.started = false;
     if (mode === "tricky") {
-      // Cards outside this pass count as done, so the progress bar still makes sense.
-      course.cards.forEach((c) => !ids.includes(c.id) && (st.got[c.id] = 1));
+      // Cards outside this pass count as read, so the progress bar still makes sense.
+      course.cards.forEach((c) => {
+        if (!ids.includes(c.id)) st.got[c.id] = st.read[c.id] = 1;
+      });
     }
     st.pile = orderIds(course, ids, st.shuffle);
     persist();
@@ -169,7 +181,12 @@
     persist();
   }
   const total = (course) => course.cards.length;
-  const doneCount = (course) => Object.keys(stateOf(course).got).length;
+  const readCount = (course) => Object.keys(stateOf(course).read).length;
+  // Cards you have read but that are still in the pile, because you pressed Again.
+  const repeatCount = (course) => {
+    const st = stateOf(course);
+    return st.pile.filter((id) => st.read[id]).length;
+  };
   const isFinished = (course) => stateOf(course).pile.length === 0;
 
   // ---------- page shell: Study | Browse switch ----------
@@ -187,9 +204,14 @@
   const subtitle = document.querySelector(".page-header .subtitle");
   (subtitle || document.querySelector(".page-header")).after(modeBar);
 
+  // On a phone the page itself doesn't scroll in Study mode: the deck stays put, and only the
+  // content inside a card (or a course's title list) scrolls.
+  const syncScrollLock = () =>
+    document.documentElement.classList.toggle("study-lock", phone.matches && document.body.classList.contains("study-on"));
   function setMode(mode) {
     const study = mode === "study";
     document.body.classList.toggle("study-on", study);
+    syncScrollLock();
     studyBtn.setAttribute("aria-pressed", String(study));
     browseBtn.setAttribute("aria-pressed", String(!study));
     root.hidden = !study;
@@ -215,7 +237,7 @@
     const grid = el("div", "study-grid");
     courses.forEach((course) => {
       const st = stateOf(course);
-      const done = doneCount(course);
+      const read = readCount(course);
       const tile = el("div", "study-tile");
       const open = el("button", "study-tile-open");
       open.type = "button";
@@ -223,17 +245,16 @@
       const hint = el("span", "study-tile-hint", course.hint);
       const bar = el("span", "study-bar");
       const fill = el("span", "study-bar-fill");
-      fill.style.width = `${(done / total(course)) * 100}%`;
+      fill.style.width = `${(read / total(course)) * 100}%`;
       bar.append(fill);
       let caption = `${total(course)} cards`;
-      if (isFinished(course) && st.started === false && done === 0) caption = `${total(course)} cards`;
-      if (done > 0 && !isFinished(course)) caption = `${done} / ${total(course)} got it`;
-      if (isFinished(course) && done > 0) caption = `Pass complete · ${total(course)} cards`;
+      if (read > 0 && !isFinished(course)) caption = `${read} / ${total(course)} read`;
+      if (isFinished(course) && read > 0) caption = `Pass complete · ${total(course)} cards`;
       const cap = el("span", "study-tile-cap", caption);
       open.append(title, hint, bar, cap);
       open.addEventListener("click", () => openCourse(course));
       tile.append(open);
-      if (done > 0 || st.started) {
+      if (read > 0 || st.started) {
         const again = el("button", "study-tile-restart", "↺");
         again.type = "button";
         again.title = "Start this course over";
@@ -256,26 +277,27 @@
   }
   function phoneCourseCard(course) {
     const st = stateOf(course);
-    const done = doneCount(course);
+    const read = readCount(course);
     const card = el("article", "study-course");
     card.append(el("h3", "study-course-name", course.name), el("p", "study-course-hint", course.hint));
     const chips = el("div", "study-chips");
     chips.append(chip(`${total(course)} cards`));
-    if (done > 0 && st.pile.length) {
-      chips.append(chip(`${st.pile.length} left`, "warn"), chip(`${done} done`, "ok"));
-    } else if (done > 0) {
+    if (read > 0 && st.pile.length) {
+      if (read < total(course)) chips.append(chip(`${read} read`, "ok"), chip(`${total(course) - read} to go`, "warn"));
+      else chips.append(chip("All read", "ok"), chip(`${st.pile.length} to repeat`, "warn"));
+    } else if (read > 0) {
       chips.append(chip("Pass complete", "ok"));
     }
     const bar = el("span", "study-bar");
     const fill = el("span", "study-bar-fill");
-    fill.style.width = `${(done / total(course)) * 100}%`;
+    fill.style.width = `${(read / total(course)) * 100}%`;
     bar.append(fill);
     const titles = el("ul", "study-titles");
     course.cards.forEach((c) => {
       const li = el("li");
-      const b = el("button", `study-title${st.got[c.id] ? " is-done" : ""}`);
+      const b = el("button", `study-title${st.read[c.id] ? " is-done" : ""}`);
       b.type = "button";
-      b.append(el("span", "study-tick", st.got[c.id] ? "✓" : ""), el("span", "", c.title));
+      b.append(el("span", "study-tick", st.read[c.id] ? "✓" : ""), el("span", "", c.title));
       b.addEventListener("click", () => openAt(course, c.id));
       li.append(b);
       titles.append(li);
@@ -290,7 +312,7 @@
       renderPhonePicker();
     });
     const actions = el("div", "study-course-actions");
-    const started = done > 0 || st.started;
+    const started = read > 0 || st.started;
     const finished = st.pile.length === 0;
     if (started) {
       const again = el("button", "study-btn is-narrow", "↺ Restart");
@@ -480,14 +502,14 @@
     head.append(back, name, sw);
 
     // progress
-    const done = doneCount(course);
+    const read = readCount(course);
     const prog = el("div", "study-progress");
     const bar = el("span", "study-bar");
     const fill = el("span", "study-bar-fill");
-    fill.style.width = `${(done / total(course)) * 100}%`;
+    fill.style.width = `${(read / total(course)) * 100}%`;
     bar.append(fill);
-    const left = st.pile.length;
-    const stat = el("span", "study-stat", `${done} got it · ${left} left`);
+    const repeat = repeatCount(course);
+    const stat = el("span", "study-stat", `${read} / ${total(course)} read${repeat ? ` · ${repeat} to repeat` : ""}`);
     prog.append(bar, stat);
     deckView.append(head, prog);
 
@@ -659,6 +681,7 @@
   }
   // Turning the phone, or resizing the window, switches between the two layouts.
   phone.addEventListener("change", () => {
+    syncScrollLock();
     syncPhoneClass();
     if (current) renderDeck();
     else renderPicker();
