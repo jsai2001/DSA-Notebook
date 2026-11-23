@@ -1,0 +1,65 @@
+<details class="question" id="q-scikit-learn-015-5-1-pipelines" data-group="scikit-learn" data-sec="scikit-learn-s016">
+  <summary>
+    <span class="q-title">5.1 Pipelines</span>
+    <span class="q-meta">
+      <span class="tag">scikit-learn</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">scikit-learn › 5. Pipelines, Cross-Validation &amp; Hyperparameter Tuning › 5.1 Pipelines</p>
+      <p>Notebook <code>04_01_preprocessing_pipelines.ipynb</code>. A <strong>Pipeline</strong> chains preprocessing and the model into one object, avoiding mismatched transformations.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+iris = load_iris(as_frame=True)
+df = iris.frame.copy()
+X = df[iris.feature_names]
+y = df["target"]
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+        </script>
+      </div>
+      <p>Manual (no pipeline):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)   # transform only, never fit on test
+log_reg = LogisticRegression()
+log_reg.fit(X_train_scaled, y_train)
+baseline_score = log_reg.score(X_test_scaled, y_test)
+baseline_score
+        </script>
+      </div>
+      <p>With a pipeline (same score, cleaner; scaler and model are fit together on training data):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+pipe = Pipeline(
+    steps=[
+        ("scale", StandardScaler()),
+        ("log_reg", LogisticRegression(max_iter=200))
+    ]
+)
+pipe.fit(X_train, y_train)
+pipeline_score = pipe.score(X_test, y_test)
+pipeline_score
+        </script>
+      </div>
+      <p><strong>Cross-validation</strong> repeatedly splits into train/test folds. Inside a pipeline, scaling is re-fit within every fold, so preprocessing never sees test data (no leakage).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+cv_scores = cross_val_score(pipe, X, y, cv=5)
+cv_scores, cv_scores.mean()
+        </script>
+      </div>
+      <p>Rule of thumb: if the process is an ordered list of transformations followed by a model, make it a pipeline.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-scikit-learn-014-4-2-dimensionality-reduction-with-pca">← Previous</a><span class="rev-pos">15 / 17</span><a href="#q-scikit-learn-016-5-2-hyperparameter-tuning">Next →</a></nav>
+    </section>
+  </div>
+</details>

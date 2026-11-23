@@ -1,0 +1,62 @@
+<details class="question" id="q-fine-tuning-llm-052-12-6-lora-peft-guidelines-lecture-as-a-t" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s037">
+  <summary>
+    <span class="q-title">12.6 LoRA/PEFT guidelines (lecture, as a table)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 12. PEFT &amp; LoRA Concepts › 12.6 LoRA/PEFT guidelines (lecture, as a table)</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Setting</th><th>Guideline</th></tr></thead>
+          <tbody>
+            <tr><td>Rank <code>r</code></td><td>Small tasks 1–4 (most efficient), medium 8–16 (balanced), complex 32–64 (more capacity)</td></tr>
+            <tr><td><code>lora_alpha</code></td><td>Common heuristic: <code>2 × rank</code></td></tr>
+            <tr><td><code>lora_dropout</code></td><td>0.05–0.1 for regularisation</td></tr>
+            <tr><td>Learning rate</td><td>1e-4 to 1e-3 (higher than full fine-tuning)</td></tr>
+            <tr><td>Target modules</td><td>Attention projections first; feed-forward and embeddings/<code>lm_head</code> for more capacity</td></tr>
+            <tr><td>Data</td><td>~100–1,000 examples minimum, 1,000–10,000 good; <strong>quality beats quantity</strong></td></tr>
+            <tr><td>Batch size / epochs</td><td>Start 16–32 (memory-bound); 3–10 epochs usually enough</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Measuring latency (distinct from accuracy):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import time
+
+def measure_inference_time(model, tokenizer, test_prompts):
+    """Measure model inference performance"""
+    total_time = 0
+
+    for prompt in test_prompts:
+        start_time = time.time()
+
+        inputs = tokenizer(prompt, return_tensors="tf", max_length=512, truncation=True)
+        outputs = model.generate(inputs["input_ids"], max_length=100)
+        result = tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+        end_time = time.time()
+        total_time += (end_time - start_time)
+
+    avg_time = total_time / len(test_prompts)
+    print(f"Average inference time: {avg_time:.3f} seconds")
+
+    return avg_time
+
+# Test performance
+test_prompts = [
+    "summarize: This is a test document for summarization.",
+    "translate English to Spanish: Hello world",
+    "classify sentiment: I love this product!"
+]
+
+avg_inference_time = measure_inference_time(model, tokenizer, test_prompts)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-051-12-5-one-base-model-many-task-adapters">← Previous</a><span class="rev-pos">52 / 76</span><a href="#q-fine-tuning-llm-053-13-1-overfitting-vs-generalisability">Next →</a></nav>
+    </section>
+  </div>
+</details>

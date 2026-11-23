@@ -1,0 +1,53 @@
+<details class="question" id="q-ml-foundations-044-mlflow-persist-load-predict" data-group="ml-foundations" data-sec="ml-foundations-s042">
+  <summary>
+    <span class="q-title">MLFlow: persist, load, predict</span>
+    <span class="q-meta">
+      <span class="tag">ML Foundations</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">ML Foundations › 10. Deployment with MLFlow › MLFlow: persist, load, predict</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import mlflow
+mlflow.__version__  # 2.11.3
+        </script>
+      </div>
+      <p><code>log_model</code> saves the <strong>entire pipeline</strong> (preprocessing + model):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+model_info = mlflow.sklearn.log_model(lr_pipe, artifact_path='lr_pipe')
+
+model_info.artifact_path  # 'lr_pipe'
+model_info.run_id         # unique ID like 'a91...'
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+!tree  # Linux command - shows directory structure in Jupyter
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Text">
+mlruns/
+└── 0/
+    └── <run_id>/
+        └── artifacts/
+            └── lr_pipe/    ← your persisted pipeline
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+model = mlflow.pyfunc.load_model(
+    f'mlruns/0/{model_info.run_id}/artifacts/lr_pipe')
+
+model.predict(X_test)  # raw data in, predictions out
+        </script>
+      </div>
+      <p>The loaded model contains everything (tweak function, ZipAvgPriceAdder, preprocessor, regressor). <code>pyfunc.load_model</code> loads a persisted model regardless of the original library. <code>!command</code> runs system commands in Jupyter.</p>
+      <p>MLFlow also: tracks runs by <code>run_id</code>, starts an HTTP endpoint to serve predictions, and builds Docker images.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ml-foundations-043-end-to-end-notebook">← Previous</a><span class="rev-pos">44 / 47</span><a href="#q-ml-foundations-045-final-challenge-optimized-random-forest">Next →</a></nav>
+    </section>
+  </div>
+</details>

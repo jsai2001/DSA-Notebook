@@ -1,0 +1,63 @@
+<details class="question" id="q-langchain-level-up-025-7-5-retrieval-rag-chain" data-group="langchain-level-up" data-sec="langchain-level-up-s026">
+  <summary>
+    <span class="q-title">7.5 Retrieval (RAG) chain</span>
+    <span class="q-meta">
+      <span class="tag">LangChain Level Up</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangChain Level Up › 7. Semantic Search with MongoDB Atlas Vector Search + OpenAI › 7.5 Retrieval (RAG) chain</p>
+      <p><strong>Prompt:</strong> two placeholders, <code>{context}</code> (docs from Atlas) and <code>{question}</code>; instructs the model to say it doesn't know instead of inventing an answer.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain_core.prompts import PromptTemplate
+
+template = """Use the following pieces of context to answer the question at the end.
+If you don't know the answer, just say that you don't know. Don't try to make up an answer.
+{context}
+Question: {question}
+"""
+custom_rag_prompt = PromptTemplate.from_template(template)
+        </script>
+      </div>
+      <p><strong>Retriever:</strong> <code>search_type="similarity"</code> (cosine), <code>k=1</code> returns the single best document.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+retriever = vector_store.as_retriever(
+    search_type="similarity",
+    search_kwargs={"k": 1},
+)
+        </script>
+      </div>
+      <p><strong>Chain.</strong> Without a parser the result is a raw <code>AIMessage</code>; adding <code>StrOutputParser()</code> gives a string.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain_core.runnables import RunnablePassthrough
+from langchain_openai import ChatOpenAI
+from langchain_core.output_parsers import StrOutputParser
+
+llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+rag_chain = (
+    {"context": retriever, "question": RunnablePassthrough()}
+    | custom_rag_prompt
+    | llm
+    | StrOutputParser()
+)
+answer = rag_chain.invoke("How can I secure my MongoDB Atlas cluster?")
+        </script>
+      </div>
+      <p><strong>Wrap in a function</strong> used by <code>main.py</code> (<code>from query import query_data</code>):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def query_data(query: str):
+    answer = rag_chain.invoke(query)
+    print(f"\033[94m{answer}\033[0m")  # print in blue
+    return answer
+        </script>
+      </div>
+      <p>Asking something outside the PDF ("How to create a vector store?") returns an "I don't have enough information" answer: the prompt instruction prevents hallucination.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langchain-level-up-024-7-4-similarity-search">← Previous</a><span class="rev-pos">25 / 35</span><a href="#q-langchain-level-up-026-8-agents-tools-over-mongodb-openai-tools">Next →</a></nav>
+    </section>
+  </div>
+</details>

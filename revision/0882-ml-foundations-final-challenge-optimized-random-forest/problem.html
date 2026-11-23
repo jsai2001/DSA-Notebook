@@ -1,0 +1,41 @@
+<details class="question" id="q-ml-foundations-045-final-challenge-optimized-random-forest" data-group="ml-foundations" data-sec="ml-foundations-s043">
+  <summary>
+    <span class="q-title">Final challenge: optimized Random Forest in one cell, logged with MLFlow</span>
+    <span class="q-meta">
+      <span class="tag">ML Foundations</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">ML Foundations › 10. Deployment with MLFlow › Final challenge: optimized Random Forest in one cell, logged with MLFlow</p>
+      <p>Same consolidated cell as above with these differences: add <code>import mlflow</code>, import <code>RandomForestRegressor</code> (from <code>sklearn.ensemble</code>) instead of <code>LinearRegression</code>, and use the tuned depth (<code>max_depth=9</code> from Section 9.5):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+rf = RandomForestRegressor(max_depth=9)
+y = raw.select('price')
+X_train, X_test, y_train, y_test = train_test_split(raw, y, test_size=0.2, random_state=42)
+
+rf_pipe = Pipeline(steps=[
+    ('tweak', tweak_transformer),
+    ('zip_avg_price', ZipAvgPriceAdder()),
+    ('preprocessor', preprocessor),
+    ('rf', rf)])
+
+rf_pipe.fit(X_train, y_train)
+rf_pipe.score(X_test, y_test)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+model_info = mlflow.sklearn.log_model(rf_pipe, artifact_path='rf_pipe')
+
+model = mlflow.pyfunc.load_model(
+    f'mlruns/0/{model_info.run_id}/artifacts/rf_pipe')
+
+model.predict(X_test)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ml-foundations-044-mlflow-persist-load-predict">← Previous</a><span class="rev-pos">45 / 47</span><a href="#q-ml-foundations-046-debugging-workflow-for-a-self-contained">Next →</a></nav>
+    </section>
+  </div>
+</details>

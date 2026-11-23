@@ -1,0 +1,81 @@
+<details class="question" id="q-langchain-level-up-032-10-1-server-routes-run" data-group="langchain-level-up" data-sec="langchain-level-up-s034">
+  <summary>
+    <span class="q-title">10.1 Server, routes, run</span>
+    <span class="q-meta">
+      <span class="tag">LangChain Level Up</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangChain Level Up › 10. Deploying Chains as a REST API with LangServe › 10.1 Server, routes, run</p>
+      <p>Workflow: create FastAPI server → create runnables → <code>add_routes</code> → run with Uvicorn → Swagger UI at <code>/docs</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from fastapi import FastAPI
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnableLambda
+from langserve import add_routes
+
+app = FastAPI(
+    title="LangChain Server",
+    version="1.0",
+    description="A simple API server using LangChain's Runnable interfaces",
+)
+
+model = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+prompt = ChatPromptTemplate.from_template("Tell me a joke about {topic}")
+
+# Parse the AIMessage into a string
+def parsed_response(response):
+    return response.content
+
+chain = prompt | model | RunnableLambda(parsed_response)
+
+# Routes
+add_routes(app, model, path="/openai")
+add_routes(app, chain, path="/joke")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="localhost", port=8000)
+        </script>
+      </div>
+      <p>Each <code>add_routes(app, runnable, path=...)</code> call auto-creates endpoints under that path:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Endpoint</th><th>Method</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>&lt;path&gt;/invoke</code></td><td>POST</td><td>Single input</td></tr>
+            <tr><td><code>&lt;path&gt;/batch</code></td><td>POST</td><td>Multiple inputs</td></tr>
+            <tr><td><code>&lt;path&gt;/stream</code></td><td>POST</td><td>Stream output</td></tr>
+            <tr><td><code>&lt;path&gt;/stream_log</code></td><td>POST</td><td>Stream with logging</td></tr>
+            <tr><td><code>&lt;path&gt;/docs</code></td><td>GET</td><td>Swagger UI for the route</td></tr>
+            <tr><td><code>/docs</code></td><td>GET</td><td>Global Swagger UI</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+uvicorn server:app --host localhost --port 8000
+uvicorn server:app --reload     # auto-restart on file changes
+        </script>
+      </div>
+      <p><strong>Gotcha:</strong> if invoke/batch/stream schemas don't show in Swagger, downgrade Pydantic:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+pip install "pydantic<2.8.2"
+        </script>
+      </div>
+      <p><strong>Test with cURL</strong> (body shape is <code>{"input": ...}</code>; for a prompt chain <code>input</code> is a dict of template variables):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+curl -X POST http://localhost:8000/joke/invoke \
+  -H "Content-Type: application/json" \
+  -d '{"input": {"topic": "cats"}}'
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langchain-level-up-031-10-deploying-chains-as-a-rest-api-with-l">← Previous</a><span class="rev-pos">32 / 35</span><a href="#q-langchain-level-up-033-10-2-challenge-solution-serve-the-atlas">Next →</a></nav>
+    </section>
+  </div>
+</details>

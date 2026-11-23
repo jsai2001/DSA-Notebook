@@ -1,0 +1,66 @@
+<details class="question" id="q-apache-spark-031-7-2-job-2-scorecard-streaming-code-06-04" data-group="apache-spark" data-sec="apache-spark-s026">
+  <summary>
+    <span class="q-title">7.2 Job 2: scorecard (streaming, code_06_04)</span>
+    <span class="q-meta">
+      <span class="tag">Apache Spark</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Apache Spark › 7. Hybrid Pipeline Exercise › 7.2 Job 2: scorecard (streaming, code_06_04)</p>
+      <p>Reuses the same session builder (<code>appName("LongLastActionsJob")</code>, Kafka jars as above).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from pyspark.sql import SparkSession
+import redis
+import time
+
+def write_to_redis(row):
+    stats_key="long-last-action-stats"
+    redis_conn=redis.Redis(host="localhost",
+                     port=6379, decode_responses=True)
+    # Increment for last action by 1
+    redis_conn.zincrby(stats_key, 1, row["last_action"])
+    redis_conn.quit()
+
+# website_spark = SparkSession.builder ... .getOrCreate()   (same as Job 1)
+
+raw_last_action_df = website_spark\
+                .readStream\
+                .format("kafka")\
+                .option("kafka.bootstrap.servers","localhost:9092")\
+                .option("subscribe","spark.exercise.lastaction.long")\
+                .option("startingOffsets","earliest")\
+                .load()
+
+# Only one value field, so no schema is needed: cast value directly to string
+last_action_df = raw_last_action_df\
+                .selectExpr("CAST(value as STRING) as last_action")
+
+last_action_df.select("last_action")\
+        .writeStream\
+        .foreach(write_to_redis)\
+        .start()
+
+# Poll the sorted set every 5 seconds to watch running counts
+redis_query_conn=redis.Redis(host="localhost",
+                     port=6379, decode_responses=True)
+while True:
+    scores=redis_query_conn.zrevrangebyscore(
+        "long-last-action-stats",99999,0,withscores=True)
+    for score in scores:
+        print(score[0], " = ", score[1])
+    time.sleep(5)
+        </script>
+      </div>
+      <p>Key techniques:</p>
+      <ul>
+        <li>Parallel JDBC read via <code>partitionColumn</code>, <code>lowerBound</code>, <code>upperBound</code>, <code>numPartitions</code>, with the filter query wrapped as a subquery in <code>dbtable</code>.</li>
+        <li>The same Kafka topic is written by a batch job (<code>write</code>) and read by a streaming job (<code>readStream</code>).</li>
+        <li><code>zincrby</code> on a Redis sorted set increments counts atomically.</li>
+        <li><code>startingOffsets: earliest</code> consumes the topic from the beginning. Section 5 used <code>latest</code>.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-apache-spark-030-7-1-job-1-extract-long-last-actions-batc">← Previous</a><span class="rev-pos">31 / 32</span><a href="#q-apache-spark-032-8-next-steps">Next →</a></nav>
+    </section>
+  </div>
+</details>

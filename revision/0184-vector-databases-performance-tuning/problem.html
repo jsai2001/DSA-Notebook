@@ -1,0 +1,73 @@
+<details class="question" id="q-vector-databases-065-performance-tuning" data-group="vector-databases" data-sec="vector-databases-s062">
+  <summary>
+    <span class="q-title">Performance tuning</span>
+    <span class="q-meta">
+      <span class="tag">Vector Databases</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Vector Databases › 12. Best practices › Performance tuning</p>
+      <ol>
+        <li><strong>Evaluate embedding models</strong> on representative queries with ground truth.</li>
+      </ol>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+models = [OpenAIEmbeddings(),
+          HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2"),
+          HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")]
+
+def evaluate_model(model, test_queries, ground_truth):
+    accuracy_scores = []
+    for query, expected in zip(test_queries, ground_truth):
+        embedding = model.embed_query(query)
+        results = collection.search([embedding], "embedding", search_params, limit=5)
+        accuracy_scores.append(calculate_accuracy(results, expected))
+    return sum(accuracy_scores) / len(accuracy_scores)
+        </script>
+      </div>
+      <ol start="2">
+        <li><strong>Optimize the distance threshold with F1</strong> (precision/recall over a labeled test set).</li>
+      </ol>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def find_optimal_threshold(test_data, thresholds=[0.1, 0.2, 0.3, 0.4, 0.5]):
+    best_threshold, best_f1_score = 0.3, 0
+    for threshold in thresholds:
+        search_params["params"]["radius"] = threshold
+        precision_scores, recall_scores = [], []
+        for query, expected_results in test_data:
+            embedding = embeddings_model.embed_query(query)
+            results = collection.search([embedding], "embedding", search_params, limit=10)
+            precision_scores.append(calculate_precision(results, expected_results))
+            recall_scores.append(calculate_recall(results, expected_results))
+        avg_precision = sum(precision_scores) / len(precision_scores)
+        avg_recall = sum(recall_scores) / len(recall_scores)
+        f1_score = 2 * (avg_precision * avg_recall) / (avg_precision + avg_recall)
+        if f1_score > best_f1_score:
+            best_f1_score, best_threshold = f1_score, threshold
+    return best_threshold
+        </script>
+      </div>
+      <ol start="3">
+        <li><strong>Pick the index by dataset size</strong>.</li>
+      </ol>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+index_configs = {
+    "small_dataset":  {"index_type": "FLAT", "metric_type": "L2"},
+    "medium_dataset": {"index_type": "IVF_FLAT", "metric_type": "L2", "params": {"nlist": 1024}},
+    "large_dataset":  {"index_type": "IVF_PQ", "metric_type": "L2",
+                       "params": {"nlist": 2048, "m": 16, "nbits": 8}}
+}
+dataset_size = collection.num_entities
+if dataset_size < 10000:        config = index_configs["small_dataset"]
+elif dataset_size < 1000000:    config = index_configs["medium_dataset"]
+else:                           config = index_configs["large_dataset"]
+collection.create_index("embedding", config)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-vector-databases-064-distance-measure-tuning">← Previous</a><span class="rev-pos">65 / 73</span><a href="#q-vector-databases-066-monitoring-and-maintenance">Next →</a></nav>
+    </section>
+  </div>
+</details>

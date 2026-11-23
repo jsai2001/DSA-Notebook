@@ -1,0 +1,58 @@
+<details class="question" id="q-az-900-029-application-hosting" data-group="az-900" data-sec="az-900-s024">
+  <summary>
+    <span class="q-title">Application hosting (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">AZ-900</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AZ-900 › 6. Compute and networking › Application hosting</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Enable Microsoft identity provider on a web app
+az webapp auth microsoft update \
+  --name az900wa \
+  --resource-group AZ900 \
+  --client-id <app-client-id> \
+  --client-secret <app-client-secret> \
+  --issuer "https://login.microsoftonline.com/<tenant-id>/v2.0"
+        </script>
+      </div>
+      <p><strong>AKS</strong>: managed <strong>container orchestration</strong>, good at scaling containers and keeping them available. A Kubernetes cluster has a <strong>control plane</strong> (manages scaling in/out) and <strong>nodes</strong> (run containers). You pay only for the compute in the cluster.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Create an AKS cluster with 2 nodes
+az aks create \
+  --resource-group AZ900 \
+  --name myAKSCluster \
+  --node-count 2 \
+  --generate-ssh-keys
+
+# Get credentials to interact with the cluster
+az aks get-credentials --resource-group AZ900 --name myAKSCluster
+
+# Deploy an app using kubectl
+kubectl create deployment myapp --image=mcr.microsoft.com/azuredocs/aci-helloworld --replicas=3
+
+# Expose the deployment
+kubectl expose deployment myapp --type=LoadBalancer --port=80 --target-port=8080
+        </script>
+      </div>
+      <p><strong>Virtual Machines</strong>: most flexible and the most responsibility (install, configure, secure everything).</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Feature</th><th>App Service (PaaS)</th><th>AKS</th><th>VMs (IaaS)</th></tr></thead>
+          <tbody>
+            <tr><td>Flexibility</td><td>Supported runtimes only</td><td>High</td><td>Full control</td></tr>
+            <tr><td>Responsibility</td><td>Low</td><td>Medium (containers)</td><td>High</td></tr>
+            <tr><td>Scaling</td><td>Built-in up/out/autoscale</td><td>Container orchestration</td><td>Manual or VMSS</td></tr>
+            <tr><td>Best for</td><td>Web apps, APIs</td><td>Microservices, containers</td><td>Lift-and-shift, custom environments</td></tr>
+            <tr><td>Turnkey</td><td>Auth, SSL, deployment slots</td><td>Managed control plane</td><td>None</td></tr>
+          </tbody>
+        </table>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-az-900-028-application-hosting">← Previous</a><span class="rev-pos">29 / 67</span><a href="#q-az-900-030-virtual-networking">Next →</a></nav>
+    </section>
+  </div>
+</details>

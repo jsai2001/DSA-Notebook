@@ -1,0 +1,76 @@
+<details class="question" id="q-pytorch-hands-on-025-lab-glove-preprocessing-gpt-2-generation" data-group="pytorch-hands-on" data-sec="pytorch-hands-on-s024">
+  <summary>
+    <span class="q-title">Lab: GloVe preprocessing + GPT-2 generation (tutoring summary) (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">PyTorch Hands-On</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">PyTorch Hands-On › 10. TorchText › Lab: GloVe preprocessing + GPT-2 generation (tutoring summary)</p>
+      <p>Match Torch and TorchText versions (e.g. Torch 2.2.0 + TorchText 0.17.0). Flow: tokenize, load GloVe, keep tokens that have vectors, mean-pool to a fixed 100-d session embedding, then prompt GPT-2.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import torch
+from torchtext.vocab import GloVe
+from torchtext.data.utils import get_tokenizer
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
+
+session_text = """
+Today, we worked on solving quadratic equations using the quadratic formula.
+The student struggled with identifying the coefficients a, b, and c from the equation format.
+We practiced several examples and focused on improving accuracy with signs under the square root.
+"""
+
+# TorchText preprocessing
+tokenizer = get_tokenizer("basic_english")
+tokens = tokenizer(session_text)
+glove = GloVe(name='6B', dim=100)
+token_vectors = [glove[token] for token in tokens if token in glove.stoi]
+if token_vectors:
+    session_embedding = torch.stack(token_vectors).mean(dim=0)   # mean-pooling
+else:
+    session_embedding = torch.zeros(100)  # fallback if empty
+print(f"Session embedding vector shape: {session_embedding.shape}")  # 100-dim
+
+# GPT-2 generation with beam search
+llm_tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+llm_model = GPT2LMHeadModel.from_pretrained("gpt2")
+llm_model.eval()
+
+prompt = (
+    "Tutoring session summary:\n"
+    f"{session_text}\n"
+    "Please suggest exercises to improve understanding of identifying the coefficients for quadratic equations.\n"
+    "\n"
+    "Summary and question:"
+)
+inputs = llm_tokenizer(prompt, return_tensors="pt")
+with torch.no_grad():
+    outputs = llm_model.generate(
+        **inputs,
+        max_new_tokens=100,
+        num_beams=5,
+        no_repeat_ngram_size=2,
+        early_stopping=True
+    )
+generated = llm_tokenizer.decode(outputs[0], skip_special_tokens=True)
+print(generated)
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Parameter</th><th>Effect</th></tr></thead>
+          <tbody>
+            <tr><td><code>max_new_tokens=100</code></td><td>Cap generated length</td></tr>
+            <tr><td><code>num_beams=5</code></td><td>Beam search, better quality than greedy</td></tr>
+            <tr><td><code>no_repeat_ngram_size=2</code></td><td>Blocks repeated bigrams</td></tr>
+            <tr><td><code>early_stopping=True</code></td><td>Stop when all beams finish</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>(The exercise notebook's first draft used a slightly different prompt, "summarize this session and suggest a next question"; same code otherwise.)</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-pytorch-hands-on-024-10-torchtext">← Previous</a><span class="rev-pos">25 / 27</span><a href="#q-pytorch-hands-on-026-lab-glove-preprocessing-gpt-2-generation">Next →</a></nav>
+    </section>
+  </div>
+</details>

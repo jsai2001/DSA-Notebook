@@ -1,0 +1,59 @@
+<details class="question" id="q-langchain-chatbot-010-6-1-changes-from-the-cli-version" data-group="langchain-chatbot" data-sec="langchain-chatbot-s010">
+  <summary>
+    <span class="q-title">6.1 Changes from the CLI version</span>
+    <span class="q-meta">
+      <span class="tag">LangChain Chatbot</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangChain Chatbot › 6. Flask backend and HTML frontend › 6.1 Changes from the CLI version</p>
+      <ul>
+        <li><code>query_llm</code> returns the response instead of printing; the <code>while True</code> loop is gone.</li>
+        <li>Routes: <code>/</code> serves the page; <code>/chatbot</code> (POST) takes <code>{"question": ...}</code> and returns <code>{"response": ...}</code>.</li>
+        <li><code>debug=True</code> is for development only.</li>
+      </ul>
+      <p>Exercises <code>02_03.py</code> and <code>02_04.py</code> are this same file (<code>02_04</code> adds <code>templates/index.html</code>). The prompt, template, <code>llm</code>, <code>llm_chain</code> and <code>query_llm</code> lines are identical to Section 5.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from flask import Flask, render_template, request, jsonify
+from langchain_openai import OpenAI
+from langchain.prompts import PromptTemplate
+
+# prompt, hotel_assistant_template, hotel_assistant_prompt_template, llm, llm_chain: same as Section 5
+# def query_llm(question): response = llm_chain.invoke({'question': question}); return response
+
+# Flask application setup
+app = Flask(__name__)
+
+@app.route("/")
+def index():
+    """Serve the main chatbot interface"""
+    return render_template("index.html")
+
+@app.route("/chatbot", methods=["POST"])
+def chatbot():
+    """Handle chatbot API requests"""
+    data = request.get_json()
+    question = data["question"]
+    response = query_llm(question)
+    return jsonify({"response": response})
+
+if __name__ == "__main__":
+    app.run(debug=True)
+        </script>
+      </div>
+      <p>Flask looks for templates in a folder named exactly <code>templates</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Text">
+project/
+├── main.py (Flask application)
+├── website_text.txt (extracted content)
+└── templates/
+    └── index.html (must be in templates folder)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langchain-chatbot-009-5-the-course-chatbot-persona-prompt-lang">← Previous</a><span class="rev-pos">10 / 29</span><a href="#q-langchain-chatbot-011-6-2-html-javascript-template-templates-i">Next →</a></nav>
+    </section>
+  </div>
+</details>

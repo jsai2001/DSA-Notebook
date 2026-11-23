@@ -1,0 +1,56 @@
+<details class="question" id="q-advanced-rag-023-two-types-of-image-vectors" data-group="advanced-rag" data-sec="advanced-rag-s022">
+  <summary>
+    <span class="q-title">Two types of image vectors</span>
+    <span class="q-meta">
+      <span class="tag">Advanced RAG</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Advanced RAG › 8. Image Embeddings and Vision Models › Two types of image vectors</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Type</th><th>Captures</th><th>Created by</th><th>Used in RAG?</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Semantic embeddings</strong></td><td>The <em>meaning</em> of the image</td><td>Deep learning model's second-to-last layer</td><td>✅ Yes</td></tr>
+            <tr><td><strong>Visual / pixel embeddings</strong></td><td>What the image <em>literally looks like</em></td><td>Compressed image input vector (e.g. PyTorch model input)</td><td>❌ Not typically</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Semantic: image → input layer → hidden layers → output (prediction); the second-to-last layer holds the learned meaning, and that is the embedding. Pixel embeddings are also long number lists but encode raw pixels, not meaning. RAG uses semantic embeddings.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import torch
+from torchvision import models, transforms
+from PIL import Image
+
+# Pretrained ResNet50; capture the layer before the classifier
+resnet = models.resnet50(pretrained=True)
+resnet.eval()
+
+semantic_embeddings = {}
+def hook_fn(module, input, output):
+    semantic_embeddings["embedding"] = output.squeeze().detach().numpy()
+resnet.avgpool.register_forward_hook(hook_fn)
+
+preprocess = transforms.Compose([
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                         std=[0.229, 0.224, 0.225]),
+])
+
+img = Image.open("example.jpg")
+input_tensor = preprocess(img).unsqueeze(0)
+
+with torch.no_grad():
+    resnet(input_tensor)  # embedding captured by the hook
+embedding = semantic_embeddings["embedding"]
+print(f"Semantic embedding dimensions: {len(embedding)}")  # 2048
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-advanced-rag-022-challenge-2-oversized-chunks-custom-sepa">← Previous</a><span class="rev-pos">23 / 35</span><a href="#q-advanced-rag-024-vision-models-101">Next →</a></nav>
+    </section>
+  </div>
+</details>

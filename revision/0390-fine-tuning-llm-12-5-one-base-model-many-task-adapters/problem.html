@@ -1,0 +1,48 @@
+<details class="question" id="q-fine-tuning-llm-051-12-5-one-base-model-many-task-adapters" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s036">
+  <summary>
+    <span class="q-title">12.5 One base model, many task adapters (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 12. PEFT &amp; LoRA Concepts › 12.5 One base model, many task adapters</p>
+      <p>Dynamic-rank idea: allocate <code>max_rank</code> rows but use only the first <code>current_rank</code> (plus learnable per-rank weights) so rank can be adapted during training:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+class AdaptiveLoRA(nn.Module):
+    def __init__(self, original_layer, max_rank=16):
+        super().__init__()
+        self.original_layer = original_layer
+        self.max_rank = max_rank
+        self.current_rank = 1
+
+        # Initialize with maximum rank
+        in_dim = original_layer.in_features
+        out_dim = original_layer.out_features
+
+        self.lora_A = nn.Parameter(torch.randn(max_rank, in_dim) * 0.01)
+        self.lora_B = nn.Parameter(torch.zeros(out_dim, max_rank))
+        self.rank_weights = nn.Parameter(torch.ones(max_rank))
+
+    def adapt_rank(self, new_rank):
+        """Dynamically adjust the effective rank"""
+        self.current_rank = min(new_rank, self.max_rank)
+
+    def forward(self, x):
+        # Use only current_rank dimensions
+        A_active = self.lora_A[:self.current_rank, :]
+        B_active = self.lora_B[:, :self.current_rank]
+        weights_active = self.rank_weights[:self.current_rank]
+
+        original_output = self.original_layer(x)
+        lora_output = x @ A_active.T @ (B_active * weights_active.unsqueeze(0)).T
+
+        return original_output + lora_output
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-050-12-5-one-base-model-many-task-adapters">← Previous</a><span class="rev-pos">51 / 76</span><a href="#q-fine-tuning-llm-052-12-6-lora-peft-guidelines-lecture-as-a-t">Next →</a></nav>
+    </section>
+  </div>
+</details>

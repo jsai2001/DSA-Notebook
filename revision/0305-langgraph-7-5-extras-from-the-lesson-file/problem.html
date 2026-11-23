@@ -1,0 +1,94 @@
+<details class="question" id="q-langgraph-049-7-5-extras-from-the-lesson-file" data-group="langgraph" data-sec="langgraph-s032">
+  <summary>
+    <span class="q-title">7.5 Extras from the lesson file</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 7. Multi-Agent Chatbot with Routing › 7.5 Extras from the lesson file</p>
+      <p>Counting routing decisions across sample requests:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def analyze_routing_patterns(conversation_history: List[str]):
+    """Analyze routing patterns in conversations"""
+    routing_stats = {
+        "product": 0,
+        "order": 0, 
+        "small_talk": 0,
+        "total_requests": len(conversation_history)
+    }
+
+    for request in conversation_history:
+        # Simulate routing decision
+        inputs = {"messages": [HumanMessage(content=request)]}
+        result = router_agent.compiled_graph.invoke(inputs)
+
+        route = result["messages"][1].content.lower()  # Router decision
+
+        if "product" in route:
+            routing_stats["product"] += 1
+        elif "order" in route:
+            routing_stats["order"] += 1
+        elif "small_talk" in route:
+            routing_stats["small_talk"] += 1
+
+    return routing_stats
+
+# Analyze patterns
+sample_requests = [
+    "Hello", "Show order ORD-123", "SpectraBook features?", 
+    "Update my order", "Laptop prices?", "Goodbye"
+]
+routing_analysis = analyze_routing_patterns(sample_requests)
+print(f"Routing Analysis: {routing_analysis}")
+        </script>
+      </div>
+      <p>Registering agents at runtime (adds a node and an edge to END, recompiles; <code>find_route</code> checks registered keywords first):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+class DynamicRouterAgent(RouterAgent):
+    def __init__(self, model, routing_prompt, smalltalk_prompt, debug=False):
+        self.registered_agents = {}
+        super().__init__(model, routing_prompt, smalltalk_prompt, debug)
+
+    def register_agent(self, agent_name: str, agent_instance: Any, route_keyword: str):
+        """Dynamically register new agents"""
+        self.registered_agents[route_keyword] = {
+            "name": agent_name,
+            "instance": agent_instance
+        }
+
+        # Add node to graph
+        agent_node_func = partial(
+            agent_node,
+            agent_class=agent_instance,
+            agent_name=agent_name
+        )
+
+        self.agent_graph.add_node(agent_name.lower(), agent_node_func)
+        self.agent_graph.add_edge(agent_name.lower(), END)
+
+        # Recompile graph
+        self.compiled_graph = self.agent_graph.compile()
+
+    def find_route(self, state: RouterAgentState) -> str:
+        """Enhanced routing with dynamic agents"""
+        last_message = state["messages"][-1]
+        route_decision = last_message.content.lower().strip()
+
+        # Check registered agents first
+        for keyword, agent_info in self.registered_agents.items():
+            if keyword in route_decision:
+                return agent_info["name"].lower()
+
+        # Fallback to default routing
+        return super().find_route(state)
+        </script>
+      </div>
+      <p>Omitted repeats: the lesson's <code>agent_node</code> / <code>robust_agent_node</code> (same wrapper, using <code>agent_class.compiled_graph</code>, plus try/except), its <code>RouterAgent</code> and prompts (lower-case names, no memory), and <code>execute_router_request</code> / <code>execute_full_conversation</code>.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-048-7-4-execution">← Previous</a><span class="rev-pos">49 / 57</span><a href="#q-langgraph-050-8-beyond-langgraph-other-frameworks-tool">Next →</a></nav>
+    </section>
+  </div>
+</details>

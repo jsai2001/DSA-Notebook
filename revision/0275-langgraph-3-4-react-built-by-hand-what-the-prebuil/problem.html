@@ -1,0 +1,96 @@
+<details class="question" id="q-langgraph-019-3-4-react-built-by-hand-what-the-prebuil" data-group="langgraph" data-sec="langgraph-s011">
+  <summary>
+    <span class="q-title">3.4 ReAct built by hand (what the prebuilt agent does for you) (3/4)</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 3. ReAct Agent (prebuilt and from scratch) › 3.4 ReAct built by hand (what the prebuilt agent does for you)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def create_react_graph():
+    agent = ReActAgent()
+
+    # Create graph
+    graph = StateGraph(ReActState)
+
+    # Add nodes
+    graph.add_node("thought", agent.thought_node)
+    graph.add_node("action", agent.action_node)
+    graph.add_node("observation", agent.observation_node)
+
+    # Define flow
+    graph.add_edge("thought", "action")
+    graph.add_edge("action", "observation")
+
+    # Conditional edge for iteration
+    def should_continue(state: ReActState) -> str:
+        if state.get("final_answer") or state.get("iteration", 0) >= agent.max_iterations:
+            return "end"
+        return "thought"
+
+    graph.add_conditional_edges(
+        "observation",
+        should_continue,
+        {"thought": "thought", "end": END}
+    )
+
+    # Set entry point
+    graph.set_entry_point("thought")
+
+    return graph.compile()
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def run_react_agent(user_input: str):
+    """Execute ReAct agent with user input"""
+    graph = create_react_graph()
+
+    initial_state = {
+        "messages": [user_input],
+        "thought": "",
+        "action": "",
+        "observation": "",
+        "final_answer": "",
+        "iteration": 0
+    }
+
+    result = graph.invoke(initial_state)
+    return result["final_answer"] or "Could not determine answer"
+
+# Usage examples
+print(run_react_agent("What is the sum of 15 and 27?"))
+print(run_react_agent("Calculate 8 times 6"))
+        </script>
+      </div>
+      <p>Refinements: LLM-chosen tool and parameters, up-front planning for multi-step problems, error recovery.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def enhanced_action_node(self, state: ReActState) -> Dict:
+    """Enhanced action selection with better tool matching"""
+    thought = state["thought"]
+    user_input = state["messages"][-1]
+
+    # Use LLM for tool selection
+    tool_selection_prompt = f"""
+    User request: {user_input}
+    Current thought: {thought}
+    Available tools: {[f"{name}: {tool.description}" for name, tool in self.tools.items()]}
+
+    Which tool should be used and with what parameters?
+    Format: tool_name(param1, param2)
+    """
+
+    tool_decision = self.llm.invoke(tool_selection_prompt).content
+
+    # Parse and execute tool
+    return self.execute_tool_from_decision(tool_decision)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-018-3-4-react-built-by-hand-what-the-prebuil">← Previous</a><span class="rev-pos">19 / 57</span><a href="#q-langgraph-020-3-4-react-built-by-hand-what-the-prebuil">Next →</a></nav>
+    </section>
+  </div>
+</details>

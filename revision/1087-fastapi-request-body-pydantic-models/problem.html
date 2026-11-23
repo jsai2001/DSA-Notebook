@@ -1,0 +1,64 @@
+<details class="question" id="q-fastapi-010-request-body-pydantic-models" data-group="fastapi" data-sec="fastapi-s011">
+  <summary>
+    <span class="q-title">Request body (Pydantic models)</span>
+    <span class="q-meta">
+      <span class="tag">FastAPI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">FastAPI › 4. Accepting Data › Request body (Pydantic models)</p>
+      <p>JSON in the body is the most common way to pass data. <strong>Pydantic</strong> validates it.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from datetime import datetime
+from http import HTTPStatus
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
+import db
+app = FastAPI()
+
+class Sale(BaseModel):
+    time: datetime
+    customer_id: str = Field(min_length=2)
+    sku: str = Field(min_length=2)
+    amount: int = Field(gt=0)
+    price: float = Field(gt=0)  # $
+
+@app.post('/sales/')
+def new_sale(sale: Sale):
+    record = db.Sale(
+        time=sale.time,
+        sku=sale.sku,
+        customer_id=sale.customer_id,
+        amount=sale.amount,
+        price=int(sale.price * 100),  # Convert dollars to cents for DB
+    )
+    key = db.insert(record)
+    return {'key': key}
+
+@app.get('/sales/{key}')
+def get_sale(key: str) -> Sale:
+    record = db.get(key)
+    if record is None:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='sale not found')
+    return Sale(
+        time=record.time,
+        sku=record.sku,
+        customer_id=record.customer_id,
+        amount=record.amount,
+        price=record.price / 100,  # Convert cents back to dollars
+    )
+        </script>
+      </div>
+      <ul>
+        <li>Keep <strong>API models separate from DB models</strong>; layers may store data differently (dollars vs cents).</li>
+        <li><code>Field(min_length=2)</code>, <code>Field(gt=0)</code> are validated automatically; failures give <code>422</code> with detailed messages.</li>
+        <li>A return annotation (<code>-&gt; Sale</code>) adds the response schema to <code>/docs</code>.</li>
+        <li><code>{key}</code> in the route is a <strong>path parameter</strong> bound to the <code>key</code> argument.</li>
+        <li>Pydantic has specialized types, e.g. <code>PastDatetime</code> for datetimes that must be in the past.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fastapi-009-query-parameters">← Previous</a><span class="rev-pos">10 / 26</span><a href="#q-fastapi-011-html-forms">Next →</a></nav>
+    </section>
+  </div>
+</details>

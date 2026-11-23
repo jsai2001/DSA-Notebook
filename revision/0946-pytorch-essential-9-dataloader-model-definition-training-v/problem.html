@@ -1,0 +1,109 @@
+<details class="question" id="q-pytorch-essential-011-9-dataloader-model-definition-training-v" data-group="pytorch-essential" data-sec="pytorch-essential-s010">
+  <summary>
+    <span class="q-title">9. DataLoader, Model Definition, Training &amp; Validation (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">PyTorch Essential</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">PyTorch Essential › 9. DataLoader, Model Definition, Training &amp; Validation</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+net = Net()
+criterion = nn.CrossEntropyLoss()              # Loss function
+optimizer = torch.optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+num_epochs = 10
+
+for epoch in range(num_epochs):
+    running_loss = 0.0
+    for i, data in enumerate(training_data_loader):
+        inputs, labels = data                   # Unpack images and labels
+        optimizer.zero_grad()                   # Zero gradients from previous batch
+        outputs = net(inputs)                   # Forward pass
+        loss = criterion(outputs, labels)       # Compute loss
+        loss.backward()                         # Backward pass (compute gradients)
+        optimizer.step()                        # Update weights
+        running_loss += loss.item()
+        if (i + 1) % 2000 == 0:
+            print(f'Epoch {epoch+1}, Batch {i+1}, Loss: {running_loss / 2000:.3f}')
+            running_loss = 0.0
+print('Finished Training')
+        </script>
+      </div>
+      <p>Per-batch order: <code>zero_grad()</code> (stops gradients accumulating across batches) → forward pass → loss vs labels → <code>backward()</code> computes gradients → <code>step()</code> updates weights → accumulate <code>loss.item()</code> for monitoring.</p>
+      <p><strong>Validation setup:</strong> split the training set with <code>random_split</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from torch.utils.data import random_split
+# Split training data: 40,000 training + 10,000 validation
+train_set, val_set = random_split(training_data, [40000, 10000])
+train_loader = DataLoader(train_set, batch_size=16, shuffle=True)
+val_loader = DataLoader(val_set, batch_size=16, shuffle=True)
+test_loader = DataLoader(test_data, batch_size=4, shuffle=False)
+        </script>
+      </div>
+      <p><strong>Training with a validation loop</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+for epoch in range(num_epochs):
+    # --- Training Phase ---
+    net.train()
+    running_loss = 0.0
+    for i, data in enumerate(train_loader):
+        inputs, labels = data
+        optimizer.zero_grad()
+        outputs = net(inputs)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item()
+
+    # --- Validation Phase ---
+    net.eval()
+    val_loss = 0.0
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for data in val_loader:
+            inputs, labels = data
+            outputs = net(inputs)
+            loss = criterion(outputs, labels)
+            val_loss += loss.item()
+            _, predicted = torch.max(outputs, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    val_accuracy = 100 * correct / total
+    print(f'Epoch {epoch+1}: '
+          f'Train Loss: {running_loss / len(train_loader):.3f}, '
+          f'Val Loss: {val_loss / len(val_loader):.3f}, '
+          f'Val Accuracy: {val_accuracy:.2f}%')
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Mode</th><th>Behavior</th></tr></thead>
+          <tbody>
+            <tr><td><code>net.train()</code></td><td>Dropout active, batch norm updates</td></tr>
+            <tr><td><code>net.eval()</code></td><td>Dropout off, batch norm frozen, for consistent inference</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><code>torch.no_grad()</code> disables gradient computation during validation, since no weights are updated there.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+          <tbody>
+            <tr><td>Epoch</td><td>One full pass over the training set</td></tr>
+            <tr><td>Batch</td><td>Subset processed per weight update</td></tr>
+            <tr><td>Loss</td><td>Error between output and labels</td></tr>
+            <tr><td>Gradient</td><td>Direction to adjust weights to reduce loss</td></tr>
+            <tr><td>Hyperparameters</td><td>Learning rate, epochs, batch size; tuned using validation</td></tr>
+          </tbody>
+        </table>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-pytorch-essential-010-9-dataloader-model-definition-training-v">← Previous</a><span class="rev-pos">11 / 12</span><a href="#q-pytorch-essential-012-10-quick-reference">Next →</a></nav>
+    </section>
+  </div>
+</details>

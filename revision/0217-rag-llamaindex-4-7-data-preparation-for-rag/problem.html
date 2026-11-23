@@ -1,0 +1,46 @@
+<details class="question" id="q-rag-llamaindex-025-4-7-data-preparation-for-rag" data-group="rag-llamaindex" data-sec="rag-llamaindex-s022">
+  <summary>
+    <span class="q-title">4.7 Data preparation for RAG (1/3)</span>
+    <span class="q-meta">
+      <span class="tag">RAG with LlamaIndex</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RAG with LlamaIndex › 4. Introduction to RAG: Pipelines, Prompts, Data Prep › 4.7 Data preparation for RAG</p>
+      <p>A RAG system is only as good as the data it retrieves. Real PDFs have inconsistent layouts, images/charts (need OCR), tables, and header/footer noise; the course deliberately uses simple book PDFs. Consider: document <strong>content</strong>, document <strong>elements</strong> (title, narrative text, list items, tables, images), and element <strong>metadata</strong> (filename, filetype, page number, section) for filtering and hybrid search.</p>
+      <p><strong>Comparing PDF loaders</strong> on the same file:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from llama_index.core import SimpleDirectoryReader
+from llama_index.readers.file import PDFReader
+from llama_index.readers.smart_pdf_loader import SmartPDFLoader
+
+PDF_PATH = "../data/almanack_of_naval_ravikant.pdf"
+LLMSHERPA_API_URL = "https://readers.llmsherpa.com/api/document/developer/parseDocument?renderFormat=all"
+
+simple_directory_reader_docs = SimpleDirectoryReader(input_files=[PDF_PATH]).load_data()   # 242, one per page
+smart_pdf_loader_docs = SmartPDFLoader(llmsherpa_api_url=LLMSHERPA_API_URL).load_data(PDF_PATH)  # 932, layout-aware chunks
+pdf_reader_docs = PDFReader().load_data(PDF_PATH)                                          # 242, same text as SimpleDirectoryReader
+
+pdf_reader_docs[100].text == simple_directory_reader_docs[100].text   # True
+        </script>
+      </div>
+      <p><strong>Custom extraction with PyMuPDF (<code>fitz</code>)</strong>: select page ranges per book, strip headers/footers, clean, attach metadata.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import fitz
+
+document = fitz.open(PDF_PATH)
+def extract_text(document, opt="text"):
+    '''Extract text from a page and returns a list of strings'''
+    text = document.get_text(opt, sort=True)
+    text = text.split("\n")
+    return text
+pages = [extract_text(page) for page in document]    # first look at raw page text
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-rag-llamaindex-024-4-6-response-synthesizers-response-modes">← Previous</a><span class="rev-pos">25 / 64</span><a href="#q-rag-llamaindex-026-4-7-data-preparation-for-rag">Next →</a></nav>
+    </section>
+  </div>
+</details>

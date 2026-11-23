@@ -1,0 +1,72 @@
+<details class="question" id="q-fastapi-021-security" data-group="fastapi" data-sec="fastapi-s022">
+  <summary>
+    <span class="q-title">Security</span>
+    <span class="q-meta">
+      <span class="tag">FastAPI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">FastAPI › 6. Production-Ready Code › Security</p>
+      <p>Security is every developer's job. Start with the <a href="https://owasp.org/www-project-top-ten/" target="_blank" rel="noopener">OWASP Top 10</a> (broken access control, cryptographic failures, injection, ...). Developers think about how things should work; put on a <strong>security hat</strong> and ask how a malicious actor would abuse the code. In reviews ask: what should I validate, and what am I not checking?</p>
+      <p>An insecure server:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from http import HTTPStatus
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+import users
+app = FastAPI()
+
+@app.get('/users/{login}')
+def get_user(login: str):
+    user = users.get(login)
+    if user is None:
+        return JSONResponse(
+            status_code=HTTPStatus.NOT_FOUND,
+            content={'error': f'{login!r} not found'},
+        )
+    return user
+
+class User(BaseModel):
+    login: str
+    uid: int
+    name: str
+    is_admin: bool
+
+@app.post('/users/{login}')
+def set_user(login, user: User):
+    users.set(login, user.model_dump())
+    return {'error': None, 'login': user.login}
+
+@app.post('/users/{login}/icon')
+async def set_icon(login: str, request: Request):
+    user = users.get(login)
+    if user is None:
+        return JSONResponse(
+            status_code=HTTPStatus.NOT_FOUND,
+            content={'error': f'{login!r} not found'},
+        )
+    data = await request.body()  # No size limit!
+    user['icon'] = data
+    users.set(login, user)
+    return {'error': None, 'login': login}
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Issue</th><th>Problem</th></tr></thead>
+          <tbody>
+            <tr><td>Broken access control</td><td>anyone can read user details or create users; no authn/authz</td></tr>
+            <tr><td>No input validation</td><td><code>login</code> not checked for malicious characters</td></tr>
+            <tr><td>No body size limit</td><td><code>set_icon</code> reads the whole body; attacker can send gigabytes</td></tr>
+            <tr><td>Can overwrite users</td><td><code>set_user</code> doesn't check existence</td></tr>
+            <tr><td>No admin check</td><td>creating users should require admin</td></tr>
+          </tbody>
+        </table>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fastapi-020-logging-and-metrics">← Previous</a><span class="rev-pos">21 / 26</span><a href="#q-fastapi-022-databases-lifespan-and-dependency-inject">Next →</a></nav>
+    </section>
+  </div>
+</details>

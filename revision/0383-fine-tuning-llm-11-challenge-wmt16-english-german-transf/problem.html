@@ -1,0 +1,48 @@
+<details class="question" id="q-fine-tuning-llm-044-11-challenge-wmt16-english-german-transf" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s031">
+  <summary>
+    <span class="q-title">11. Challenge: WMT16 English→German Transfer Learning (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 11. Challenge: WMT16 English→German Transfer Learning</p>
+      <p>Batch BLEU evaluation (generate for a whole batch, decode, score each pair, average):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
+import nltk
+nltk.download('punkt')
+
+# Function to calculate BLEU score
+def calculate_bleu(reference, hypothesis):
+    reference_tokens = [nltk.word_tokenize(reference)]
+    hypothesis_tokens = nltk.word_tokenize(hypothesis)
+    bleu_score = sentence_bleu(reference_tokens, hypothesis_tokens, smoothing_function=SmoothingFunction().method4)
+    return bleu_score
+
+# Function to translate and evaluate
+def translate_and_evaluate(dataset):
+    bleu_scores = []
+    batch = next(iter(dataset))
+    inputs = batch[0]['input_ids']
+    references = batch[1]
+    outputs = model.generate(inputs, max_length=128, num_beams=4, early_stopping=True)
+    for i in range(len(inputs)):
+        reference = tokenizer.decode(references[i], skip_special_tokens=True)
+        hypothesis = tokenizer.decode(outputs[i], skip_special_tokens=True)
+        bleu_score = calculate_bleu(reference, hypothesis)
+        bleu_scores.append(bleu_score)
+    return sum(bleu_scores) / len(bleu_scores)
+
+# Evaluate on the validation set
+average_bleu_score = translate_and_evaluate(test_dataset)
+print(f'Average BLEU score on validation set: {average_bleu_score}')
+        </script>
+      </div>
+      <p><strong>Results (lecture):</strong> BLEU ≈ <strong>0.12</strong> (acceptable for a hard language pair after a short head-only run), ~10–15 min GPU, ~10% of parameters trained. Lecture variant prompt for German→English: <code>"translate German to English: {german}"</code>.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-043-11-challenge-wmt16-english-german-transf">← Previous</a><span class="rev-pos">44 / 76</span><a href="#q-fine-tuning-llm-045-12-1-peft-in-one-view">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,80 @@
+<details class="question" id="q-vector-databases-050-cache-management-production" data-group="vector-databases" data-sec="vector-databases-s049">
+  <summary>
+    <span class="q-title">Cache management (production) (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">Vector Databases</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Vector Databases › 9. Use case 1: LLM semantic cache › Cache management (production)</p>
+      <ul>
+        <li><strong>Timestamp</strong> (<code>last_used</code>) field: update on every hit (upsert) so you can prune LRU / by age.</li>
+        <li><strong>Pruning strategies</strong>: age-based (simple, may delete popular old entries), LRU (keeps popular, needs timestamp updates), size-based (predictable, may delete recent), hybrid (best, more complex).</li>
+        <li><strong>User feedback</strong> field (+1 thumbs up / -1 thumbs down) and delete negative entries.</li>
+        <li><strong>TTL</strong>, cache warming (pre-populate with common prompts), multi-model cache (add <code>model_name</code> field and filter on it).</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# TTL / age-based prune
+import time
+one_week_ago = int(time.time()) - (7 * 24 * 60 * 60)
+cache.delete(f"timestamp < {one_week_ago}")
+
+# Feedback-based prune
+feedback = FieldSchema(name="feedback", dtype=DataType.INT8)   # 1 up, -1 down, 0 none
+cache_collection.delete("feedback == -1")
+
+# Multi-model cache: filter on model
+model_name = FieldSchema("model_name", DataType.VARCHAR, max_length=50)
+results = cache.search(data=[embedding], anns_field="prompt_embedding", param={"metric_type": "L2"},
+                       limit=1, expr="model_name == 'gpt-4'", output_fields=["response_text"])
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Update last_used on a hit (upsert), then prune by age, then by least-recently-used
+cache_collection.upsert([[hit_id], [prompt_text], [response_text], [embedding], [int(time.time())]])
+
+def prune_cache(max_size=10000, max_age_days=30):
+    current_size = cache_collection.num_entities
+    if current_size <= max_size:
+        return
+    age_threshold = int(time.time()) - (max_age_days * 24 * 60 * 60)
+    cache_collection.delete(f"last_used < {age_threshold}")                  # age-based
+    if cache_collection.num_entities > max_size:                              # then LRU
+        old_entries = cache_collection.query(expr="cache_id > 0", output_fields=["cache_id", "last_used"],
+                                             limit=current_size - max_size, sort_by="last_used")
+        ids_to_delete = [e["cache_id"] for e in old_entries]
+        cache_collection.delete(f"cache_id in {ids_to_delete}")
+        </script>
+      </div>
+      <p>Illustrative cache class from the lesson (some methods are stubs):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+class LLMCache:
+    def __init__(self, collection, llm, embeddings_model, threshold=0.3):
+        self.collection, self.llm = collection, llm
+        self.embeddings_model, self.threshold = embeddings_model, threshold
+        self.metrics = {"hits": 0, "misses": 0}
+
+    def get_response(self, prompt):
+        embedding = self.embeddings_model.embed_query(prompt)
+        results = self.collection.search(
+            data=[embedding], anns_field="prompt_embedding",
+            param={"metric_type": "L2", "params": {"nprobe": 10, "radius": self.threshold}},
+            limit=1, output_fields=["response_text", "cache_id"])
+        if results[0] and results[0][0].distance < self.threshold:
+            self.metrics["hits"] += 1
+            self.update_timestamp(results[0][0].entity.get("cache_id"))
+            return results[0][0].entity.get("response_text"), "cache"
+        self.metrics["misses"] += 1
+        response = self.llm(prompt)
+        self.collection.insert([[prompt], [response], [embedding], [int(time.time())]])
+        return response, "llm"
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-vector-databases-049-measuring-effectiveness">← Previous</a><span class="rev-pos">50 / 73</span><a href="#q-vector-databases-051-cache-management-production">Next →</a></nav>
+    </section>
+  </div>
+</details>

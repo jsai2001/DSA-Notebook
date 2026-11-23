@@ -1,0 +1,71 @@
+<details class="question" id="q-apache-spark-020-5-1-generate-a-visits-stream-code-04-03" data-group="apache-spark" data-sec="apache-spark-s017">
+  <summary>
+    <span class="q-title">5.1 Generate a visits stream (code_04_03)</span>
+    <span class="q-meta">
+      <span class="tag">Apache Spark</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Apache Spark › 5. Real-Time Pipeline: Website Analytics › 5.1 Generate a visits stream (code_04_03)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from kafka import KafkaProducer
+import datetime
+import random
+import json
+import time
+
+visits_topic = "spark.streaming.website.visits"
+
+def string_serializer(value):
+    return value.encode('utf-8')
+
+visits_producer = KafkaProducer(
+    bootstrap_servers=["localhost:9092"],
+    key_serializer=string_serializer,
+    value_serializer=string_serializer
+)
+countries = ["USA","India","Brazil","Australia","Russia"]
+last_actions = ["Catalog","FAQ","Order","ShoppingCart"]
+
+for i in range(1, 100):
+    json_record = {}
+    json_record["country"] = countries[random.randint(0,4)]
+    json_record["last_action"] = last_actions[random.randint(0,3)]
+    json_record["visit_date"] = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
+    json_record["duration"] = random.randint(1,20)
+    # Country as key: each country goes through the same partition,
+    # so updates for a country are handled sequentially
+    kafka_key = json_record["country"]
+    kafka_value = json.dumps(json_record)
+    visits_producer.send(visits_topic, key=kafka_key, value=kafka_value)
+    time.sleep(random.randint(1,3))   # sleep 1-3 seconds
+visits_producer.flush()
+visits_producer.close()
+        </script>
+      </div>
+      <p>Consumer test cell (checks that topic data is published correctly, prints partition and offset):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from kafka import KafkaConsumer
+
+def string_deserializer(value):
+    return value.decode('utf-8')
+
+visits_consumer=KafkaConsumer(
+                bootstrap_servers=["localhost:9092"],
+                value_deserializer=string_deserializer,
+                auto_offset_reset="latest"
+                )
+visits_consumer.subscribe(visits_topic)
+messages = visits_consumer.poll()
+print("Total messages :", len(messages))
+for message in messages:
+    print("%d:%d: vs=%s" % (message.partition, message.offset, message.value))
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-apache-spark-019-5-real-time-pipeline-website-analytics">← Previous</a><span class="rev-pos">20 / 32</span><a href="#q-apache-spark-021-5-2-streaming-analytics-job-code-04-04">Next →</a></nav>
+    </section>
+  </div>
+</details>

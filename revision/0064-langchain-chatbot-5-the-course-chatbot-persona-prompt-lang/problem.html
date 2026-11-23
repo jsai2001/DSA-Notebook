@@ -1,0 +1,78 @@
+<details class="question" id="q-langchain-chatbot-009-5-the-course-chatbot-persona-prompt-lang" data-group="langchain-chatbot" data-sec="langchain-chatbot-s009">
+  <summary>
+    <span class="q-title">5. The course chatbot: persona prompt + LangChain chain</span>
+    <span class="q-meta">
+      <span class="tag">LangChain Chatbot</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangChain Chatbot › 5. The course chatbot: persona prompt + LangChain chain</p>
+      <p><strong>Idea:</strong> extracted text + instruction block in one prompt, so the model answers only from that text and refuses everything else.</p>
+      <ul>
+        <li><strong>Persona:</strong> "Mr. Landon", hotel manager, for a consistent voice.</li>
+        <li><strong>Scope limit:</strong> fixed refusal "I can't assist you with that, sorry!" for off-topic questions.</li>
+        <li><strong><code>{question}</code>:</strong> <code>PromptTemplate(input_variables=["question"])</code> placeholder.</li>
+        <li><strong><code>temperature=0</code>:</strong> deterministic, factual.</li>
+        <li><strong><code>prompt_template | llm</code>:</strong> the pipe operator (LCEL) builds a chain; run it with <code>.invoke({...})</code>.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain_openai import OpenAI
+from langchain.prompts import PromptTemplate
+
+# Load extracted website/PDF content
+prompt = open('website_text.txt', 'r').read()
+
+# Create specialized hotel assistant template
+hotel_assistant_template = prompt + """
+You are the hotel manager of Landon Hotel, named "Mr. Landon". 
+Your expertise is exclusively in providing information and advice about anything related to Landon Hotel. 
+This includes any general Landon Hotel related queries. 
+You do not provide information outside of this scope. 
+If a question is not about Landon Hotel, respond with, "I can't assist you with that, sorry!" 
+Question: {question} 
+Answer: 
+"""
+
+# Create prompt template
+hotel_assistant_prompt_template = PromptTemplate(
+    input_variables=["question"],
+    template=hotel_assistant_template
+)
+
+# Initialize LLM with low temperature for consistency
+llm = OpenAI(model='gpt-3.5-turbo-instruct', temperature=0)
+
+# Create LLM chain using pipe operator
+llm_chain = hotel_assistant_prompt_template | llm
+        </script>
+      </div>
+      <p>Command-line version (exercise <code>02_02.py</code> prints inside <code>query_llm</code> and loops on <code>input()</code>; the version below returns the answer so it can be reused by Flask):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def query_llm(question):
+    """Process user question and return LLM response"""
+    response = llm_chain.invoke({'question': question})
+    return response
+
+# Interactive testing (command line version)
+def test_chatbot():
+    """Test chatbot functionality interactively"""
+    print("Landon Hotel Chatbot - Type 'quit' to exit")
+    while True:
+        user_input = input("You: ")
+        if user_input.lower() == 'quit':
+            break
+        response = query_llm(user_input)
+        print(f"Mr. Landon: {response}")
+
+# Uncomment to test
+# test_chatbot()
+        </script>
+      </div>
+      <p>Expected: greetings and hotel questions (name, location in London's West End, check-in at 3:00 PM, amenities) are answered from the data; "What is LangChain?", "What is OpenAI?", "Tell me about Python" return the refusal.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langchain-chatbot-008-4-calling-openai-directly-vs-through-lan">← Previous</a><span class="rev-pos">9 / 29</span><a href="#q-langchain-chatbot-010-6-1-changes-from-the-cli-version">Next →</a></nav>
+    </section>
+  </div>
+</details>

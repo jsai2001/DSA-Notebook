@@ -1,0 +1,77 @@
+<details class="question" id="q-rag-llamaindex-044-6-6-document-summary-index" data-group="rag-llamaindex" data-sec="rag-llamaindex-s034">
+  <summary>
+    <span class="q-title">6.6 Document Summary Index</span>
+    <span class="q-meta">
+      <span class="tag">RAG with LlamaIndex</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RAG with LlamaIndex › 6. Advanced RAG: Pre-Retrieval &amp; Indexing › 6.6 Document Summary Index</p>
+      <p>Embed <strong>document summaries</strong> and link them to their chunks. Limits of chunk-only retrieval: chunks lack global context, similarity thresholds need tuning, embeddings may miss relevance, keyword filtering has its own problems. The index stores an LLM summary per document, the document's text chunks, and a mapping between them. Retrieval operates at the document level first, then synthesizes over the linked chunks (different optimal representations for retrieval vs synthesis).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from llama_index.core import DocumentSummaryIndex, get_response_synthesizer
+
+splitter = TokenTextSplitter(chunk_size=1024, chunk_overlap=16)
+response_synthesizer = get_response_synthesizer(response_mode="tree_summarize", use_async=True)
+
+doc_summary_index = DocumentSummaryIndex.from_documents(
+    senpai_documents,
+    llm=Settings.llm,
+    embed_model=Settings.embed_model,
+    transformations=[splitter],
+    response_synthesizer=response_synthesizer,     # generates each document's summary
+    show_progress=True,
+    vector_store=doc_summary_vector_store          # collection "words-of-the-senpai-document-summary-index"
+)
+        </script>
+      </div>
+      <p>The high-level <code>as_query_engine()</code> route uses <strong>embedding-based</strong> retrieval by default. The low-level retrievers allow either mode:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th></th><th>LLM-based (<code>DocumentSummaryIndexLLMRetriever</code>)</th><th>Embedding-based (<code>DocumentSummaryIndexEmbeddingRetriever</code>)</th></tr></thead>
+          <tbody>
+            <tr><td>Selects by</td><td>LLM scores summaries in batches (<code>choice_batch_size</code>, default 10; <code>choice_top_k</code>, default 1)</td><td>Cosine similarity of query vs summary embeddings (<code>similarity_top_k</code>)</td></tr>
+            <tr><td>Speed / cost</td><td>Slower, more expensive</td><td>Faster, cheaper</td></tr>
+            <tr><td>Quality</td><td>Higher via LLM reasoning</td><td>Depends on embedding quality</td></tr>
+            <tr><td>Custom hooks</td><td><code>choice_select_prompt</code>, <code>format_node_batch_fn</code>, <code>parse_choice_select_answer_fn</code></td><td><code>similarity_top_k</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from llama_index.core.indices.document_summary import (
+    DocumentSummaryIndexLLMRetriever, DocumentSummaryIndexEmbeddingRetriever)
+from llama_index.core.query_engine import RetrieverQueryEngine
+
+response_synthesizer = get_response_synthesizer(response_mode="tree_summarize")
+
+# LLM-based
+doc_llm_retriever = DocumentSummaryIndexLLMRetriever(
+    doc_summary_index,
+    choice_top_k=5,
+    llm=Settings.llm,
+    # choice_select_prompt=None, choice_batch_size=10,
+    # format_node_batch_fn=None, parse_choice_select_answer_fn=None,
+)
+doc_llm_query_engine = RetrieverQueryEngine(
+    retriever=doc_llm_retriever, response_synthesizer=response_synthesizer)
+doc_llm_query_engine.update_prompts(
+    {'response_synthesizer:text_qa_template': HYPE_ANSWER_GEN_PROMPT_TEMPLATE})
+doc_llm_query_engine.query("How can I stop overanalyzing my own moods and feelings?")
+
+# Embedding-based
+doc_embed_retriever = DocumentSummaryIndexEmbeddingRetriever(
+    doc_summary_index,
+    # similarity_top_k=1,
+)
+doc_embed_query_engine = RetrieverQueryEngine(
+    retriever=doc_embed_retriever, response_synthesizer=response_synthesizer)
+        </script>
+      </div>
+      <p>The retrievers also support adding/deleting documents from the index.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-rag-llamaindex-043-6-5-metadata-extraction">← Previous</a><span class="rev-pos">44 / 64</span><a href="#q-rag-llamaindex-045-6-7-query-transformations">Next →</a></nav>
+    </section>
+  </div>
+</details>

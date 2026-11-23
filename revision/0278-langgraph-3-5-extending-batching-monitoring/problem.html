@@ -1,0 +1,72 @@
+<details class="question" id="q-langgraph-022-3-5-extending-batching-monitoring" data-group="langgraph" data-sec="langgraph-s012">
+  <summary>
+    <span class="q-title">3.5 Extending, batching, monitoring (2/3)</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 3. ReAct Agent (prebuilt and from scratch) › 3.5 Extending, batching, monitoring</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def batch_process_questions(questions: list):
+    """Process multiple questions efficiently"""
+    results = []
+
+    for i, question in enumerate(questions):
+        print(f"Processing question {i+1}: {question}")
+
+        try:
+            result = execute_agent(question)
+            final_answer = result["messages"][-1].content
+            results.append({"question": question, "answer": final_answer, "success": True})
+        except Exception as e:
+            results.append({"question": question, "error": str(e), "success": False})
+
+    return results
+
+# Batch processing example
+math_questions = [
+    "What is 5 plus 7?",
+    "Calculate 4 times 9",
+    "What is the sum of 15 and 23?"
+]
+
+batch_results = batch_process_questions(math_questions)
+        </script>
+      </div>
+      <p>Timing and metrics:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import time
+
+def monitored_execution(question: str):
+    """Execute agent with performance monitoring"""
+    start_time = time.time()
+
+    inputs = {"messages": [HumanMessage(content=question)]}
+    result = agent_graph.invoke(inputs)
+
+    end_time = time.time()
+    execution_time = end_time - start_time
+
+    # Performance metrics
+    metrics = {
+        "execution_time": execution_time,
+        "message_count": len(result["messages"]),
+        "final_answer": result["messages"][-1].content,
+        "tool_usage": sum(1 for msg in result["messages"] if "ToolMessage" in str(type(msg)))
+    }
+
+    print(f"Performance Metrics: {metrics}")
+    return result, metrics
+
+# Monitor execution
+monitored_result, perf_metrics = monitored_execution("What is 12 times 8?")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-021-3-5-extending-batching-monitoring">← Previous</a><span class="rev-pos">22 / 57</span><a href="#q-langgraph-023-3-5-extending-batching-monitoring">Next →</a></nav>
+    </section>
+  </div>
+</details>

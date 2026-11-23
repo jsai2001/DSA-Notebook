@@ -1,0 +1,55 @@
+<details class="question" id="q-fastapi-016-raw-non-json-responses" data-group="fastapi" data-sec="fastapi-s017">
+  <summary>
+    <span class="q-title">Raw (non-JSON) responses</span>
+    <span class="q-meta">
+      <span class="tag">FastAPI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">FastAPI › 5. Sending Data › Raw (non-JSON) responses</p>
+      <p>Return a <code>Response</code> with <code>bytes</code> content and a <code>media_type</code>. Here <code>width</code>/<code>height</code> are query params and the image is the request body; validate both size and parameters.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from http import HTTPStatus
+from io import BytesIO
+from fastapi import FastAPI, HTTPException, Request, Response
+from PIL import Image
+app = FastAPI()
+MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB
+
+@app.post('/resize')
+async def resize(width: int, height: int, request: Request):
+    size = int(request.headers.get('Content-Length', 0))
+    if not size:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail='missing content-length header',
+        )
+    if size > MAX_IMAGE_SIZE:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail='image too large (max is 5MB)',
+        )
+    if width <= 0 or height <= 0:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail='width and height must be positive',
+        )
+    data = await request.body()
+    io = BytesIO(data)
+    img = Image.open(io)
+    img = img.resize((width, height))
+    out = BytesIO()
+    img.save(out, format='PNG')
+    return Response(
+        content=out.getvalue(),
+        status_code=HTTPStatus.OK,
+        media_type='image/png',
+    )
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fastapi-015-streaming-responses">← Previous</a><span class="rev-pos">16 / 26</span><a href="#q-fastapi-017-custom-error-handlers">Next →</a></nav>
+    </section>
+  </div>
+</details>

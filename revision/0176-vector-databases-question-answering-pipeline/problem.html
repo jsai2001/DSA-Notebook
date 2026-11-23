@@ -1,0 +1,98 @@
+<details class="question" id="q-vector-databases-057-question-answering-pipeline" data-group="vector-databases" data-sec="vector-databases-s055">
+  <summary>
+    <span class="q-title">Question-answering pipeline</span>
+    <span class="q-meta">
+      <span class="tag">Vector Databases</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Vector Databases › 10. Use case 2: RAG concepts › Question-answering pipeline</p>
+      <p>User prompt -&gt; validation and metadata -&gt; embed -&gt; query knowledge base (top-K, with scalar filters) -&gt; build context -&gt; augment prompt -&gt; LLM -&gt; answer (plus sources).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def process_prompt(user_prompt, user_metadata):
+    if not authenticate_user(user_metadata["user_id"]):        # validation
+        return "Unauthorized"
+    filters = {"product_id": user_metadata.get("product_id"),   # metadata -> scalar filters
+               "user_id": user_metadata.get("user_id"),
+               "category": user_metadata.get("category")}
+    return user_prompt, filters
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+prompt_embedding = embeddings_model.embed_query(user_prompt)      # same model as curation
+results = knowledge_base.search(
+    data=[prompt_embedding],
+    anns_field="chunk_embedding",
+    param={"metric_type": "L2", "params": {"nprobe": 10}},
+    limit=3,                                                       # top-3 chunks
+    expr=f"product_id == '{filters['product_id']}'",               # scalar filter
+    output_fields=["chunk_text", "metadata"]
+)
+context = "\n\n".join(hit.entity.get("chunk_text") for hit in results[0])
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Complete RAG pipeline (lesson sketch)
+def rag_query(user_prompt, user_metadata):
+    prompt, filters = process_prompt(user_prompt, user_metadata)
+    embedding = embeddings_model.embed_query(prompt)
+    results = knowledge_base.search(data=[embedding], anns_field="chunk_embedding", limit=3,
+                                    expr=build_filter_expression(filters))
+    context = "\n\n".join([hit.entity.get("chunk_text") for hit in results[0]])
+    augmented_prompt = f"""
+    Context: {context}
+    Question: {prompt}
+    Answer based on context only:
+    """
+    return llm(augmented_prompt)
+        </script>
+      </div>
+      <p>(Build filter expressions from validated values; interpolating raw user input into <code>expr</code> invites injection.)</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Top-K</th><th>Trade-off</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>precise, may miss context</td></tr>
+            <tr><td><strong>3</strong></td><td>balanced (recommended start)</td></tr>
+            <tr><td>5</td><td>more comprehensive, more noise</td></tr>
+            <tr><td>10</td><td>too much context</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Prompt augmentation</strong>: instruct the model to use only the context, allow "I don't know", ask for citations.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+augmented_prompt = f"""
+Context Information:
+{context}
+
+Question: {user_prompt}
+
+Instructions:
+- Answer the question based ONLY on the context provided above
+- If the context doesn't contain relevant information, say "I don't have enough information to answer this question"
+- Be concise and accurate
+- Cite specific parts of the context when possible
+
+Answer:
+"""
+        </script>
+      </div>
+      <p><strong>Temperature</strong>: 0.0 deterministic/factual, <strong>0.3 recommended for RAG</strong>, 0.7 general chat, 1.0 creative.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+llm = OpenAI(temperature=0.3)
+answer = llm(augmented_prompt)
+return {"answer": answer,
+        "sources": [hit.entity.get("metadata") for hit in results[0]],
+        "confidence": calculate_confidence(results[0])}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-vector-databases-056-knowledge-curation-pipeline">← Previous</a><span class="rev-pos">57 / 73</span><a href="#q-vector-databases-058-rag-applications">Next →</a></nav>
+    </section>
+  </div>
+</details>

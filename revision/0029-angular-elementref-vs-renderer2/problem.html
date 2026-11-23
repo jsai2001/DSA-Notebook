@@ -1,0 +1,62 @@
+<details class="question" id="q-angular-029-elementref-vs-renderer2" data-group="angular" data-sec="angular-s030">
+  <summary>
+    <span class="q-title">ElementRef vs Renderer2</span>
+    <span class="q-meta">
+      <span class="tag">Angular</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Angular › 9. Directives › ElementRef vs Renderer2</p>
+      <p>Direct <code>nativeElement</code> access is less safe (XSS risk) and does not work with server-side rendering. <code>Renderer2</code> is the recommended, safer API.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="TypeScript">
+// ElementRef (direct)
+this.element.nativeElement.innerHTML += '<i>Icon</i>';
+
+// Renderer2
+const icon = this.renderer.createElement('i');
+this.renderer.appendChild(this.element.nativeElement, icon);
+        </script>
+      </div>
+      <p>Other directive patterns:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="TypeScript">
+@Directive({ selector: '[appClickTracker]' })
+export class ClickTrackerDirective {
+  @HostListener('click')
+  onClick() { console.log('Element clicked'); }
+}
+
+@Directive({ selector: '[appSafeHighlight]' })
+export class SafeHighlightDirective {
+  constructor(private el: ElementRef, private renderer: Renderer2) { }
+  ngAfterContentInit() {
+    this.renderer.setStyle(this.el.nativeElement, 'backgroundColor', 'yellow');
+  }
+}
+        </script>
+      </div>
+      <p>The direct-style highlight variant (<code>this.el.nativeElement.style.backgroundColor = 'yellow'</code>) is the unsafe counterpart of the Renderer2 version.</p>
+      <p>Testing a directive: mock <code>ElementRef</code> with a spy and inject the directive through <code>TestBed</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="TypeScript">
+beforeEach(() => {
+  TestBed.configureTestingModule({
+    providers: [
+      OnlineStatusDirective,
+      { provide: ElementRef<HTMLAnchorElement>, useValue: jasmine.createSpy('ElementRefSpy') }
+    ]
+  });
+  directive = TestBed.inject(OnlineStatusDirective);
+});
+
+it('should create an instance', () => {
+  expect(directive).toBeTruthy();
+});
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-angular-028-types-and-module-vs-standalone">← Previous</a><span class="rev-pos">29 / 55</span><a href="#q-angular-030-tsconfig-json-project-root">Next →</a></nav>
+    </section>
+  </div>
+</details>

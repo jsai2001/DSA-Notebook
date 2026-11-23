@@ -1,0 +1,42 @@
+<details class="question" id="q-langchain-level-up-017-6-1-query-analyzer" data-group="langchain-level-up" data-sec="langchain-level-up-s018">
+  <summary>
+    <span class="q-title">6.1 Query analyzer</span>
+    <span class="q-meta">
+      <span class="tag">LangChain Level Up</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangChain Level Up › 6. Q&amp;A Agent with Multiple Data Sources &amp; Query Analysis › 6.1 Query analyzer</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from pydantic import BaseModel, Field
+
+class Search(BaseModel):
+    query: str = Field(description="Question asked by the user")
+    person: str = Field(description="Person targeted in the user query")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+
+llm_function_calling = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+system_message = """You have the ability to issue search queries to get information to help answer user information."""
+prompt = ChatPromptTemplate.from_messages([
+    ("system", system_message),
+    ("human", "{question}"),
+])
+structured_llm = llm_function_calling.with_structured_output(Search)
+query_analyzer = prompt | structured_llm
+
+structured_output = query_analyzer.invoke({"question": "Where did Harrison work?"})
+print(structured_output)
+# Search(query='work', person='HARRISON')
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langchain-level-up-016-6-q-a-agent-with-multiple-data-sources-q">← Previous</a><span class="rev-pos">17 / 35</span><a href="#q-langchain-level-up-018-6-2-routing-to-a-retriever-with-a-custom">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,66 @@
+<details class="question" id="q-fastapi-022-databases-lifespan-and-dependency-inject" data-group="fastapi" data-sec="fastapi-s023">
+  <summary>
+    <span class="q-title">Databases: lifespan and dependency injection (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">FastAPI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">FastAPI › 6. Production-Ready Code › Databases: lifespan and dependency injection</p>
+      <p>Two problems: with the <code>fastapi</code> CLI there is <strong>no main function</strong> to connect to the DB, and <strong>each request needs its own cursor</strong>. FastAPI's answers are <strong>lifespan events</strong> (startup/shutdown) and <strong>dependency injection</strong> (<code>Depends</code>).</p>
+      <p>Table (<code>schema.sql</code>) and DB creation script:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="SQL">
+CREATE TABLE trades (
+    time TIMESTAMP,
+    user VARCHAR(32),
+    symbol VARCHAR(32),
+    price INTEGER, -- In ¢
+    volume INTEGER,
+    side VARCHAR(4) -- "buy" or "sell"
+);
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+#!/bin/bash
+rm -f trades.db
+sqlite3 trades.db < schema.sql
+        </script>
+      </div>
+      <p>Lifespan: connect on startup, close on shutdown. Code before <code>yield</code> is startup; <code>yield</code> blocks until shutdown; <code>finally</code> guarantees close.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import sqlite3
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+
+_db = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global _db
+    _db = sqlite3.connect('trades.db', check_same_thread=False)
+    try:
+        yield  # Server runs here
+    finally:
+        _db.close()  # Always close, even after exceptions
+
+app = FastAPI(lifespan=lifespan)
+        </script>
+      </div>
+      <p>Per-request cursor via a dependency (<code>with _db</code> commits, or rolls back on error):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from fastapi import Depends
+
+def get_cursor():
+    with _db as cursor:
+        yield cursor
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fastapi-021-security">← Previous</a><span class="rev-pos">22 / 26</span><a href="#q-fastapi-023-databases-lifespan-and-dependency-inject">Next →</a></nav>
+    </section>
+  </div>
+</details>

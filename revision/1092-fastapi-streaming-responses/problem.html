@@ -1,0 +1,54 @@
+<details class="question" id="q-fastapi-015-streaming-responses" data-group="fastapi" data-sec="fastapi-s016">
+  <summary>
+    <span class="q-title">Streaming responses</span>
+    <span class="q-meta">
+      <span class="tag">FastAPI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">FastAPI › 5. Sending Data › Streaming responses</p>
+      <p>For large or incremental data use <code>StreamingResponse</code>. JSON itself does not stream, but <strong>JSON Lines (NDJSON)</strong>, one JSON object per line, does. The handler passes a generator; items are sent as produced, without buffering everything. Under the hood HTTP uses <strong>chunked transfer encoding</strong> (chunk size in hex, then data).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from datetime import datetime, timedelta
+from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+app = FastAPI()
+
+class Event(BaseModel):
+    time: datetime
+    user: str
+    action: str
+    uri: str
+
+def query_events(start_time: datetime):
+    """Dummy query, could be a database query."""
+    time = start_time
+    for _ in range(10):
+        time += timedelta(seconds=19)
+        event = Event(
+            time=time,
+            user='elliot',
+            action='read',
+            uri='file:///etc/passwd',
+        )
+        yield event.model_dump_json() + '\n'
+
+@app.get('/events')
+async def get_gen(start: datetime):
+    events = query_events(start)
+    return StreamingResponse(events)
+        </script>
+      </div>
+      <p>Inspect the raw chunked stream with curl (<code>--raw</code> keeps chunk framing, <code>-i</code> shows headers):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+curl -i --raw http://localhost:8000/events?start=2024-08-06T14:18:30
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fastapi-014-json-responses-with-pydantic">← Previous</a><span class="rev-pos">15 / 26</span><a href="#q-fastapi-016-raw-non-json-responses">Next →</a></nav>
+    </section>
+  </div>
+</details>

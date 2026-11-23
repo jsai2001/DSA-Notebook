@@ -1,0 +1,73 @@
+<details class="question" id="q-boto3-017-6-boto3-with-github-actions-q61-70" data-group="boto3" data-sec="boto3-s007">
+  <summary>
+    <span class="q-title">6. boto3 with GitHub Actions (Q61-70) (1/4)</span>
+    <span class="q-meta">
+      <span class="tag">Boto3</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Boto3 › 6. boto3 with GitHub Actions (Q61-70)</p>
+      <p><strong>Q61. How is boto3 used in GitHub Actions?</strong> A workflow step sets up Python, installs boto3, configures AWS credentials and runs a script that creates, updates or deletes resources. Credentials come from GitHub Secrets, or better from an IAM role through OIDC.</p>
+      <p><strong>Standard workflow skeleton.</strong> Almost every workflow in Q62-70 repeats these steps; only the trigger, an extra step, and the final <code>run:</code> line change (see the variants below).</p>
+      <p><strong>Q62. Deploy a Lambda function (workflow + script).</strong> The script uploads the zip to S3, then <code>update_function_code</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Deploy Lambda Function
+on:
+  push:
+    branches: [main]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    - name: Install dependencies
+      run: pip install boto3
+    - name: Zip Lambda code
+      run: zip -r lambda_function.zip lambda_function.py
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+    - name: Deploy Lambda
+      run: python deploy_lambda.py
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# deploy_lambda.py
+import boto3
+
+def deploy_lambda():
+    s3_client = boto3.client('s3')
+    lambda_client = boto3.client('lambda')
+    bucket_name = 'my-lambda-bucket'
+    function_name = 'MyLambdaFunction'
+
+    # Upload zip to S3
+    s3_client.upload_file('lambda_function.zip', bucket_name, 'lambda_function.zip')
+
+    # Update Lambda function code
+    lambda_client.update_function_code(
+        FunctionName=function_name,
+        S3Bucket=bucket_name,
+        S3Key='lambda_function.zip'
+    )
+    print(f"Updated Lambda function: {function_name}")
+
+if __name__ == "__main__":
+    deploy_lambda()
+        </script>
+      </div>
+      <p><strong>Q63. Configure AWS credentials securely.</strong></p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-boto3-016-5-boto3-with-ansible-q51-60">← Previous</a><span class="rev-pos">17 / 25</span><a href="#q-boto3-018-6-boto3-with-github-actions-q61-70">Next →</a></nav>
+    </section>
+  </div>
+</details>

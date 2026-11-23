@@ -1,0 +1,47 @@
+<details class="question" id="q-apache-spark-013-3-environment-setup" data-group="apache-spark" data-sec="apache-spark-s011">
+  <summary>
+    <span class="q-title">3. Environment Setup (3/3)</span>
+    <span class="q-meta">
+      <span class="tag">Apache Spark</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Apache Spark › 3. Environment Setup</p>
+      <p><strong>5. Create Kafka topics:</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from kafka.admin import KafkaAdminClient, NewTopic
+from kafka import KafkaConsumer
+consumer = KafkaConsumer(group_id="setup", bootstrap_servers="localhost:9092")
+if "spark.streaming.website.visits" not in consumer.topics():
+    admin_client = KafkaAdminClient(
+                    bootstrap_servers="localhost:9092",
+                    client_id='spark-de')
+    topic_list = [
+        NewTopic(name="spark.streaming.website.visits",
+                 num_partitions=1, replication_factor=1),
+        NewTopic(name="spark.streaming.carts.abandoned",
+                 num_partitions=1, replication_factor=1),
+        NewTopic(name="spark.exercise.lastaction.long",
+                 num_partitions=1, replication_factor=1)
+    ]
+    result = admin_client.create_topics(new_topics=topic_list, validate_only=False)
+for topic in consumer.topics():
+    print(topic)
+        </script>
+      </div>
+      <p><strong>6. Raw data folder and environment check:</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import os
+os.makedirs("./raw_data", exist_ok=True)
+print(os.environ["JAVA_HOME"])   # must point to Java 17
+print(os.environ["PATH"])
+        </script>
+      </div>
+      <p>If the Docker containers are shut down, the databases and topics are lost. Rerun the setup notebook to recreate them.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-apache-spark-012-3-environment-setup">← Previous</a><span class="rev-pos">13 / 32</span><a href="#q-apache-spark-014-4-batch-pipeline-warehouse-stock-aggrega">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,87 @@
+<details class="question" id="q-scikit-learn-008-3-5-evaluating-classification-models" data-group="scikit-learn" data-sec="scikit-learn-s009">
+  <summary>
+    <span class="q-title">3.5 Evaluating Classification Models</span>
+    <span class="q-meta">
+      <span class="tag">scikit-learn</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">scikit-learn › 3. Supervised Learning › 3.5 Evaluating Classification Models</p>
+      <p>Notebook <code>02_06_evaluating_classification_models.ipynb</code> (same data/model as 3.4, plus metrics).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import sklearn.metrics as metrics
+import matplotlib.pyplot as plt
+y_pred = model.predict(X_test)
+y_prob = model.predict_proba(X_test)[:, 1]
+acc = metrics.accuracy_score(y_test, y_pred)
+print(f"Accuracy:  {acc:.3f}")
+        </script>
+      </div>
+      <p><strong>Accuracy alone misleads.</strong> If 99% of customers don't cancel, predicting "nobody cancels" scores 99% and is useless.</p>
+      <p><strong>Confusion matrix:</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+cm = metrics.confusion_matrix(y_test, y_pred)
+disp = metrics.ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=[0,1])
+disp.plot(values_format='d')
+plt.title("Confusion Matrix — UCLA Admissions")
+plt.show()
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th></th><th>Predicted Negative</th><th>Predicted Positive</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Actual Negative</strong></td><td>TN</td><td>FP</td></tr>
+            <tr><td><strong>Actual Positive</strong></td><td>FN</td><td>TP</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Question</th><th>Formula</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Precision</strong></td><td>Of predicted positives, how many were right?</td><td>TP / (TP + FP)</td></tr>
+            <tr><td><strong>Recall</strong></td><td>Of actual positives, how many were caught?</td><td>TP / (TP + FN)</td></tr>
+            <tr><td><strong>F1</strong></td><td>Harmonic mean of the two (they pull against each other)</td><td>2PR / (P + R)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+prec = metrics.precision_score(y_test, y_pred, zero_division=0)
+rec  = metrics.recall_score(y_test, y_pred)
+f1   = metrics.f1_score(y_test, y_pred)
+print(f"Precision: {prec:.3f}")
+print(f"Recall:    {rec:.3f}")
+print(f"F1 score:  {f1:.3f}")
+        </script>
+      </div>
+      <p><strong>ROC curve / AUC:</strong> ROC plots true-positive rate vs false-positive rate across all thresholds; AUC is its area as one score.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+metrics.RocCurveDisplay.from_predictions(y_test, y_prob)
+plt.title("ROC Curve — UCLA Admissions")
+plt.show()
+auc = metrics.roc_auc_score(y_test, y_prob)
+print(f"AUC:       {auc:.3f}")
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>AUC</th><th>Reading</th></tr></thead>
+          <tbody>
+            <tr><td>0.9–1.0</td><td>Excellent</td></tr>
+            <tr><td>0.8–0.9</td><td>Good</td></tr>
+            <tr><td>0.7–0.8</td><td>Fair</td></tr>
+            <tr><td>0.6–0.7</td><td>Poor</td></tr>
+            <tr><td>0.5</td><td>Random guessing</td></tr>
+          </tbody>
+        </table>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-scikit-learn-007-3-4-logistic-regression">← Previous</a><span class="rev-pos">8 / 17</span><a href="#q-scikit-learn-009-3-6-decision-trees">Next →</a></nav>
+    </section>
+  </div>
+</details>

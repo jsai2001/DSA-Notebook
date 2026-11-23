@@ -1,0 +1,106 @@
+<details class="question" id="q-vector-databases-027-collection-schema" data-group="vector-databases" data-sec="vector-databases-s026">
+  <summary>
+    <span class="q-title">Collection schema</span>
+    <span class="q-meta">
+      <span class="tag">Vector Databases</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Vector Databases › 5. Milvus objects › Collection schema</p>
+      <p>A collection has a schema of scalar + vector fields, exactly one primary key, optional dynamic fields.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from pymilvus import CollectionSchema, FieldSchema, DataType, Collection
+
+course_id = FieldSchema(name="course_id", dtype=DataType.INT64, is_primary=True, max_length=32)
+title = FieldSchema(name="title", dtype=DataType.VARCHAR, max_length=256)
+description = FieldSchema(name="description", dtype=DataType.VARCHAR, max_length=2048)
+desc_embedding = FieldSchema(
+    name="desc_embedding",
+    dtype=DataType.FLOAT_VECTOR,
+    dim=1536            # must match the embedding model
+)
+
+schema = CollectionSchema(
+    fields=[course_id, title, description, desc_embedding],
+    description="Courses List",
+    enable_dynamic_field=True
+)
+
+collection_name = "courses_list"
+collection = Collection(
+    name=collection_name,
+    schema=schema,
+    using=connection_id,
+    shard_num=2         # parallelism for DML
+)
+        </script>
+      </div>
+      <ul>
+        <li><code>FieldSchema</code> parts: <code>name</code>, <code>dtype</code>, <code>is_primary</code>, <code>max_length</code> (required for VARCHAR), <code>dim</code> (vector).</li>
+        <li><strong>Vector <code>dim</code> must equal the embedding model's output and cannot change later.</strong> Check with <code>len(embeddings_model.embed_query("test"))</code>.</li>
+        <li><code>shard_num</code>: DML parallelism (small data 1-4, large 4-16).</li>
+      </ul>
+      <p><strong>Primary key</strong>: one scalar field, unique, can be auto-generated.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+FieldSchema(name="course_id", dtype=DataType.INT64, is_primary=True, auto_id=False)  # you supply IDs
+FieldSchema(name="cache_id",  dtype=DataType.INT64, is_primary=True, auto_id=True)   # Milvus generates (used for the cache)
+        </script>
+      </div>
+      <p><strong>Dynamic fields</strong>: extra ad hoc fields supplied at insert time with <code>enable_dynamic_field=True</code> (flexible, may cost performance; enable only if needed).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+insert_data = [
+    [1, 2, 3],                                     # IDs
+    ["title1", "title2", "title3"],                # titles
+    [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]],          # embeddings
+    [{"extra_field": "value1"}, {"extra_field": "value2"}, {}]   # dynamic
+]
+        </script>
+      </div>
+      <p><strong>Data types</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Scalar</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>INT8/16/32/64, FLOAT, DOUBLE, BOOLEAN</td><td>numeric/boolean</td></tr>
+            <tr><td>VARCHAR</td><td>needs <code>max_length</code></td></tr>
+            <tr><td>JSON, ARRAY</td><td><code>ARRAY</code> needs <code>element_type</code> and <code>max_capacity</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Vector</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>FLOAT_VECTOR</td><td>standard embeddings (most common)</td></tr>
+            <tr><td>BINARY_VECTOR</td><td><code>dim</code> must be a multiple of 8; compressed</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+FieldSchema(name="tags", dtype=DataType.ARRAY, element_type=DataType.VARCHAR, max_capacity=10)
+FieldSchema(name="metadata", dtype=DataType.JSON)
+FieldSchema(name="binary_embedding", dtype=DataType.BINARY_VECTOR, dim=128)
+        </script>
+      </div>
+      <p><strong>Collection operations</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+utility.list_collections(using=connection_id)
+utility.has_collection("courses_list", using=connection_id)
+existing = Collection(collection_name, using=connection_id)   # access an existing one
+print(existing.schema)
+existing.num_entities
+utility.drop_collection("courses_list", using=connection_id)
+utility.rename_collection("old_name", "new_name")   # source marks this "if supported"
+        </script>
+      </div>
+      <p><strong>Schema modification restrictions</strong>: you cannot change field types, names, the primary key, vector dimension, or remove fields. Workaround: create a new collection with the new schema, migrate data, drop the old one. (You can add dynamic fields at insert and edit the description.)</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-vector-databases-026-users-and-roles-access-control">← Previous</a><span class="rev-pos">27 / 73</span><a href="#q-vector-databases-028-partitions">Next →</a></nav>
+    </section>
+  </div>
+</details>

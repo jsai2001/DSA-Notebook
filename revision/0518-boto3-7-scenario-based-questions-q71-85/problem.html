@@ -1,0 +1,71 @@
+<details class="question" id="q-boto3-021-7-scenario-based-questions-q71-85" data-group="boto3" data-sec="boto3-s008">
+  <summary>
+    <span class="q-title">7. Scenario-Based Questions (Q71-85) (1/5)</span>
+    <span class="q-meta">
+      <span class="tag">Boto3</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Boto3 › 7. Scenario-Based Questions (Q71-85)</p>
+      <p><strong>Q71. GitHub Actions workflow cannot authenticate with AWS.</strong> Troubleshooting checklist:</p>
+      <ul>
+        <li>Verify <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code> in GitHub Secrets.</li>
+        <li>Check the IAM user/role has the needed permissions.</li>
+        <li>Check the <code>aws-actions/configure-aws-credentials</code> step config.</li>
+        <li>Check the region.</li>
+        <li>Enable debug logging with <code>ACTIONS_STEP_DEBUG: true</code>.</li>
+        <li>Switch to OIDC with an IAM role.</li>
+      </ul>
+      <p><strong>Q72. Timeout listing thousands of S3 objects.</strong> Use a paginator and process in batches to limit memory; add retries for transient errors. (Gotcha: <code>MaxItems</code> caps the total results returned, so it truncates rather than speeds up. Use <code>PageSize</code> to tune per-request size.)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+from botocore.exceptions import ClientError
+
+def list_s3_objects(bucket_name):
+    s3_client = boto3.client('s3')
+    paginator = s3_client.get_paginator('list_objects_v2')
+    try:
+        for page in paginator.paginate(Bucket=bucket_name, PaginationConfig={'MaxItems': 1000}):
+            if 'Contents' in page:
+                for obj in page['Contents']:
+                    print(f"Object: {obj['Key']}")
+    except ClientError as e:
+        print(f"Error: {e}")
+
+if __name__ == "__main__":
+    list_s3_objects('my-large-bucket')
+        </script>
+      </div>
+      <p><strong>Q73. Create an EKS cluster with boto3, then configure it with Ansible.</strong></p>
+      <ol>
+        <li>boto3 creates the cluster and node group and waits for <code>ACTIVE</code>.</li>
+        <li>boto3 reads the cluster details and generates a kubeconfig.</li>
+        <li>Ansible uses the kubeconfig and the <code>k8s</code> module to deploy resources.</li>
+        <li>Run both in a GitHub Actions workflow.</li>
+      </ol>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# create_eks.py
+import boto3
+import time
+
+def create_eks_cluster(cluster_name, role_arn, subnets):
+    eks_client = boto3.client('eks')
+    eks_client.create_cluster(
+        name=cluster_name,
+        roleArn=role_arn,
+        resourcesVpcConfig={'subnetIds': subnets}
+    )
+    while eks_client.describe_cluster(name=cluster_name)['cluster']['status'] != 'ACTIVE':
+        print("Waiting for cluster...")
+        time.sleep(30)
+    print("Cluster created")
+        </script>
+      </div>
+      <p><strong>Q74. "Rate Exceeded" when creating many EC2 instances.</strong> Exponential backoff with retries, limit concurrent calls, use batch operations (for example <code>MinCount</code>/<code>MaxCount</code> instead of looping).</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-boto3-020-6-boto3-with-github-actions-q61-70">← Previous</a><span class="rev-pos">21 / 25</span><a href="#q-boto3-022-7-scenario-based-questions-q71-85">Next →</a></nav>
+    </section>
+  </div>
+</details>

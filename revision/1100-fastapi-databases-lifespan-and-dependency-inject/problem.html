@@ -1,0 +1,72 @@
+<details class="question" id="q-fastapi-023-databases-lifespan-and-dependency-inject" data-group="fastapi" data-sec="fastapi-s023">
+  <summary>
+    <span class="q-title">Databases: lifespan and dependency injection (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">FastAPI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">FastAPI › 6. Production-Ready Code › Databases: lifespan and dependency injection</p>
+      <p>Handler using it:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from datetime import datetime
+from enum import Enum
+from pydantic import BaseModel, Field
+
+class Side(Enum):
+    buy = 'buy'
+    sell = 'sell'
+
+class Trade(BaseModel):
+    user: str = Field(min_length=3)
+    time: datetime
+    symbol: str = Field(min_length=3)
+    price: int = Field(gt=0)   # In cents
+    volume: int = Field(gt=0)
+    side: Side
+
+@app.post('/trades')
+def new_trade(trade: Trade, cursor=Depends(get_cursor)):
+    params = {
+        'user': trade.user,
+        'time': trade.time,
+        'symbol': trade.symbol,
+        'price': trade.price,
+        'volume': trade.volume,
+        'side': trade.side.value,
+    }
+    cursor.execute(insert_sql, params)
+    return {'error': None}
+
+insert_sql = """
+INSERT INTO trades
+    (user, time, symbol, price, volume, side)
+VALUES
+    (:user, :time, :symbol, :price, :volume, :side)
+"""
+        </script>
+      </div>
+      <p>Example request body (<code>trade.json</code>), sent with <code>POST http://localhost:8000/trades</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JSON">
+{
+  "user": "warren",
+  "time": "2024-08-13T18:27:44",
+  "symbol": "MSFT",
+  "price": 41360,
+  "volume": 1000,
+  "side": "buy"
+}
+        </script>
+      </div>
+      <ul>
+        <li><code>Depends</code> makes FastAPI call <code>get_cursor()</code> for each request.</li>
+        <li><code>side.value</code> extracts the string from the Enum.</li>
+        <li>Use <strong>parameterized queries</strong> (<code>:user</code>); never string-format SQL (injection).</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fastapi-022-databases-lifespan-and-dependency-inject">← Previous</a><span class="rev-pos">23 / 26</span><a href="#q-fastapi-024-example-make-a-csv-processing-server-pro">Next →</a></nav>
+    </section>
+  </div>
+</details>

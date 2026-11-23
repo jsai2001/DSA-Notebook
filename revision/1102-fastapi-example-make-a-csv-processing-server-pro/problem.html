@@ -1,0 +1,99 @@
+<details class="question" id="q-fastapi-025-example-make-a-csv-processing-server-pro" data-group="fastapi" data-sec="fastapi-s024">
+  <summary>
+    <span class="q-title">Example: make a CSV-processing server production-ready (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">FastAPI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">FastAPI › 6. Production-Ready Code › Example: make a CSV-processing server production-ready</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import csv
+import logging
+import math
+from datetime import datetime
+from functools import wraps
+from http import HTTPStatus
+from io import StringIO
+from time import perf_counter
+from fastapi import FastAPI, HTTPException, Request
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%dT%H:%M:%S',
+)
+app = FastAPI()
+MAX_CSV_SIZE = 5 * (1 << 20)  # 5 MB
+
+def parse_csv(fp):
+    reader = csv.DictReader(fp)
+    start_time = end_time = None
+    prev_lat = prev_lng = None
+    count = total_distance = 0
+    for row in reader:
+        count += 1
+        time = datetime.fromisoformat(row['time'])
+        if start_time is None:
+            start_time = time
+        else:
+            end_time = time
+        lat, lng = float(row['lat']), float(row['lng'])
+        if prev_lat:
+            total_distance += distance(lat, lng, prev_lat, prev_lng)
+        prev_lat, prev_lng = lat, lng
+    duration_hours = (end_time - start_time).total_seconds() / (60 * 60)
+    speed = total_distance / duration_hours
+    return count, total_distance, speed
+
+def timed(fn):
+    """Decorator that logs function run time as a metric."""
+    fn_name = fn.__name__
+
+    @wraps(fn)
+    async def wrapper(*args, **kw):
+        start = perf_counter()
+        try:
+            return await fn(*args, **kw)
+        finally:
+            duration = perf_counter() - start
+            logging.info(f'[metric:{fn_name}.time] %.3f', duration)
+    return wrapper
+
+@app.post('/run')
+@timed  # Must be BELOW @app.post, otherwise the route registers the unwrapped function
+async def run_stats(request: Request):
+    # Validate content type
+    if (mime_type := request.headers['content-type']) != 'text/csv':
+        logging.error(f'bad format: {mime_type}')
+        raise HTTPException(HTTPStatus.NOT_ACCEPTABLE, detail='not a CSV')
+    # Validate file size
+    if (size := int(request.headers['Content-Length'])) > MAX_CSV_SIZE:
+        logging.error(f'[run_stats] file too large: {size}')
+        raise HTTPException(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, detail='file too large')
+    data = await request.body()
+    fp = StringIO(data.decode())
+    count, distance, speed = parse_csv(fp)
+    out = {'count': count, 'distance': distance, 'speed': speed}
+    logging.info('run_stats - %s', out)
+    return out
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Fix</th><th>How</th></tr></thead>
+          <tbody>
+            <tr><td>Size limit</td><td>reject over 5 MB with <code>413 REQUEST_ENTITY_TOO_LARGE</code></td></tr>
+            <tr><td>Content-type check</td><td>require <code>text/csv</code>, else <code>406 NOT_ACCEPTABLE</code></td></tr>
+            <tr><td>Logging</td><td><code>basicConfig</code> at module level; log bad format, oversized files and the result</td></tr>
+            <tr><td>Metrics</td><td><code>@timed</code> decorator with <code>perf_counter()</code> and <code>finally</code> so duration is always logged</td></tr>
+            <tr><td>Decorator order</td><td><code>@timed</code> sits directly above the function, under <code>@app.post</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fastapi-024-example-make-a-csv-processing-server-pro">← Previous</a><span class="rev-pos">25 / 26</span><a href="#q-fastapi-026-7-quick-patterns-recap">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,41 @@
+<details class="question" id="q-langgraph-027-4-4-agent-with-conversation-memory" data-group="langgraph" data-sec="langgraph-s016">
+  <summary>
+    <span class="q-title">4.4 Agent with conversation memory</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 4. Product Q&amp;A Chatbot (function tool + retriever tool + memory) › 4.4 Agent with conversation memory</p>
+      <p><code>MemorySaver</code> is a checkpointer that stores graph state per <strong>thread ID</strong>. Same ID = same conversation (follow-ups resolve); different ID = isolated. The system prompt sets the persona and forces tool use over model memory.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langgraph.prebuilt import create_react_agent
+from langgraph.checkpoint.memory import MemorySaver
+from langchain_core.messages import AIMessage,HumanMessage,SystemMessage
+#Create a System prompt to provide a persona to the chatbot
+system_prompt = SystemMessage("""
+    You are professional chatbot that answers questions about laptops sold by your company.
+    To answer questions about laptops, you will ONLY use the available tools and NOT your own memory.
+    You will handle small talk and greetings by producing professional responses.
+    """
+)
+#Create a list of tools available
+tools = [get_laptop_price, get_product_features]
+#Create memory across questions in a conversation (conversation memory)
+checkpointer=MemorySaver()
+#Create a Product QnA Agent. This is actual a graph in langGraph
+product_QnA_agent=create_react_agent(
+                                model=model, #LLM to use
+                                tools=tools, #List of tools to use
+                                state_modifier=system_prompt, #The system prompt
+                                debug=False, #Debugging turned on if needed
+                                checkpointer=checkpointer #For conversation memory
+)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-026-4-3-retriever-tool-product-features-from">← Previous</a><span class="rev-pos">27 / 57</span><a href="#q-langgraph-028-4-5-execution-streaming-vs-request-respo">Next →</a></nav>
+    </section>
+  </div>
+</details>

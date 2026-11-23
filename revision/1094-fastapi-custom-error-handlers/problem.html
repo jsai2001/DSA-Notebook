@@ -1,0 +1,57 @@
+<details class="question" id="q-fastapi-017-custom-error-handlers" data-group="fastapi" data-sec="fastapi-s018">
+  <summary>
+    <span class="q-title">Custom error handlers</span>
+    <span class="q-meta">
+      <span class="tag">FastAPI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">FastAPI › 5. Sending Data › Custom error handlers</p>
+      <p>FastAPI handles most errors, but an unknown exception type gives <code>500 Internal Server Error</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from fastapi import FastAPI
+app = FastAPI()
+
+class FreqError(Exception):
+    pass
+
+def char_freq(text: str):
+    if not text:
+        raise FreqError('empty text')
+    freqs = {}
+    for c in text.lower():
+        freqs[c] = freqs.get(c, 0) + 1
+    return freqs
+
+@app.get('/freq')
+def freq(text: str):
+    return char_freq(text)
+        </script>
+      </div>
+      <p>Register a handler for it:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from http import HTTPStatus
+
+@app.exception_handler(FreqError)
+async def freq_error_handler(request: Request, exc: FreqError):
+    return JSONResponse(
+        status_code=HTTPStatus.BAD_REQUEST,
+        content={'error': str(exc)},
+        headers={'X-Frequency-Text': request.query_params.get('text', '')},
+    )
+        </script>
+      </div>
+      <ul>
+        <li>The handler is <code>async def (request, exc)</code> and returns a <code>JSONResponse</code> with custom status, content and headers.</li>
+        <li>Custom headers conventionally start with <code>X-</code>; header names are case-insensitive.</li>
+        <li><strong>Security:</strong> do not put raw exception text in responses; it can leak tokens, addresses or other sensitive data.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fastapi-016-raw-non-json-responses">← Previous</a><span class="rev-pos">17 / 26</span><a href="#q-fastapi-018-example-query-logs-with-content-negotiat">Next →</a></nav>
+    </section>
+  </div>
+</details>

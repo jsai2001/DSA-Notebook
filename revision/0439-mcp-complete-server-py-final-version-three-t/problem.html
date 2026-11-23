@@ -1,0 +1,91 @@
+<details class="question" id="q-mcp-024-complete-server-py-final-version-three-t" data-group="mcp" data-sec="mcp-s025">
+  <summary>
+    <span class="q-title">Complete server.py (final version; three tools)</span>
+    <span class="q-meta">
+      <span class="tag">Model Context Protocol</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Model Context Protocol › 5. Building a Python MCP Server (FastMCP) › Complete server.py (final version; three tools)</p>
+      <p>Helper plus tools. <code>get_location</code> exists because LLMs may guess wrong coordinates; geocoding gives accurate ones. The first-pass <code>get_current_weather</code>/<code>get_forecast</code> in the lesson (string error messages) are earlier steps of this file.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from typing import Any
+import httpx
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("weather")
+
+OPENMETEO_API_BASE = "https://api.open-meteo.com/v1"
+USER_AGENT = "weather-app/1.0"
+
+async def make_openmeteo_request(url: str) -> dict[str, Any] | None:
+    """Make a request to the Open-Meteo API with proper error handling."""
+    headers = {"User-Agent": USER_AGENT, "Accept": "application/json"}
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(url, headers=headers, timeout=30.0)
+            response.raise_for_status()
+            return response.json()
+        except Exception:
+            return None
+
+@mcp.tool()
+async def get_current_weather(latitude: float, longitude: float) -> dict[str, Any]:
+    """Get current weather for a location.
+    Args:
+        latitude: Latitude of the location
+        longitude: Longitude of the location
+    """
+    url = f"{OPENMETEO_API_BASE}/forecast?latitude={latitude}&longitude={longitude}&current=temperature_2m,is_day,showers,cloud_cover,wind_speed_10m,wind_direction_10m,pressure_msl,snowfall,precipitation,relative_humidity_2m,apparent_temperature,rain,weather_code,surface_pressure,wind_gusts_10m"
+    data = await make_openmeteo_request(url)
+    if not data:
+        return {"error": "Unable to fetch current weather data for this location."}
+    return data
+
+@mcp.tool()
+async def get_forecast(latitude: float, longitude: float, days: int = 7) -> dict[str, Any]:
+    """Get weather forecast for a location.
+    Args:
+        latitude: Latitude of the location
+        longitude: Longitude of the location
+        days: Number of days to forecast (default: 7)
+    """
+    url = f"{OPENMETEO_API_BASE}/forecast?latitude={latitude}&longitude={longitude}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&forecast_days={days}"
+    data = await make_openmeteo_request(url)
+    if not data:
+        return {"error": "Unable to fetch forecast data for this location."}
+    return data
+
+@mcp.tool()
+async def get_location(city: str, country: str = "") -> dict[str, Any]:
+    """Get coordinates for a city using Open-Meteo Geocoding API.
+    Args:
+        city: Name of the city
+        country: Country code (optional, e.g., 'US', 'UK')
+    """
+    url = f"https://geocoding-api.open-meteo.com/v1/search?name={city}"
+    if country:
+        url += f"&country={country}"
+    data = await make_openmeteo_request(url)
+    if not data or not data.get("results"):
+        return {"error": "Unable to find location."}
+    result = data["results"][0]
+    return {
+        "name": result["name"],
+        "latitude": result["latitude"],
+        "longitude": result["longitude"],
+        "country": result["country"]
+    }
+
+if __name__ == "__main__":
+    mcp.run(transport='stdio')
+        </script>
+      </div>
+      <p>The helper returns <code>None</code> on any failure, so each tool returns an error value instead of crashing the server.</p>
+      <p>The exercise file <code>open-meteo-weather/server.py</code> is the same helper with two tools, but its <code>get_forecast</code> formats the daily arrays into a text string (the "don't pre-format" anti-pattern above) and its <code>get_current_weather</code> returns the raw dict.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-mcp-023-tool-anatomy">← Previous</a><span class="rev-pos">24 / 65</span><a href="#q-mcp-025-claude-desktop-integration">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,70 @@
+<details class="question" id="q-gcp-ml-015-challenge-set-up-a-notebook-for-the-expe" data-group="gcp-ml" data-sec="gcp-ml-s015">
+  <summary>
+    <span class="q-title">Challenge: set up a notebook for the expert MNIST example</span>
+    <span class="q-meta">
+      <span class="tag">GCP for Machine Learning</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GCP for Machine Learning › 7. Notebook Types and GPU Scaling › Challenge: set up a notebook for the expert MNIST example</p>
+      <ul>
+        <li><strong>Best choice: Instance</strong> (SSH like user-managed, dynamic sizing/GPU like managed).</li>
+        <li>Get the notebook in: open the expert MNIST notebook from tensorflow.org in public Colab → download <code>.ipynb</code> → upload into the instance.</li>
+        <li>Pick a machine type with a GPU, set the TensorFlow runtime, watch the resource meter.</li>
+        <li>Observation: training (5 epochs) used about <strong>50% of one GPU</strong>, so one GPU is enough; more would waste money.</li>
+        <li>At recording, 5 GPU types were available and not all are compatible with every base image. Test before scaling.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Instance with a GPU for the challenge
+gcloud workbench instances create mnist-expert \
+  --location=us-central1-a \
+  --machine-type=n1-standard-4 \
+  --accelerator-type=NVIDIA_TESLA_T4 \
+  --accelerator-core-count=1
+gcloud workbench instances describe mnist-expert \
+  --location=us-central1-a \
+  --format="value(proxyUri)"
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Expert MNIST: CNN
+import tensorflow as tf
+mnist = tf.keras.datasets.mnist
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+# Reshape for CNN (add channel dimension)
+x_train = x_train.reshape(-1, 28, 28, 1).astype('float32') / 255.0
+x_test = x_test.reshape(-1, 28, 28, 1).astype('float32') / 255.0
+model = tf.keras.models.Sequential([
+    tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=(28, 28, 1)),
+    tf.keras.layers.MaxPooling2D((2, 2)),
+    tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+    tf.keras.layers.MaxPooling2D((2, 2)),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(64, activation='relu'),
+    tf.keras.layers.Dropout(0.2),
+    tf.keras.layers.Dense(10, activation='softmax')
+])
+model.compile(optimizer='adam',
+              loss='sparse_categorical_crossentropy',
+              metrics=['accuracy'])
+# GPU kicks in here (watch the meter)
+model.fit(x_train, y_train, epochs=5, batch_size=64, validation_split=0.1)
+loss, accuracy = model.evaluate(x_test, y_test)
+print(f"Test accuracy: {accuracy:.4f}")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# List GPU types for a zone, then stop the instance when done
+gcloud compute accelerator-types list --filter="zone:us-central1-a" --format=table
+# Pricing: https://cloud.google.com/compute/gpus-pricing
+gcloud workbench instances stop mnist-expert --location=us-central1-a
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-gcp-ml-014-gpu-scaling-and-cost">← Previous</a><span class="rev-pos">15 / 26</span><a href="#q-gcp-ml-016-8-vector-search-embeddings-ann-rag">Next →</a></nav>
+    </section>
+  </div>
+</details>

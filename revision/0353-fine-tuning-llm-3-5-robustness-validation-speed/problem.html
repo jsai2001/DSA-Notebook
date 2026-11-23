@@ -1,0 +1,84 @@
+<details class="question" id="q-fine-tuning-llm-014-3-5-robustness-validation-speed" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s011">
+  <summary>
+    <span class="q-title">3.5 Robustness, validation, speed</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 3. FLAN-T5 &amp; the 4-Step Prompting Workflow › 3.5 Robustness, validation, speed</p>
+      <ul>
+        <li>Use a smaller model (<code>flan-t5-base</code>) in production for speed; reduce input <code>max_length</code> (256), output <code>max_length</code> and <code>num_beams</code> (3) to save memory.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def memory_efficient_generate(prompt):
+    inputs = tokenizer(prompt, return_tensors="tf", max_length=256, truncation=True)
+
+    # Use smaller parameters for memory efficiency
+    outputs = model.generate(
+        inputs["input_ids"],
+        max_length=100,
+        num_beams=3,
+        early_stopping=True
+    )
+
+    return tokenizer.decode(outputs[0], skip_special_tokens=True)
+        </script>
+      </div>
+      <p>Retry wrapper with output validation (the lecture shows three near-identical retry variants; this is the general one):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def robust_prompt_execution(prompt, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            response = query_llm(prompt)
+            if validate_response(response):
+                return response
+        except Exception as e:
+            if attempt == max_retries - 1:
+                return f"Error after {max_retries} attempts: {str(e)}"
+            continue
+    return None
+
+def validate_response(response):
+    return response and len(response.strip()) > 0
+        </script>
+      </div>
+      <p>Per-task output validators and a heuristic quality check:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def validate_output(output, task_type):
+    validators = {
+        "summarize": lambda x: len(x.split()) < 50,
+        "translate": lambda x: len(x) > 0 and not x.startswith("translate"),
+        "question": lambda x: len(x.split()) < 20
+    }
+
+    validator = validators.get(task_type, lambda x: True)
+    return validator(output)
+
+# Usage
+is_valid = validate_output(summary, "summarize")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def quality_check(input_text, output_text, task_type):
+    checks = {
+        "length": len(output_text) > 0,
+        "relevance": task_type.lower() in output_text.lower() if task_type != "question" else True,
+        "completeness": not output_text.endswith("...")
+    }
+
+    return all(checks.values()), checks
+
+# Usage
+is_quality, details = quality_check(input_text, result, "summarize")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-013-3-4-reusable-helpers">← Previous</a><span class="rev-pos">14 / 76</span><a href="#q-fine-tuning-llm-015-4-prompt-engineering-patterns">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,77 @@
+<details class="question" id="q-bedrock-009-bash-hello-world-claude-sh" data-group="bedrock" data-sec="bedrock-s010">
+  <summary>
+    <span class="q-title">Bash hello world (claude.sh)</span>
+    <span class="q-meta">
+      <span class="tag">Amazon Bedrock</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Amazon Bedrock › 6. Bedrock API: Bash to Rust › Bash hello world (claude.sh)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+#!/bin/bash
+
+# Check if AWS CLI is installed
+if ! command -v aws &> /dev/null; then
+    echo "AWS CLI is not installed"
+    exit 1
+fi
+
+# Default prompt
+PROMPT="${1:-Say hello in a creative way}"
+
+# Create temporary files for request and response
+REQUEST_FILE=$(mktemp)
+RESPONSE_FILE=$(mktemp)
+
+# Build request body
+cat > "$REQUEST_FILE" << EOF
+{
+    "prompt": "\n\nHuman: ${PROMPT}\n\nAssistant:",
+    "max_tokens_to_sample": 300,
+    "temperature": 0.7,
+    "stop_sequences": ["\n\nHuman:"]
+}
+EOF
+
+echo "Sending request to Bedrock..."
+
+# Call Bedrock inference via AWS CLI
+aws bedrock-runtime invoke-model \
+    --model-id anthropic.claude-v2 \
+    --content-type application/json \
+    --accept application/json \
+    --body file://"$REQUEST_FILE" \
+    "$RESPONSE_FILE"
+
+# Extract and print response
+cat "$RESPONSE_FILE" | python3 -c "import sys,json; print(json.load(sys.stdin)['completion'])"
+
+# Cleanup
+rm -f "$REQUEST_FILE" "$RESPONSE_FILE"
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+chmod +x claude.sh
+./claude.sh
+        </script>
+      </div>
+      <p>Request body fields (Claude v2 text-completion format):</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>prompt</code></td><td>Must use <code>\n\nHuman:</code> and <code>\n\nAssistant:</code> format for Claude</td></tr>
+            <tr><td><code>max_tokens_to_sample</code></td><td>Maximum response length</td></tr>
+            <tr><td><code>temperature</code></td><td><code>0.0</code> deterministic, <code>1.0</code> creative</td></tr>
+            <tr><td><code>stop_sequences</code></td><td>When the model should stop</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>The shebang lets you run the script directly. <code>command -v aws</code> exits with code 1 if the CLI is missing. Temp files are needed by the Bash interface. The response is parsed for the <code>completion</code> field.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-bedrock-008-6-bedrock-api-bash-to-rust">← Previous</a><span class="rev-pos">9 / 17</span><a href="#q-bedrock-010-rust-hello-world">Next →</a></nav>
+    </section>
+  </div>
+</details>

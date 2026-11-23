@@ -1,0 +1,54 @@
+<details class="question" id="q-python-automation-004-4-organizing-files-by-type" data-group="python-automation" data-sec="python-automation-s005">
+  <summary>
+    <span class="q-title">4. Organizing Files by Type</span>
+    <span class="q-meta">
+      <span class="tag">Python Automation</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Python Automation › 4. Organizing Files by Type</p>
+      <p>A script that sorts files in the current directory into category folders, with unknown types going to <code>MISC</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import os
+from pathlib import Path
+
+SUBDIRECTORIES = {
+    "DOCUMENTS": ['.pdf', '.rtf', '.txt'],
+    "AUDIOS": ['.m4a', '.m4b', '.mp3'],
+    "VIDEOS": ['.mov', '.avi', '.mp4'],
+    "IMAGES": ['.jpg', '.jpeg', '.png']
+}
+
+def pickDirectory(value):
+    for category, suffixes in SUBDIRECTORIES.items():
+        if value in suffixes:
+            return category
+    return "MISC"
+
+def organizeDirectory():
+    for item in os.scandir():
+        if item.is_dir():
+            continue
+        filePath = Path(item)
+        fileType = filePath.suffix.lower()
+        directory = pickDirectory(fileType)
+        directoryPath = Path(directory)
+        if directoryPath.is_dir() != True:
+            directoryPath.mkdir()
+        filePath.rename(directoryPath.joinpath(filePath))
+
+print(pickDirectory(".pdf"))  # DOCUMENTS (test the function before running everything)
+organizeDirectory()
+        </script>
+      </div>
+      <ul>
+        <li><code>os.scandir()</code> iterates the current directory. <code>Path(item).suffix</code> gives the extension. <code>.mkdir()</code> creates a folder. <code>.rename()</code> moves the file.</li>
+        <li>Flow: dictionary maps categories to extensions, <code>pickDirectory</code> looks up the category, <code>organizeDirectory</code> skips directories, creates missing category folders, and moves each file.</li>
+        <li><code>.lower()</code> makes extension matching case-insensitive. Check the result with <code>ls</code>.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-python-automation-003-3-running-cli-commands-with-subprocess">← Previous</a><span class="rev-pos">4 / 40</span><a href="#q-python-automation-005-5-parsing-data-files-txt-csv-json-xml">Next →</a></nav>
+    </section>
+  </div>
+</details>

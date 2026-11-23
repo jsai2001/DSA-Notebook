@@ -1,0 +1,69 @@
+<details class="question" id="q-langgraph-054-8-2-advanced-tools" data-group="langgraph" data-sec="langgraph-s035">
+  <summary>
+    <span class="q-title">8.2 Advanced tools (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 8. Beyond LangGraph: Other Frameworks, Tools, Deployment › 8.2 Advanced tools</p>
+      <p><strong>Third-party API tools</strong> (weather, Slack, read-only SQL; the DB tool allows only <code>SELECT</code>):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# External API integration tools
+import requests
+from typing import Dict, Any
+
+@tool
+def weather_api_tool(location: str) -> str:
+    """Get current weather information for a location"""
+    api_key = "your-weather-api-key"
+    url = f"http://api.openweathermap.org/data/2.5/weather?q={location}&appid={api_key}"
+
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        return f"Weather in {location}: {data['weather'][0]['description']}, {data['main']['temp']}K"
+    return f"Could not fetch weather for {location}"
+
+@tool
+def slack_notification_tool(message: str, channel: str) -> str:
+    """Send notification to Slack channel"""
+    webhook_url = "your-slack-webhook-url"
+    payload = {
+        "channel": channel,
+        "text": message,
+        "username": "AI Agent"
+    }
+
+    response = requests.post(webhook_url, json=payload)
+    return "Message sent successfully" if response.status_code == 200 else "Failed to send message"
+
+@tool
+def database_query_tool(query: str) -> str:
+    """Execute database queries safely"""
+    import sqlite3
+
+    # Safe query execution with parameterization
+    conn = sqlite3.connect("company_data.db")
+    cursor = conn.cursor()
+
+    try:
+        # Only allow SELECT queries for safety
+        if query.strip().upper().startswith("SELECT"):
+            cursor.execute(query)
+            results = cursor.fetchall()
+            return str(results)
+        else:
+            return "Only SELECT queries are allowed"
+    except Exception as e:
+        return f"Query error: {str(e)}"
+    finally:
+        conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-053-8-2-advanced-tools">← Previous</a><span class="rev-pos">54 / 57</span><a href="#q-langgraph-055-8-3-production-shape-config-logging-metr">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,64 @@
+<details class="question" id="q-scikit-learn-013-4-1-k-means-clustering" data-group="scikit-learn" data-sec="scikit-learn-s014">
+  <summary>
+    <span class="q-title">4.1 K-Means Clustering</span>
+    <span class="q-meta">
+      <span class="tag">scikit-learn</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">scikit-learn › 4. Unsupervised Learning › 4.1 K-Means Clustering</p>
+      <p>Notebook <code>03_02_clustering.ipynb</code>. Repeatedly assigns points to the nearest center, then moves each center. Scale features first so none dominates.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sklearn.cluster import KMeans
+url = "https://raw.githubusercontent.com/uiuc-cse/data-fa14/gh-pages/data/iris.csv"
+df = pd.read_csv(url)
+X = df[['sepal_length', 'sepal_width', 'petal_length', 'petal_width']]
+scaler = sklearn.preprocessing.StandardScaler()
+X_scaled = scaler.fit_transform(X)
+kmeans = KMeans(n_clusters=3, random_state=1, n_init='auto')
+kmeans.fit(X_scaled)
+cluster_labels = kmeans.labels_
+# Compare clusters to actual species
+df["cluster"] = cluster_labels
+crosstab = pd.crosstab(df["cluster"], df["species"])
+crosstab
+        </script>
+      </div>
+      <p>Clusters tend to match species although the model never saw the labels.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+plt.figure(figsize=(6, 5))
+scatter = plt.scatter(
+    df["sepal_length"],
+    df["sepal_width"],
+    c=df["cluster"],
+    cmap=plt.cm.Set1,
+    edgecolor="k"
+)
+plt.xlabel("sepal length (cm)")
+plt.ylabel("sepal width (cm)")
+plt.title("K-Means clusters on Iris (k=3)")
+plt.show()
+        </script>
+      </div>
+      <p><strong>Choosing K, the elbow method.</strong> <em>Inertia</em> measures how tight points sit around their center. It always falls as K grows, so pick the elbow where the drop flattens. Domain knowledge matters too.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+inertias = []
+for k in range(1, 11):
+    km = KMeans(n_clusters=k, random_state=1)
+    km.fit(X)
+    inertias.append(km.inertia_)
+plt.plot(range(1, 11), inertias, marker='o')
+plt.xlabel("Number of Clusters (k)")
+plt.ylabel("Inertia")
+plt.title("Elbow Method")
+plt.show()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-scikit-learn-012-4-unsupervised-learning">← Previous</a><span class="rev-pos">13 / 17</span><a href="#q-scikit-learn-014-4-2-dimensionality-reduction-with-pca">Next →</a></nav>
+    </section>
+  </div>
+</details>

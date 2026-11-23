@@ -1,0 +1,67 @@
+<details class="question" id="q-rag-llamaindex-033-5-3-building-an-evaluation-set-synthetic" data-group="rag-llamaindex" data-sec="rag-llamaindex-s028">
+  <summary>
+    <span class="q-title">5.3 Building an evaluation set (synthetic Q&amp;A from your own data) (1/3)</span>
+    <span class="q-meta">
+      <span class="tag">RAG with LlamaIndex</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RAG with LlamaIndex › 5. RAG Evaluation › 5.3 Building an evaluation set (synthetic Q&amp;A from your own data)</p>
+      <p>The hard part of RAG evaluation is a high-quality evaluation dataset, not the metrics. Pipeline: sample documents per author → chunk → LLM writes a question per chunk → LLM answers from the chunk → critic LLM scores question groundedness → filter → publish.</p>
+      <p>OpenAI is used here because Cohere's free tier is rate-limited (the dataset is published, so rerunning is optional).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from llama_index.llms.openai import OpenAI
+llm = OpenAI(model="gpt-3.5-turbo")
+
+from utils import get_documents_from_docstore, group_documents_by_author, sample_documents
+import random
+
+documents = get_documents_from_docstore("../data/words-of-the-senpais")   # one cleaned Document per book page
+random.seed(42)
+documents_by_author = group_documents_by_author(documents)
+docs_for_eval_set = sample_documents(documents_by_author, num_samples=25)   # balanced sample per author
+
+# Sanity check: documents per author
+from collections import Counter
+def count_documents_by_author(documents):
+    return Counter(doc.metadata['author'] for doc in documents if 'author' in doc.metadata)
+count_documents_by_author(docs_for_eval_set)
+
+# Chunk the sampled pages
+from utils import ingest
+from llama_index.core.node_parser import TokenTextSplitter
+splitter = TokenTextSplitter(chunk_size=256, chunk_overlap=32)
+docs_for_eval_set = ingest(documents=docs_for_eval_set, transformations=[splitter])
+        </script>
+      </div>
+      <p>The helpers behind that (<code>helpers/utils.py</code>): <code>group_documents_by_author</code> builds a <code>defaultdict(list)</code> keyed by <code>doc.metadata['author']</code> (warns and skips docs with no author). <code>sample_documents</code> keeps only docs longer than 500 characters, then <code>random.sample</code>s <code>num_samples</code> per author (warns if an author has too few).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def group_documents_by_author(documents):
+    documents_by_author = defaultdict(list)
+    for doc in documents:
+        author = doc.metadata.get('author', None)
+        if author:
+            documents_by_author[author].append(doc)
+        else:
+            print("Warning: A document without an author was encountered and skipped.")
+    return documents_by_author
+
+def sample_documents(documents_by_author, num_samples=10):
+    sampled_documents = []
+    for author, docs in documents_by_author.items():
+        valid_docs = [doc for doc in docs if len(doc.get_content()) > 500]
+        if len(valid_docs) >= num_samples:
+            sampled_documents.extend(random.sample(valid_docs, num_samples))
+        else:
+            print(f"Author {author} does not have enough valid documents to sample {num_samples}.")
+    return sampled_documents
+        </script>
+      </div>
+      <p><strong>Prompts</strong> (<code>helpers/prompts.py</code>): the question prompt asks for a short, first-person, search-engine-style question answerable from the context; the answer prompt answers in second person using only the context.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-rag-llamaindex-032-5-2-metrics">← Previous</a><span class="rev-pos">33 / 64</span><a href="#q-rag-llamaindex-034-5-3-building-an-evaluation-set-synthetic">Next →</a></nav>
+    </section>
+  </div>
+</details>

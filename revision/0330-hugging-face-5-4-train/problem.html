@@ -1,0 +1,48 @@
+<details class="question" id="q-hugging-face-017-5-4-train" data-group="hugging-face" data-sec="hugging-face-s017">
+  <summary>
+    <span class="q-title">5.4 Train</span>
+    <span class="q-meta">
+      <span class="tag">Hugging Face Transformers</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Hugging Face Transformers › 5. Transfer Learning (Sentiment Model) › 5.4 Train</p>
+      <p>Training is regular neural-network training. Steps: convert datasets to TensorFlow with <code>to_tf_dataset</code>, <code>compile</code> (optimizer, loss, metrics), then <code>fit</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import tensorflow as tf
+batch_size = 64
+tokenizer_columns = db_tokenizer.model_input_names
+# Convert to TensorFlow tensors
+train_dataset = training_dataset.to_tf_dataset(
+    columns=tokenizer_columns, label_cols=["label"],
+    shuffle=True, batch_size=batch_size)
+val_dataset = validation_dataset.to_tf_dataset(
+    columns=tokenizer_columns, label_cols=["label"],
+    shuffle=False, batch_size=batch_size)
+# Compile with training hyperparameters
+sentiment_model.compile(
+    optimizer=tf.keras.optimizers.Adam(learning_rate=5e-5),
+    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+    metrics=tf.metrics.SparseCategoricalAccuracy())
+# Train — existing base parameters are updated based on the custom dataset
+sentiment_model.fit(train_dataset, validation_data=val_dataset, epochs=5)
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Epoch</th><th>Train Acc</th><th>Val Loss</th><th>Val Acc</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>58.9%</td><td>0.909</td><td>65.7%</td></tr>
+            <tr><td>3</td><td>84.4%</td><td>0.486</td><td>86.7%</td></tr>
+            <tr><td>4</td><td>91.4%</td><td>0.485</td><td>86.7%</td></tr>
+            <tr><td>5</td><td>94.5%</td><td>0.554</td><td>82.9%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Validation accuracy peaks at epochs 3 to 4 while training accuracy keeps rising. That is overfitting, so early stopping would help.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-hugging-face-016-5-3-model-architecture-and-freezing">← Previous</a><span class="rev-pos">17 / 26</span><a href="#q-hugging-face-018-5-5-predict-with-the-custom-model">Next →</a></nav>
+    </section>
+  </div>
+</details>

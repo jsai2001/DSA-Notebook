@@ -1,0 +1,89 @@
+<details class="question" id="q-azure-ai-014-demo-tts-and-stt-exercise-02-07b" data-group="azure-ai" data-sec="azure-ai-s015">
+  <summary>
+    <span class="q-title">Demo: TTS and STT (exercise 02_07b)</span>
+    <span class="q-meta">
+      <span class="tag">Azure AI Services</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Azure AI Services › 3. Speech › Demo: TTS and STT (exercise 02_07b)</p>
+      <p>Portal: Create resource -&gt; "speech" -&gt; <strong>Speech</strong> (Free tier: 1 per subscription). Copy key and <strong>region</strong> (location).</p>
+      <p><code>.env</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang=".env">
+SPEECH_KEY="<key>"
+SPEECH_REGION="<region>"
+        </script>
+      </div>
+      <p><code>package.json</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JSON">
+{
+  "name": "speech",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "microsoft-cognitiveservices-speech-sdk": "^1.41.0",
+    "dotenv": "^16.4.5"
+  }
+}
+        </script>
+      </div>
+      <p><code>index.js</code> (TTS block is commented out; STT is active. Swap the comments to run the other):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+require('dotenv').config()
+const fs = require("fs");
+const sdk = require("microsoft-cognitiveservices-speech-sdk");
+const speechConfig = sdk.SpeechConfig.fromSubscription(process.env.SPEECH_KEY, process.env.SPEECH_REGION);
+// --- Text to Speech (commented out — uncomment to use) ---
+// speechConfig.speechSynthesisVoiceName = "en-US-JennyNeural";
+// speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3;
+// const audioConfig = sdk.AudioConfig.fromAudioFileOutput("./outputaudio.wav");
+// let synthesizer = new sdk.SpeechSynthesizer(speechConfig, audioConfig)
+// synthesizer.speakTextAsync("This is some sample text", (result) => {
+//     synthesizer.close();
+// })
+// --- Speech to Text (active) ---
+let audioConfig = sdk.AudioConfig.fromWavFileInput(fs.readFileSync("inputaudio.wav"));
+let speechRecognizer = new sdk.SpeechRecognizer(speechConfig, audioConfig);
+speechConfig.speechRecognitionLanguage = "en-US";
+speechRecognizer.recognizeOnceAsync(result => {
+    switch (result.reason) {
+        case sdk.ResultReason.RecognizedSpeech:
+            console.log(`RECOGNIZED: Text=${result.text}`);
+            break;
+        case sdk.ResultReason.NoMatch:
+            console.log("NOMATCH: Speech could not be recognized.");
+            break;
+        case sdk.ResultReason.Canceled:
+            const cancellation = sdk.CancellationDetails.fromResult(result);
+            console.log(`CANCELED: Reason=${cancellation.reason}`);
+            if (cancellation.reason == sdk.CancellationReason.Error) {
+                console.log(`CANCELED: ErrorCode=${cancellation.ErrorCode}`);
+                console.log(`CANCELED: ErrorDetails=${cancellation.errorDetails}`);
+                console.log("CANCELED: Did you set the speech resource key and region values?");
+            }
+            break;
+    }
+    speechRecognizer.close();
+});
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td><code>SpeechConfig</code></td><td>Key + region, language, voice (<code>en-US-JennyNeural</code>), output format</td></tr>
+            <tr><td><code>AudioConfig</code></td><td><code>fromAudioFileOutput</code> (TTS target file) or <code>fromWavFileInput</code> (STT source)</td></tr>
+            <tr><td><code>SpeechSynthesizer</code> + <code>speakTextAsync</code></td><td>Text to audio file (<code>outputaudio.wav</code>)</td></tr>
+            <tr><td><code>SpeechRecognizer</code> + <code>recognizeOnceAsync</code></td><td>Audio to text; result <code>reason</code> is <code>RecognizedSpeech</code>, <code>NoMatch</code>, or <code>Canceled</code> (check <code>CancellationDetails</code>)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Run: <code>node index.js</code>. TTS writes <code>outputaudio.wav</code>; STT prints <code>RECOGNIZED: Text=...</code>.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-azure-ai-013-intent-recognition">← Previous</a><span class="rev-pos">14 / 39</span><a href="#q-azure-ai-015-4-language">Next →</a></nav>
+    </section>
+  </div>
+</details>

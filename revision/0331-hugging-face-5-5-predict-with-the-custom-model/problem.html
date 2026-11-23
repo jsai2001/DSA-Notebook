@@ -1,0 +1,58 @@
+<details class="question" id="q-hugging-face-018-5-5-predict-with-the-custom-model" data-group="hugging-face" data-sec="hugging-face-s018">
+  <summary>
+    <span class="q-title">5.5 Predict with the custom model</span>
+    <span class="q-meta">
+      <span class="tag">Hugging Face Transformers</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Hugging Face Transformers › 5. Transfer Learning (Sentiment Model) › 5.5 Predict with the custom model</p>
+      <p>Without a pipeline you handle pre-processing (tokenize, convert to tensors) and post-processing (labels from logits) yourself. <code>Dataset.from_dict()</code> converts data in any format into a Hugging Face Dataset.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from datasets import Dataset, DatasetDict
+import numpy as np
+# Create a Python dictionary with similar structure as the dataset object
+infer_data = {
+    'id': [0, 1],
+    'verse_text': [
+        'and be glad in the summer morning when the kindred ride on their way',
+        'how hearts were answering to his own'],
+    'label': [1, 0]  # true labels for comparison (not mandatory for inference)
+}
+# Convert to Hugging Face Dataset
+infer_dataset = Dataset.from_dict(infer_data)
+# DatasetDict creation is optional — you can use the dataset directly
+# Shown here to demonstrate how to create one for training with custom data sources
+ds_dict = DatasetDict()
+ds_dict["infer"] = infer_dataset
+# Pre-processing: tokenize and convert to tensors (same steps as training)
+enc_dataset = ds_dict.map(tokenize, batched=True, batch_size=None)
+infer_final_dataset = enc_dataset["infer"].to_tf_dataset(
+    columns=tokenizer_columns, shuffle=True, batch_size=batch_size)
+# Predict
+predictions = sentiment_model.predict(infer_final_dataset)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Logits: raw scores for each sentiment class per input
+print(predictions.logits)
+# [[-1.68,  2.47, -0.85, -0.26],   ← scores for 4 classes (input 1)
+#  [-1.58,  2.53, -1.20, -0.18]]   ← scores for 4 classes (input 2)
+# Post-processing: argmax to find the best class
+pred_label_ids = np.argmax(predictions.logits, axis=1)
+for i in range(len(pred_label_ids)):
+    print("Poem =", infer_data["verse_text"][i],
+          " Predicted=", labels.names[pred_label_ids[i]],
+          " True-Label=", labels.names[infer_data["label"][i]])
+# Poem = and be glad in the summer morning...  Predicted= positive  True-Label= positive
+# Poem = how hearts were answering to his own   Predicted= positive  True-Label= negative
+        </script>
+      </div>
+      <p><code>predictions.logits</code> holds raw class scores per input and <code>np.argmax</code> picks the top class. The first sample is right, the second is wrong, so more data or epochs would help.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-hugging-face-017-5-4-train">← Previous</a><span class="rev-pos">18 / 26</span><a href="#q-hugging-face-019-inference-challenges">Next →</a></nav>
+    </section>
+  </div>
+</details>

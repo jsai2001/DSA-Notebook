@@ -1,0 +1,70 @@
+<details class="question" id="q-langchain-level-up-011-4-4-chain-without-vs-with-context" data-group="langchain-level-up" data-sec="langchain-level-up-s012">
+  <summary>
+    <span class="q-title">4.4 Chain without vs with context</span>
+    <span class="q-meta">
+      <span class="tag">LangChain Level Up</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangChain Level Up › 4. RAG: Architecture &amp; the Red30 Shoes Q&amp;A Chatbot › 4.4 Chain without vs with context</p>
+      <p><strong>Without context</strong> (generic answer): chat prompt = system message + human message <code>{user_query}</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain.prompts import SystemMessagePromptTemplate, HumanMessagePromptTemplate, ChatPromptTemplate
+template = """You are a customer support specialist who can answer questions 
+and assist users with general inquiries."""
+system_message_prompt_template = SystemMessagePromptTemplate.from_template(template)
+human_message_prompt_template = HumanMessagePromptTemplate.from_template("{user_query}")
+chat_prompt_template = ChatPromptTemplate.from_messages([
+    system_message_prompt_template,
+    human_message_prompt_template
+])
+model = ChatOpenAI()
+output_parser = StrOutputParser()
+chain = chat_prompt_template | model | output_parser
+response = chain.invoke({"user_query": "What are the shipping costs?"})
+# Generic reply ("Please provide me with the following details...") — no Red30 knowledge
+        </script>
+      </div>
+      <p><strong>With context:</strong> add <code>{context}</code> to the system message and wire the retriever in with <code>RunnablePassthrough</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+template = """You are a customer support specialist who can answer questions 
+and assist users with general inquiries based on the following context:
+{context}
+"""
+system_message_prompt_template = SystemMessagePromptTemplate.from_template(template)
+human_message_prompt_template = HumanMessagePromptTemplate(
+    input_variables=["question", "context"],
+    template="{question}"
+)
+chat_prompt_template = ChatPromptTemplate.from_messages([
+    system_message_prompt_template,
+    human_message_prompt_template
+])
+retriever = db.as_retriever()
+chain = (
+    {"context": retriever, "question": RunnablePassthrough()}
+    | chat_prompt_template
+    | model
+    | output_parser
+)
+response = chain.invoke("What is the return policy?")
+# Specific answer, e.g. "returns accepted within 30 days of purchase"
+        </script>
+      </div>
+      <p><code>RunnablePassthrough</code> forwards the user query unchanged to <code>{question}</code> while the retriever searches the store and fills <code>{context}</code>; both reach the prompt, then the LLM, then the parser.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Aspect</th><th>Without context</th><th>With context (RAG)</th></tr></thead>
+          <tbody>
+            <tr><td>Response</td><td>Generic, vague</td><td>Specific, accurate</td></tr>
+            <tr><td>Knowledge</td><td>LLM training data only</td><td>LLM + your data</td></tr>
+          </tbody>
+        </table>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langchain-level-up-010-4-3-embeddings-and-chroma-vector-store">← Previous</a><span class="rev-pos">11 / 35</span><a href="#q-langchain-level-up-012-4-5-complete-rag-function">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -8,6 +8,8 @@ Usage:
 Pages (see PAGES below; each is a tab in the nav bar):
     index.html           Coding Solutions, one card per folder in problems/
     system-design.html   System Design, one card per folder in designs/
+    revision.html        Revision Cards, one card per folder in revision/ (made by
+                         tools/make_revision_cards.py from the course revision notes)
 
 Layout:
     template.html                  shared page shell; build.py fills {{TITLE}}, {{SUBTITLE}}
@@ -55,14 +57,26 @@ PAGES = [
     {
         "output": "index.html",
         "folder": "problems",
+        "kind": "problems",
+        "unit": "problem",
         "title": "Coding Solutions",
         "subtitle": "My notes and solutions. Click a question to expand it.",
     },
     {
         "output": "system-design.html",
         "folder": "designs",
+        "kind": "designs",
+        "unit": "card",
         "title": "System Design",
         "subtitle": "How real systems work, with interactive walkthroughs. Click a question to expand it.",
+    },
+    {
+        "output": "revision.html",
+        "folder": "revision",
+        "kind": "cards",
+        "unit": "card",
+        "title": "Revision Cards",
+        "subtitle": "Course revision notes cut into short cards. Open a course, then step through its cards.",
     },
 ]
 
@@ -260,17 +274,17 @@ def load_groups(base, cards):
     return [(g, members[g["id"]]) for g in groups if members[g["id"]]]
 
 
-def render_group(pad, group, cards):
+def render_group(pad, group, cards, unit):
     count = len(cards)
     esc = htmllib.escape
     inner = pad + "    "
     body = "\n\n".join(f"{inner}<!-- ===== {where} ===== -->\n" + indent(card, inner) for where, card in cards)
     return (
         f"{pad}<!-- ===== group: {group['id']} ===== -->\n"
-        f'{pad}<details class="pattern-group" id="g-{group["id"]}">\n'
+        f'{pad}<details class="pattern-group" id="g-{group["id"]}" data-unit="{unit}">\n'
         f"{pad}  <summary>\n"
         f'{pad}    <span class="g-name">{esc(group["name"])}</span>\n'
-        f'{pad}    <span class="g-count"><span class="g-total">{count} problem{"" if count == 1 else "s"}</span></span>\n'
+        f'{pad}    <span class="g-count"><span class="g-total">{count} {unit}{"" if count == 1 else "s"}</span></span>\n'
         f'{pad}    <span class="g-hint">{esc(group["hint"])}</span>\n'
         f"{pad}  </summary>\n"
         f'{pad}  <div class="g-body">\n{body}\n{pad}  </div>\n'
@@ -306,7 +320,11 @@ def build_page(template, page):
             check_script_safe(js, script)
             scripts.append((f"{where}/{CARD_SCRIPT}", js))
 
-    html = template.replace("{{TITLE}}", page["title"]).replace("{{SUBTITLE}}", page["subtitle"])
+    html = (
+        template.replace("{{TITLE}}", page["title"])
+        .replace("{{SUBTITLE}}", page["subtitle"])
+        .replace("{{KIND}}", page["kind"])
+    )
     html = replace_marker(
         html,
         "NAV",
@@ -326,7 +344,7 @@ def build_page(template, page):
     if groups is None:
         render_list = lambda pad: "\n\n".join(f"{pad}<!-- ===== {where} ===== -->\n" + indent(card, pad) for where, card in cards)
     else:
-        render_list = lambda pad: "\n\n".join(render_group(pad, g, members) for g, members in groups)
+        render_list = lambda pad: "\n\n".join(render_group(pad, g, members, page['unit']) for g, members in groups)
     html = replace_marker(html, "PROBLEMS", render_list)
     html = replace_marker(
         html,
@@ -353,7 +371,7 @@ def main():
     stale = False
     for page, html, count, nviz in built:
         output = ROOT / page["output"]
-        summary = f"{count} {'problems' if page['folder'] == 'problems' else 'cards'}, {nviz} visualizers"
+        summary = f"{count} {page['unit']}s, {nviz} visualizers"
         current = output.read_text(encoding="utf-8") if output.exists() else None
         if check:
             if current != html:

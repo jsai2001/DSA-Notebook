@@ -1,0 +1,116 @@
+<details class="question" id="q-boto3-007-2-core-aws-services-with-boto3-q16-30" data-group="boto3" data-sec="boto3-s003">
+  <summary>
+    <span class="q-title">2. Core AWS Services with boto3 (Q16-30) (4/4)</span>
+    <span class="q-meta">
+      <span class="tag">Boto3</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Boto3 › 2. Core AWS Services with boto3 (Q16-30)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+from datetime import datetime, timedelta
+
+def monitor_ec2_metrics(instance_id):
+    cloudwatch = boto3.client('cloudwatch')
+    response = cloudwatch.get_metric_statistics(
+        Namespace='AWS/EC2',
+        MetricName='CPUUtilization',
+        Dimensions=[{'Name': 'InstanceId', 'Value': instance_id}],
+        StartTime=datetime.utcnow() - timedelta(minutes=60),
+        EndTime=datetime.utcnow(),
+        Period=300,
+        Statistics=['Average']
+    )
+    for datapoint in response['Datapoints']:
+        print(f"Time: {datapoint['Timestamp']}, CPU: {datapoint['Average']}%")
+
+if __name__ == "__main__":
+    monitor_ec2_metrics('i-1234567890abcdef0')
+        </script>
+      </div>
+      <p><strong>Q27. Throttling and rate limits.</strong> Exponential backoff, either through boto3's retry configuration or manual retries.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+from botocore.exceptions import ClientError
+import time
+
+def list_objects_with_retry(bucket_name):
+    s3 = boto3.client('s3')
+    retries = 3
+    for attempt in range(retries):
+        try:
+            response = s3.list_objects_v2(Bucket=bucket_name)
+            return response['Contents']
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'Throttling' and attempt < retries - 1:
+                time.sleep(2 ** attempt)
+            else:
+                raise
+    return []
+
+if __name__ == "__main__":
+    objects = list_objects_with_retry('my-bucket')
+    print(objects)
+        </script>
+      </div>
+      <p><strong>Q28. Create an SQS queue and send a message.</strong> <code>create_queue</code> returns <code>QueueUrl</code>, which <code>send_message</code> needs.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+def create_and_send_sqs_message(queue_name, message):
+    sqs = boto3.client('sqs')
+    response = sqs.create_queue(QueueName=queue_name)
+    queue_url = response['QueueUrl']
+    sqs.send_message(QueueUrl=queue_url, MessageBody=message)
+    print(f"Sent message to {queue_url}")
+
+if __name__ == "__main__":
+    create_and_send_sqs_message('my-queue', 'Hello, SQS!')
+        </script>
+      </div>
+      <p><strong>Q29. VPC subnet and security group.</strong> VPC resources are created through the EC2 client.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+def create_vpc_resources(vpc_id):
+    ec2 = boto3.client('ec2')
+    subnet = ec2.create_subnet(VpcId=vpc_id, CidrBlock='10.0.1.0/24')
+    sg = ec2.create_security_group(GroupName='my-sg', Description='My security group', VpcId=vpc_id)
+    print(f"Created subnet: {subnet['Subnet']['SubnetId']}, SG: {sg['GroupId']}")
+
+if __name__ == "__main__":
+    create_vpc_resources('vpc-12345678')
+        </script>
+      </div>
+      <p><strong>Q30. STS assume role for cross-account access.</strong> <code>assume_role</code> returns temporary <code>AccessKeyId</code>, <code>SecretAccessKey</code> and <code>SessionToken</code>; pass them to a new client.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+def assume_role(role_arn, session_name):
+    sts = boto3.client('sts')
+    response = sts.assume_role(RoleArn=role_arn, RoleSessionName=session_name)
+    credentials = response['Credentials']
+    s3 = boto3.client(
+        's3',
+        aws_access_key_id=credentials['AccessKeyId'],
+        aws_secret_access_key=credentials['SecretAccessKey'],
+        aws_session_token=credentials['SessionToken']
+    )
+    buckets = s3.list_buckets()
+    print(buckets['Buckets'])
+
+if __name__ == "__main__":
+    assume_role('arn:aws:iam::123456789012:role/MyRole', 'MySession')
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-boto3-006-2-core-aws-services-with-boto3-q16-30">← Previous</a><span class="rev-pos">7 / 25</span><a href="#q-boto3-008-3-boto3-with-eks-kubernetes-q31-40">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,74 @@
+<details class="question" id="q-boto3-015-5-boto3-with-ansible-q51-60" data-group="boto3" data-sec="boto3-s006">
+  <summary>
+    <span class="q-title">5. boto3 with Ansible (Q51-60) (2/3)</span>
+    <span class="q-meta">
+      <span class="tag">Boto3</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Boto3 › 5. boto3 with Ansible (Q51-60)</p>
+      <p><strong>Q55. Tag instances for Ansible dynamic inventory.</strong> <code>create_tags</code>; Ansible groups hosts by tag.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+def tag_ec2_instances(instance_ids, tags, region='us-east-1'):
+    ec2_client = boto3.client('ec2', region_name=region)
+    ec2_client.create_tags(
+        Resources=instance_ids,
+        Tags=[{'Key': k, 'Value': v} for k, v in tags.items()]
+    )
+    print(f"Tagged instances: {instance_ids}")
+
+# Example usage
+tag_ec2_instances(['i-1234567890abcdef0'], {'AnsibleGroup': 'webservers'})
+        </script>
+      </div>
+      <p><strong>Q56. Ensure prerequisites (boto3 installed) for Ansible's AWS modules.</strong> Run a shell command on the instance through SSM <code>send_command</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+def ensure_ansible_prerequisites(instance_id, region='us-east-1'):
+    ssm_client = boto3.client('ssm', region_name=region)
+    response = ssm_client.send_command(
+        InstanceIds=[instance_id],
+        DocumentName='AWS-RunShellScript',
+        Parameters={'commands': ['pip install boto3']}
+    )
+    print(f"Ensured boto3 installation on {instance_id}")
+    return response['Command']['CommandId']
+
+# Example usage
+ensure_ansible_prerequisites('i-1234567890abcdef0')
+        </script>
+      </div>
+      <p><strong>Q57. Retrieve resource details for Ansible's <code>ec2_instance</code> module.</strong> Query with boto3 and save to a JSON file or environment variables. (Gotcha: the source code uses <code>json.dump</code> without <code>import json</code>.)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+def get_ec2_details(instance_id, region='us-east-1'):
+    ec2_client = boto3.client('ec2', region_name=region)
+    response = ec2_client.describe_instances(InstanceIds=[instance_id])
+    instance = response['Reservations'][0]['Instances'][0]
+    details = {
+        'instance_id': instance['InstanceId'],
+        'public_ip': instance.get('PublicIpAddress', 'N/A')
+    }
+    with open('ec2_details.json', 'w') as f:
+        json.dump(details, f)
+    print(f"EC2 details saved for Ansible")
+    return details
+
+# Example usage
+get_ec2_details('i-1234567890abcdef0')
+        </script>
+      </div>
+      <p><strong>Q58. Create an SNS topic for Ansible notifications.</strong> <code>create_topic</code> and return the ARN; same call as Q21, with a <code>region</code> parameter and a <code>return topic_arn</code>.</p>
+      <p><strong>Q59. Handle resource failures dynamically.</strong> Monitor health (for example via CloudWatch) and remediate, either by restarting directly or by triggering an Ansible playbook.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-boto3-014-5-boto3-with-ansible-q51-60">← Previous</a><span class="rev-pos">15 / 25</span><a href="#q-boto3-016-5-boto3-with-ansible-q51-60">Next →</a></nav>
+    </section>
+  </div>
+</details>

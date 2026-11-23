@@ -1,0 +1,96 @@
+<details class="question" id="q-bedrock-010-rust-hello-world" data-group="bedrock" data-sec="bedrock-s011">
+  <summary>
+    <span class="q-title">Rust hello world</span>
+    <span class="q-meta">
+      <span class="tag">Amazon Bedrock</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Amazon Bedrock › 6. Bedrock API: Bash to Rust › Rust hello world</p>
+      <p><code>Cargo.toml</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="TOML">
+[package]
+name = "hello-bedrock"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+aws-config = "1.0"
+aws-sdk-bedrockruntime = "1.0"
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+        </script>
+      </div>
+      <p><code>aws-config</code> loads credentials and region, <code>aws-sdk-bedrockruntime</code> is the inference client, <code>tokio</code> is the required async runtime, <code>serde</code>/<code>serde_json</code> handle JSON, <code>anyhow</code> simplifies errors.</p>
+      <p><code>main.rs</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Rust">
+use aws_config;
+use aws_sdk_bedrockruntime::{Client, primitives::Blob};
+use serde_json::{json, Value};
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    // Create Bedrock client
+    let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
+    let client = Client::new(&config);
+
+    // Build prompt
+    let prompt = "\n\nHuman: Say hello in a creative way\n\nAssistant:";
+
+    // Build request body
+    let body = json!({
+        "prompt": prompt,
+        "max_tokens_to_sample": 300,
+        "temperature": 0.7,
+        "stop_sequences": ["\n\nHuman:"]
+    });
+
+    // Send request to Bedrock
+    let response = client
+        .invoke_model()
+        .model_id("anthropic.claude-v2")
+        .content_type("application/json")
+        .accept("application/json")
+        .body(Blob::new(serde_json::to_vec(&body)?))
+        .send()
+        .await?;
+
+    // Parse and print response
+    let response_body: Value = serde_json::from_slice(&response.body().as_ref())?;
+    println!("{}", response_body["completion"].as_str().unwrap_or("No response"));
+
+    Ok(())
+}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+cargo run                                  # dev mode
+cargo build --release                      # optimized binary
+du -sh target/release/hello-bedrock        # ~8 MB
+./target/release/hello-bedrock
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Aspect</th><th>Bash</th><th>Rust</th></tr></thead>
+          <tbody>
+            <tr><td>Purpose</td><td>Prototype, explore API</td><td>Production, distribute</td></tr>
+            <tr><td>Setup</td><td>Minutes</td><td>Longer (Cargo.toml, deps)</td></tr>
+            <tr><td>Error handling</td><td>Basic (<code>exit 1</code>)</td><td><code>anyhow</code>, <code>Result</code></td></tr>
+            <tr><td>Distribution</td><td>Needs Bash + AWS CLI on target</td><td>Single binary, no runtime</td></tr>
+            <tr><td>Async</td><td>No</td><td>Yes (Tokio)</td></tr>
+            <tr><td>Size</td><td>~25 lines</td><td>~40 lines</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Both call the same <code>invoke-model</code> API with the same request body. Start in <code>main.rs</code> for exploration, then refactor into <code>lib.rs</code> once you know whether it becomes a CLI, library or web service. The binary can grow into a team CLI tool with subcommands, be embedded in web apps, or become automation.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-bedrock-009-bash-hello-world-claude-sh">← Previous</a><span class="rev-pos">10 / 17</span><a href="#q-bedrock-011-7-knowledge-bases-and-rag">Next →</a></nav>
+    </section>
+  </div>
+</details>

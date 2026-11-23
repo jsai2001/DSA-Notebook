@@ -1,0 +1,81 @@
+<details class="question" id="q-boto3-006-2-core-aws-services-with-boto3-q16-30" data-group="boto3" data-sec="boto3-s003">
+  <summary>
+    <span class="q-title">2. Core AWS Services with boto3 (Q16-30) (3/4)</span>
+    <span class="q-meta">
+      <span class="tag">Boto3</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Boto3 › 2. Core AWS Services with boto3 (Q16-30)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+import zipfile
+import io
+
+def create_and_invoke_lambda(function_name):
+    lambda_client = boto3.client('lambda')
+
+    # Create ZIP file for Lambda code
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('index.py', 'def handler(event, context):\n    return {"statusCode": 200, "body": "Hello from Lambda!"}')
+    zip_buffer.seek(0)
+
+    # Create Lambda function
+    lambda_client.create_function(
+        FunctionName=function_name,
+        Runtime='python3.9',
+        Role='arn:aws:iam::123456789012:role/lambda-role',
+        Handler='index.handler',
+        Code={'ZipFile': zip_buffer.read()}
+    )
+
+    # Invoke Lambda
+    response = lambda_client.invoke(FunctionName=function_name)
+    print(f"Lambda response: {response['Payload'].read().decode()}")
+
+if __name__ == "__main__":
+    create_and_invoke_lambda('my-lambda')
+        </script>
+      </div>
+      <p><strong>Q24. Manage IAM roles and policies.</strong> IAM client: create roles and policies; <code>attach_role_policy</code> attaches one.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+def attach_policy_to_role(role_name, policy_arn):
+    iam = boto3.client('iam')
+    iam.attach_role_policy(RoleName=role_name, PolicyArn=policy_arn)
+    print(f"Attached {policy_arn} to {role_name}")
+
+if __name__ == "__main__":
+    attach_policy_to_role('my-role', 'arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess')
+        </script>
+      </div>
+      <p><strong>Q25. CloudFormation stacks.</strong> <code>create_stack</code>, <code>update_stack</code>, <code>delete_stack</code>. Use a waiter to block until done. (The source example shows only create plus waiter.)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+def manage_cloudformation_stack(stack_name, template_body):
+    cf = boto3.client('cloudformation')
+    cf.create_stack(StackName=stack_name, TemplateBody=template_body)
+    cf.get_waiter('stack_create_complete').wait(StackName=stack_name)
+    print(f"Stack {stack_name} created")
+
+if __name__ == "__main__":
+    template = '''
+    Resources:
+      MyBucket:
+        Type: AWS::S3::Bucket
+    '''
+    manage_cloudformation_stack('my-stack', template)
+        </script>
+      </div>
+      <p><strong>Q26. Monitor CloudWatch metrics for an EC2 instance.</strong> <code>get_metric_statistics</code> with namespace, metric, dimensions, time range, period and statistic.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-boto3-005-2-core-aws-services-with-boto3-q16-30">← Previous</a><span class="rev-pos">6 / 25</span><a href="#q-boto3-007-2-core-aws-services-with-boto3-q16-30">Next →</a></nav>
+    </section>
+  </div>
+</details>

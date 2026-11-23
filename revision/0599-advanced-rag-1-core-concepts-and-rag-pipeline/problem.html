@@ -1,0 +1,47 @@
+<details class="question" id="q-advanced-rag-002-1-core-concepts-and-rag-pipeline" data-group="advanced-rag" data-sec="advanced-rag-s002">
+  <summary>
+    <span class="q-title">1. Core Concepts and RAG Pipeline (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">Advanced RAG</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Advanced RAG › 1. Core Concepts and RAG Pipeline</p>
+      <p><strong>Vector database</strong>: works with unstructured data as vectors. "Database" is a misnomer; it is a <strong>compute engine for vector data</strong>. Embeddings are long lists of numbers (hundreds to thousands).</p>
+      <p><strong>Why "embeddings"</strong>: they come from the second-to-last layer of a deep neural network. That layer holds what the network learned, before the predictive layer is applied.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sentence_transformers import SentenceTransformer
+model = SentenceTransformer("all-MiniLM-L6-v2")
+text = "Vector databases store embeddings for similarity search"
+embedding = model.encode(text)
+print(f"Embedding dimensions: {len(embedding)}")  # 384
+print(f"First 5 values: {embedding[:5]}")
+        </script>
+      </div>
+      <p><strong>Embedding models</strong>: deep neural networks that turn data into vectors. Two rules:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rule</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>Match data type to model type</td><td>Image models for images, text models for text. Even multimodal models need the input type specified.</td></tr>
+            <tr><td>Same model for indexing and retrieval</td><td>Only same-size vectors can be compared, so the query must use the model that vectorized the data.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+text_model = SentenceTransformer("all-MiniLM-L6-v2")  # text only
+text_embedding = text_model.encode("Hello world")       # correct
+# text_model.encode(image)  # WRONG: text model can't embed images
+query_embedding = text_model.encode("search query")     # same model as indexing
+# different_model.encode("search query")  # WRONG: different dimensions
+        </script>
+      </div>
+      <p><strong>LLMs in RAG</strong>: the interface to your data. Most (incl. GPT-4) are transformers that predict the next token. They are trained on public data and have no access to yours, which is the gap RAG fills.</p>
+      <p><strong>RAG pipeline</strong>: question → embedding model → vector DB similarity search → relevant context → LLM (question + context) → answer.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-advanced-rag-001-overview">← Previous</a><span class="rev-pos">2 / 35</span><a href="#q-advanced-rag-003-1-core-concepts-and-rag-pipeline">Next →</a></nav>
+    </section>
+  </div>
+</details>

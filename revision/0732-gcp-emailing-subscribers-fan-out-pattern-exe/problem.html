@@ -1,0 +1,68 @@
+<details class="question" id="q-gcp-032-emailing-subscribers-fan-out-pattern-exe" data-group="gcp" data-sec="gcp-s030">
+  <summary>
+    <span class="q-title">Emailing subscribers: fan-out pattern (Exercise 06_02) (2/3)</span>
+    <span class="q-meta">
+      <span class="tag">Google Cloud (GCP)</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Google Cloud (GCP) › 7. Cloud Tasks and the Fan-Out Pattern › Emailing subscribers: fan-out pattern (Exercise 06_02)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+// dbService.js
+require('dotenv').config();
+const mysql = require('mysql2');
+
+const createUnixSocketPool = async (config) => {
+  const dbSocketPath = process.env.DB_SOCKET_PATH || "/cloudsql"
+  return await mysql.createPool({
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME,
+    socketPath: `${dbSocketPath}/${process.env.CLOUD_SQL_CONNECTION_NAME}`,
+    ...config
+  });
+}
+
+const createTcpPool = async (config) => {
+  const dbSocketAddr = process.env.DB_HOST.split(":")
+  return await mysql.createPool({
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME,
+    host: dbSocketAddr[0],
+    port: dbSocketAddr[1],
+    ...config
+  });
+}
+
+const createPool = async (config) => {
+  let pool;
+  if (process.env.DB_HOST) {
+    pool = await createTcpPool(config);
+  } else {
+    pool = await createUnixSocketPool(config);
+  }
+  return pool.promise();
+}
+
+const getTotalNumberOfEmails = async () => {
+  return 100000;
+};
+
+const getEmailReceivers = async (startCount=0, limit=1000) => {
+  const pool = await createPool({});
+  const sql = "SELECT email from emails LIMIT ?, ?";
+  const [results] = await pool.query(sql, [startCount, limit]);
+  return results.map(result => result.email);
+};
+
+exports.getTotalNumberOfEmails = getTotalNumberOfEmails;
+exports.getEmailReceivers = getEmailReceivers;
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-gcp-031-emailing-subscribers-fan-out-pattern-exe">← Previous</a><span class="rev-pos">32 / 44</span><a href="#q-gcp-033-emailing-subscribers-fan-out-pattern-exe">Next →</a></nav>
+    </section>
+  </div>
+</details>

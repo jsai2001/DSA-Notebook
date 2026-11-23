@@ -1,0 +1,50 @@
+<details class="question" id="q-fastapi-011-html-forms" data-group="fastapi" data-sec="fastapi-s012">
+  <summary>
+    <span class="q-title">HTML forms</span>
+    <span class="q-meta">
+      <span class="tag">FastAPI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">FastAPI › 4. Accepting Data › HTML forms</p>
+      <p>Browsers submit forms as <code>POST</code>. Use <code>Annotated[..., Form()]</code> to read form fields; <code>StaticFiles</code> serves HTML; <code>RedirectResponse</code> sends the user on after submit.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import logging
+from typing import Annotated
+from http import HTTPStatus
+from fastapi import FastAPI, Form
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
+app = FastAPI()
+app.mount('/static', StaticFiles(directory='static'))
+
+@app.post('/survey')
+def survey(
+    name: Annotated[str, Form()],
+    happy: Annotated[str, Form()],
+    talk: Annotated[str, Form()],
+):
+    logging.info('[survey] name: %r, happy: %r, talk: %r', name, happy, talk)
+    return RedirectResponse(
+        url='/static/thanks.html',
+        status_code=HTTPStatus.FOUND,
+    )
+        </script>
+      </div>
+      <p>The HTML side only needs matching field names (from <code>static/survey.html</code>; the rest is Bootstrap markup):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="HTML">
+<form method="POST" action="/survey">
+  <input class="form-control" id="name" name="name">
+  <select class="form-control" id="happy" name="happy"> ... </select>
+  <select class="form-control" id="talk" name="talk"> ... </select>
+  <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fastapi-010-request-body-pydantic-models">← Previous</a><span class="rev-pos">11 / 26</span><a href="#q-fastapi-012-raw-request-data">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,81 @@
+<details class="question" id="q-rag-llamaindex-035-5-3-building-an-evaluation-set-synthetic" data-group="rag-llamaindex" data-sec="rag-llamaindex-s028">
+  <summary>
+    <span class="q-title">5.3 Building an evaluation set (synthetic Q&amp;A from your own data) (3/3)</span>
+    <span class="q-meta">
+      <span class="tag">RAG with LlamaIndex</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RAG with LlamaIndex › 5. RAG Evaluation › 5.3 Building an evaluation set (synthetic Q&amp;A from your own data)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from llama_index.core.prompts.base import PromptTemplate
+from prompts import QUESTION_GEN_PROMPT, ANSWER_GEN_PROMPT, GROUNDEDNESS_PROMPT
+
+QUESTION_GEN_PROMPT_TEMPLATE = PromptTemplate(QUESTION_GEN_PROMPT)
+ANSWER_GEN_PROMPT_TEMPLATE = PromptTemplate(ANSWER_GEN_PROMPT)
+GROUNDEDNESS_PROMPT_TEMPLATE = PromptTemplate(GROUNDEDNESS_PROMPT)
+
+# 1) Generate a question per chunk
+questions = []
+for doc in docs_for_eval_set:
+    result_dict = {}
+    context = doc.get_content()
+    prompt = QUESTION_GEN_PROMPT_TEMPLATE.format(context_str=context)
+    response = llm.complete(prompt)
+    result_dict['question'] = response.text
+    result_dict["context"] = context
+    questions.append(result_dict)
+
+# 2) Generate an answer from question + context
+for question in questions:
+    prompt = ANSWER_GEN_PROMPT_TEMPLATE.format(query_str=question['question'], context_str=question['context'])
+    response = llm.complete(prompt)
+    question['answer'] = response.text
+
+# 3) Critic LLM (stronger model) rates how answerable each question is from its context
+critic_llm = OpenAI(model="gpt-4o")
+for question in questions:
+    prompt = GROUNDEDNESS_PROMPT_TEMPLATE.format(query_str=question['question'], context_str=question['context'])
+    response = critic_llm.complete(prompt)
+    response_string = response.text
+    try:
+        score_as_int = int(response_string.split("Total rating: ")[-1].strip())
+        score_rational = response_string.split("Total rating: ")[-2].split("Evaluation: ")[1]
+        question['question_groundedness_score'] = score_as_int
+        question['question_groundedness_score_rationale'] = score_rational
+    except Exception as e:
+        question['question_groundedness_score'] = None
+        question['question_groundedness_score_rationale'] = None
+        </script>
+      </div>
+      <p>Filter on groundedness (for example keep score ≥ 4) for a higher-quality set. Final fields: <code>question</code>, <code>context</code>, <code>answer</code>, <code>question_groundedness_score</code>, <code>question_groundedness_score_rationale</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Publish / reuse the dataset on Hugging Face Hub
+from datasets import Dataset, load_dataset
+
+rag_eval_set = Dataset.from_list(questions)
+rag_eval_set.push_to_hub("harpreetsahota/LI_Learning_RAG_Eval_Set")
+
+rag_eval_set = load_dataset("harpreetsahota/LI_Learning_RAG_Eval_Set")
+        </script>
+      </div>
+      <p>Also in <code>helpers/utils.py</code>, <code>run_generations_on_eval_set(eval_dataset, col_name, query_pipeline, time_out=True)</code> runs the pipeline on each <code>question</code>, appends <code>response.response</code> as a new dataset column, and sleeps 25 s after every 5 queries to respect the free-tier rate limit:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def run_generations_on_eval_set(eval_dataset, col_name, query_pipeline, time_out=True):
+    responses = []
+    for i, row in tqdm(enumerate(eval_dataset), total=len(eval_dataset), desc="Generating answers"):
+        response = query_pipeline.run(row['question'])
+        responses.append(response.response)
+        if time_out and (i + 1) % 5 == 0:
+            time.sleep(25)
+    return eval_dataset.add_column(col_name, responses)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-rag-llamaindex-034-5-3-building-an-evaluation-set-synthetic">← Previous</a><span class="rev-pos">35 / 64</span><a href="#q-rag-llamaindex-036-6-1-three-rag-paradigms-from-the-rag-for">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,77 @@
+<details class="question" id="q-boto3-014-5-boto3-with-ansible-q51-60" data-group="boto3" data-sec="boto3-s006">
+  <summary>
+    <span class="q-title">5. boto3 with Ansible (Q51-60) (1/3)</span>
+    <span class="q-meta">
+      <span class="tag">Boto3</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Boto3 › 5. boto3 with Ansible (Q51-60)</p>
+      <p>boto3 handles what Ansible's AWS modules do not cover: pre-provisioning, inventories, readiness checks and remediation. Data is handed to Ansible through JSON files, tags or environment variables. Ansible's AWS modules themselves require boto3 installed on the host.</p>
+      <p><strong>Q51. Complement Ansible playbooks.</strong> Create or query resources before or after playbooks run.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+def prepare_aws_resources():
+    ec2_client = boto3.client('ec2')
+    response = ec2_client.run_instances(
+        ImageId='ami-12345678',
+        InstanceType='t2.micro',
+        MinCount=1,
+        MaxCount=1
+    )
+    instance_id = response['Instances'][0]['InstanceId']
+    print(f"Created instance: {instance_id}")
+    return instance_id
+
+# Example usage
+instance_id = prepare_aws_resources()
+        </script>
+      </div>
+      <p><strong>Q52. Generate an inventory for Ansible.</strong> Query running instances and write them in an inventory-compatible structure.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+import json
+
+def generate_ansible_inventory(region='us-east-1'):
+    ec2_client = boto3.client('ec2', region_name=region)
+    response = ec2_client.describe_instances()
+    inventory = {'webservers': {'hosts': []}}
+    for reservation in response['Reservations']:
+        for instance in reservation['Instances']:
+            if instance['State']['Name'] == 'running':
+                inventory['webservers']['hosts'].append(instance['PublicIpAddress'])
+    with open('inventory.json', 'w') as f:
+        json.dump(inventory, f)
+    print("Ansible inventory generated.")
+
+# Example usage
+generate_ansible_inventory()
+        </script>
+      </div>
+      <p><strong>Q53. Validate resource state before a playbook.</strong> Check instance state or tags so prerequisites are met.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+def validate_aws_resources(instance_id, region='us-east-1'):
+    ec2_client = boto3.client('ec2', region_name=region)
+    response = ec2_client.describe_instances(InstanceIds=[instance_id])
+    instance = response['Reservations'][0]['Instances'][0]
+    if instance['State']['Name'] != 'running':
+        raise Exception(f"Instance {instance_id} is not running")
+    print(f"Instance {instance_id} is ready for Ansible playbook")
+    return True
+
+# Example usage
+validate_aws_resources('i-1234567890abcdef0')
+        </script>
+      </div>
+      <p><strong>Q54. Create resources Ansible will configure.</strong> Provision EC2 or S3 with boto3, then pass IDs/ARNs to Ansible. Code is the same as Q51 (<code>run_instances</code>, return <code>instance_id</code>), with a <code>region</code> parameter.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-boto3-013-4-boto3-with-terraform-q41-50">← Previous</a><span class="rev-pos">14 / 25</span><a href="#q-boto3-015-5-boto3-with-ansible-q51-60">Next →</a></nav>
+    </section>
+  </div>
+</details>

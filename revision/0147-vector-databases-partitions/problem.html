@@ -1,0 +1,47 @@
+<details class="question" id="q-vector-databases-028-partitions" data-group="vector-databases" data-sec="vector-databases-s027">
+  <summary>
+    <span class="q-title">Partitions</span>
+    <span class="q-meta">
+      <span class="tag">Vector Databases</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Vector Databases › 6. Partitions and indexes › Partitions</p>
+      <ul>
+        <li>A partition is a physical subdivision of a collection that stores related data together, so queries scan fewer data blocks (fewer disk reads, better cache use).</li>
+        <li>Every collection has an automatic <code>_default</code> partition (data goes there when none is given).</li>
+        <li>Typical keys: tenant ID (multitenancy), date/month (time series), region, device ID, user ID.</li>
+        <li>Guidance: partition by frequently filtered fields, keep the number of partitions small (&lt;100), search specific partitions.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Manual partitions
+collection.create_partition("tenant_1")
+print([p.name for p in collection.partitions])       # ['_default', 'tenant_1']
+collection.insert(data, partition_name="tenant_1")
+
+collection.search(data=[query_vector], anns_field="embedding",
+                  param={"metric_type": "L2"}, limit=10,
+                  partition_names=["tenant_1"])      # only this partition (faster)
+
+collection.has_partition("tenant_1")
+partition = collection.partition("tenant_1")
+partition.load()      # load a single partition into memory
+partition.release()
+collection.drop_partition("tenant_1")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Partition key: Milvus routes rows to partitions automatically
+tenant_id = FieldSchema(name="tenant_id", dtype=DataType.INT64, is_partition_key=True)
+schema = CollectionSchema(fields=[id_field, tenant_id, embedding_field],
+                          partition_key_field="tenant_id")
+collection.insert([[1, 2, 3], [100, 100, 200], [[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]]])
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-vector-databases-027-collection-schema">← Previous</a><span class="rev-pos">28 / 73</span><a href="#q-vector-databases-029-indexes">Next →</a></nav>
+    </section>
+  </div>
+</details>

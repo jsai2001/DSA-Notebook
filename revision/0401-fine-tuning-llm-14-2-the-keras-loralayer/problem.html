@@ -1,0 +1,63 @@
+<details class="question" id="q-fine-tuning-llm-062-14-2-the-keras-loralayer" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s044">
+  <summary>
+    <span class="q-title">14.2 The Keras LoRALayer (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 14. LoRA in TensorFlow: Implementation &amp; Experiments › 14.2 The Keras LoRALayer</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def explore_model_layers(model):
+    """Explore and display model layer structure"""
+
+    # Access decoder layers
+    decoder = model.decoder
+    print(f"Decoder type: {type(decoder)}")
+
+    # Flatten layers to see all components
+    flattened_layers = list(model.decoder._flatten_layers())
+
+    print("Model layers:")
+    for i, layer in enumerate(flattened_layers):
+        layer_type = type(layer).__name__
+        print(f"Layer {i}: {layer_type}")
+
+        # Identify dense layers for LoRA replacement
+        if 'Dense' in layer_type:
+            print(f"  -> Dense layer found: {layer.units} units")
+
+    return flattened_layers
+
+# Usage
+layers = explore_model_layers(model)
+        </script>
+      </div>
+      <p>Demo 1 freeze-and-wrap (<code>model.layers[3]</code> is the <code>lm_head</code>):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import tf_keras
+for ix, layer in enumerate(model.decoder._flatten_layers()):
+    if isinstance(layer, tf_keras.src.layers.core.dense.Dense):
+        layer.trainable = False
+        layer = LoRALayer(layer)
+    else:
+        layer.trainable = False
+model.get_layer('encoder').trainable = False
+model.get_layer('shared').trainable = False
+model.layers[3] = LoRALayer(model.get_layer('lm_head'))
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+model.summary()
+        </script>
+      </div>
+      <p><strong>Read this critically (interview gotcha):</strong> inside the loop, <code>layer = LoRALayer(layer)</code> only rebinds a local variable; it does not insert the LoRA layer into the model, so that loop effectively just <em>freezes</em> layers. The Chapter 4 Solution version (small model) skips the loop and applies the same three freezes plus <code>model.layers[3] = LoRALayer(model.get_layer('lm_head'))</code>. The reported trainable count after "LoRA" (24,674,304 = 768 × 32,128, i.e. the <code>lm_head</code> size) is identical to the plain freeze in Section 9.2. Always confirm with <code>model.summary()</code> that <code>w_a</code> / <code>w_b</code> appear among trainable weights.</p>
+      <p>Lecture numbers: trainable 247,577,856 (944 MB) before vs 24,674,304 (94 MB) after, 222,903,552 frozen; GPU RAM ~8 GB vs ~30 GB; 7–10 min for 3 epochs vs 20–30 min full fine-tuning.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-061-14-2-the-keras-loralayer">← Previous</a><span class="rev-pos">62 / 76</span><a href="#q-fine-tuning-llm-063-14-3-compile-train-evaluate">Next →</a></nav>
+    </section>
+  </div>
+</details>

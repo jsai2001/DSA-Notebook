@@ -1,0 +1,85 @@
+<details class="question" id="q-langchain-level-up-030-8-4-multitask-agent-challenge-solution" data-group="langchain-level-up" data-sec="langchain-level-up-s031">
+  <summary>
+    <span class="q-title">8.4 Multitask agent (challenge + solution)</span>
+    <span class="q-meta">
+      <span class="tag">LangChain Level Up</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangChain Level Up › 8. Agents &amp; Tools over MongoDB (OpenAI Tools Agent) › 8.4 Multitask agent (challenge + solution)</p>
+      <p><strong>Problem:</strong> "How to create a vector store?" returns "I don't know" because the PDF covers best practices, not tutorials. Fix: add a second tool backed by an HTML page, and tighten the system prompt.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+prompt = ChatPromptTemplate.from_messages([
+    ("system",
+     "You are a very powerful assistant, but don't know current events.\n"
+     "If you don't know the answer, just say 'I don't know'.\n"
+     "Do not try to make up an answer."),
+    ("human", "{input}"),
+    MessagesPlaceholder(variable_name="agent_scratchpad"),
+])
+        </script>
+      </div>
+      <p>Web search module (<code>web_search.py</code>), then the chain:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain_community.document_loaders import WebBaseLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import Chroma
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+from langchain import hub
+
+loader = WebBaseLoader("https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-overview/")
+data = loader.load()
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=20)
+documents = text_splitter.split_documents(data)
+vector_store = Chroma.from_documents(documents, OpenAIEmbeddings())
+retriever = vector_store.as_retriever()
+
+prompt = hub.pull("rlm/rag-prompt")     # pre-built prompt from LangChain Hub
+llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+
+web_search_chain = (
+    {"context": retriever, "question": RunnablePassthrough()}
+    | prompt
+    | llm
+    | StrOutputParser()
+)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# agent.py
+from retrievers.web_search import web_search_chain
+
+@tool
+def web_search_query(query: str) -> str:
+    """Search queries using web search for additional information."""
+    response = web_search_chain.invoke(query)
+    return response
+
+tools = [vector_search_query, web_search_query]
+llm_with_tools = llm.bind_tools(tools)
+agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+
+run_agent("How to create a vector store?")   # agent picks web_search_query
+run_agent("What is vector search?")          # agent picks web_search_query
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tool</th><th>Data source</th><th>Best for</th></tr></thead>
+          <tbody>
+            <tr><td><code>vector_search_query</code></td><td>Atlas (PDF)</td><td>Best practices, security, deployment</td></tr>
+            <tr><td><code>web_search_query</code></td><td>Web (HTML page)</td><td>Tutorials, how-to, vector search overview</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Gotcha: the agent chooses tools only from names/docstrings, so write clear docstrings.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langchain-level-up-029-8-3-agentexecutor">← Previous</a><span class="rev-pos">30 / 35</span><a href="#q-langchain-level-up-031-10-deploying-chains-as-a-rest-api-with-l">Next →</a></nav>
+    </section>
+  </div>
+</details>

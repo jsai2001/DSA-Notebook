@@ -1,0 +1,57 @@
+<details class="question" id="q-langchain-level-up-010-4-3-embeddings-and-chroma-vector-store" data-group="langchain-level-up" data-sec="langchain-level-up-s011">
+  <summary>
+    <span class="q-title">4.3 Embeddings and Chroma vector store</span>
+    <span class="q-meta">
+      <span class="tag">LangChain Level Up</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangChain Level Up › 4. RAG: Architecture &amp; the Red30 Shoes Q&amp;A Chatbot › 4.3 Embeddings and Chroma vector store</p>
+      <p>Embeddings = lists of floats; <strong>small distance → high relatedness</strong>, large distance → low relatedness.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import Chroma
+
+embeddings = OpenAIEmbeddings()
+db = Chroma.from_documents(chunks, embeddings)
+
+user_query = "What is the return policy?"
+docs = db.similarity_search(user_query)
+for doc in docs:
+    print(doc.page_content)
+        </script>
+      </div>
+      <p>Inspecting raw embeddings (1536 dims for <code>text-embedding-ada-002</code>):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import openai
+def get_embedding(text, model="text-embedding-ada-002"):
+    """Create an embedding for a piece of text."""
+    response = openai.embeddings.create(input=text, model=model)
+    return response.data[0].embedding
+
+query_embedding = get_embedding(user_query)
+print(f"Query embedding length: {len(query_embedding)}")
+print(f"First 5 values: {query_embedding[:5]}")
+for doc in docs:
+    doc_embedding = get_embedding(doc.page_content)
+    print(f"Doc embedding length: {len(doc_embedding)}")
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Feature</th><th>FAISS</th><th>Chroma</th></tr></thead>
+          <tbody>
+            <tr><td>Provider</td><td>Facebook/Meta</td><td>Open-source, AI-native</td></tr>
+            <tr><td>Storage</td><td>In-memory (default)</td><td>Persistent by default</td></tr>
+            <tr><td>Best for</td><td>Fast similarity search</td><td>Easy setup, persistence</td></tr>
+            <tr><td>Install</td><td><code>pip install faiss-cpu</code></td><td><code>pip install chromadb</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langchain-level-up-009-4-2-load-and-split-documents">← Previous</a><span class="rev-pos">10 / 35</span><a href="#q-langchain-level-up-011-4-4-chain-without-vs-with-context">Next →</a></nav>
+    </section>
+  </div>
+</details>

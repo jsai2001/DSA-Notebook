@@ -1,0 +1,77 @@
+<details class="question" id="q-fine-tuning-llm-047-12-3-lora-low-rank-adaptation-the-math" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s034">
+  <summary>
+    <span class="q-title">12.3 LoRA (Low-Rank Adaptation): the math</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 12. PEFT &amp; LoRA Concepts › 12.3 LoRA (Low-Rank Adaptation): the math</p>
+      <ul>
+        <li>Keep the original weight matrix <strong>W</strong> frozen (e.g. 512×512 = 262,144 parameters).</li>
+        <li>Learn a low-rank update <strong>ΔW = A × B</strong> where <strong>A</strong> is (in × r) and <strong>B</strong> is (r × out) and <strong>r</strong> (rank) is tiny. Output = <code>W·x + (x·A·B)</code> (scaled by <code>alpha / r</code> in the PyTorch version).</li>
+        <li>For r = 1: 512×1×2 = 1,024 trainable parameters, <strong>~256x reduction</strong>.</li>
+        <li><strong>B is initialised to zeros</strong> in the PyTorch version, so training starts exactly at the pre-trained behaviour.</li>
+      </ul>
+      <p>PyTorch LoRA wrapper (freezes the original layer, scales by <code>alpha/rank</code>):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+class LoRALayer(nn.Module):
+    def __init__(self, original_layer, rank=4, alpha=16):
+        super().__init__()
+        self.original_layer = original_layer
+        self.rank = rank
+        self.alpha = alpha
+
+        # Get dimensions from original layer
+        if hasattr(original_layer, 'in_features'):
+            in_dim = original_layer.in_features
+            out_dim = original_layer.out_features
+        else:
+            in_dim = original_layer.weight.shape[1]
+            out_dim = original_layer.weight.shape[0]
+
+        # LoRA matrices A and B
+        self.lora_A = nn.Parameter(torch.randn(rank, in_dim) * 0.01)
+        self.lora_B = nn.Parameter(torch.zeros(out_dim, rank))
+
+        # Freeze original weights
+        for param in self.original_layer.parameters():
+            param.requires_grad = False
+
+    def forward(self, x):
+        # Original computation + LoRA adaptation
+        original_output = self.original_layer(x)
+        lora_output = (x @ self.lora_A.T @ self.lora_B.T) * (self.alpha / self.rank)
+        return original_output + lora_output
+        </script>
+      </div>
+      <p>Parameter-reduction calculator:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def calculate_lora_efficiency(matrix_size, rank):
+    """Calculate parameter reduction with LoRA"""
+    original_params = matrix_size * matrix_size
+    lora_params = 2 * matrix_size * rank  # A and B matrices
+
+    reduction_factor = original_params / lora_params
+    efficiency = (1 - lora_params / original_params) * 100
+
+    return {
+        'original_parameters': original_params,
+        'lora_parameters': lora_params,
+        'reduction_factor': reduction_factor,
+        'efficiency_percentage': efficiency
+    }
+
+# Example: 512x512 matrix with rank=1
+efficiency = calculate_lora_efficiency(512, 1)
+print(f"Parameter reduction: {efficiency['reduction_factor']:.1f}x")
+print(f"Efficiency: {efficiency['efficiency_percentage']:.1f}%")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-046-12-2-adapters-the-idea-lora-refines">← Previous</a><span class="rev-pos">47 / 76</span><a href="#q-fine-tuning-llm-048-12-4-lora-with-the-hugging-face-peft-lib">Next →</a></nav>
+    </section>
+  </div>
+</details>

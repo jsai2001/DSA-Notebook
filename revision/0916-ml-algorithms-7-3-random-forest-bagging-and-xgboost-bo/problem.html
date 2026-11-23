@@ -1,0 +1,75 @@
+<details class="question" id="q-ml-algorithms-032-7-3-random-forest-bagging-and-xgboost-bo" data-group="ml-algorithms" data-sec="ml-algorithms-s030">
+  <summary>
+    <span class="q-title">7.3 Random Forest (bagging) and XGBoost (boosting)</span>
+    <span class="q-meta">
+      <span class="tag">ML Algorithms</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">ML Algorithms › 7. Decision Trees, Random Forest, XGBoost › 7.3 Random Forest (bagging) and XGBoost (boosting)</p>
+      <p>Single trees overfit; ensembles combine many trees.</p>
+      <p><strong>Random Forest:</strong> train many trees, each on a <strong>random subset of columns</strong> (and optionally rows). The final answer is the average (regression) or vote (classification). Analogy: you and 40 friends each hit a golf ball once, and the average landing spot is closer to the hole than a typical single hit.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sklearn.ensemble import RandomForestRegressor
+rf = RandomForestRegressor(n_estimators=100, max_depth=3)
+rf.fit(X_train, y_train)
+rf.score(X_test, y_test)  # 0.528 at depth 3
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+test_scores = []
+train_scores = []
+for i in range(1, 20):
+    rf = RandomForestRegressor(n_estimators=100, max_depth=i)
+    rf.fit(X_train, y_train)
+    test_scores.append(rf.score(X_test, y_test))
+    train_scores.append(rf.score(X_train, y_train))
+pd.DataFrame({'train': train_scores, 'test': test_scores}).plot.line(figsize=(8, 6))
+        </script>
+      </div>
+      <p>The test score flattens around depth 11-13. When several depths score similarly, pick the shallower model.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+rf = RandomForestRegressor(n_estimators=100, max_depth=13, random_state=42)
+rf.fit(X_train, y_train)
+rf.score(X_test, y_test)  # 0.82
+        </script>
+      </div>
+      <p><strong>XGBoost:</strong> train a tree, then train another that corrects the previous tree's errors, and repeat. The prediction is the sum of all trees' contributions. Analogy: hit the golf ball again from where it landed, each swing correcting the last.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from xgboost import XGBRegressor
+xgb = XGBRegressor()
+xgb.fit(X_train, y_train)
+xgb.score(X_test, y_test)  # 0.87
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Model (elevators, test R²)</th><th>Score</th><th>Technique</th></tr></thead>
+          <tbody>
+            <tr><td>Decision Tree (depth 11)</td><td>~0.70</td><td>Single tree</td></tr>
+            <tr><td>Linear Regression</td><td>~0.81</td><td>Line fitting</td></tr>
+            <tr><td>Random Forest (depth 13)</td><td>~0.82</td><td>Bagging</td></tr>
+            <tr><td>XGBoost</td><td>~0.87</td><td>Boosting</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th></th><th>Bagging (Random Forest)</th><th>Boosting (XGBoost)</th></tr></thead>
+          <tbody>
+            <tr><td>Strategy</td><td>Independent trees on random subsets</td><td>Sequential trees, each correcting errors</td></tr>
+            <tr><td>Parallelizable</td><td>Yes</td><td>No (each depends on the previous)</td></tr>
+            <tr><td>Overfitting risk</td><td>Lower</td><td>Higher (but has regularization)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Key hyperparameters: <code>max_depth</code> (tree complexity) and <code>n_estimators</code> (number of trees).</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ml-algorithms-031-7-2-real-example-aircraft-elevators">← Previous</a><span class="rev-pos">32 / 34</span><a href="#q-ml-algorithms-033-7-4-challenge-decision-tree-on-titanic-f">Next →</a></nav>
+    </section>
+  </div>
+</details>

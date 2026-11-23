@@ -1,0 +1,59 @@
+<details class="question" id="q-az-900-065-dan-storage-identity-availability" data-group="az-900" data-sec="az-900-s057">
+  <summary>
+    <span class="q-title">Dan: storage, identity, availability</span>
+    <span class="q-meta">
+      <span class="tag">AZ-900</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AZ-900 › 13. Scenario walkthroughs from the course › Dan: storage, identity, availability</p>
+      <p>Dan's app has four VMs and hundreds of GB of images. Sales agents use it on mobile devices.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Requirement</th><th>Solution</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>Frequently used images</td><td>Blob Storage, <strong>Hot</strong> tier</td><td>Low access cost</td></tr>
+            <tr><td>Archived images for regulatory compliance</td><td>Blob Storage, <strong>Archive</strong> tier</td><td>Lowest storage cost, rarely read</td></tr>
+            <tr><td>Migrate hundreds of GB of images</td><td><strong>Data Box Disk</strong></td><td>Microsoft ships SSDs, you copy and ship back</td></tr>
+            <tr><td>Secure mobile access, protect against a lost device</td><td><strong>Passwordless with Microsoft Authenticator</strong> and biometrics</td><td>No stored password</td></tr>
+            <tr><td>Survive data center failures</td><td><strong>Availability sets</strong></td><td>Fault domains for racks, update domains for reboots</td></tr>
+            <tr><td>Survive natural disasters</td><td>Deploy to <strong>both regions of a region pair</strong></td><td>Regions are geographically separated, and Microsoft avoids impacting both at once</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# 1. Storage: Create blob containers with appropriate tiers
+az storage account create --name danstorage --resource-group DanApp --location centralus --sku Standard_GRS
+az storage container create --name active-images --account-name danstorage
+az storage container create --name archived-images --account-name danstorage
+
+# Upload to hot tier (frequently accessed)
+az storage blob upload --account-name danstorage --container-name active-images \
+  --name product.jpg --file ./product.jpg --tier Hot
+
+# Upload to archive tier (regulatory storage)
+az storage blob upload --account-name danstorage --container-name archived-images \
+  --name old-record.jpg --file ./old-record.jpg --tier Archive
+
+# 2. Compute: Deploy VMs in an availability set
+az vm availability-set create \
+  --resource-group DanApp --name DanAvailSet \
+  --platform-fault-domain-count 2 --platform-update-domain-count 3
+
+az vm create --resource-group DanApp --name DanVM1 \
+  --image Ubuntu2204 --availability-set DanAvailSet \
+  --admin-username azureuser --generate-ssh-keys
+
+# 3. Security: Enable passwordless auth (FIDO2 + Authenticator)
+az rest --method PATCH \
+  --uri "https://graph.microsoft.com/v1.0/policies/authenticationMethodsPolicy/authenticationMethodConfigurations/microsoftAuthenticator" \
+  --headers "Content-Type=application/json" \
+  --body '{"state": "enabled"}'
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-az-900-064-azure-monitor">← Previous</a><span class="rev-pos">65 / 67</span><a href="#q-az-900-066-will-pricing-performance-protection">Next →</a></nav>
+    </section>
+  </div>
+</details>

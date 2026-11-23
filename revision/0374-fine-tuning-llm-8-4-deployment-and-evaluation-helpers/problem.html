@@ -1,0 +1,60 @@
+<details class="question" id="q-fine-tuning-llm-035-8-4-deployment-and-evaluation-helpers" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s024">
+  <summary>
+    <span class="q-title">8.4 Deployment and evaluation helpers</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 8. Transfer Learning vs Fine-Tuning › 8.4 Deployment and evaluation helpers</p>
+      <p>Shrink for deployment with TensorFlow Lite (default optimisation for speed; <code>OPTIMIZE_FOR_SIZE</code> for memory):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def optimize_for_deployment(model, optimization_type='speed'):
+    if optimization_type == 'speed':
+        # Convert to TensorFlow Lite
+        converter = tf.lite.TFLiteConverter.from_keras_model(model)
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]
+        tflite_model = converter.convert()
+        return tflite_model
+
+    elif optimization_type == 'memory':
+        # Quantization
+        converter = tf.lite.TFLiteConverter.from_keras_model(model)
+        converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
+        return converter.convert()
+
+    return model
+
+# Usage
+optimized_model = optimize_for_deployment(model, 'speed')
+        </script>
+      </div>
+      <p>Gain over a baseline:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def evaluate_transfer_learning(model, test_data, baseline_accuracy=None):
+    # Evaluate model performance
+    test_loss, test_accuracy = model.evaluate(test_data, verbose=0)
+
+    results = {
+        'test_accuracy': test_accuracy,
+        'test_loss': test_loss,
+        'improvement': None
+    }
+
+    if baseline_accuracy:
+        results['improvement'] = test_accuracy - baseline_accuracy
+        results['improvement_percentage'] = (results['improvement'] / baseline_accuracy) * 100
+
+    return results
+
+# Usage
+results = evaluate_transfer_learning(model, test_dataset, baseline_accuracy=0.75)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-034-8-3-progressive-fine-tuning-frozen-first">← Previous</a><span class="rev-pos">35 / 76</span><a href="#q-fine-tuning-llm-036-9-transfer-learning-on-flan-t5-en-es-tra">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,79 @@
+<details class="question" id="q-boto3-018-6-boto3-with-github-actions-q61-70" data-group="boto3" data-sec="boto3-s007">
+  <summary>
+    <span class="q-title">6. boto3 with GitHub Actions (Q61-70) (2/4)</span>
+    <span class="q-meta">
+      <span class="tag">Boto3</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Boto3 › 6. boto3 with GitHub Actions (Q61-70)</p>
+      <ul>
+        <li>Store <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code> in GitHub Secrets.</li>
+        <li>Set them with the <code>aws-actions/configure-aws-credentials</code> action (the step shown in Q62).</li>
+        <li>Prefer IAM roles with temporary credentials via OIDC (see Q76).</li>
+        <li>Never hardcode credentials in scripts or workflow files.</li>
+      </ul>
+      <p><strong>Workflow variants for Q64-70.</strong> Each of these uses the Q62 skeleton, with these differences:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+# Q64 validate S3: on: [push]; final step
+    - name: Validate S3
+      run: python validate_s3.py
+
+# Q65 scale EKS: manual trigger; final step
+on: [workflow_dispatch]
+    - name: Scale EKS
+      run: python scale_eks.py
+
+# Q66 publish test results to SNS: extra steps before/after credentials
+    - name: Install dependencies
+      run: pip install boto3 pytest
+    - name: Run tests
+      run: pytest --junitxml=report.xml
+    - name: Publish to SNS
+      run: python publish_sns.py
+
+# Q67 create S3 bucket + upload; Q68 CloudFormation deploy: final steps
+    - name: Create and Upload to S3
+      run: python s3_upload.py
+    - name: Deploy Stack
+      run: python deploy_cloudformation.py
+
+# Q69 safe error handling: do not fail the pipeline on non-critical errors
+    - name: Check S3 Bucket
+      continue-on-error: true
+      run: python handle_errors.py
+
+# Q70 cleanup EC2: scheduled daily (as written in the source)
+on: [schedule: { cron: '0 0 * * *' }]
+    - name: Cleanup EC2
+      run: python cleanup_ec2.py
+        </script>
+      </div>
+      <p>Note: the Q70 <code>on:</code> line is not valid GitHub syntax as written. The correct form is <code>on:</code> then <code>schedule:</code> then <code>- cron: '0 0 * * *'</code>.</p>
+      <p><strong>Q64. Validate an S3 bucket's contents.</strong> List objects and check for expected files or properties; exit non-zero on failure so the workflow fails.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# validate_s3.py
+import boto3
+import sys
+
+def validate_s3_bucket(bucket_name):
+    s3_client = boto3.client('s3')
+    response = s3_client.list_objects_v2(Bucket=bucket_name)
+    if 'Contents' not in response:
+        print("Bucket is empty!")
+        sys.exit(1)
+    for obj in response['Contents']:
+        print(f"Found: {obj['Key']}, Size: {obj['Size']}")
+    print("Validation successful!")
+
+if __name__ == "__main__":
+    validate_s3_bucket('my-bucket')
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-boto3-017-6-boto3-with-github-actions-q61-70">← Previous</a><span class="rev-pos">18 / 25</span><a href="#q-boto3-019-6-boto3-with-github-actions-q61-70">Next →</a></nav>
+    </section>
+  </div>
+</details>

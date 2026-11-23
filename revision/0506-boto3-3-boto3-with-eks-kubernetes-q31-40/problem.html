@@ -1,0 +1,83 @@
+<details class="question" id="q-boto3-009-3-boto3-with-eks-kubernetes-q31-40" data-group="boto3" data-sec="boto3-s004">
+  <summary>
+    <span class="q-title">3. boto3 with EKS / Kubernetes (Q31-40) (2/3)</span>
+    <span class="q-meta">
+      <span class="tag">Boto3</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Boto3 › 3. boto3 with EKS / Kubernetes (Q31-40)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+import json
+
+def create_eks_service_account_role(role_name, cluster_name, region='us-east-1'):
+    iam_client = boto3.client('iam', region_name=region)
+    trust_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {"Federated": f"arn:aws:iam::123456789012:oidc-provider/oidc.eks.{region}.amazonaws.com/id/EXAMPLED539D4633E53DE1B716D3041E"},
+                "Action": "sts:AssumeRoleWithWebIdentity",
+                "Condition": {
+                    "StringEquals": {
+                        f"oidc.eks.{region}.amazonaws.com/id/EXAMPLED539D4633E53DE1B716D3041E:sub": "system:serviceaccount:default:my-sa"
+                    }
+                }
+            }
+        ]
+    }
+    response = iam_client.create_role(
+        RoleName=role_name,
+        AssumeRolePolicyDocument=json.dumps(trust_policy)
+    )
+    iam_client.attach_role_policy(
+        RoleName=role_name,
+        PolicyArn='arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess'
+    )
+    return response['Role']['Arn']
+
+# Example usage
+role_arn = create_eks_service_account_role('eks-sa-role', 'my-eks-cluster')
+print(f"Role ARN: {role_arn}")
+        </script>
+      </div>
+      <p><strong>Q35. Create a node group.</strong> <code>create_nodegroup</code> takes instance types, scaling config, subnets and the node IAM role.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+def create_eks_nodegroup(cluster_name, nodegroup_name, role_arn, subnets, region='us-east-1'):
+    eks_client = boto3.client('eks', region_name=region)
+    response = eks_client.create_nodegroup(
+        clusterName=cluster_name,
+        nodegroupName=nodegroup_name,
+        scalingConfig={
+            'minSize': 1,
+            'maxSize': 3,
+            'desiredSize': 2
+        },
+        instanceTypes=['t3.medium'],
+        subnets=subnets,
+        nodeRole=role_arn
+    )
+    return response
+
+# Example usage
+response = create_eks_nodegroup(
+    'my-eks-cluster', 
+    'my-nodegroup', 
+    'arn:aws:iam::123456789012:role/EKSNodeRole', 
+    ['subnet-12345678', 'subnet-87654321']
+)
+print(f"Nodegroup creation initiated: {response['nodegroup']['nodegroupArn']}")
+        </script>
+      </div>
+      <p><strong>Q36. Combine boto3 with the <code>kubernetes</code> client.</strong> boto3 fetches the cluster endpoint and CA data; those configure the Kubernetes API client. (Gotcha: the source passes the caller ARN as the API key. Real EKS auth needs a signed STS token, for example from <code>aws eks get-token</code>.)</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-boto3-008-3-boto3-with-eks-kubernetes-q31-40">← Previous</a><span class="rev-pos">9 / 25</span><a href="#q-boto3-010-3-boto3-with-eks-kubernetes-q31-40">Next →</a></nav>
+    </section>
+  </div>
+</details>

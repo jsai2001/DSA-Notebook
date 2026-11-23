@@ -1,0 +1,88 @@
+<details class="question" id="q-boto3-012-4-boto3-with-terraform-q41-50" data-group="boto3" data-sec="boto3-s005">
+  <summary>
+    <span class="q-title">4. boto3 with Terraform (Q41-50) (2/3)</span>
+    <span class="q-meta">
+      <span class="tag">Boto3</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Boto3 › 4. boto3 with Terraform (Q41-50)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+def manage_terraform_s3_backend(bucket_name, region='us-east-1'):
+    s3_client = boto3.client('s3', region_name=region)
+    s3_client.put_bucket_versioning(
+        Bucket=bucket_name,
+        VersioningConfiguration={'Status': 'Enabled'}
+    )
+    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix='terraform.tfstate')
+    if 'Contents' in response:
+        print(f"Terraform state file found in {bucket_name}")
+    else:
+        print(f"No state file found in {bucket_name}")
+
+# Example usage
+manage_terraform_s3_backend('my-terraform-backend')
+        </script>
+      </div>
+      <p><strong>Q45. Check a Terraform-managed CloudFormation stack's status.</strong> <code>describe_stacks</code>, read <code>StackStatus</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+def check_cloudformation_stack(stack_name, region='us-east-1'):
+    cf_client = boto3.client('cloudformation', region_name=region)
+    response = cf_client.describe_stacks(StackName=stack_name)
+    stack = response['Stacks'][0]
+    print(f"Stack {stack_name} Status: {stack['StackStatus']}")
+    return stack['StackStatus']
+
+# Example usage
+check_cloudformation_stack('my-terraform-stack')
+        </script>
+      </div>
+      <p><strong>Q46. Trigger Terraform programmatically (Lambda).</strong> A Lambda function (S3 trigger or API call) downloads the config and runs <code>terraform apply</code> through a subprocess, or delegates to AWS CodeBuild. (Practical gotcha: the Terraform binary must be packaged in the Lambda.)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+import subprocess
+
+def lambda_handler(event, context):
+    s3_client = boto3.client('s3')
+    s3_client.download_file('my-terraform-bucket', 'terraform/main.tf', '/tmp/main.tf')
+    result = subprocess.run(['terraform', 'apply', '-auto-approve'], cwd='/tmp', capture_output=True)
+    return {
+        'statusCode': 200,
+        'body': result.stdout.decode()
+    }
+        </script>
+      </div>
+      <p><strong>Q47. Clean up orphaned resources not in Terraform.</strong> List live resources, compare against state IDs, delete the unmanaged ones. Destructive: dry-run first (Q85).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+import json
+
+def clean_orphaned_resources(state_file_path, region='us-east-1'):
+    with open(state_file_path, 'r') as f:
+        state = json.load(f)
+    managed_ids = [r['instances'][0]['attributes']['id'] for r in state['resources'] if r['type'] == 'aws_instance']
+    ec2_client = boto3.client('ec2', region_name=region)
+    response = ec2_client.describe_instances()
+    for reservation in response['Reservations']:
+        for instance in reservation['Instances']:
+            if instance['InstanceId'] not in managed_ids:
+                ec2_client.terminate_instances(InstanceIds=[instance['InstanceId']])
+                print(f"Terminated orphaned instance: {instance['InstanceId']}")
+
+# Example usage
+clean_orphaned_resources('terraform.tfstate')
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-boto3-011-4-boto3-with-terraform-q41-50">← Previous</a><span class="rev-pos">12 / 25</span><a href="#q-boto3-013-4-boto3-with-terraform-q41-50">Next →</a></nav>
+    </section>
+  </div>
+</details>

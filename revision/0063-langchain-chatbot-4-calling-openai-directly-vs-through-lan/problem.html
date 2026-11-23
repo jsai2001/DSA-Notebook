@@ -1,0 +1,67 @@
+<details class="question" id="q-langchain-chatbot-008-4-calling-openai-directly-vs-through-lan" data-group="langchain-chatbot" data-sec="langchain-chatbot-s008">
+  <summary>
+    <span class="q-title">4. Calling OpenAI directly vs through LangChain</span>
+    <span class="q-meta">
+      <span class="tag">LangChain Chatbot</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangChain Chatbot › 4. Calling OpenAI directly vs through LangChain</p>
+      <p><strong>Direct OpenAI SDK</strong> (exercise <code>02_01.py</code>): messages with roles <code>system</code> (task) and <code>user</code> (input), plus <code>temperature</code>. Example: keyword extraction (original pastes a paragraph on early checkers programs; shortened).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from openai import OpenAI
+client = OpenAI()
+
+response = client.chat.completions.create(
+  model="gpt-3.5-turbo",
+  messages=[
+    {
+      "role": "system",
+      "content": "You will be provided with a block of text, and your task is to extract a list of keywords from it."
+    },
+    {
+      "role": "user",
+      "content": "<paragraph of text to extract keywords from>"
+    }
+  ],
+  temperature=0.5
+)
+print(response.choices[0].message.content)
+        </script>
+      </div>
+      <p><strong>LangChain</strong> <code>ChatOpenAI</code> uses <code>SystemMessage</code>/<code>HumanMessage</code> and <code>llm.invoke(...)</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# LangChain with OpenAI
+from langchain_openai import ChatOpenAI
+from langchain.schema import HumanMessage, SystemMessage
+
+# Initialize LLM
+llm = ChatOpenAI(
+    model="gpt-3.5-turbo",
+    temperature=0.7,
+    max_tokens=1000
+)
+
+# Basic conversation
+def basic_chat(user_message: str) -> str:
+    """Basic chat functionality"""
+    messages = [
+        SystemMessage(content="You are a helpful assistant."),
+        HumanMessage(content=user_message)
+    ]
+    response = llm.invoke(messages)
+    return response.content
+
+# Test basic chat
+response = basic_chat("Hello, how can you help me?")
+print(response)
+        </script>
+      </div>
+      <p>The course chatbot below uses the completion-style <code>OpenAI</code> class (<code>gpt-3.5-turbo-instruct</code>), not <code>ChatOpenAI</code>.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langchain-chatbot-007-3-4-combined-collector-and-validation">← Previous</a><span class="rev-pos">8 / 29</span><a href="#q-langchain-chatbot-009-5-the-course-chatbot-persona-prompt-lang">Next →</a></nav>
+    </section>
+  </div>
+</details>

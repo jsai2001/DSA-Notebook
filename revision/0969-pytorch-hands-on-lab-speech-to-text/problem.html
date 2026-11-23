@@ -1,0 +1,85 @@
+<details class="question" id="q-pytorch-hands-on-022-lab-speech-to-text" data-group="pytorch-hands-on" data-sec="pytorch-hands-on-s022">
+  <summary>
+    <span class="q-title">Lab: speech-to-text (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">PyTorch Hands-On</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">PyTorch Hands-On › 9. TorchAudio › Lab: speech-to-text</p>
+      <p>Flow: load audio, extract acoustic features frame by frame (one tensor per transformer layer, 12 for the base model), classify each frame, greedy-decode to a transcript; optionally use Whisper instead.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import torch, torchaudio
+
+bundle = torchaudio.pipelines.WAV2VEC2_ASR_BASE_960H
+print("Sample Rate:", bundle.sample_rate)
+print("Labels:", bundle.get_labels())
+
+# model with pretrained weights (ssl override only for certificate problems on download)
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = bundle.get_model().to(device)
+
+# audio backend (needs: pip3 install soundfile sox)
+print(torchaudio.list_audio_backends())     # installed backends
+print(torchaudio.get_audio_backend())       # current backend
+torchaudio.set_audio_backend("soundfile")   # or "sox_io"
+
+# load and resample to the model's rate
+SPEECH_FILE = "voice-sample.wav"
+waveform, sample_rate = torchaudio.load(SPEECH_FILE)
+waveform = waveform.to(device)
+if sample_rate != bundle.sample_rate:
+    waveform = torchaudio.functional.resample(waveform, sample_rate, bundle.sample_rate)
+
+# extract features (12 layers)
+with torch.inference_mode():
+    features, _ = model.extract_features(waveform)
+
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(len(features), 1, figsize=(16, 4.3 * len(features)))
+for i, feats in enumerate(features):
+    ax[i].imshow(feats[0].cpu())
+    ax[i].set_title(f"Feature from transformer layer {i+1}")
+    ax[i].set_xlabel("Feature dimension")
+    ax[i].set_ylabel("Frame (time-axis)")
+plt.tight_layout()
+plt.show()
+
+# classify frames
+with torch.inference_mode():
+    emission, _ = model(waveform)
+plt.imshow(emission[0].cpu().T)
+plt.title("Classification result")
+plt.xlabel("Frame (time-axis)")
+plt.ylabel("Class")
+plt.show()
+        </script>
+      </div>
+      <p><strong>Greedy CTC decoding</strong>: argmax class per frame, collapse consecutive repeats, drop the blank token. Simplest decoder; no external dictionary.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+class GreedyCTCDecoder(torch.nn.Module):
+    def __init__(self, labels, blank=0):
+        super().__init__()
+        self.labels = labels
+        self.blank = blank
+
+    def forward(self, emission: torch.Tensor) -> str:
+        indices = torch.argmax(emission, dim=-1)
+        indices = torch.unique_consecutive(indices, dim=-1)
+        indices = [i for i in indices if i != self.blank]
+        return "".join([self.labels[i] for i in indices])
+
+decoder = GreedyCTCDecoder(labels=bundle.get_labels())
+transcript = decoder(emission[0])
+print(transcript)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-pytorch-hands-on-021-9-torchaudio">← Previous</a><span class="rev-pos">22 / 27</span><a href="#q-pytorch-hands-on-023-lab-speech-to-text">Next →</a></nav>
+    </section>
+  </div>
+</details>

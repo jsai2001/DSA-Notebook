@@ -1,0 +1,83 @@
+<details class="question" id="q-angular-046-signals-angular-16-developer-preview-at" data-group="angular" data-sec="angular-s047">
+  <summary>
+    <span class="q-title">Signals (Angular 16+, developer preview at recording) (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">Angular</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Angular › 14. Reactive Programming: Signals, effect, async Pipe, RxJS › Signals (Angular 16+, developer preview at recording)</p>
+      <p>Reactive pattern: data is wrapped in getters and setters so Angular tracks changes and updates only what changed, instead of checking every component. The API may change, so check the docs.</p>
+      <p><code>signal(initialValue)</code> returns a <code>WritableSignal</code>; the type is inferred, or given explicitly. <strong>Read a signal by calling it.</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="TypeScript">
+const count = signal(0);                       // inferred number
+public unread = signal<Message[]>([]);         // explicit type
+this.unread();                                 // read value
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>Use</th></tr></thead>
+          <tbody>
+            <tr><td><code>set(value)</code></td><td>replace the value</td></tr>
+            <tr><td><code>update(fn)</code></td><td>return a new value from the current one (immutable, recommended)</td></tr>
+            <tr><td><code>mutate(fn)</code></td><td>change the current value in place (mutable, no return).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="TypeScript">
+this.http.get<Message[]>('/assets/mocks/messages.json')
+  .subscribe({ next: items => this.unread.set(items) });
+
+this.unread.update(items => items.filter(item => item.id !== selected.id));
+
+this.unread.mutate(items => {
+  const index = items.findIndex(item => item.id === selected.id);
+  items.splice(index, 1);
+});
+        </script>
+      </div>
+      <p><code>MessageService</code> with these calls is in section 8.</p>
+      <p><strong><code>computed()</code></strong> derives a <strong>read-only</strong> value from other signals. It is <strong>cached</strong> (recalculates only when dependencies change) and <strong>lazy</strong> (evaluated only when read), which suits filtering large arrays and heavy calculations.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="TypeScript">
+public count = computed(() => this.unread().length);
+
+count();            // read
+count.set(5);       // error: set does not exist on a computed signal
+        </script>
+      </div>
+      <p>Use in a component (an <code>effect</code> inside the constructor) and in a template:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="TypeScript">
+@Component({
+  selector: 'app-messages',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './messages.component.html',
+  styleUrls: ['./messages.component.css']
+})
+export class MessagesComponent {
+  constructor(
+    private title: Title,
+    public messageService: MessageService
+  ) {
+    effect(() => {
+      this.title.setTitle(`Gem Finder | Messages (${this.messageService.count()})`);
+    });
+  }
+}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="HTML">
+<span *ngIf="messageService.count()">&nbsp;({{ messageService.count() }})</span>
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-angular-045-router-in-templates">← Previous</a><span class="rev-pos">46 / 55</span><a href="#q-angular-047-signals-angular-16-developer-preview-at">Next →</a></nav>
+    </section>
+  </div>
+</details>

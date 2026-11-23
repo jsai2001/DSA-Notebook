@@ -1,0 +1,71 @@
+<details class="question" id="q-az-900-052-azure-policy" data-group="az-900" data-sec="az-900-s045">
+  <summary>
+    <span class="q-title">Azure Policy</span>
+    <span class="q-meta">
+      <span class="tag">AZ-900</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AZ-900 › 10. Governance and compliance › Azure Policy</p>
+      <p>Defines rules applied when resources are created and managed (for example, VMs must be a certain size, resources must be in a certain region, certain resource types must deploy together).</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Effect</th><th>Behavior</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Append</strong></td><td>Adds properties to a resource (for example auto-add a tag)</td></tr>
+            <tr><td><strong>Audit</strong></td><td>Logs a warning on non-compliance</td></tr>
+            <tr><td><strong>AuditIfNotExists</strong></td><td>Logs a warning if a required related resource is missing</td></tr>
+            <tr><td><strong>DeployIfNotExists</strong></td><td>Deploys the required related resource if missing</td></tr>
+            <tr><td><strong>Deny</strong></td><td>Blocks the create or update</td></tr>
+            <tr><td><strong>Disabled</strong></td><td>Policy is off</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# List all built-in policy definitions
+az policy definition list --query "[?policyType=='BuiltIn'].{Name:displayName}" --output table
+
+# Assign a policy: "Allowed locations" — restrict resources to specific regions
+az policy assignment create \
+  --name "AllowedLocations" \
+  --policy "/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c" \
+  --params '{"listOfAllowedLocations": {"value": ["centralus", "eastus"]}}' \
+  --scope "/subscriptions/<sub-id>"
+
+# Assign a policy: "Require a tag on resources"
+az policy assignment create \
+  --name "RequireDeptTag" \
+  --policy "/providers/Microsoft.Authorization/policyDefinitions/871b6d14-10aa-478d-b466-ef6698305b4c" \
+  --params '{"tagName": {"value": "department"}}' \
+  --scope "/subscriptions/<sub-id>/resourceGroups/AZ900"
+
+# Check policy compliance
+az policy state summarize --output table
+
+# List non-compliant resources
+az policy state list \
+  --filter "complianceState eq 'NonCompliant'" \
+  --query "[].{Resource:resourceId, Policy:policyAssignmentName}" \
+  --output table
+
+# Create a custom policy definition (deny VMs larger than Standard_D4s_v3)
+az policy definition create \
+  --name "RestrictVMSize" \
+  --display-name "Restrict VM sizes" \
+  --rules '{
+    "if": {
+      "allOf": [
+        {"field": "type", "equals": "Microsoft.Compute/virtualMachines"},
+        {"not": {"field": "Microsoft.Compute/virtualMachines/sku.name", "in": ["Standard_D2s_v3", "Standard_D4s_v3"]}}
+      ]
+    },
+    "then": {"effect": "deny"}
+  }'
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-az-900-051-azure-blueprints">← Previous</a><span class="rev-pos">52 / 67</span><a href="#q-az-900-053-resource-locks">Next →</a></nav>
+    </section>
+  </div>
+</details>

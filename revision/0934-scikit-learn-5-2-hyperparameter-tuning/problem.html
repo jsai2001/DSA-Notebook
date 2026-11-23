@@ -1,0 +1,67 @@
+<details class="question" id="q-scikit-learn-016-5-2-hyperparameter-tuning" data-group="scikit-learn" data-sec="scikit-learn-s017">
+  <summary>
+    <span class="q-title">5.2 Hyperparameter Tuning</span>
+    <span class="q-meta">
+      <span class="tag">scikit-learn</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">scikit-learn › 5. Pipelines, Cross-Validation &amp; Hyperparameter Tuning › 5.2 Hyperparameter Tuning</p>
+      <p>Notebook <code>04_02_optimize_performance.ipynb</code>. <strong>Hyperparameters</strong> are set before training (tree depth, number of trees), not learned from data.</p>
+      <p>Baseline (default random forest) and stable estimate via cross-validation, since one split can be lucky or unlucky:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sklearn.datasets import load_breast_cancer
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score, GridSearchCV
+data = load_breast_cancer(as_frame=True)
+df = data.frame.copy()
+X = df[data.feature_names]
+y = df["target"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1)
+baseline_model = RandomForestClassifier(random_state=1)
+baseline_model.fit(X_train, y_train)
+baseline_test_score = baseline_model.score(X_test, y_test)
+cv_scores = cross_val_score(baseline_model, X_train, y_train, cv=5)
+cv_scores, cv_scores.mean()
+        </script>
+      </div>
+      <p><strong>GridSearchCV:</strong> define a grid, cross-validate every combination, choose the best average score, then evaluate the best model once on the held-out test set.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+param_grid = {
+    "n_estimators": [50, 100, 200],
+    "max_depth": [None, 5, 10],
+    "min_samples_split": [2, 5]
+}
+grid_search = GridSearchCV(
+    estimator=RandomForestClassifier(random_state=42),
+    param_grid=param_grid,
+    cv=5,
+    n_jobs=-1,
+    scoring="accuracy"
+)
+grid_search.fit(X_train, y_train)
+print(grid_search.best_params_)
+print(grid_search.best_score_)
+best_model = grid_search.best_estimator_
+best_test_score = best_model.score(X_test, y_test)
+best_test_score
+        </script>
+      </div>
+      <p>Inspect all results:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+results_df = pd.DataFrame(grid_search.cv_results_)
+results_df = results_df.sort_values("mean_test_score", ascending=False)
+results_df[[
+    "param_n_estimators", "param_max_depth", "param_min_samples_split", "mean_test_score"
+]].head()
+        </script>
+      </div>
+      <p><code>best_params_</code> is the winning combination, <code>best_estimator_</code> the trained model with it.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-scikit-learn-015-5-1-pipelines">← Previous</a><span class="rev-pos">16 / 17</span><a href="#q-scikit-learn-017-6-wrap-up-workflow-model-table-resources">Next →</a></nav>
+    </section>
+  </div>
+</details>

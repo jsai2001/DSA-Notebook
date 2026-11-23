@@ -1,0 +1,44 @@
+<details class="question" id="q-fastapi-014-json-responses-with-pydantic" data-group="fastapi" data-sec="fastapi-s015">
+  <summary>
+    <span class="q-title">JSON responses with Pydantic</span>
+    <span class="q-meta">
+      <span class="tag">FastAPI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">FastAPI › 5. Sending Data › JSON responses with Pydantic</p>
+      <p>Returning a dict gives JSON. A Pydantic return type also adds the response schema to <code>/docs</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from datetime import datetime, timedelta
+from fastapi import FastAPI
+from pydantic import BaseModel
+app = FastAPI()
+
+class TimeResponse(BaseModel):
+    delta: timedelta
+
+@app.get('/time_delta')
+def time_diff(start: datetime, end: datetime) -> TimeResponse:
+    delta = end - start
+    return TimeResponse(delta=delta)
+        </script>
+      </div>
+      <p><code>timedelta</code> serializes to an ISO 8601 duration by default (<code>"PT1M27S"</code>). Override with a <strong>field serializer</strong> to return <code>{"delta": 87}</code>; make the serializer's return type match what clients expect.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from pydantic import BaseModel, field_serializer
+
+class TimeResponse(BaseModel):
+    delta: timedelta
+
+    @field_serializer('delta')
+    def serialize_delta(self, v: timedelta) -> int:
+        return int(v.total_seconds())
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fastapi-013-example-start-stop-a-vm-enum-lock-path-p">← Previous</a><span class="rev-pos">14 / 26</span><a href="#q-fastapi-015-streaming-responses">Next →</a></nav>
+    </section>
+  </div>
+</details>

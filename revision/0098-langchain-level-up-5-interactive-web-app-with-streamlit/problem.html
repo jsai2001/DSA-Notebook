@@ -1,0 +1,89 @@
+<details class="question" id="q-langchain-level-up-014-5-interactive-web-app-with-streamlit" data-group="langchain-level-up" data-sec="langchain-level-up-s015">
+  <summary>
+    <span class="q-title">5. Interactive Web App with Streamlit</span>
+    <span class="q-meta">
+      <span class="tag">LangChain Level Up</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangChain Level Up › 5. Interactive Web App with Streamlit</p>
+      <p><strong>Streamlit</strong> is an open-source Python library for quickly building interactive web apps. It has a simple API, built-in chat components, live reruns, and easy deploy/share, so it suits prototyping GenAI apps.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+pip install streamlit
+streamlit run app.py     # opens http://localhost:8501
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import streamlit as st
+st.title("Q&A App")           # Page title
+st.header("Welcome")          # Header
+st.write("Hello, world!")     # Write text
+st.markdown("**Bold text**")  # Markdown support
+        </script>
+      </div>
+      <p><strong>Chat history</strong> lives in <code>st.session_state</code> (persists across reruns). The system message is stored but not displayed.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import streamlit as st
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+    st.session_state.messages.append({
+        "role": "system",
+        "content": "You are a helpful assistant. Ask me anything."
+    })
+        </script>
+      </div>
+      <p><strong>Complete <code>app.py</code></strong> (wired to the RAG <code>query()</code> function from Section 4.6, saved in <code>query.py</code>):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import streamlit as st
+from query import query  # the RAG query function
+
+st.title("Q&A Chatbot App")
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+    st.session_state.messages.append({
+        "role": "system",
+        "content": "You are a helpful assistant. Ask me anything."
+    })
+
+# Display chat messages (skip system)
+chat_placeholder = st.container()
+with chat_placeholder:
+    for message in st.session_state.messages:
+        if message["role"] != "system":
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+
+# Accept user input
+prompt = st.chat_input("What's up?")
+if prompt:
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
+    response = query(prompt)          # RAG logic
+    with st.chat_message("assistant"):
+        st.markdown(response)
+    st.session_state.messages.append({"role": "assistant", "content": response})
+        </script>
+      </div>
+      <p>The resulting bot is context-aware (RAG over the FAQ) and history-aware (it answers "What was my first question?").</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Component</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>st.container()</code></td><td>Group elements</td></tr>
+            <tr><td><code>st.chat_message(role)</code></td><td>Message bubble (user/assistant)</td></tr>
+            <tr><td><code>st.chat_input()</code></td><td>Chat text input</td></tr>
+            <tr><td><code>st.session_state</code></td><td>Persist data (chat history) across reruns</td></tr>
+          </tbody>
+        </table>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langchain-level-up-013-4-6-challenge-context-and-history-aware">← Previous</a><span class="rev-pos">14 / 35</span><a href="#q-langchain-level-up-015-deploying-to-streamlit-community-cloud">Next →</a></nav>
+    </section>
+  </div>
+</details>

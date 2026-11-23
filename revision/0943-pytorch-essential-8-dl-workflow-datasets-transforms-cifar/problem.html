@@ -1,0 +1,86 @@
+<details class="question" id="q-pytorch-essential-008-8-dl-workflow-datasets-transforms-cifar" data-group="pytorch-essential" data-sec="pytorch-essential-s009">
+  <summary>
+    <span class="q-title">8. DL Workflow, Datasets &amp; Transforms (CIFAR-10) (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">PyTorch Essential</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">PyTorch Essential › 8. DL Workflow, Datasets &amp; Transforms (CIFAR-10)</p>
+      <p><strong>Pipeline:</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Stage</th><th>Steps</th></tr></thead>
+          <tbody>
+            <tr><td>Data preparation</td><td>Load data → convert to tensors → apply transforms → batch</td></tr>
+            <tr><td>Model development</td><td>Design → train (training data) → validate (validation data)</td></tr>
+            <tr><td>Deployment</td><td>Save model to file → deploy to cloud server or edge device</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Learning types:</strong> supervised (labeled), unsupervised (no labels, finds patterns), semi-supervised (mix).</p>
+      <p><strong>Dataset splits</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Split</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>Training</td><td>Fit model parameters</td></tr>
+            <tr><td>Validation</td><td>Measure performance on unseen data and tune hyperparameters</td></tr>
+            <tr><td>Testing</td><td>Final evaluation</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Overfitting:</strong> the model is excellent on training data but fails on unseen examples. The validation set exposes this.</p>
+      <p><strong>CIFAR-10:</strong> 60,000 colour images (50,000 train, 10,000 test), 32×32 RGB, 10 classes (0 airplane, 1 automobile, 2 bird, 3 cat, 4 deer, 5 dog, 6 frog, 7 horse, 8 ship, 9 truck).</p>
+      <p><strong>PyTorch data conventions:</strong> a <strong>Dataset</strong> stores samples and labels; a <strong>DataLoader</strong> feeds them into the network.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import torch
+from torchvision.datasets import CIFAR10
+import matplotlib.pyplot as plt
+# Load training and test datasets
+train_dataset = CIFAR10(root='./data', train=True, download=True)
+test_dataset = CIFAR10(root='./data', train=False, download=True)
+# Print shapes
+print(len(train_dataset))  # 50000
+print(len(test_dataset))   # 10000
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Plot first 16 images
+for i in range(16):
+    plt.subplot(4, 4, i + 1)
+    plt.imshow(train_dataset.data[i])
+plt.show()
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Check class labels for first few images
+for i in range(4):
+    image, label = train_dataset[i]
+    print(f"Image {i}: {train_dataset.classes[label]}")
+# e.g., Image 0: frog, Image 1: truck, Image 3: deer
+        </script>
+      </div>
+      <p><strong>Transforms</strong> (<code>torchvision.transforms</code>) adjust data before it enters the model. <code>Compose</code> chains them; <code>Resize((H, W))</code> rescales; <code>ToTensor()</code> converts to a tensor; <code>Normalize(mean, std)</code> normalizes per channel. Training and test transforms may differ (here only training is resized).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from torchvision import transforms
+train_transforms = transforms.Compose([
+    transforms.Resize((64, 64)),       # Scale to 64×64
+    transforms.ToTensor(),             # Convert to tensor
+    transforms.Normalize(
+        mean=[0.4914, 0.4822, 0.4465], # CIFAR-10 standard means
+        std=[0.2470, 0.2435, 0.2616]   # CIFAR-10 standard stds
+    )
+])
+train_dataset = CIFAR10(root='./data', train=True, download=True, transform=train_transforms)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-pytorch-essential-007-7-exercises-tensor-creation-chunk-vs-spl">← Previous</a><span class="rev-pos">8 / 12</span><a href="#q-pytorch-essential-009-8-dl-workflow-datasets-transforms-cifar">Next →</a></nav>
+    </section>
+  </div>
+</details>

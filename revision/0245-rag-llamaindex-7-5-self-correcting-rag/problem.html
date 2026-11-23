@@ -1,0 +1,78 @@
+<details class="question" id="q-rag-llamaindex-053-7-5-self-correcting-rag" data-group="rag-llamaindex" data-sec="rag-llamaindex-s041">
+  <summary>
+    <span class="q-title">7.5 Self-correcting RAG</span>
+    <span class="q-meta">
+      <span class="tag">RAG with LlamaIndex</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RAG with LlamaIndex › 7. Advanced RAG: Post-Retrieval &amp; Other Techniques › 7.5 Self-correcting RAG</p>
+      <p>Query engines that <strong>evaluate their own output and retry</strong> when it isn't good enough.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Engine</th><th>Evaluator</th><th>On failure</th></tr></thead>
+          <tbody>
+            <tr><td><code>RetryQueryEngine</code></td><td><code>RelevancyEvaluator</code></td><td>Transforms the query using the evaluation result and re-queries, up to <code>max_retries</code></td></tr>
+            <tr><td><code>RetrySourceQueryEngine</code></td><td><code>RelevancyEvaluator</code></td><td>Evaluates each source node, builds a new index from only the passing nodes, retries on it</td></tr>
+            <tr><td><code>RetryGuidelineQueryEngine</code></td><td><code>GuidelineEvaluator</code> (custom guidelines)</td><td>Transforms the query from feedback (<code>FeedbackQueryTransformation</code>, optionally <code>resynthesize_query=True</code>) and retries</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from llama_index.core.query_engine import RetryQueryEngine, RetrySourceQueryEngine
+from llama_index.core.evaluation import RelevancyEvaluator
+
+base_query_engine = create_query_engine(
+    index=index,
+    mode="query",
+    response_mode="compact",
+    similiarty_top_k=15,
+    vector_store_query_mode="mmr",
+    vector_store_kwargs={"mmr_threshold": 0.42},
+    return_source=True,
+    verbose=True
+)
+query_response_evaluator = RelevancyEvaluator()
+
+retry_query_engine = RetryQueryEngine(base_query_engine, query_response_evaluator)
+retry_source_query_engine = RetrySourceQueryEngine(base_query_engine, query_response_evaluator)
+
+retry_query_engine.query("I need a framework for decision making that helps me create my own luck")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from llama_index.core.evaluation import GuidelineEvaluator
+from llama_index.core.evaluation.guideline import DEFAULT_GUIDELINES
+from llama_index.core import Response
+from llama_index.core.indices.query.query_transform.feedback_transform import FeedbackQueryTransformation
+from llama_index.core.query_engine import RetryGuidelineQueryEngine
+
+guideline_eval = GuidelineEvaluator(
+    guidelines=DEFAULT_GUIDELINES
+    + "\nThe response should not be overly long.\n"
+    "The response should try to summarize where possible.\n"
+)
+
+# Try the evaluator and query transform by hand
+query = "I need a framework for decision making that helps me create my own luck"
+response = query_pipeline.run(input=query)
+typed_response = response if isinstance(response, Response) else response.get_response()
+eval = guideline_eval.evaluate_response(query, typed_response)
+print(f"Guideline eval evaluation result: {eval.feedback}")
+
+feedback_query_transform = FeedbackQueryTransformation(resynthesize_query=True)
+transformed_query = feedback_query_transform.run(query, {"evaluation": eval})
+print(f"Transformed query: {transformed_query.query_str}")
+
+retry_guideline_query_engine = RetryGuidelineQueryEngine(
+    base_query_engine, guideline_eval, resynthesize_query=True)
+        </script>
+      </div>
+      <p>Each retry engine takes <code>max_retries</code>; if the response passes evaluation it is returned, and if <code>max_retries</code> is 0 the first response is returned unevaluated. Each retry costs extra LLM calls (evaluation plus re-query).</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-rag-llamaindex-052-7-4-prompt-compression-longllmlingua">← Previous</a><span class="rev-pos">53 / 64</span><a href="#q-rag-llamaindex-054-8-modular-rag">Next →</a></nav>
+    </section>
+  </div>
+</details>

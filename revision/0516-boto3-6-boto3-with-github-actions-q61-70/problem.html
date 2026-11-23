@@ -1,0 +1,87 @@
+<details class="question" id="q-boto3-019-6-boto3-with-github-actions-q61-70" data-group="boto3" data-sec="boto3-s007">
+  <summary>
+    <span class="q-title">6. boto3 with GitHub Actions (Q61-70) (3/4)</span>
+    <span class="q-meta">
+      <span class="tag">Boto3</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Boto3 › 6. boto3 with GitHub Actions (Q61-70)</p>
+      <p><strong>Q65. Scale an EKS cluster from a workflow.</strong> The script calls <code>update_nodegroup_config</code> with <code>scalingConfig={'desiredSize': desired_capacity}</code> (same call as Q33), from <code>scale_eks_cluster('my-cluster', 'my-nodegroup', 3)</code>. Workflow uses the <code>workflow_dispatch</code> trigger above.</p>
+      <p><strong>Q66. Publish test results to SNS.</strong> Run pytest, then publish a JSON message with a subject.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# publish_sns.py
+import boto3
+import json
+
+def publish_test_results(topic_arn, message):
+    sns_client = boto3.client('sns')
+    sns_client.publish(
+        TopicArn=topic_arn,
+        Message=json.dumps({'test_results': message}),
+        Subject='Test Results'
+    )
+    print("Published to SNS")
+
+if __name__ == "__main__":
+    publish_test_results('arn:aws:sns:us-east-1:123456789012:TestTopic', 'Tests passed!')
+        </script>
+      </div>
+      <p><strong>Q67. Create an S3 bucket and upload artifacts.</strong> Catch <code>BucketAlreadyOwnedByYou</code> to stay idempotent.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# s3_upload.py
+import boto3
+
+def create_and_upload(bucket_name, file_path):
+    s3_client = boto3.client('s3')
+    try:
+        s3_client.create_bucket(Bucket=bucket_name)
+        print(f"Created bucket: {bucket_name}")
+    except s3_client.exceptions.BucketAlreadyOwnedByYou:
+        print(f"Bucket {bucket_name} already exists")
+    s3_client.upload_file(file_path, bucket_name, file_path)
+    print(f"Uploaded {file_path} to {bucket_name}")
+
+if __name__ == "__main__":
+    create_and_upload('my-unique-bucket-123', 'artifact.txt')
+        </script>
+      </div>
+      <p><strong>Q68. Trigger a CloudFormation deployment.</strong> Create the stack; on <code>AlreadyExistsException</code> fall back to update. Waiters block until completion.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# deploy_cloudformation.py
+import boto3
+
+def deploy_stack(stack_name, template_file):
+    cf_client = boto3.client('cloudformation')
+    with open(template_file, 'r') as f:
+        template_body = f.read()
+    try:
+        cf_client.create_stack(
+            StackName=stack_name,
+            TemplateBody=template_body,
+            Capabilities=['CAPABILITY_IAM']
+        )
+        cf_client.get_waiter('stack_create_complete').wait(StackName=stack_name)
+        print(f"Stack {stack_name} created")
+    except cf_client.exceptions.AlreadyExistsException:
+        cf_client.update_stack(
+            StackName=stack_name,
+            TemplateBody=template_body,
+            Capabilities=['CAPABILITY_IAM']
+        )
+        cf_client.get_waiter('stack_update_complete').wait(StackName=stack_name)
+        print(f"Stack {stack_name} updated")
+
+if __name__ == "__main__":
+    deploy_stack('MyStack', 'template.yml')
+        </script>
+      </div>
+      <p><strong>Q69. Handle boto3 errors without breaking the pipeline.</strong></p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-boto3-018-6-boto3-with-github-actions-q61-70">← Previous</a><span class="rev-pos">19 / 25</span><a href="#q-boto3-020-6-boto3-with-github-actions-q61-70">Next →</a></nav>
+    </section>
+  </div>
+</details>

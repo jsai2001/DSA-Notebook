@@ -1,0 +1,65 @@
+<details class="question" id="q-ml-algorithms-008-3-2-challenge-k-means-on-titanic-data-pr" data-group="ml-algorithms" data-sec="ml-algorithms-s007">
+  <summary>
+    <span class="q-title">3.2 Challenge: K-means on Titanic (data prep reused in every later chapter)</span>
+    <span class="q-meta">
+      <span class="tag">ML Algorithms</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">ML Algorithms › 3. Other Clustering Algorithms &amp; the Titanic Pipeline › 3.2 Challenge: K-means on Titanic (data prep reused in every later chapter)</p>
+      <p>Task: drop missing values, drop categorical features, scale, run K-means, use the elbow method.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import pandas as pd
+url = 'https://github.com/mattharrison/datasets/raw/master/data/titanic3.xls'
+raw = pd.read_excel(url)
+# Check missing values
+raw.isna().sum()
+# age: ~263 missing, cabin: ~1014 missing, boat/body: many missing
+# Check data types — drop non-numeric (object) columns
+raw.dtypes
+        </script>
+      </div>
+      <p>Select the columns you <strong>want</strong> (positive selection) rather than dropping the ones you don't. It is clearer and less error-prone.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def tweak_titanic(df):
+    return (df
+            .loc[:, ['pclass', 'survived', 'age', 'sibsp', 'parch', 'fare']]
+            .dropna()
+    )
+tweak_titanic(raw)
+# Verify: .isna().sum() should show all zeros
+        </script>
+      </div>
+      <p><strong>Why standardize:</strong> clustering uses distance. <code>fare</code> reaches about 150 and <code>age</code> about 80, while other columns are 0-3, so large-range features would dominate. <code>set_config(transform_output='pandas')</code> makes transformers return DataFrames instead of NumPy arrays.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sklearn.preprocessing import StandardScaler
+from sklearn import set_config
+set_config(transform_output='pandas')  # Output Pandas instead of NumPy
+scaler = StandardScaler()
+X = scaler.fit_transform(tweak_titanic(raw))
+X
+# Every column now has mean ≈ 0 and std ≈ 1
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+inertias = []
+for i in range(20):
+    km = KMeans(n_clusters=i+1, n_init=1, max_iter=300, random_state=42)
+    km.fit(X)
+    inertias.append(km.inertia_)
+fig, ax = plt.subplots(figsize=(8, 6))
+ax.plot(range(1, 21), inertias, marker='o')
+        </script>
+      </div>
+      <p>Result: about 5 clusters by the ruler technique; if the ruler touches several spots, pick the simpler one. Much of ML is reusable code patterns: plug in your own data.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ml-algorithms-007-3-1-hierarchical-and-dbscan">← Previous</a><span class="rev-pos">8 / 34</span><a href="#q-ml-algorithms-009-4-pca-and-other-dimensionality-reduction">Next →</a></nav>
+    </section>
+  </div>
+</details>

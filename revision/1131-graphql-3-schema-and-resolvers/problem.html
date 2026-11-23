@@ -1,0 +1,95 @@
+<details class="question" id="q-graphql-004-3-schema-and-resolvers" data-group="graphql" data-sec="graphql-s004">
+  <summary>
+    <span class="q-title">3. Schema and Resolvers (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">GraphQL</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GraphQL › 3. Schema and Resolvers</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th></th><th>Schema</th><th>Resolver</th></tr></thead>
+          <tbody>
+            <tr><td>Defines</td><td><strong>What</strong> types and queries exist (blueprint/contract)</td><td><strong>How</strong> the data is returned (implementation)</td></tr>
+            <tr><td>Contains</td><td>Type definitions only, no logic</td><td>Functions that return data</td></tr>
+            <tr><td>File</td><td><code>data/schema.js</code></td><td><code>index.js</code> (<code>rootValue</code>), later <code>data/resolvers.js</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li>Every schema must have <code>type Query</code> listing all queryable fields.</li>
+        <li>Resolver function names must exactly match the schema's query/mutation field names.</li>
+        <li>Flow: client query -&gt; schema validates types -&gt; resolver returns data.</li>
+      </ul>
+      <p><strong>Hello World schema</strong> (<code>data/schema.js</code>):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+import { buildSchema } from 'graphql';
+
+const schema = buildSchema(`
+    type Query {
+        hello: String
+    }
+`);
+
+export default schema;
+        </script>
+      </div>
+      <p><strong>Wiring schema and resolver</strong> (<code>index.js</code>):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+import express from 'express';
+import { graphqlHTTP } from 'express-graphql';
+import schema from './data/schema';
+
+const PORT = 8080;
+const app = express();
+
+app.get('/', (req, res) => {
+    res.send('GraphQL is amazing!');
+});
+
+const root = { hello: () => "Hi, I'm Manny!" };
+
+app.use('/graphql', graphqlHTTP({
+    schema: schema,
+    rootValue: root,
+    graphiql: true,
+}));
+
+app.listen(PORT, () => console.log(`Running server on localhost:${PORT}/graphql`));
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th><code>graphqlHTTP</code> option</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>schema</code></td><td>The schema blueprint</td></tr>
+            <tr><td><code>rootValue</code></td><td>Object of resolver functions, matched to fields by name</td></tr>
+            <tr><td><code>graphiql</code></td><td><code>true</code> serves the GraphiQL browser IDE at <code>/graphql</code> (its Docs panel is generated from the schema)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Test at <code>localhost:8080/graphql</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="GraphQL">
+{
+    hello
+}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JSON">
+{
+    "data": {
+        "hello": "Hi, I'm Manny!"
+    }
+}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-graphql-003-2-project-and-server-setup">← Previous</a><span class="rev-pos">4 / 25</span><a href="#q-graphql-005-3-schema-and-resolvers">Next →</a></nav>
+    </section>
+  </div>
+</details>

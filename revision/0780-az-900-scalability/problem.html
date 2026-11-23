@@ -1,0 +1,65 @@
+<details class="question" id="q-az-900-010-scalability" data-group="az-900" data-sec="az-900-s008">
+  <summary>
+    <span class="q-title">Scalability (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">AZ-900</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AZ-900 › 3. Benefits of cloud: availability, scale, reliability, governance › Scalability</p>
+      <p>Horizontal scaling with a VM Scale Set (VMSS), manual and autoscale rules:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Create a Virtual Machine Scale Set (VMSS) — auto horizontal scaling
+az vmss create \
+  --resource-group myRG \
+  --name myScaleSet \
+  --image Ubuntu2204 \
+  --vm-sku Standard_B2s \
+  --instance-count 2 \
+  --admin-username azureuser \
+  --generate-ssh-keys \
+  --load-balancer myLoadBalancer
+
+# Scale OUT to 4 instances
+az vmss scale \
+  --resource-group myRG \
+  --name myScaleSet \
+  --new-capacity 4
+
+# Scale IN back to 2 instances
+az vmss scale \
+  --resource-group myRG \
+  --name myScaleSet \
+  --new-capacity 2
+
+# Enable autoscaling — scale automatically based on CPU usage
+az monitor autoscale create \
+  --resource-group myRG \
+  --resource myScaleSet \
+  --resource-type Microsoft.Compute/virtualMachineScaleSets \
+  --name myAutoscale \
+  --min-count 2 \
+  --max-count 10 \
+  --count 2
+
+# Add a rule: scale out when CPU > 70%
+az monitor autoscale rule create \
+  --resource-group myRG \
+  --autoscale-name myAutoscale \
+  --condition "Percentage CPU > 70 avg 5m" \
+  --scale out 2
+
+# Add a rule: scale in when CPU < 30%
+az monitor autoscale rule create \
+  --resource-group myRG \
+  --autoscale-name myAutoscale \
+  --condition "Percentage CPU < 30 avg 5m" \
+  --scale in 1
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-az-900-009-scalability">← Previous</a><span class="rev-pos">10 / 67</span><a href="#q-az-900-011-reliability-and-predictability">Next →</a></nav>
+    </section>
+  </div>
+</details>

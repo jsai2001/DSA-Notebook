@@ -1,0 +1,57 @@
+<details class="question" id="q-boto3-013-4-boto3-with-terraform-q41-50" data-group="boto3" data-sec="boto3-s005">
+  <summary>
+    <span class="q-title">4. boto3 with Terraform (Q41-50) (3/3)</span>
+    <span class="q-meta">
+      <span class="tag">Boto3</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Boto3 › 4. boto3 with Terraform (Q41-50)</p>
+      <p><strong>Q48. Enable versioning on the backend bucket.</strong> Same <code>put_bucket_versioning(Bucket=..., VersioningConfiguration={'Status': 'Enabled'})</code> call as Q44, on its own.</p>
+      <p><strong>Q49. Dynamic credentials for Terraform's AWS provider.</strong> Assume a role via STS, then export the temporary credentials as environment variables, which the provider reads. (Q60 for Ansible is the same code with <code>RoleSessionName='AnsibleSession'</code>.)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+import os
+
+def set_terraform_credentials(role_arn, region='us-east-1'):
+    sts_client = boto3.client('sts')
+    response = sts_client.assume_role(RoleArn=role_arn, RoleSessionName='TerraformSession')
+    credentials = response['Credentials']
+    os.environ['AWS_ACCESS_KEY_ID'] = credentials['AccessKeyId']
+    os.environ['AWS_SECRET_ACCESS_KEY'] = credentials['SecretAccessKey']
+    os.environ['AWS_SESSION_TOKEN'] = credentials['SessionToken']
+    print("Terraform credentials set.")
+
+# Example usage
+set_terraform_credentials('arn:aws:iam::123456789012:role/TerraformRole')
+        </script>
+      </div>
+      <p><strong>Q50. Monitor drift.</strong> Compare live attributes (tags, instance type, security groups) with the state file.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+import json
+
+def detect_drift(state_file_path, region='us-east-1'):
+    with open(state_file_path, 'r') as f:
+        state = json.load(f)
+    ec2_client = boto3.client('ec2', region_name=region)
+    for resource in state['resources']:
+        if resource['type'] == 'aws_instance':
+            instance_id = resource['instances'][0]['attributes']['id']
+            response = ec2_client.describe_instances(InstanceIds=[instance_id])
+            actual_tags = response['Reservations'][0]['Instances'][0].get('Tags', [])
+            expected_tags = resource['instances'][0]['attributes']['tags']
+            if actual_tags != expected_tags:
+                print(f"Drift detected for instance {instance_id}: Tags differ")
+
+# Example usage
+detect_drift('terraform.tfstate')
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-boto3-012-4-boto3-with-terraform-q41-50">← Previous</a><span class="rev-pos">13 / 25</span><a href="#q-boto3-014-5-boto3-with-ansible-q51-60">Next →</a></nav>
+    </section>
+  </div>
+</details>

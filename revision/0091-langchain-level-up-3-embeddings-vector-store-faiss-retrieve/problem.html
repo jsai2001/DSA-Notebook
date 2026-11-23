@@ -1,0 +1,82 @@
+<details class="question" id="q-langchain-level-up-007-3-embeddings-vector-store-faiss-retrieve" data-group="langchain-level-up" data-sec="langchain-level-up-s008">
+  <summary>
+    <span class="q-title">3. Embeddings, Vector Store (FAISS) &amp; Retriever</span>
+    <span class="q-meta">
+      <span class="tag">LangChain Level Up</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangChain Level Up › 3. Embeddings, Vector Store (FAISS) &amp; Retriever</p>
+      <p><strong>Similarity search</strong> retrieves dataset content similar to a query (used in information retrieval, image recognition, recommenders, NLP). <strong>Embeddings</strong> are vector representations of text that preserve semantic relationships; text → embedding model → vector → vector store. Query vectors are compared with stored vectors (cosine similarity) and the top-k closest are returned.</p>
+      <p><strong>Step 1: RAG prompt template</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from dotenv import load_dotenv
+from langchain.prompts import ChatPromptTemplate
+load_dotenv()
+template = """Answer the question based only on the following context:
+{context}
+
+Question: {question}
+"""
+prompt = ChatPromptTemplate.from_template(template)
+        </script>
+      </div>
+      <p><strong>Step 2: Embeddings + FAISS store</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain_core.documents import Document
+
+embeddings = OpenAIEmbeddings()
+documents = [
+    Document(page_content="harrison worked at kensho"),
+    Document(page_content="bears like to eat honey"),
+    Document(page_content="the weather in paris is sunny today"),
+    Document(page_content="langchain is a framework for building LLM apps"),
+]
+vector_store = FAISS.from_documents(documents, embeddings)
+        </script>
+      </div>
+      <p><strong>Direct similarity search</strong> returns a list of <code>Document</code> objects (<code>page_content</code> = text, <code>metadata</code> = source/page/etc.). <code>k</code> (top_k) is the number of results.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+query = "Where did Harrison work?"
+results = vector_store.similarity_search(query, k=1)
+print(results[0].page_content)   # "harrison worked at kensho"
+        </script>
+      </div>
+      <p><strong>Vector store as a retriever in an LCEL RAG chain</strong> — the dict runs in parallel: the retriever fills <code>{context}</code>, <code>RunnablePassthrough()</code> forwards the raw question unchanged to <code>{question}</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain_openai import ChatOpenAI
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
+
+retriever = vector_store.as_retriever()
+llm = ChatOpenAI()
+chain = (
+    {"context": retriever, "question": RunnablePassthrough()}
+    | prompt
+    | llm
+    | StrOutputParser()
+)
+result = chain.invoke("Where did Harrison work?")   # "Harrison worked at Kensho."
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Concept</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>similarity_search()</code></td><td>Direct method to find similar documents</td></tr>
+            <tr><td><code>as_retriever()</code></td><td>Wraps a vector store as a retriever usable in chains</td></tr>
+            <tr><td><code>RunnablePassthrough()</code></td><td>Passes input through unchanged (the question in RAG chains)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langchain-level-up-006-2-4-output-parsers">← Previous</a><span class="rev-pos">7 / 35</span><a href="#q-langchain-level-up-008-4-1-why-rag-architecture">Next →</a></nav>
+    </section>
+  </div>
+</details>

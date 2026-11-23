@@ -1,0 +1,47 @@
+<details class="question" id="q-fastapi-009-query-parameters" data-group="fastapi" data-sec="fastapi-s010">
+  <summary>
+    <span class="q-title">Query parameters</span>
+    <span class="q-meta">
+      <span class="tag">FastAPI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">FastAPI › 4. Accepting Data › Query parameters</p>
+      <p>Appended after <code>?</code>, separated by <code>&amp;</code>: <code>GET /logs?start=2024-01-01T00:00:00&amp;end=2024-01-02T00:00:00&amp;level=ERROR</code></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from http import HTTPStatus
+from datetime import datetime
+from fastapi import FastAPI, HTTPException
+import logs  # Dummy database
+app = FastAPI()
+
+@app.get('/logs')
+def logs_query(start: datetime, end: datetime, level: str = None):
+    # Always validate incoming parameters
+    if start >= end:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail='start must be before end'
+        )
+    if not level or not logs.is_valid_level(level):
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail='invalid log level'
+        )
+    records = logs.query(start, end, level)
+    if not records:
+        raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='no logs found')
+    return {'count': len(records), 'records': records}
+        </script>
+      </div>
+      <ul>
+        <li>Function parameters map to query parameters; <strong>type hints</strong> drive conversion (<code>datetime</code> parsed from ISO).</li>
+        <li>A parameter with a default (<code>level: str = None</code>) is optional.</li>
+        <li>Conversion failures return <code>422 Unprocessable Entity</code> automatically.</li>
+        <li>Raise <code>HTTPException</code> with the right status for your own validation errors.</li>
+        <li><code>/docs</code> shows generated OpenAPI documentation.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fastapi-008-example-info-handler">← Previous</a><span class="rev-pos">9 / 26</span><a href="#q-fastapi-010-request-body-pydantic-models">Next →</a></nav>
+    </section>
+  </div>
+</details>

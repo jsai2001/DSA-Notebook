@@ -1,0 +1,83 @@
+<details class="question" id="q-gcp-ml-023-12-vertex-ai-pipelines-mlops" data-group="gcp-ml" data-sec="gcp-ml-s023">
+  <summary>
+    <span class="q-title">12. Vertex AI Pipelines (MLOps)</span>
+    <span class="q-meta">
+      <span class="tag">GCP for Machine Learning</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GCP for Machine Learning › 12. Vertex AI Pipelines (MLOps)</p>
+      <p><strong>Automate, monitor and govern ML systems serverlessly</strong> (managed Kubernetes underneath).</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Feature</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>Serverless</td><td>No infrastructure to manage</td></tr>
+            <tr><td>Frameworks</td><td>Kubeflow Pipelines (KFP) or TensorFlow Extended (TFX)</td></tr>
+            <tr><td>DAG visualization</td><td>Directed Acyclic Graph of steps</td></tr>
+            <tr><td>Template Gallery</td><td>Pre-built templates for common workflows</td></tr>
+            <tr><td>Custom templates</td><td>Upload your own</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Pipelines tie together: Feature Store (features for training), Training, Model Registry, Endpoints, Evaluation.</p>
+      <p><strong>Template Gallery</strong> (Vertex AI → Pipelines → Template Gallery): filter by type (e.g., "Pipelines and Vertex AI" is the easiest to run), view the DAG with node inputs/outputs, create a run from the UI or download to customize. Example: <strong>LLM Text Generation Evaluation</strong> (summarization, Q&amp;A, text generation).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Install the KFP SDK and import
+# !pip install kfp google-cloud-pipeline-components
+from kfp import compiler
+from kfp.dsl import pipeline, component
+from google.cloud import aiplatform as aip
+aip.init(project="<your-project-id>", location="us-central1")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Simple pipeline with two components
+@component
+def train_model(dataset_uri: str) -> str:
+    import tensorflow as tf
+    # Training logic here
+    model_path = "gs://<your-bucket>/models/trained_model"
+    return model_path
+@component
+def evaluate_model(model_path: str) -> float:
+    # Evaluation logic here
+    accuracy = 0.95
+    return accuracy
+@pipeline(name="my-training-pipeline")
+def training_pipeline(dataset_uri: str):
+    train_task = train_model(dataset_uri=dataset_uri)
+    eval_task = evaluate_model(model_path=train_task.output)
+# Compile the pipeline
+compiler.Compiler().compile(
+    pipeline_func=training_pipeline,
+    package_path="training_pipeline.json"
+)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Submit the pipeline job
+job = aip.PipelineJob(
+    display_name="my-training-run",
+    template_path="training_pipeline.json",
+    parameter_values={"dataset_uri": "gs://<your-bucket>/data/"},
+    pipeline_root="gs://<your-bucket>/pipeline_root/"
+)
+job.run(sync=False)
+print(f"Pipeline job submitted: {job.resource_name}")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+gcloud ai pipelines jobs list --region=us-central1 --format=table
+gcloud ai pipelines jobs describe <job-id> --region=us-central1
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-gcp-ml-022-11-endpoints-online-vs-batch-prediction">← Previous</a><span class="rev-pos">23 / 26</span><a href="#q-gcp-ml-024-challenge-solution-custom-training-pipel">Next →</a></nav>
+    </section>
+  </div>
+</details>

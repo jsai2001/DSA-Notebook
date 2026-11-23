@@ -1,0 +1,82 @@
+<details class="question" id="q-rag-llamaindex-048-7-1-node-post-processing" data-group="rag-llamaindex" data-sec="rag-llamaindex-s037">
+  <summary>
+    <span class="q-title">7.1 Node post-processing (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">RAG with LlamaIndex</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RAG with LlamaIndex › 7. Advanced RAG: Post-Retrieval &amp; Other Techniques › 7.1 Node post-processing</p>
+      <p>A <strong>node postprocessor</strong> takes the retrieved nodes, transforms or filters them, and returns them, after retrieval and before response synthesis. All subclass <code>BaseNodePostProcessor</code>, so they share one usage pattern. They plug into a <strong>query engine</strong>, not into <code>as_retriever()</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+query_engine = index.as_query_engine(
+    ...,                                  # other query engine arguments
+    node_postprocessors=[your_post_processor]
+)
+response = query_engine.query("your query")
+
+# Manual assembly (retriever + postprocessors)
+from llama_index.core.retrievers import VectorIndexRetriever
+from llama_index.core.query_engine import RetrieverQueryEngine
+from llama_index.core.postprocessor import SimilarityPostprocessor
+
+retriever = VectorIndexRetriever(index=index, similarity_top_k=10)
+query_engine = RetrieverQueryEngine(
+    retriever=retriever,
+    node_postprocessors=[SimilarityPostprocessor(similarity_cutoff=0.7)]
+)
+response = query_engine.query("Your query here")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from llama_index.core.postprocessor import (
+    SimilarityPostprocessor, KeywordNodePostprocessor, MetadataReplacementPostProcessor,
+    LongContextReorder, SentenceEmbeddingOptimizer)
+
+# 1. Filter by similarity score
+similarity_postprocessor = SimilarityPostprocessor(similarity_cutoff=0.7)
+
+# 2. Filter by keywords (uses spaCy; lang defaults to "en")
+required_keywords = ["luck", "destiny", "hardwork", "mind", "decision"]
+exclude_keywords = ["Trulia", "Redfin", "Zillow"]
+keyword_postprocessor = KeywordNodePostprocessor(
+    required_keywords=required_keywords, exclude_keywords=exclude_keywords)
+
+# 3. Replace node text with a metadata value (pair with SentenceWindowNodeParser)
+postprocessor = MetadataReplacementPostProcessor(target_metadata_key="window")
+
+# 4. Reorder: best nodes at the start and end
+postprocessor = LongContextReorder()
+
+# 5. Keep only query-relevant sentences inside each node
+postprocessor = SentenceEmbeddingOptimizer(
+    embed_model=Settings.embed_model,
+    percentile_cutoff=0.5,
+    threshold_cutoff=0.7
+)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Keyword postprocessor inside a query engine (helper kwargs as used in the notebook)
+query_engine = create_query_engine(
+    index=index,
+    mode="query",
+    response_mode="compact",
+    similiarty_top_k=5,
+    vector_store_query_mode="mmr",
+    vector_store_kwargs={"mmr_threshold": 0.42},
+    post_processor=keyword_postprocessor,
+    return_source=True
+)
+response = query_engine.query("How to make good decisions?")
+response.source_nodes[0].__dict__
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-rag-llamaindex-047-7-advanced-rag-post-retrieval-other-tech">← Previous</a><span class="rev-pos">48 / 64</span><a href="#q-rag-llamaindex-049-7-1-node-post-processing">Next →</a></nav>
+    </section>
+  </div>
+</details>

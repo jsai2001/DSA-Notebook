@@ -1,0 +1,89 @@
+<details class="question" id="q-graphql-015-adding-sqlite-sequelize" data-group="graphql" data-sec="graphql-s013">
+  <summary>
+    <span class="q-title">Adding SQLite (Sequelize)</span>
+    <span class="q-meta">
+      <span class="tag">GraphQL</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GraphQL › 6. Persistence: MongoDB and SQLite › Adding SQLite (Sequelize)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+npm install casual lodash sequelize sqlite3
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Package</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>sequelize</code></td><td>ORM for SQL databases</td></tr>
+            <tr><td><code>sqlite3</code></td><td>SQLite driver</td></tr>
+            <tr><td><code>casual</code></td><td>Fake data generator for seeding</td></tr>
+            <tr><td><code>lodash</code></td><td><code>_.times()</code> to repeat the seed call</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Final <code>dbConnectors.js</code> adds these imports at the top and the SQLite section below the Mongo code above, then exports both:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+import { Sequelize, DataTypes } from "sequelize";
+import _ from 'lodash';
+import casual from 'casual';
+
+// ... MongoDB section as above ...
+
+const sequelize = new Sequelize('sqlite::memory:');   // in RAM, resets on restart
+
+const Categories = sequelize.define('categories', {
+    category: DataTypes.STRING,
+    description: DataTypes.STRING,
+});
+
+async function syncAndSeedCategories() {
+    try {
+        await sequelize.sync({ force: true });   // creates table, drops it first if it exists
+        console.log('SQLite connection established and Categories model synced');
+
+        await Promise.all(_.times(5, () => {
+            return Categories.create({
+                category: casual.word,
+                description: casual.sentence,
+            });
+        }));
+
+        console.log('Categories seeded');
+    } catch (error) {
+        console.log('Error with SQLite DB:', error);
+    }
+}
+
+syncAndSeedCategories();
+
+export { Widgets, Categories };
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Concept</th><th>Mongoose</th><th>Sequelize</th></tr></thead>
+          <tbody>
+            <tr><td>String type</td><td><code>String</code></td><td><code>DataTypes.STRING</code></td></tr>
+            <tr><td>Number type</td><td><code>Number</code></td><td><code>DataTypes.INTEGER</code> / <code>DataTypes.FLOAT</code></td></tr>
+            <tr><td>Define model</td><td><code>mongoose.model('name', schema)</code></td><td><code>sequelize.define('name', fields)</code></td></tr>
+            <tr><td>Sync to DB</td><td>automatic on connect</td><td><code>sequelize.sync()</code></td></tr>
+            <tr><td>In-memory DB</td><td>not supported</td><td><code>'sqlite::memory:'</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Server start logs confirm both connections:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Text">
+Connected to MongoDB
+SQLite connection established and Categories model synced
+Categories seeded
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-graphql-014-6-persistence-mongodb-and-sqlite">← Previous</a><span class="rev-pos">15 / 25</span><a href="#q-graphql-016-7-crud-resolvers-with-mongodb">Next →</a></nav>
+    </section>
+  </div>
+</details>

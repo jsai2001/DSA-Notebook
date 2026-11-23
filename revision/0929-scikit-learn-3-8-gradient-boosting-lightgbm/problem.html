@@ -1,0 +1,84 @@
+<details class="question" id="q-scikit-learn-011-3-8-gradient-boosting-lightgbm" data-group="scikit-learn" data-sec="scikit-learn-s012">
+  <summary>
+    <span class="q-title">3.8 Gradient Boosting &amp; LightGBM</span>
+    <span class="q-meta">
+      <span class="tag">scikit-learn</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">scikit-learn › 3. Supervised Learning › 3.8 Gradient Boosting &amp; LightGBM</p>
+      <p>Notebook <code>02_09_gradient_boosting_and_lightgbm.ipynb</code>. Trees are built <strong>in sequence</strong>; each learns from the previous trees' mistakes.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sklearn.ensemble import GradientBoostingClassifier
+import lightgbm as lgb
+X, y = make_moons(n_samples=1000, noise=0.25, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+gb = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, max_depth=3, random_state=42)
+gb.fit(X_train, y_train)
+y_pred_gb = gb.predict(X_test)
+accuracy_gb = accuracy_score(y_test, y_pred_gb)
+print(f"Gradient Boosting Accuracy: {accuracy_gb:.3f}")
+        </script>
+      </div>
+      <ul>
+        <li><code>n_estimators=100</code>: 100 small sequential trees. <code>learning_rate=0.1</code>: moderate correction per tree.</li>
+      </ul>
+      <p><strong>LightGBM</strong> is a separate, very fast boosting library (focuses on the most promising splits).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+lgbm = lgb.LGBMClassifier(n_estimators=100, learning_rate=0.1, random_state=42)
+lgbm.fit(X_train, y_train)
+y_pred_lgb = lgbm.predict(X_test)
+accuracy_lgb = accuracy_score(y_test, y_pred_lgb)
+print(f"LightGBM Accuracy: {accuracy_lgb:.3f}")
+        </script>
+      </div>
+      <p>Decision-boundary helper (only in the notebook, not the lesson text):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def plot_decision_boundary(model, X, y, ax, title):
+    h = .02
+    x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
+    y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
+    xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
+    Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+    Z = Z.reshape(xx.shape)
+    ax.contourf(xx, yy, Z, cmap=plt.cm.coolwarm, alpha=0.6)
+    ax.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.coolwarm, edgecolor='k')
+    ax.set_title(title)
+    ax.set_xlabel("Feature 1")
+    ax.set_ylabel("Feature 2")
+fig, ax = plt.subplots(figsize=(6,5))
+plot_decision_boundary(gb, X_test, y_test, ax, "Gradient Boosting Decision Boundary")
+plt.show()
+# same call with lgbm / "LightGBM Decision Boundary"
+        </script>
+      </div>
+      <p>Side-by-side comparison:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+results = pd.DataFrame({
+    'Model': ['Gradient Boosting', 'LightGBM'],
+    'Accuracy': [accuracy_gb, accuracy_lgb]
+})
+results
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Algorithm</th><th>Strategy</th><th>Speed</th><th>Overfitting risk</th><th>Best for</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Decision Tree</strong></td><td>Single tree</td><td>Fast</td><td>High if deep</td><td>Interpretability</td></tr>
+            <tr><td><strong>Random Forest</strong></td><td>Independent trees (bagging)</td><td>Fast (parallel)</td><td>Lower</td><td>Performance + transparency</td></tr>
+            <tr><td><strong>Gradient Boosting</strong></td><td>Sequential trees (boosting)</td><td>Slower</td><td>Higher, needs tuning</td><td>Max accuracy on structured data</td></tr>
+            <tr><td><strong>LightGBM</strong></td><td>Optimized boosting</td><td>Very fast</td><td>Moderate</td><td>Large datasets</td></tr>
+          </tbody>
+        </table>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-scikit-learn-010-3-7-random-forest">← Previous</a><span class="rev-pos">11 / 17</span><a href="#q-scikit-learn-012-4-unsupervised-learning">Next →</a></nav>
+    </section>
+  </div>
+</details>

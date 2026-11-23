@@ -1,0 +1,39 @@
+<details class="question" id="q-advanced-rag-028-challenge-which-dog-is-most-similar-to-t" data-group="advanced-rag" data-sec="advanced-rag-s027">
+  <summary>
+    <span class="q-title">Challenge: which dog is most similar to the cats?</span>
+    <span class="q-meta">
+      <span class="tag">Advanced RAG</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Advanced RAG › 9. Image Search Demos › Challenge: which dog is most similar to the cats?</p>
+      <p>Approach: for each dog image, retrieve top-4; count cat images, weighted by rank (rank i gets <code>4 - i</code> points: 4, 3, 2, 1). A cat at rank 0 and another at rank 2 scores 4 + 2 = 6.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+dog_paths = glob.glob("images/dog*.jpg")
+retriever = vector_store.as_retriever()
+
+dog_cat_scores = {}
+for dog_path in dog_paths:
+    encoded_dog = encode_image(dog_path)
+    results = retriever.invoke(encoded_dog)
+
+    cats_retrieved = 0
+    for i, doc in enumerate(results):
+        source = doc.metadata["image_path"]
+        if "cat" in source:
+            cats_retrieved += 4 - i  # inverse weight by rank
+    dog_cat_scores[dog_path] = cats_retrieved
+
+for dog, score in sorted(dog_cat_scores.items(), key=lambda x: x[1], reverse=True):
+    print(f"{dog}: cat score = {score}")
+# images/dog1.jpg: cat score = 7   <- most similar to cats
+# images/dog2.jpg: cat score = 3
+# images/dog3.jpg: cat score = 0
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-advanced-rag-027-compare-images-semantically">← Previous</a><span class="rev-pos">28 / 35</span><a href="#q-advanced-rag-029-10-multimodal-rag">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,98 @@
+<details class="question" id="q-langgraph-037-5-4-extras-from-the-lesson-file" data-group="langgraph" data-sec="langgraph-s022">
+  <summary>
+    <span class="q-title">5.4 Extras from the lesson file (2/3)</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 5. Custom Orders Agent (hand-built graph) › 5.4 Extras from the lesson file</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+class OrdersAgent:
+    def __init__(self):
+        self.llm = llm
+        self.tools = {tool.name: tool for tool in orders_tools}
+        self.max_iterations = 5
+
+    def orders_llm_node(self, state: OrdersState) -> Dict:
+        """LLM node for analysis and decision making"""
+        user_query = state["messages"][-1]
+        tool_results = state.get("tool_results", [])
+        iteration = state.get("iteration", 0)
+
+        # Build context
+        context = f"User query: {user_query}"
+        if tool_results:
+            context += f"\nTool results: {tool_results}"
+
+        # LLM prompt for decision making
+        prompt = f"""
+        {context}
+
+        Available tools: {list(self.tools.keys())}
+
+        Analyze the query and determine:
+        1. If you need to call a tool, specify: tool_name(parameters)
+        2. If you have enough information, provide the final answer
+
+        Tools available:
+        - get_order_details(order_id): Get order information
+        - update_quantity(order_id, new_quantity): Update order quantity
+        """
+
+        llm_response = self.llm.invoke(prompt).content
+
+        return {
+            "llm_output": llm_response,
+            "iteration": iteration + 1
+        }
+
+    def orders_tools_node(self, state: OrdersState) -> Dict:
+        """Tool execution node"""
+        llm_output = state["llm_output"]
+
+        # Parse tool call from LLM output (simplified)
+        tool_results = []
+
+        if "get_order_details(" in llm_output:
+            # Extract order_id
+            order_id = self.extract_parameter(llm_output, "get_order_details")
+            if order_id:
+                result = self.tools["get_order_details"].func(order_id)
+                tool_results.append(f"get_order_details({order_id}) = {result}")
+
+        elif "update_quantity(" in llm_output:
+            # Extract parameters
+            params = self.extract_update_params(llm_output)
+            if params:
+                order_id, quantity = params
+                result = self.tools["update_quantity"].func(order_id, int(quantity))
+                tool_results.append(f"update_quantity({order_id}, {quantity}) = {result}")
+
+        return {"tool_results": tool_results}
+
+    def extract_parameter(self, text: str, tool_name: str) -> str:
+        """Extract parameter from tool call"""
+        import re
+        pattern = f"{tool_name}\\(([^)]+)\\)"
+        match = re.search(pattern, text)
+        return match.group(1).strip('"\'') if match else None
+
+    def extract_update_params(self, text: str) -> tuple:
+        """Extract parameters for update_quantity"""
+        import re
+        pattern = r"update_quantity\(([^,]+),\s*(\d+)\)"
+        match = re.search(pattern, text)
+        if match:
+            order_id = match.group(1).strip('"\'')
+            quantity = match.group(2)
+            return (order_id, quantity)
+        return None
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-036-5-4-extras-from-the-lesson-file">← Previous</a><span class="rev-pos">37 / 57</span><a href="#q-langgraph-038-5-4-extras-from-the-lesson-file">Next →</a></nav>
+    </section>
+  </div>
+</details>

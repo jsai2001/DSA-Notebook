@@ -1,0 +1,83 @@
+<details class="question" id="q-boto3-022-7-scenario-based-questions-q71-85" data-group="boto3" data-sec="boto3-s008">
+  <summary>
+    <span class="q-title">7. Scenario-Based Questions (Q71-85) (2/5)</span>
+    <span class="q-meta">
+      <span class="tag">Boto3</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Boto3 › 7. Scenario-Based Questions (Q71-85)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+from botocore.exceptions import ClientError
+import time
+
+def create_ec2_instances(instance_count):
+    ec2_client = boto3.client('ec2')
+    for i in range(instance_count):
+        try:
+            ec2_client.run_instances(
+                ImageId='ami-12345678',
+                InstanceType='t2.micro',
+                MinCount=1,
+                MaxCount=1
+            )
+            print(f"Created instance {i+1}")
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'RequestLimitExceeded':
+                time.sleep(2 ** i)  # Exponential backoff
+                continue
+            raise e
+
+if __name__ == "__main__":
+    create_ec2_instances(5)
+        </script>
+      </div>
+      <p><strong>Q75. Detect Terraform drift.</strong> Query AWS, compare with state-file data, report discrepancies (missing resources, modified attributes).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+import json
+
+def detect_drift(bucket_name):
+    s3_client = boto3.client('s3')
+    try:
+        response = s3_client.head_bucket(Bucket=bucket_name)
+        print(f"Bucket {bucket_name} exists in AWS")
+        # Compare with Terraform state (assumed to be parsed)
+        terraform_state = {'versioning': 'enabled'}
+        versioning = s3_client.get_bucket_versioning(Bucket=bucket_name).get('Status')
+        if versioning != terraform_state['versioning']:
+            print(f"Drift detected: Versioning is {versioning}, expected {terraform_state['versioning']}")
+    except s3_client.exceptions.ClientError:
+        print(f"Bucket {bucket_name} not found in AWS")
+
+if __name__ == "__main__":
+    detect_drift('my-bucket')
+        </script>
+      </div>
+      <p><strong>Q76. Credentials exposed in workflow logs.</strong></p>
+      <ul>
+        <li>Keep credentials in GitHub Secrets.</li>
+        <li>Use OIDC to assume an IAM role instead of long-term keys (workflow below).</li>
+        <li>Mask sensitive values with <code>::add-mask::</code>.</li>
+        <li>Do not log sensitive data in scripts.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+# Only the credentials step differs from the Q62 skeleton:
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        role-to-assume: arn:aws:iam::123456789012:role/GitHubActionsRole
+        aws-region: us-east-1
+        </script>
+      </div>
+      <p>(OIDC also needs the job to have <code>permissions: id-token: write</code>.)</p>
+      <p><strong>Q77. Monitor CloudWatch alarms and trigger an Ansible playbook.</strong> Query alarms, and on <code>ALARM</code> state run <code>ansible-playbook</code> via <code>subprocess</code>. Run on a schedule in GitHub Actions.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-boto3-021-7-scenario-based-questions-q71-85">← Previous</a><span class="rev-pos">22 / 25</span><a href="#q-boto3-023-7-scenario-based-questions-q71-85">Next →</a></nav>
+    </section>
+  </div>
+</details>

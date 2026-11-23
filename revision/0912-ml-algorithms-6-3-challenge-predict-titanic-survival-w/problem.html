@@ -1,0 +1,53 @@
+<details class="question" id="q-ml-algorithms-028-6-3-challenge-predict-titanic-survival-w" data-group="ml-algorithms" data-sec="ml-algorithms-s026">
+  <summary>
+    <span class="q-title">6.3 Challenge: predict Titanic survival (with train/test split)</span>
+    <span class="q-meta">
+      <span class="tag">ML Algorithms</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">ML Algorithms › 6. Logistic Regression › 6.3 Challenge: predict Titanic survival (with train/test split)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn import set_config
+set_config(transform_output='pandas')
+url = 'https://github.com/mattharrison/datasets/raw/master/data/titanic3.xls'
+raw = pd.read_excel(url)
+# Select numeric columns, drop missing values
+titanic_X = (raw
+    .loc[:, ['pclass', 'age', 'sibsp', 'parch', 'fare']]
+    .dropna()
+)
+# Standardize
+std = StandardScaler()
+X = std.fit_transform(titanic_X)
+        </script>
+      </div>
+      <p>This time the data is split, so evaluation uses unseen data:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sklearn.model_selection import train_test_split
+y = raw.loc[X.index, 'survived']
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+from sklearn.linear_model import LogisticRegression
+lr = LogisticRegression()
+lr.fit(X_train, y_train)
+lr.score(X_test, y_test)  # ~0.65 accuracy
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from xgboost import XGBClassifier
+xgb = XGBClassifier()
+xgb.fit(X_train, y_train)
+xgb.score(X_test, y_test)  # Sometimes lower than logistic regression!
+        </script>
+      </div>
+      <p>XGBoost does not always win: with few numeric features, logistic regression (about 65%) can match or beat it. The best model depends on the data and features.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ml-algorithms-027-6-2-real-example-eye-movements-22-featur">← Previous</a><span class="rev-pos">28 / 34</span><a href="#q-ml-algorithms-029-7-decision-trees-random-forest-xgboost">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,76 @@
+<details class="question" id="q-fine-tuning-llm-043-11-challenge-wmt16-english-german-transf" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s031">
+  <summary>
+    <span class="q-title">11. Challenge: WMT16 English→German Transfer Learning (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 11. Challenge: WMT16 English→German Transfer Learning</p>
+      <p>Notebook <code>Chapter3_Solution</code>: same recipe as Section 9 on <strong>WMT16 <code>de-en</code></strong>, direction <strong>English→German</strong>, FLAN-T5-base, 30,000 train / 2,000 test rows, Adam 2e-5, 3 epochs, BLEU evaluation on a batch.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+!pip install transformers tensorflow datasets nltk
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from datasets import load_dataset
+
+# Load the WMT16 English-German dataset
+dataset = load_dataset('wmt16', 'de-en')
+
+# Display an example
+print(dataset['train'][0])
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Preprocess the dataset for input into the model
+def preprocess_data(examples):
+    inputs = [f'Translate English to German: {example["en"]}' for example in examples['translation']]
+    targets = [example['de'] for example in examples['translation']]
+    model_inputs = tokenizer(inputs, max_length=128, truncation=True, padding='max_length', return_tensors='tf')
+    labels = tokenizer(targets, max_length=128, truncation=True, padding='max_length', return_tensors='tf').input_ids
+    model_inputs['labels'] = labels
+    decoder_inputs = tokenizer(targets, max_length=128, truncation=True, padding="max_length")
+    model_inputs["decoder_input_ids"] = decoder_inputs["input_ids"]
+    return model_inputs
+
+
+train_dataset = dataset['train'].select(range(30000)).map(preprocess_data, batched=True)
+test_dataset = dataset['test'].select(range(2000)).map(preprocess_data, batched=True)
+
+train_dataset = train_dataset.to_tf_dataset(
+    columns=['input_ids', 'attention_mask', 'decoder_input_ids'],
+    label_cols=['labels'],
+    shuffle=True,
+    batch_size=64,
+    collate_fn=None
+)
+
+test_dataset = test_dataset.to_tf_dataset(
+    columns=['input_ids', 'attention_mask', 'decoder_input_ids'],
+    label_cols=['labels'],
+    shuffle=True,
+    batch_size=64,
+    collate_fn=None
+)
+        </script>
+      </div>
+      <p>Model load is the same as Section 9.1 with <code>google/flan-t5-base</code>; freezing is the same three lines (<code>shared</code>, <code>encoder</code>, <code>decoder</code>), with <code>model.summary()</code> before and after. Train:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Compile the model
+model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=2e-5),
+              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True))
+
+# Train the model
+model.fit(train_dataset, validation_data=test_dataset, epochs=3)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-042-10-1-the-notebook-scorer-rouge-score-nlt">← Previous</a><span class="rev-pos">43 / 76</span><a href="#q-fine-tuning-llm-044-11-challenge-wmt16-english-german-transf">Next →</a></nav>
+    </section>
+  </div>
+</details>

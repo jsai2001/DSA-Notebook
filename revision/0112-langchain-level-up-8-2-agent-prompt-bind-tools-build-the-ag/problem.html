@@ -1,0 +1,55 @@
+<details class="question" id="q-langchain-level-up-028-8-2-agent-prompt-bind-tools-build-the-ag" data-group="langchain-level-up" data-sec="langchain-level-up-s029">
+  <summary>
+    <span class="q-title">8.2 Agent prompt, bind tools, build the agent</span>
+    <span class="q-meta">
+      <span class="tag">LangChain Level Up</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangChain Level Up › 8. Agents &amp; Tools over MongoDB (OpenAI Tools Agent) › 8.2 Agent prompt, bind tools, build the agent</p>
+      <p>The prompt has <code>input</code> (user query) and <code>agent_scratchpad</code> (intermediate tool calls/results enabling multi-step reasoning).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a helpful assistant."),
+    ("human", "{input}"),
+    MessagesPlaceholder(variable_name="agent_scratchpad"),
+])
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+tools = [get_word_length, vector_search_query]
+llm_with_tools = llm.bind_tools(tools)    # attach tool definitions to the LLM
+
+from langchain.agents.format_scratchpad.openai_tools import format_to_openai_tool_messages
+from langchain.agents.output_parsers.openai_tools import OpenAIToolsAgentOutputParser
+
+agent = (
+    {
+        "input": lambda x: x["input"],
+        "agent_scratchpad": lambda x: format_to_openai_tool_messages(x["intermediate_steps"]),
+    }
+    | prompt
+    | llm_with_tools
+    | OpenAIToolsAgentOutputParser()
+)
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Component</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td><code>bind_tools()</code></td><td>Attaches tool definitions to the LLM</td></tr>
+            <tr><td><code>format_to_openai_tool_messages</code></td><td>Converts intermediate steps into scratchpad messages</td></tr>
+            <tr><td><code>OpenAIToolsAgentOutputParser</code></td><td>Parses LLM output into an <code>AgentAction</code> (call tool) or <code>AgentFinish</code> (final answer)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langchain-level-up-027-8-1-defining-tools">← Previous</a><span class="rev-pos">28 / 35</span><a href="#q-langchain-level-up-029-8-3-agentexecutor">Next →</a></nav>
+    </section>
+  </div>
+</details>

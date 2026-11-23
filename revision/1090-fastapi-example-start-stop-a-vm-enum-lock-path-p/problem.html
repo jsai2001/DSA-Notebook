@@ -1,0 +1,62 @@
+<details class="question" id="q-fastapi-013-example-start-stop-a-vm-enum-lock-path-p" data-group="fastapi" data-sec="fastapi-s014">
+  <summary>
+    <span class="q-title">Example: start/stop a VM (Enum, Lock, path params)</span>
+    <span class="q-meta">
+      <span class="tag">FastAPI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">FastAPI › 4. Accepting Data › Example: start/stop a VM (Enum, Lock, path params)</p>
+      <p>Spec: <code>POST /vm/start</code> with <code>cpu_count</code> (1-64), <code>mem_size_gb</code> (8-1024), <code>image</code> (one of three); returns an id. <code>POST /vm/{id}/stop</code> returns the id and spec, or 404.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from enum import Enum
+from http import HTTPStatus
+from threading import Lock
+from uuid import uuid4
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel, Field
+
+lock = Lock()
+vms = {}  # id -> VM
+app = FastAPI()
+
+class Image(Enum):
+    ubuntu = 'ubuntu:24.04'
+    debian = 'debian:bookworm'
+    alpine = 'alpine:3.20'
+
+class VM(BaseModel):
+    cpu_count: int = Field(gt=0, lt=65)
+    mem_size_gb: int = Field(ge=8, lt=1025)
+    image: Image
+
+@app.post('/vm/start')
+def start_vm(vm: VM):
+    id = uuid4().hex
+    with lock:
+        vms[id] = vm
+    return {'id': id}
+
+@app.post('/vm/{id}/stop')
+def stop_vm(id: str):
+    with lock:
+        vm = vms.pop(id, None)
+    if vm is None:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='VM not found',
+        )
+    return {'id': id, 'spec': vm.dict()}
+        </script>
+      </div>
+      <ul>
+        <li><strong>Enum</strong> field: Pydantic rejects values outside the allowed set.</li>
+        <li><strong>Lock</strong> protects shared state because sync handlers run in multiple threads.</li>
+        <li><code>vms.pop(id, None)</code> removes and returns the VM, or <code>None</code>.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fastapi-012-raw-request-data">← Previous</a><span class="rev-pos">13 / 26</span><a href="#q-fastapi-014-json-responses-with-pydantic">Next →</a></nav>
+    </section>
+  </div>
+</details>

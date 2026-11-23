@@ -1,0 +1,44 @@
+<details class="question" id="q-fastapi-012-raw-request-data" data-group="fastapi" data-sec="fastapi-s013">
+  <summary>
+    <span class="q-title">Raw request data</span>
+    <span class="q-meta">
+      <span class="tag">FastAPI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">FastAPI › 4. Accepting Data › Raw request data</p>
+      <p>Use a <code>Request</code> parameter for the raw body, e.g. an image whose size you return. Reading the body needs <code>await</code>, so the handler must be <code>async</code>. Never accept unbounded input from the internet: check the size.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from fastapi import FastAPI, Request, HTTPException
+from PIL import Image
+from io import BytesIO
+from http import HTTPStatus
+app = FastAPI()
+MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB
+
+@app.post('/size')
+async def size(request: Request):
+    size = int(request.headers.get('Content-Length', 0))
+    if not size:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail='missing content-length header',
+        )
+    if size > MAX_IMAGE_SIZE:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail='image too large (max is 5MB)',
+        )
+    data = await request.body()
+    io = BytesIO(data)
+    img = Image.open(io)
+    return {'width': img.width, 'height': img.height}
+        </script>
+      </div>
+      <p><code>BytesIO</code> turns raw bytes into a file-like object for libraries such as PIL. Headers: <code>request.headers.get('Header-Name')</code>.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fastapi-011-html-forms">← Previous</a><span class="rev-pos">12 / 26</span><a href="#q-fastapi-013-example-start-stop-a-vm-enum-lock-path-p">Next →</a></nav>
+    </section>
+  </div>
+</details>

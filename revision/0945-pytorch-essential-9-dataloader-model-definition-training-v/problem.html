@@ -1,0 +1,67 @@
+<details class="question" id="q-pytorch-essential-010-9-dataloader-model-definition-training-v" data-group="pytorch-essential" data-sec="pytorch-essential-s010">
+  <summary>
+    <span class="q-title">9. DataLoader, Model Definition, Training &amp; Validation (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">PyTorch Essential</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">PyTorch Essential › 9. DataLoader, Model Definition, Training &amp; Validation</p>
+      <p><strong><code>torch.utils.data.DataLoader</code></strong> is an iterable over a dataset. It supports map-style and iterable-style datasets, configurable order, automatic batching, and single- or multi-process loading. Default <code>batch_size</code> is 1. Other parameters: <code>dataset</code>, <code>sampler</code> (custom sampling), <code>num_workers</code> (multi-process loading).</p>
+      <p><strong>Why mini-batches</strong> (e.g. 64 or 128): a full-dataset pass needs lots of memory; mini-batches use less memory and train faster.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from torch.utils.data import DataLoader
+batch_size = 16
+training_data_loader = DataLoader(training_data, batch_size=batch_size, shuffle=True)
+test_data_loader = DataLoader(test_data, batch_size=batch_size, shuffle=False)
+        </script>
+      </div>
+      <p><code>shuffle=True</code> for training (random samples), <code>shuffle=False</code> for testing (repeatable results).</p>
+      <p><strong>Model development steps:</strong> design (architecture, initial weights and biases) → training (feed data, compute error, adjust parameters) → validation (unseen data, tune hyperparameters) → testing (final check on fully unseen data).</p>
+      <p><strong>Network definition</strong> (LeNet-style CNN for 3×32×32 inputs):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import torch.nn as nn
+import torch.nn.functional as F
+
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.conv1 = nn.Conv2d(3, 6, 5)       # 3 input channels → 6 output, 5×5 kernel
+        self.pool = nn.MaxPool2d(2, 2)          # 2×2 window, stride 2
+        self.conv2 = nn.Conv2d(6, 16, 5)        # 6 input → 16 output channels
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)   # Fully connected layer 1
+        self.fc2 = nn.Linear(120, 84)            # Fully connected layer 2
+        self.fc3 = nn.Linear(84, 10)             # Output: 10 classes (CIFAR-10)
+
+    def forward(self, x):
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 16 * 5 * 5)              # Reshape for fully connected layers
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Layer</th><th>In → Out</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>conv1</code> Conv2d(3, 6, 5)</td><td>3 → 6 channels</td><td>First convolution, 5×5 kernel</td></tr>
+            <tr><td><code>pool</code> MaxPool2d(2, 2)</td><td></td><td>Shrink spatial size</td></tr>
+            <tr><td><code>conv2</code> Conv2d(6, 16, 5)</td><td>6 → 16 channels</td><td>Second convolution</td></tr>
+            <tr><td><code>fc1</code> Linear</td><td>16×5×5 = 400 → 120</td><td>Fully connected</td></tr>
+            <tr><td><code>fc2</code> Linear</td><td>120 → 84</td><td>Fully connected</td></tr>
+            <tr><td><code>fc3</code> Linear</td><td>84 → 10</td><td>Output, one per class</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><code>F.relu</code> zeroes negative values. <code>x.view(-1, 16*5*5)</code> flattens the feature maps for the linear layers.</p>
+      <p><strong>Training loop</strong></p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-pytorch-essential-009-8-dl-workflow-datasets-transforms-cifar">← Previous</a><span class="rev-pos">10 / 12</span><a href="#q-pytorch-essential-011-9-dataloader-model-definition-training-v">Next →</a></nav>
+    </section>
+  </div>
+</details>

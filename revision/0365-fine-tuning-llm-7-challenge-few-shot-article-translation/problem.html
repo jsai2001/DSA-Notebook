@@ -1,0 +1,84 @@
+<details class="question" id="q-fine-tuning-llm-026-7-challenge-few-shot-article-translation" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s019">
+  <summary>
+    <span class="q-title">7. Challenge: Few-Shot Article Translation (1/4)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 7. Challenge: Few-Shot Article Translation</p>
+      <p><strong>Task:</strong> build a few-shot prompt (worked examples) that translates English articles to Spanish while preserving context, using CNN/DailyMail and FLAN-T5-large (<code>flan-t5-small</code> if GPU-limited). Long articles plus examples can exceed the 512-token window; the notebook uses two examples and output <code>max_length=500</code>.</p>
+      <p>Notebook <code>Chapter2_Solution</code> (article text shortened here; the notebook holds ~200-word English/Spanish pairs for three articles):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+!pip install transformers tensorflow datasets
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from datasets import load_dataset
+
+# Load the Dailymail dataset
+dataset = load_dataset('abisee/cnn_dailymail', '3.0.0')
+print(dataset['train'][0])
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Selecting three dialogues from the DailyMail dataset and creating manual translations
+articles = [
+    {
+        "article": """
+As he turns 18, Harry Potter star Daniel Radcliffe will gain access to a £20 million ($41.1 million) fortune. ... (full ~200-word article)
+""",
+        "translation": """
+Al cumplir 18 años, la estrella de Harry Potter, Daniel Radcliffe, tendrá acceso a una fortuna de £20 millones ($41.1 millones). ... (full Spanish translation)
+"""
+    },
+    # ... article 2 (Miami-Dade "forgotten floor") and article 3 (Minneapolis bridge collapse), same structure
+]
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Constructing the few-shot learning prompt with the selected dialogues and their translations
+few_shot_prompt = ""
+
+for example in articles[:2]:
+    few_shot_prompt += f"Translate this text from English to Spanish:\n\n Text: \n\n {example['article']} \n\n Translation: \n\n {example['translation']} \n\n "
+
+# Print the few-shot prompt
+print(few_shot_prompt)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# New dialogue to translate
+new_article = dataset['test'][0]['article']
+
+# Adding the new dialogue to the prompt
+prompt_with_new_article = few_shot_prompt + f"\n Translate this text from English to Spanish: \n\n Text: \n\n {new_article} \n\n Translation: "
+
+# Print the final prompt
+print(prompt_with_new_article)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Generate inputs for the prompt
+inputs = tokenizer(prompt_with_new_article, return_tensors="tf")
+
+# Generate outputs
+outputs = model.generate(inputs["input_ids"], max_length=500)
+
+# Decode and print the translation
+translation = tokenizer.decode(outputs[0], skip_special_tokens=True)
+print("Translation:", translation)
+        </script>
+      </div>
+      <p>Evaluate by comparing <code>new_article</code> with <code>translation</code>; if context is lost, add more detailed examples or reword the instruction.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-025-6-prompt-engineering-case-studies">← Previous</a><span class="rev-pos">26 / 76</span><a href="#q-fine-tuning-llm-027-7-challenge-few-shot-article-translation">Next →</a></nav>
+    </section>
+  </div>
+</details>

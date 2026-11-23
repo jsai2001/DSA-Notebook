@@ -1,0 +1,102 @@
+<details class="question" id="q-langchain-level-up-013-4-6-challenge-context-and-history-aware" data-group="langchain-level-up" data-sec="langchain-level-up-s014">
+  <summary>
+    <span class="q-title">4.6 Challenge: context- AND history-aware chatbot</span>
+    <span class="q-meta">
+      <span class="tag">LangChain Level Up</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangChain Level Up › 4. RAG: Architecture &amp; the Red30 Shoes Q&amp;A Chatbot › 4.6 Challenge: context- AND history-aware chatbot</p>
+      <p>Needs RAG plus conversation memory. Three building blocks: a <strong>history-aware retriever</strong> (rewrites the question into a standalone one using chat history), a <strong>stuff-documents Q&amp;A chain</strong>, and a <strong>retrieval chain</strong> combining them.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain_community.document_loaders import TextLoader
+from langchain.text_splitter import CharacterTextSplitter
+from langchain_community.vectorstores import Chroma
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+
+documents = TextLoader("docs/faq.txt").load()
+text_splitter = CharacterTextSplitter(chunk_size=100, chunk_overlap=0, separator="\n")
+chunks = text_splitter.split_documents(documents)
+vector_store = Chroma.from_documents(chunks, OpenAIEmbeddings())
+retriever = vector_store.as_retriever()
+llm = ChatOpenAI()
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain.chains.history_aware_retriever import create_history_aware_retriever
+from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+
+contextualize_q_system_prompt = """Given a chat history and the latest user question 
+which might reference context in the chat history, formulate a standalone question 
+which can be understood without the chat history. Do NOT answer the question, 
+just reformulate it if needed and otherwise return it as is."""
+contextualize_q_prompt = ChatPromptTemplate.from_messages([
+    ("system", contextualize_q_system_prompt),
+    MessagesPlaceholder("chat_history"),
+    ("human", "{input}"),
+])
+history_aware_retriever = create_history_aware_retriever(
+    llm, retriever, contextualize_q_prompt
+)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain.chains.combine_documents import create_stuff_documents_chain
+
+qa_system_prompt = """You are an assistant for question-answering tasks. 
+Use the following pieces of retrieved context to answer the question. 
+If you don't know the answer, just say that you don't know.
+{context}"""
+qa_prompt = ChatPromptTemplate.from_messages([
+    ("system", qa_system_prompt),
+    MessagesPlaceholder("chat_history"),
+    ("human", "{input}"),
+])
+question_answer_chain = create_stuff_documents_chain(llm, qa_prompt)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain.chains import create_retrieval_chain
+from langchain_core.messages import HumanMessage, AIMessage
+
+rag_chain = create_retrieval_chain(history_aware_retriever, question_answer_chain)
+chat_history = []
+
+def query(user_query):
+    response = rag_chain.invoke({
+        "input": user_query,
+        "chat_history": chat_history
+    })
+    chat_history.extend([
+        HumanMessage(content=user_query),
+        AIMessage(content=response["answer"])
+    ])
+    return response["answer"]
+
+print(query("What are the opening hours?"))
+print(query("What are the shipping costs?"))
+print(query("What was my last question?"))   # answered from chat_history
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Component</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>create_history_aware_retriever</code></td><td>Reformulates the question using chat history before retrieval</td></tr>
+            <tr><td><code>create_stuff_documents_chain</code></td><td>"Stuffs" retrieved docs into the prompt</td></tr>
+            <tr><td><code>create_retrieval_chain</code></td><td>Combines retriever + Q&amp;A chain; response dict has <code>answer</code></td></tr>
+            <tr><td><code>MessagesPlaceholder("chat_history")</code></td><td>Prompt slot for conversation history</td></tr>
+            <tr><td><code>HumanMessage</code> / <code>AIMessage</code></td><td>Message objects used to track history</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Use <code>WebBaseLoader</code> instead of <code>TextLoader</code> for web data sources.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langchain-level-up-012-4-5-complete-rag-function">← Previous</a><span class="rev-pos">13 / 35</span><a href="#q-langchain-level-up-014-5-interactive-web-app-with-streamlit">Next →</a></nav>
+    </section>
+  </div>
+</details>

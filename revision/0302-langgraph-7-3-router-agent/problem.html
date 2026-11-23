@@ -1,0 +1,84 @@
+<details class="question" id="q-langgraph-046-7-3-router-agent" data-group="langgraph" data-sec="langgraph-s030">
+  <summary>
+    <span class="q-title">7.3 Router agent (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 7. Multi-Agent Chatbot with Routing › 7.3 Router agent</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+#Creating the routing agent
+from typing import TypedDict, Annotated
+from langgraph.graph import StateGraph, END
+from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, ToolMessage
+import operator
+class RouterAgentState(TypedDict):
+    messages: Annotated[list[AnyMessage], operator.add]
+class RouterAgent:
+    def __init__(self, model, system_prompt, smalltalk_prompt, debug=False):
+        self.system_prompt=system_prompt
+        self.smalltalk_prompt=smalltalk_prompt
+        self.model=model
+        self.debug=debug
+        router_graph=StateGraph(RouterAgentState)
+        router_graph.add_node("Router",self.call_llm)
+        router_graph.add_node("Product_Agent",product_QnA_node)
+        router_graph.add_node("Orders_Agent",orders_node)
+        router_graph.add_node("Small_Talk", self.respond_smalltalk)
+        router_graph.add_conditional_edges(
+            "Router",
+            self.find_route,
+            {"PRODUCT": "Product_Agent", 
+             "ORDER" : "Orders_Agent",
+             "SMALLTALK" : "Small_Talk",
+             "END": END }
+        )
+        #One way routing, not coming back to router
+        router_graph.add_edge("Product_Agent",END)
+        router_graph.add_edge("Orders_Agent",END)
+        router_graph.add_edge("Small_Talk",END)
+        #Set where there graph starts
+        router_graph.set_entry_point("Router")
+        self.router_graph = router_graph.compile()
+    def call_llm(self, state:RouterAgentState):
+        messages=state["messages"]
+        if self.debug:
+            print(f"Call LLM received {messages}")
+        #If system prompt exists, add to messages in the front
+        if self.system_prompt:
+            messages = [SystemMessage(content=self.system_prompt)] + messages
+        #invoke the model with the message history
+        result = self.model.invoke(messages)
+        if self.debug:
+            print(f"Call LLM result {result}")
+        return { "messages":[result] }
+    def respond_smalltalk(self, state:RouterAgentState):
+        messages=state["messages"]
+        if self.debug:
+            print(f"Small talk received: {messages}")
+        #If system prompt exists, add to messages in the front
+        messages = [SystemMessage(content=self.smalltalk_prompt)] + messages
+        #invoke the model with the message history
+        result = self.model.invoke(messages)
+        if self.debug:
+            print(f"Small talk result {result}")
+        return { "messages":[result] }
+    def find_route(self, state:RouterAgentState):
+        last_message = state["messages"][-1]
+        if self.debug: 
+            print("Router: Last result from LLM : ", last_message)
+        #Set the last message as the destination
+        destination=last_message.content
+        if self.debug:
+            print(f"Destination chosen : {destination}")
+        return destination
+        </script>
+      </div>
+      <p>The router graph has <strong>no checkpointer</strong>; memory lives in the inner agents via the forwarded thread ID. <code>find_route</code> returns the LLM text as the route key, so prompt wording and dictionary keys must match exactly.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-045-7-2-reusing-agents-as-nodes">← Previous</a><span class="rev-pos">46 / 57</span><a href="#q-langgraph-047-7-3-router-agent">Next →</a></nav>
+    </section>
+  </div>
+</details>

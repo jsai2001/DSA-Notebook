@@ -1,0 +1,82 @@
+<details class="question" id="q-az-900-025-compute-types" data-group="az-900" data-sec="az-900-s021">
+  <summary>
+    <span class="q-title">Compute types</span>
+    <span class="q-meta">
+      <span class="tag">AZ-900</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AZ-900 › 6. Compute and networking › Compute types</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Feature</th><th>Virtual Machines</th><th>Container Instances (ACI)</th><th>Functions</th></tr></thead>
+          <tbody>
+            <tr><td>Model</td><td>IaaS</td><td>PaaS</td><td>Serverless</td></tr>
+            <tr><td>You manage</td><td>OS, runtime, app</td><td>App and image</td><td>Code only</td></tr>
+            <tr><td>Best for</td><td>Full control, lift-and-shift</td><td>Small, quick container workloads</td><td>Event-driven microservices</td></tr>
+            <tr><td>Billing</td><td>VM uptime</td><td>CPU and memory used</td><td>Per execution</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li><strong>VMs</strong>: Windows or Linux, many sizes. Azure installs the OS and you configure everything else.</li>
+        <li><strong>ACI</strong>: runs containers without VMs, with <strong>container groups</strong> for several containers in one instance. For heavy or long-running workloads use <strong>AKS</strong>.</li>
+        <li><strong>Azure Functions</strong>: microservices that take an input, do an operation and return a result. <strong>Event-driven</strong> (file upload, HTTP request, timer). Consumption billing, no VM costs.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Create a VM using Azure CLI
+az vm create \
+  --resource-group myResourceGroup \
+  --name myVM \
+  --image Ubuntu2204 \
+  --admin-username azureuser \
+  --generate-ssh-keys
+
+# Open port 80 for web traffic
+az vm open-port --port 80 --resource-group myResourceGroup --name myVM
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Deploy a container using ACI
+az container create \
+  --resource-group myResourceGroup \
+  --name mycontainer \
+  --image mcr.microsoft.com/azuredocs/aci-helloworld \
+  --ports 80 \
+  --dns-name-label my-aci-demo
+
+# Check container status
+az container show --resource-group myResourceGroup --name mycontainer --query instanceView.state
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Example Azure Function (Python) — HTTP Trigger
+import azure.functions as func
+import logging
+
+app = func.FunctionApp()
+
+@app.route(route="hello")
+def hello(req: func.HttpRequest) -> func.HttpResponse:
+    name = req.params.get('name', 'World')
+    logging.info(f"HTTP trigger processed a request for {name}")
+    return func.HttpResponse(f"Hello, {name}!")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Deploy an Azure Function using Azure CLI
+func init MyFunctionProject --python
+cd MyFunctionProject
+func new --name hello --template "HTTP trigger"
+func azure functionapp publish myFunctionApp
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-az-900-024-containers">← Previous</a><span class="rev-pos">25 / 67</span><a href="#q-az-900-026-vm-options">Next →</a></nav>
+    </section>
+  </div>
+</details>

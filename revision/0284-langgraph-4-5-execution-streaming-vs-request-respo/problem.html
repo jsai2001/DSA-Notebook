@@ -1,0 +1,82 @@
+<details class="question" id="q-langgraph-028-4-5-execution-streaming-vs-request-respo" data-group="langgraph" data-sec="langgraph-s017">
+  <summary>
+    <span class="q-title">4.5 Execution: streaming vs request-response</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 4. Product Q&amp;A Chatbot (function tool + retriever tool + memory) › 4.5 Execution: streaming vs request-response</p>
+      <p><code>stream(..., stream_mode="values")</code> yields state after each step; <code>invoke</code> returns the final result.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+#Setup chatbot
+import uuid
+#To maintain memory, each request should be in the context of a thread.
+#Each user conversation will use a separate thread ID
+config = {"configurable": {"thread_id": uuid.uuid4()}}
+#Test the agent with an input
+inputs = {"messages":[
+                HumanMessage("What are the features and pricing for GammaAir?")
+            ]}
+#Use streaming to print responses as the agent  does the work.
+#This is an alternate way to stream agent responses without waiting for the agent to finish
+for stream in product_QnA_agent.stream(inputs, config, stream_mode="values"):
+    message=stream["messages"][-1]
+    if isinstance(message, tuple):
+        print(message)
+    else:
+        message.pretty_print()
+        </script>
+      </div>
+      <p>Multi-turn conversation on one thread: greetings use no tool, names and features use the retriever, "How much does it cost?" uses memory plus the price tool.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import uuid
+#Send a sequence of messages to chatbot and get its response
+#This simulates the conversation between the user and the Agentic chatbot
+user_inputs = [
+    "Hello",
+    "I am looking to buy a laptop",
+    "Give me a list of available laptop names",
+    "Tell me about the features of  SpectraBook",
+    "How much does it cost?",
+    "Give me similar information about OmegaPro",
+    "What info do you have on AcmeRight ?",
+    "Thanks for the help"
+]
+#Create a new thread
+config = {"configurable": {"thread_id": str(uuid.uuid4())}}
+for input in user_inputs:
+    print(f"----------------------------------------\nUSER : {input}")
+    #Format the user message
+    user_message = {"messages":[HumanMessage(input)]}
+    #Get response from the agent
+    ai_response = product_QnA_agent.invoke(user_message,config=config)
+    #Print the response
+    print(f"AGENT : {ai_response['messages'][-1].content}")
+        </script>
+      </div>
+      <p>Isolation test: two threads, each asking "What is its price ?", get their own laptop's price.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+#conversation memory by user
+def execute_prompt(user, config, prompt):
+    inputs = {"messages":[("user",prompt)]}
+    ai_response = product_QnA_agent.invoke(inputs,config=config)
+    print(f"\n{user}: {ai_response['messages'][-1].content}")
+#Create different session threads for 2 users
+config_1 = {"configurable": {"thread_id": str(uuid.uuid4())}}
+config_2 = {"configurable": {"thread_id": str(uuid.uuid4())}}
+#Test both threads
+execute_prompt("USER 1", config_1, "Tell me about the features of  SpectraBook")
+execute_prompt("USER 2", config_2, "Tell me about the features of  GammaAir")
+execute_prompt("USER 1", config_1, "What is its price ?")
+execute_prompt("USER 2", config_2, "What is its price ?")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-027-4-4-agent-with-conversation-memory">← Previous</a><span class="rev-pos">28 / 57</span><a href="#q-langgraph-029-4-6-extras-from-the-lesson-file">Next →</a></nav>
+    </section>
+  </div>
+</details>

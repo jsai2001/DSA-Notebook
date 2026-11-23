@@ -1,0 +1,82 @@
+<details class="question" id="q-ml-foundations-037-9-2-decision-tree-and-validation-curves" data-group="ml-foundations" data-sec="ml-foundations-s037">
+  <summary>
+    <span class="q-title">9.2 Decision tree and validation curves (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">ML Foundations</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">ML Foundations › 9. Model Tuning › 9.2 Decision tree and validation curves</p>
+      <p>Sklearn naming convention (applies across models):</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Prefix</th><th>Raise the value</th><th>Lower the value</th></tr></thead>
+          <tbody>
+            <tr><td><code>max_</code></td><td>More complex, overfitting</td><td>Simpler, underfitting</td></tr>
+            <tr><td><code>min_</code></td><td>Simpler, underfitting</td><td>More complex, overfitting</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Parameter</th><th>Default</th><th>Raising it</th></tr></thead>
+          <tbody>
+            <tr><td><code>max_depth</code></td><td>None (unbounded)</td><td>Deeper, more complex</td></tr>
+            <tr><td><code>min_samples_split</code></td><td>2</td><td>Simpler (more rows needed to split)</td></tr>
+            <tr><td><code>min_samples_leaf</code></td><td>1</td><td>Simpler (more rows per leaf)</td></tr>
+            <tr><td><code>criterion</code></td><td>squared_error</td><td>Changes how splits are scored</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+dt_pipe.named_steps['dt']
+help(dt_pipe.named_steps['dt'])
+        </script>
+      </div>
+      <p>A <strong>validation curve</strong> sweeps one hyperparameter using cross-fold validation (each fold takes a turn as the test set) and plots train vs test score.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sklearn.model_selection import validation_curve
+
+param_range = range(1, 20)
+train_scores, test_scores = validation_curve(
+    dt_pipe, X_train, y_train,
+    param_name="dt__max_depth",
+    param_range=param_range,
+    scoring="neg_mean_squared_error", n_jobs=1)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import matplotlib.pyplot as plt
+import numpy as np
+
+train_scores_mean = np.mean(train_scores, axis=1)
+train_scores_std = np.std(train_scores, axis=1)
+test_scores_mean = np.mean(test_scores, axis=1)
+test_scores_std = np.std(test_scores, axis=1)
+
+plt.title("Validation Curve with Decision Tree")  # CatBoost version below only changes this title
+plt.xlabel("max_depth")
+plt.ylabel("Score")
+lw = 2
+plt.plot(param_range, train_scores_mean, label="Training score",
+         color="darkorange", lw=lw)
+plt.fill_between(param_range, train_scores_mean - train_scores_std,
+                 train_scores_mean + train_scores_std, alpha=0.2,
+                 color="darkorange", lw=lw)
+plt.plot(param_range, test_scores_mean, label="Cross-validation score",
+         color="navy", lw=lw)
+plt.fill_between(param_range, test_scores_mean - test_scores_std,
+                 test_scores_mean + test_scores_std, alpha=0.2,
+                 color="navy", lw=lw)
+plt.legend(loc="best")
+        </script>
+      </div>
+      <p>Reading it: train score keeps rising (memorizing); test score rises, peaks (about depth 8), then drops, so overfitting begins after the peak; a widening gap means growing overfitting.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ml-foundations-036-9-1-linear-regression-and-ridge">← Previous</a><span class="rev-pos">37 / 47</span><a href="#q-ml-foundations-038-9-2-decision-tree-and-validation-curves">Next →</a></nav>
+    </section>
+  </div>
+</details>

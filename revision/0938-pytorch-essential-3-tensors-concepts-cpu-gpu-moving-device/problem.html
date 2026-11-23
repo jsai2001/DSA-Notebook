@@ -1,0 +1,100 @@
+<details class="question" id="q-pytorch-essential-003-3-tensors-concepts-cpu-gpu-moving-device" data-group="pytorch-essential" data-sec="pytorch-essential-s004">
+  <summary>
+    <span class="q-title">3. Tensors: Concepts, CPU/GPU, Moving Devices</span>
+    <span class="q-meta">
+      <span class="tag">PyTorch Essential</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">PyTorch Essential › 3. Tensors: Concepts, CPU/GPU, Moving Devices</p>
+      <p>A <strong>tensor</strong> is PyTorch's core data structure: a multi-dimensional array whose elements share a <strong>single data type</strong>. It holds inputs, intermediate representations and outputs. Real-world data (e.g. images) is encoded into tensors; each intermediate representation is a set of floats produced by multiplying the input with the previous layer's weights.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dimension</th><th>Name</th></tr></thead>
+          <tbody>
+            <tr><td>0-d</td><td>Scalar</td></tr>
+            <tr><td>1-d</td><td>Vector</td></tr>
+            <tr><td>2-d</td><td>Matrix</td></tr>
+            <tr><td>3-d</td><td>Stack of matrices (e.g. time series)</td></tr>
+            <tr><td>n-d</td><td>n-dimensional tensor</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Tensor vs NumPy ndarray</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Feature</th><th>PyTorch tensor</th><th>NumPy ndarray</th></tr></thead>
+          <tbody>
+            <tr><td>GPU operations</td><td>Yes, much faster</td><td>CPU only</td></tr>
+            <tr><td>Distributed processing</td><td>Multiple CPUs/GPUs across servers</td><td>No</td></tr>
+            <tr><td>Computation-graph tracking (autograd)</td><td>Yes</td><td>No</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Tensors on CPU</strong> (default device; dtype is derived from the input):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import torch
+# Create tensors from 2D lists (default: CPU device, dtype derived from input)
+first_tens = torch.tensor([[1, 2, 3, 4], [5, 6, 7, 8]])
+second_tens = torch.tensor([[1, 1, 1, 1], [2, 2, 2, 2]])
+# Addition
+add_tens = first_tens + second_tens
+print(add_tens)        # tensor([[ 2,  3,  4,  5], [ 7,  8,  9, 10]])
+print(add_tens.size()) # torch.Size([2, 4])
+# Subtraction
+sub_tens = first_tens - second_tens
+print(sub_tens)        # tensor([[0, 1, 2, 3], [3, 4, 5, 6]])
+print(sub_tens.size()) # torch.Size([2, 4])
+        </script>
+      </div>
+      <p><strong>Tensors on GPU.</strong> PyTorch uses the <strong>CUDA</strong> library to detect and use the GPU. <code>cuda:0</code> means the first GPU; multiple GPUs are addressed by index. Results of GPU operations stay on the GPU.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import torch
+print(torch.__version__)
+# Check GPU availability and set device
+device = "cuda" if torch.cuda.is_available() else "cpu"
+# Create tensors on GPU
+tens_a = torch.tensor([[1, 2], [3, 4]], device=device)
+tens_b = torch.tensor([[5, 6], [7, 8]], device=device)
+# Multiplication on GPU
+multi_tens = tens_a * tens_b
+print(multi_tens)  # device='cuda:0' indicates first GPU is used
+        </script>
+      </div>
+      <p><strong>Why move between devices</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Direction</th><th>Reason</th></tr></thead>
+          <tbody>
+            <tr><td>CPU → GPU</td><td>Training large networks and high-dimensional image tensors is far faster on GPU</td></tr>
+            <tr><td>GPU → CPU</td><td>Post-training processing with libraries that only accept CPU data (e.g. NumPy)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>CPU → GPU (three equivalent forms):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Method 1
+tensor_gpu = tensor.cuda()
+# Method 2
+tensor_gpu = tensor.to("cuda")
+# Method 3 (specify GPU index)
+tensor_gpu = tensor.to("cuda:0")
+        </script>
+      </div>
+      <p>GPU → CPU. <strong>Gotcha:</strong> a tensor with <code>requires_grad=True</code> must be detached from the autograd graph first.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# When requires_grad=False
+tensor_cpu = tensor_gpu.cpu()
+# When requires_grad=True (during training)
+tensor_cpu = tensor_gpu.detach().cpu()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-pytorch-essential-002-2-environment-google-colab-gpu-check">← Previous</a><span class="rev-pos">3 / 12</span><a href="#q-pytorch-essential-004-4-creating-tensors-attributes-data-types">Next →</a></nav>
+    </section>
+  </div>
+</details>

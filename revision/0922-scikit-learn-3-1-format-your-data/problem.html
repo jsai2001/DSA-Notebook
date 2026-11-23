@@ -1,0 +1,89 @@
+<details class="question" id="q-scikit-learn-004-3-1-format-your-data" data-group="scikit-learn" data-sec="scikit-learn-s005">
+  <summary>
+    <span class="q-title">3.1 Format Your Data</span>
+    <span class="q-meta">
+      <span class="tag">scikit-learn</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">scikit-learn › 3. Supervised Learning › 3.1 Format Your Data</p>
+      <p>Notebook <code>02_02_format_your_data.ipynb</code>. Models need <strong>numeric</strong> input. Sample email dataset:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import pandas as pd
+import numpy as np
+import sklearn
+data = {
+    "subject": [
+        "Win a free vacation", "Your receipt from Bookstore", "Limited time offer", "Meeting agenda",
+        "Update your account info", "Family photos inside", "Exclusive promo just for you", "Weekly project status"
+    ],
+    "label": ["spam", "not_spam", "spam", "not_spam", "spam", "not_spam", "spam", "not_spam"],
+    "sender_domain": [
+        "promos.biz", "gmail.com", "offers.mail", "company.com",
+        "alerts.bank", "yahoo.com", "promos.biz", "company.com"
+    ],
+    "num_links": [5, 0, 7, 1, np.nan, 0, 4, 1],
+    "num_words": [40, 120, 35, 80, 60, 100, 50, 90],
+    "received_date": [
+        "2024-01-15", "2024-01-18", "2024-02-02", "2024-02-10",
+        "2024-03-05", "2024-03-08", "2024-03-20", "2024-04-01"
+    ]
+}
+df = pd.DataFrame(data)
+        </script>
+      </div>
+      <p><strong>1. Text label to numeric:</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+df["is_spam"] = df["label"].map({"spam": 1, "not_spam": 0})
+df[["label", "is_spam"]]
+        </script>
+      </div>
+      <p><strong>2. Dummy variables for categories (one-hot):</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+df = pd.get_dummies(df, columns=["sender_domain"], prefix="domain")
+df.head()
+        </script>
+      </div>
+      <p><strong>3. Missing values:</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+median_links = df["num_links"].median()
+df["num_links"] = df["num_links"].fillna(median_links)
+df["num_links"]
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>Trade-off</th></tr></thead>
+          <tbody>
+            <tr><td><code>dropna()</code></td><td>Simple, loses data</td></tr>
+            <tr><td><code>fillna(median)</code></td><td>Keeps all rows, assumes a value</td></tr>
+            <tr><td>Imputation</td><td>Estimates a likely value (more sophisticated)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>4. Standard scaling:</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+scaler = sklearn.preprocessing.StandardScaler()
+df["num_links_original"] = df["num_links"]
+df["num_words_original"] = df["num_words"]
+df[["num_links", "num_words"]] = scaler.fit_transform(df[["num_links", "num_words"]])
+df[["num_links_original", "num_links", "num_words_original", "num_words"]]
+        </script>
+      </div>
+      <p><strong>5. Date features:</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+df["received_month"] = pd.to_datetime(df["received_date"]).dt.month
+df[["received_date", "received_month"]]
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-scikit-learn-003-3-supervised-learning">← Previous</a><span class="rev-pos">4 / 17</span><a href="#q-scikit-learn-005-3-2-train-test-split">Next →</a></nav>
+    </section>
+  </div>
+</details>

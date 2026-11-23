@@ -1,0 +1,75 @@
+<details class="question" id="q-azure-ai-031-demo-text-translation-exercise-06-02b" data-group="azure-ai" data-sec="azure-ai-s032">
+  <summary>
+    <span class="q-title">Demo: text translation (exercise 06_02b)</span>
+    <span class="q-meta">
+      <span class="tag">Azure AI Services</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Azure AI Services › 7. Translator › Demo: text translation (exercise 06_02b)</p>
+      <p>Portal: create <strong>Translator</strong> resource (Free tier), copy key, endpoint, and <strong>region</strong> (region is required in the credential).</p>
+      <p><code>.env</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang=".env">
+TRANSLATOR_KEY=""
+TRANSLATOR_ENDPOINT=""
+TRANSLATOR_REGION="eastus"
+        </script>
+      </div>
+      <p><code>package.json</code> (dependencies only):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JSON">
+{
+  "name": "translation",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "@azure-rest/ai-translation-text": "^1.0.0"
+  }
+}
+        </script>
+      </div>
+      <p><code>index.js</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+require("dotenv").config();
+const TextTranslationClient = require("@azure-rest/ai-translation-text").default
+const apiKey = process.env.TRANSLATOR_KEY;
+const endpoint = process.env.TRANSLATOR_ENDPOINT;
+const region = process.env.TRANSLATOR_REGION;
+const translateCredential = {
+    key: apiKey,
+    region,
+};
+const translationClient = new TextTranslationClient(endpoint, translateCredential);
+const inputText = [{ text: "The world is full of miracles." }];
+translationClient.path("/translate").post({
+    body: inputText,
+    queryParameters: {
+        to: "hi",
+        from: "en",
+    },
+}).then((translateResponse) => {
+    const translations = translateResponse.body;
+    for (const translation of translations) {
+        console.log(
+            `Text was translated to: '${translation?.translations[0]?.to}' and the result is: '${translation?.translations[0]?.text}'.`
+        );
+    }
+});
+        </script>
+      </div>
+      <p>Output:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Text">
+Text was translated to: 'hi' and the result is: 'दुनिया चमत्कारों से भरी है।'.
+        </script>
+      </div>
+      <ul>
+        <li>Input is an array of <code>{ text }</code> objects; POST to <code>/translate</code> with <code>from</code> and <code>to</code> query parameters (change <code>to</code> for <code>fr</code>, <code>de</code>, etc.).</li>
+        <li>The SDK is a thin wrapper over the REST API.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-azure-ai-030-7-translator">← Previous</a><span class="rev-pos">31 / 39</span><a href="#q-azure-ai-032-8-document-intelligence">Next →</a></nav>
+    </section>
+  </div>
+</details>

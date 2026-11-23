@@ -1,0 +1,50 @@
+<details class="question" id="q-ml-foundations-042-9-5-challenge-grid-search-on-random-fore" data-group="ml-foundations" data-sec="ml-foundations-s040">
+  <summary>
+    <span class="q-title">9.5 Challenge: grid search on Random Forest</span>
+    <span class="q-meta">
+      <span class="tag">ML Foundations</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">ML Foundations › 9. Model Tuning › 9.5 Challenge: grid search on Random Forest</p>
+      <p>Baseline: same pipeline as 7.5, R² ≈ 0.877. Reuse the grid search code and swap the prefix <code>dt__</code> to <code>rf__</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+param_grid = {
+    'rf__max_depth': [4, 7, 9],
+}
+
+grid_search = GridSearchCV(rf_pipe, param_grid, cv=5)
+grid_search.fit(X_train, y_train)
+        </script>
+      </div>
+      <p>Much slower than the tree: 3 values x 5 folds = 15 fits of 100 trees each.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+grid_search.best_params_
+# {'rf__max_depth': 9}
+
+rf_pipe.set_params(rf__max_depth=9)
+rf_pipe.fit(X_train, y_train)
+rf_pipe.score(X_test, y_test)  # < 0.877 — score went DOWN
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+RandomForestRegressor?
+# max_depth: default is None (unbounded)
+        </script>
+      </div>
+      <p>Why tuning made it worse:</p>
+      <ul>
+        <li>Search was incomplete (8, 10, etc. untested).</li>
+        <li>Grid search optimizes on CV folds of the training data, which may not match this test set.</li>
+        <li>Random forest averaging already counters overfit trees, so capping depth can remove useful signal.</li>
+        <li>One parameter isn't enough; try <code>min_samples_split</code> or Hyperopt/Optuna.</li>
+      </ul>
+      <p>Lessons: tuning doesn't always help, grid search finds the best only within your grid, and different models need different tuning (trees benefit hugely from pruning, forests less).</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ml-foundations-041-9-4-grid-search">← Previous</a><span class="rev-pos">42 / 47</span><a href="#q-ml-foundations-043-end-to-end-notebook">Next →</a></nav>
+    </section>
+  </div>
+</details>

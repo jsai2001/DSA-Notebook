@@ -1,0 +1,103 @@
+<details class="question" id="q-boto3-010-3-boto3-with-eks-kubernetes-q31-40" data-group="boto3" data-sec="boto3-s004">
+  <summary>
+    <span class="q-title">3. boto3 with EKS / Kubernetes (Q31-40) (3/3)</span>
+    <span class="q-meta">
+      <span class="tag">Boto3</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Boto3 › 3. boto3 with EKS / Kubernetes (Q31-40)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+from kubernetes import client, config
+from kubernetes.client.rest import ApiException
+
+def configure_k8s_client(cluster_name, region='us-east-1'):
+    eks_client = boto3.client('eks', region_name=region)
+    cluster = eks_client.describe_cluster(name=cluster_name)['cluster']
+    configuration = client.Configuration()
+    configuration.host = cluster['endpoint']
+    configuration.ssl_ca_cert = cluster['certificateAuthority']['data']
+    configuration.api_key['authorization'] = boto3.client('sts').get_caller_identity()['Arn']
+    k8s_client = client.ApiClient(configuration)
+    return client.CoreV1Api(k8s_client)
+
+# Example usage: List pods
+k8s_api = configure_k8s_client('my-eks-cluster')
+pods = k8s_api.list_pod_for_all_namespaces()
+for pod in pods.items:
+    print(f"Pod: {pod.metadata.name}")
+        </script>
+      </div>
+      <p><strong>Q37. Retrieve EKS logs from CloudWatch.</strong> Use the <code>logs</code> client against the log group <code>/aws/eks/&lt;cluster&gt;/cluster</code>; times are epoch milliseconds.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+from datetime import datetime, timedelta
+
+def get_eks_logs(cluster_name, region='us-east-1'):
+    logs_client = boto3.client('logs', region_name=region)
+    log_group = f"/aws/eks/{cluster_name}/cluster"
+    response = logs_client.filter_log_events(
+        logGroupName=log_group,
+        startTime=int((datetime.now() - timedelta(hours=1)).timestamp() * 1000),
+        endTime=int(datetime.now().timestamp() * 1000)
+    )
+    return response['events']
+
+# Example usage
+logs = get_eks_logs('my-eks-cluster')
+for log in logs:
+    print(f"Log: {log['message']}")
+        </script>
+      </div>
+      <p><strong>Q38. Configure autoscaling for EKS.</strong> Same <code>update_nodegroup_config</code> call as Q33, with <code>minSize</code>/<code>maxSize</code> set to the autoscaling bounds and <code>desiredSize</code> set to the minimum: <code>configure_eks_autoscaling(cluster, nodegroup, 2, 5)</code>. The <code>autoscaling</code> client can also tune the underlying Auto Scaling group. This call only sets bounds; actual scale-out needs the Cluster Autoscaler (see Q78).</p>
+      <p><strong>Q39. Delete an EKS cluster and its resources.</strong> Delete node groups first, wait, then delete the cluster.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+import time
+
+def delete_eks_cluster(cluster_name, nodegroup_name, region='us-east-1'):
+    eks_client = boto3.client('eks', region_name=region)
+    # Delete node group
+    eks_client.delete_nodegroup(clusterName=cluster_name, nodegroupName=nodegroup_name)
+    while eks_client.describe_nodegroup(clusterName=cluster_name, nodegroupName=nodegroup_name)['nodegroup']['status'] != 'DELETED':
+        print("Waiting for nodegroup deletion...")
+        time.sleep(30)
+    # Delete cluster
+    eks_client.delete_cluster(name=cluster_name)
+    while eks_client.describe_cluster(name=cluster_name)['cluster']['status'] != 'DELETED':
+        print("Waiting for cluster deletion...")
+        time.sleep(30)
+    print("Cluster and nodegroup deleted.")
+
+# Example usage
+delete_eks_cluster('my-eks-cluster', 'my-nodegroup')
+        </script>
+      </div>
+      <p><strong>Q40. Manage EKS add-ons (VPC-CNI, CoreDNS).</strong> <code>create_addon</code>, <code>describe_addon</code>, <code>delete_addon</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+def manage_eks_addon(cluster_name, addon_name, version, region='us-east-1'):
+    eks_client = boto3.client('eks', region_name=region)
+    response = eks_client.create_addon(
+        clusterName=cluster_name,
+        addonName=addon_name,
+        addonVersion=version
+    )
+    return response
+
+# Example usage
+response = manage_eks_addon('my-eks-cluster', 'vpc-cni', 'v1.10.1-eksbuild.1')
+print(f"Addon created: {response['addon']['addonArn']}")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-boto3-009-3-boto3-with-eks-kubernetes-q31-40">← Previous</a><span class="rev-pos">10 / 25</span><a href="#q-boto3-011-4-boto3-with-terraform-q41-50">Next →</a></nav>
+    </section>
+  </div>
+</details>

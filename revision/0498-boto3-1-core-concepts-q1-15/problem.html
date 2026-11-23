@@ -1,0 +1,71 @@
+<details class="question" id="q-boto3-001-1-core-concepts-q1-15" data-group="boto3" data-sec="boto3-s002">
+  <summary>
+    <span class="q-title">1. Core Concepts (Q1-15) (1/3)</span>
+    <span class="q-meta">
+      <span class="tag">Boto3</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Boto3 › 1. Core Concepts (Q1-15)</p>
+      <p><strong>Q1. What is boto3 and how does it talk to AWS?</strong> The official AWS SDK for Python. It gives a Pythonic interface to AWS APIs (EC2, S3, Lambda and more). It sends HTTP requests signed with your credentials, and <code>botocore</code> does the low-level work.</p>
+      <p><strong>Q2. <code>boto3.client</code> vs <code>boto3.resource</code></strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th></th><th><code>client</code></th><th><code>resource</code></th></tr></thead>
+          <tbody>
+            <tr><td>Level</td><td>Low-level, maps 1:1 to the API; returns raw dicts/JSON</td><td>Higher-level, object-oriented (buckets, instances as Python objects)</td></tr>
+            <tr><td>Coverage</td><td>All API operations</td><td>Simpler, but not every service or operation</td></tr>
+            <tr><td>Use when</td><td>You need precise control or the resource abstraction is missing</td><td>Common tasks, readable code</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+# Using client
+client = boto3.client('s3')
+response = client.list_buckets()
+print(response['Buckets'])
+
+# Using resource
+resource = boto3.resource('s3')
+for bucket in resource.buckets.all():
+    print(bucket.name)
+        </script>
+      </div>
+      <p><strong>Q3. How does boto3 authenticate?</strong> Credential sources, in resolution order:</p>
+      <ol>
+        <li>Environment variables (<code>AWS_ACCESS_KEY_ID</code>, <code>AWS_SECRET_ACCESS_KEY</code>, <code>AWS_SESSION_TOKEN</code>).</li>
+        <li>Credentials file (<code>~/.aws/credentials</code>).</li>
+        <li>IAM roles for EC2 instances or ECS tasks.</li>
+        <li>AWS CLI SSO or temporary credentials from STS.</li>
+      </ol>
+      <p>You can also pass credentials explicitly in code or select a named profile (Q19).</p>
+      <p><strong>Q4. Which services can boto3 manage?</strong> Most of them:</p>
+      <ul>
+        <li>Compute: EC2, Lambda, ECS, EKS</li>
+        <li>Storage: S3, EBS, Glacier</li>
+        <li>Database: DynamoDB, RDS, Redshift</li>
+        <li>Networking: VPC, Route 53, ELB</li>
+        <li>Messaging: SNS, SQS, SES</li>
+        <li>Monitoring: CloudWatch, CloudTrail</li>
+        <li>Management: IAM, CloudFormation, SSM</li>
+      </ul>
+      <p><strong>Q5. Pagination.</strong> Use paginators. They follow <code>NextToken</code> (or the equivalent marker) automatically.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+s3 = boto3.client('s3')
+paginator = s3.get_paginator('list_objects_v2')
+for page in paginator.paginate(Bucket='my-bucket'):
+    for obj in page.get('Contents', []):
+        print(obj['Key'])
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><span></span><span class="rev-pos">1 / 25</span><a href="#q-boto3-002-1-core-concepts-q1-15">Next →</a></nav>
+    </section>
+  </div>
+</details>

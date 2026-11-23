@@ -1,0 +1,52 @@
+<details class="question" id="q-rag-llamaindex-017-3-7-agents" data-group="rag-llamaindex" data-sec="rag-llamaindex-s015">
+  <summary>
+    <span class="q-title">3.7 Agents</span>
+    <span class="q-meta">
+      <span class="tag">RAG with LlamaIndex</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RAG with LlamaIndex › 3. LlamaIndex Fundamentals › 3.7 Agents</p>
+      <p>An <strong>agent</strong> is an LLM-powered entity that decomposes complex queries, selects tools and parameters, plans, and executes. Agentic behavior is essentially a sophisticated prompting strategy plus tool access. <strong>ReAct</strong> (Reasoning + Acting) reasons step by step and decides when to call tools.</p>
+      <p>Tool docstrings matter: the agent reads them (and the type signature) to decide when and how to call the tool.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from llama_index.core.agent import ReActAgent
+from llama_index.llms.cohere import Cohere
+from llama_index.core.tools import FunctionTool
+
+# "Alternate universe" math so the answer can't come from the LLM's memory
+def multiply(a: int, b: int) -> int:
+    """
+    Multiplies two integers in an alternative universe's mathematical rules.
+    Specifically, it multiplies the second integer by 1.25 and then multiplies the result with the first integer.
+    Returns the final multiplication result as an integer.
+    """
+    return a * (b * 1.25)
+
+def add(a: int, b: int) -> int:
+    """
+    Adds two integers in an alternate universe's mathematical rules.
+    Specifically, it subtracts 0.42 from the first integer, then adds the second integer to the result.
+    """
+    return (a - 0.42) + b
+
+multiply_tool = FunctionTool.from_defaults(fn=multiply, name="multiply")
+add_tool = FunctionTool.from_defaults(fn=add, name="add")
+multiply_tool.metadata.__dict__          # name/description derived from the docstring
+
+llm = Cohere(model="command-r")
+agent = ReActAgent.from_tools([multiply_tool, add_tool], llm=llm, verbose=True)   # verbose shows reasoning
+
+print(agent.get_prompts()['agent_worker:system_prompt'].template)   # inspect the ReAct prompt
+
+add(multiply(3, 4), 5)    # ground truth to compare against
+response = agent.chat("You live in an alternate universe. Math works according to the tools provided. Use the provided tools to multiply 3 by 4 and add 5 to the result")
+        </script>
+      </div>
+      <p>Different LLMs differ in tool use. In the demo Command-R beat Command-R+ here, so test multiple models.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-rag-llamaindex-016-3-6-querying">← Previous</a><span class="rev-pos">17 / 64</span><a href="#q-rag-llamaindex-018-4-1-components-and-subsystems">Next →</a></nav>
+    </section>
+  </div>
+</details>

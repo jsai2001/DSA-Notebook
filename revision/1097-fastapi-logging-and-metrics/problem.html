@@ -1,0 +1,72 @@
+<details class="question" id="q-fastapi-020-logging-and-metrics" data-group="fastapi" data-sec="fastapi-s021">
+  <summary>
+    <span class="q-title">Logging and metrics</span>
+    <span class="q-meta">
+      <span class="tag">FastAPI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">FastAPI › 6. Production-Ready Code › Logging and metrics</p>
+      <ul>
+        <li><strong>Metrics</strong> answer "what is happening now?" (request count, error rate, query latency). Tools: Prometheus, OpenTelemetry, Datadog.</li>
+        <li><strong>Logging</strong> answers "how did we get here?" (incidents, debugging). Use Python's built-in <code>logging</code>.</li>
+        <li>If logs don't help in development, they won't help during a 4 a.m. incident.</li>
+        <li>Configure logging as early as possible (ideally from config). In code review ask: should we log here, at what level, with what info? Log enough to reproduce (e.g. query parameters). Format fields: see the <a href="https://docs.python.org/3/library/logging.html#logrecord-attributes" target="_blank" rel="noopener">LogRecord attributes</a>.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import logging
+from datetime import datetime, timedelta
+from time import perf_counter
+from fastapi import FastAPI, Request
+import db
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%dT%H:%M:%S',
+)
+app = FastAPI()
+
+@app.get('/posts/{login}')
+def get_posts(login: str, since: str = None):
+    if since:
+        since = datetime.strptime(since, '%Y%m%d')
+    else:
+        since = datetime.now() - timedelta(days=7)
+        since = datetime(since.year, since.month, since.day)
+    logging.info('get posts for %s since %s', login, since)
+    posts = db.query_posts(login, since)
+    return posts
+        </script>
+      </div>
+      <p><strong>Middleware</strong> runs around every HTTP request; <code>call_next</code> invokes the next middleware or the handler. Prefix metric lines (<code>[metric:call.duration]</code>) so a collector can parse and forward them.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+@app.middleware('http')
+async def timing(request: Request, call_next):
+    start = perf_counter()
+    response = await call_next(request)
+    duration = perf_counter() - start
+    logging.info(
+        '[metric:call.duration] %s %s %d - %.2fs',
+        request.method,
+        request.url,
+        response.status_code,
+        duration,
+    )
+    return response
+        </script>
+      </div>
+      <p>Using Uvicorn's logger instead of the root logger (useful to separate server logs from app logs):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+log = logging.getLogger('uvicorn')
+log.info('message')
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fastapi-019-configuration">← Previous</a><span class="rev-pos">20 / 26</span><a href="#q-fastapi-021-security">Next →</a></nav>
+    </section>
+  </div>
+</details>

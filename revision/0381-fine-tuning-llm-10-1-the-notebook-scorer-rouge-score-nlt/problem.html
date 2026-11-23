@@ -1,0 +1,78 @@
+<details class="question" id="q-fine-tuning-llm-042-10-1-the-notebook-scorer-rouge-score-nlt" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s030">
+  <summary>
+    <span class="q-title">10.1 The notebook scorer (rouge_score + nltk)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 10. Evaluation Metrics: ROUGE &amp; BLEU › 10.1 The notebook scorer (rouge_score + nltk)</p>
+      <p>Used in Chapter 3 Demo 2. <code>use_stemmer=True</code> stems words before matching; <code>SmoothingFunction().method4</code> avoids zero BLEU on short sentences.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from rouge_score import rouge_scorer
+from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
+import nltk
+nltk.download('punkt')
+
+def translate(inputs):
+    outputs = model.generate(inputs[0]["input_ids"], max_length=128, num_beams=4, early_stopping=True)
+    return tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+
+# Function to calculate ROUGE and BLEU scores
+def calculate_scores(reference, hypothesis):
+    # Initialize scorers
+    rouge = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
+    bleu_smoothing = SmoothingFunction().method4
+
+    # Calculate ROUGE scores
+    rouge_scores = rouge.score(reference, hypothesis)
+
+    # Calculate BLEU score
+    reference_tokens = [nltk.word_tokenize(reference)]
+    hypothesis_tokens = nltk.word_tokenize(hypothesis)
+    bleu_score = sentence_bleu(reference_tokens, hypothesis_tokens, smoothing_function=bleu_smoothing)
+
+    return rouge_scores, bleu_score
+
+# Evaluate translations and calculate scores
+batch = next(iter(test_dataset))
+translated_text = translate(batch)
+reference_text = tokenizer.decode(batch[1][0], skip_special_tokens=True)
+rouge_scores, bleu_score = calculate_scores(reference_text, translated_text)
+print(f"Reference: {reference_text}")
+print(f"Translation: {translated_text}")
+print(f"ROUGE Scores: {rouge_scores}")
+print(f"BLEU Score: {bleu_score}")
+print()
+        </script>
+      </div>
+      <p>Rough BLEU reading guide from the lecture (0.12 on the WMT16 challenge was called acceptable for a new language pair):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def interpret_bleu_score(bleu_score):
+    """Interpret BLEU score quality levels"""
+    if bleu_score >= 0.4:
+        return "Excellent translation quality"
+    elif bleu_score >= 0.3:
+        return "Good translation quality"
+    elif bleu_score >= 0.2:
+        return "Acceptable translation quality"
+    elif bleu_score >= 0.1:
+        return "Poor but understandable translation"
+    else:
+        return "Very poor translation quality"
+
+# Example usage
+bleu_result = 0.12  # From challenge solution
+quality_assessment = interpret_bleu_score(bleu_result)
+print(f"BLEU Score: {bleu_result:.3f} - {quality_assessment}")
+        </script>
+      </div>
+      <p>(Other lecture evaluators — <code>evaluate_translation_model</code>, <code>TransferLearningTranslator</code>, <code>TranslationEvaluator</code> — repeat the same translate → score → average loop and are omitted. The lecture's targets of ROUGE-1 &gt; 0.7 and BLEU &gt; 0.5 are optimistic against the 0.1–0.2 BLEU actually seen.)</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-041-10-evaluation-metrics-rouge-bleu">← Previous</a><span class="rev-pos">42 / 76</span><a href="#q-fine-tuning-llm-043-11-challenge-wmt16-english-german-transf">Next →</a></nav>
+    </section>
+  </div>
+</details>

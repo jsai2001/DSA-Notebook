@@ -1,0 +1,63 @@
+<details class="question" id="q-fine-tuning-llm-056-13-3-learning-rate-batch-size-epochs" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s040">
+  <summary>
+    <span class="q-title">13.3 Learning rate, batch size, epochs</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 13. Tuning LoRA: Rank, Overfitting, Hyperparameters › 13.3 Learning rate, batch size, epochs</p>
+      <p>Learning-rate range test (try an exponential sweep for a few batches; the lecture then picks the steepest-descent LR and divides by 10 to be conservative):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def find_optimal_learning_rate(model, train_data, lr_range=(1e-5, 1e-2)):
+    """Find optimal learning rate using learning rate finder"""
+    learning_rates = []
+    losses = []
+
+    # Exponential range of learning rates
+    import numpy as np
+    lrs = np.logspace(np.log10(lr_range[0]), np.log10(lr_range[1]), 20)
+
+    for lr in lrs:
+        # Train for few steps with current lr
+        optimizer = torch.optim.AdamW(model.parameters(), lr=lr)
+
+        model.train()
+        batch_losses = []
+
+        for i, batch in enumerate(train_data):
+            if i >= 10:  # Test only few batches
+                break
+
+            optimizer.zero_grad()
+            outputs = model(**batch)
+            loss = outputs.loss
+            loss.backward()
+            optimizer.step()
+
+            batch_losses.append(loss.item())
+
+        avg_loss = sum(batch_losses) / len(batch_losses)
+        learning_rates.append(lr)
+        losses.append(avg_loss)
+
+    # Find lr with steepest descent
+    optimal_idx = np.argmin(np.gradient(losses))
+    optimal_lr = learning_rates[optimal_idx]
+
+    return {
+        'optimal_lr': optimal_lr,
+        'lr_curve': list(zip(learning_rates, losses)),
+        'recommendation': optimal_lr / 10  # Conservative choice
+    }
+        </script>
+      </div>
+      <ul>
+        <li>Omitted glue: a batch-size × epochs grid search and an <code>optimize_lora_configuration</code> orchestrator that chains LR search → CV rank → grid. Measured batch/rank trade-offs are in Section 14.4.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-055-13-2-choosing-the-rank">← Previous</a><span class="rev-pos">56 / 76</span><a href="#q-fine-tuning-llm-057-13-4-cross-validation-regularisation-mon">Next →</a></nav>
+    </section>
+  </div>
+</details>

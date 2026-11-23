@@ -1,0 +1,81 @@
+<details class="question" id="q-azure-ai-029-demo-text-moderation-exercise-05-02b" data-group="azure-ai" data-sec="azure-ai-s030">
+  <summary>
+    <span class="q-title">Demo: text moderation (exercise 05_02b)</span>
+    <span class="q-meta">
+      <span class="tag">Azure AI Services</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Azure AI Services › 6. Content Safety › Demo: text moderation (exercise 05_02b)</p>
+      <p>Portal: create <strong>Azure AI Content Safety</strong> (Free tier), copy key and endpoint.</p>
+      <p><code>.env</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang=".env">
+CONTENT_SAFETY_KEY=""
+CONTENT_SAFETY_ENDPOINT=""
+        </script>
+      </div>
+      <p><code>package.json</code> (dependencies; the rest is <code>npm init</code> boilerplate):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JSON">
+{
+  "name": "contentsafety",
+  "dependencies": {
+    "@azure-rest/ai-content-safety": "^1.0.0",
+    "dotenv": "^16.4.5"
+  }
+}
+        </script>
+      </div>
+      <p><code>index.js</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+require("dotenv").config();
+const ContentSafetyClient = require("@azure-rest/ai-content-safety").default,
+    { isUnexpected } = require("@azure-rest/ai-content-safety");
+const { AzureKeyCredential } = require("@azure/core-auth");
+async function checkContent(contentType, textContent) {
+    const endpoint = process.env.CONTENT_SAFETY_ENDPOINT;
+    const key = process.env.CONTENT_SAFETY_KEY;
+    const credential = new AzureKeyCredential(key);
+    const client = ContentSafetyClient(endpoint, credential);
+    const analyzeTextOption = { text: textContent };
+    const analyzeTextParameters = { body: analyzeTextOption };
+    const result = await client.path("/text:analyze").post(analyzeTextParameters);
+    if (isUnexpected(result)) {
+        throw result;
+    }
+    console.log("------------ \nContent Type:" + contentType)
+    for (let i = 0; i < result.body.categoriesAnalysis.length; i++) {
+        const textCategoriesAnalysisOutput = result.body.categoriesAnalysis[i];                
+        console.log(
+            textCategoriesAnalysisOutput.category,
+            " severity: ",
+            textCategoriesAnalysisOutput.severity
+        );
+    }
+}
+let safeContent = "I am feeling great today"
+//#region selfHarmContent violentContent hateContent sexualContent
+let selfHarmContent = ".."
+let violentContent = ".."
+let hateContent = ".."
+let sexualContent = ".."
+//#endregion
+checkContent("safeContent", safeContent);
+checkContent("selfHarmContent", selfHarmContent);
+checkContent("violentContent", violentContent);
+checkContent("sexualContent", sexualContent);
+checkContent("hateContent", hateContent);
+        </script>
+      </div>
+      <ul>
+        <li>Flow: create <code>ContentSafetyClient(endpoint, AzureKeyCredential)</code>, POST <code>{ text }</code> to <code>/text:analyze</code>, <code>isUnexpected</code> detects error responses, read <code>result.body.categoriesAnalysis</code> (severity per category).</li>
+        <li>Sample results: safe text scored 0 in all four; hate content scored 2 for Hate; violent content scored 4 for Violence; sexual and self-harm content scored only in their own category.</li>
+        <li>Calls are async, so output order may differ from submission order.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-azure-ai-028-6-content-safety">← Previous</a><span class="rev-pos">29 / 39</span><a href="#q-azure-ai-030-7-translator">Next →</a></nav>
+    </section>
+  </div>
+</details>

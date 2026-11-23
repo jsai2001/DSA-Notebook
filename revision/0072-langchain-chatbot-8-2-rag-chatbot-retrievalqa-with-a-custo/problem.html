@@ -1,0 +1,72 @@
+<details class="question" id="q-langchain-chatbot-017-8-2-rag-chatbot-retrievalqa-with-a-custo" data-group="langchain-chatbot" data-sec="langchain-chatbot-s016">
+  <summary>
+    <span class="q-title">8.2 RAG chatbot (RetrievalQA with a custom prompt)</span>
+    <span class="q-meta">
+      <span class="tag">LangChain Chatbot</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangChain Chatbot › 8. RAG upgrade: chunking, vector store, retrieval, memory › 8.2 RAG chatbot (RetrievalQA with a custom prompt)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Retrieval-Augmented Generation chatbot
+from langchain.chains import RetrievalQA
+from langchain.prompts import PromptTemplate
+
+class PersonalizedChatbot:
+    def __init__(self, retriever, llm):
+        self.retriever = retriever
+        self.llm = llm
+        self.setup_qa_chain()
+
+    def setup_qa_chain(self):
+        """Setup QA chain with custom prompt"""
+        prompt_template = """
+        Use the following context to answer the question. If you don't know the answer based on the context, say so.
+
+        Context: {context}
+        Question: {question}
+        Answer:
+        """
+        prompt = PromptTemplate(
+            template=prompt_template,
+            input_variables=["context", "question"]
+        )
+        self.qa_chain = RetrievalQA.from_chain_type(
+            llm=self.llm,
+            chain_type="stuff",
+            retriever=self.retriever,
+            return_source_documents=True,
+            chain_type_kwargs={"prompt": prompt}
+        )
+
+    def chat(self, question: str) -> dict:
+        """Process user question and return answer"""
+        try:
+            result = self.qa_chain.invoke({"query": question})
+            return {
+                "answer": result["result"],
+                "sources": [doc.page_content[:200] + "..." for doc in result["source_documents"]],
+                "success": True
+            }
+        except Exception as e:
+            return {
+                "answer": f"Sorry, I encountered an error: {str(e)}",
+                "sources": [],
+                "success": False
+            }
+
+# Initialize chatbot
+chatbot = PersonalizedChatbot(retriever, llm)
+
+# Test chatbot
+response = chatbot.chat("What is the main topic of the documents?")
+print(f"Answer: {response['answer']}")
+print(f"Sources: {len(response['sources'])} documents referenced")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langchain-chatbot-016-8-1-document-processing-pipeline">← Previous</a><span class="rev-pos">17 / 29</span><a href="#q-langchain-chatbot-018-8-3-conversation-memory-conversationalre">Next →</a></nav>
+    </section>
+  </div>
+</details>

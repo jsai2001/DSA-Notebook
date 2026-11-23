@@ -1,0 +1,744 @@
+/* Revision Cards tab: Study | Browse switch, course picker and the stacked deck.
+   Colors come from the page's theme variables; the glass look from glass.css is used when present. */
+
+/* The top card is fully opaque (the cards underneath must not show through it). */
+:root {
+  --study-solid: rgb(255, 255, 255);
+  --study-solid-head: rgb(246, 246, 248);
+}
+:root[data-theme="dark"] {
+  --study-solid: rgb(30, 30, 32);
+  --study-solid-head: rgb(38, 38, 41);
+}
+
+/* Study mode shows the deck only; Browse shows the list, filters and search. */
+body.study-on .filters,
+body.study-on #no-results,
+body.study-on .view-bar,
+body.study-on #question-list,
+body.study-on #dock {
+  display: none !important;
+}
+/* With a deck open, drop the big title so the whole deck fits on one screen. */
+body.study-on.study-deck-open .page-header .title,
+body.study-on.study-deck-open .page-header .subtitle {
+  display: none;
+}
+.study[hidden],
+.study-picker[hidden],
+.study-deck[hidden] {
+  display: none;
+}
+
+/* ---------- Study | Browse switch ---------- */
+.study-modes {
+  display: inline-flex;
+  gap: 0.2rem;
+  padding: 0.25rem;
+  margin: 1rem auto 0;
+  border-radius: 2rem;
+  border: 0.1rem solid var(--lg-card-border, var(--border-card));
+  background: var(--lg-pill, var(--surface));
+}
+.page-header {
+  text-align: center;
+}
+.study-mode {
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.35rem 1.2rem;
+  border: 0;
+  border-radius: 2rem;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.study-mode[aria-pressed="true"] {
+  background: var(--active-bg);
+  color: var(--active-text);
+}
+.study-mode:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---------- course picker ---------- */
+.study {
+  max-width: 62rem;
+  margin: 1.5rem auto 6rem;
+  padding: 0 1rem;
+}
+.study-intro {
+  text-align: center;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+}
+.study-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0.9rem;
+}
+.study-tile {
+  position: relative;
+}
+.study-tile-open {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-align: left;
+  font: inherit;
+  padding: 1rem 1.1rem;
+  border-radius: 1.25rem;
+  border: 0.1rem solid var(--lg-card-border, var(--border-card));
+  background: var(--lg-card, var(--card-bg));
+  box-shadow: var(--lg-card-rim, none), var(--lg-card-shadow, none);
+  color: var(--text-strong);
+  cursor: pointer;
+}
+.study-tile-open:hover {
+  background: var(--lg-pill-hover, var(--surface-hover));
+}
+.study-tile-open:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.study-tile-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+  padding-right: 1.8rem;
+}
+.study-tile-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  flex: 1;
+}
+.study-tile-cap {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.study-tile-restart {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.7rem;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 50%;
+  border: 0.1rem solid var(--border-soft);
+  background: var(--surface);
+  color: var(--text-strong);
+  font: inherit;
+  cursor: pointer;
+}
+.study-tile-restart:hover {
+  background: var(--surface-hover);
+}
+.study-bar {
+  display: block;
+  height: 0.45rem;
+  border-radius: 1rem;
+  background: var(--border-soft);
+  overflow: hidden;
+}
+.study-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 1rem;
+  background: var(--lg-tint, var(--active-bg));
+  transition: width 0.3s ease;
+}
+
+/* ---------- deck header ---------- */
+.study-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem 1rem;
+  margin-bottom: 0.75rem;
+}
+.study-name {
+  flex: 1;
+  min-width: 8rem;
+  font-size: 1.15rem;
+  text-align: center;
+}
+.study-back,
+.study-shuffle {
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 2rem;
+  border: 0.1rem solid var(--lg-card-border, var(--border-card));
+  background: var(--lg-pill, var(--surface));
+  color: var(--text-strong);
+  cursor: pointer;
+}
+.study-back:hover,
+.study-shuffle:hover {
+  background: var(--lg-pill-hover, var(--surface-hover));
+}
+.study-back:focus-visible,
+.study-shuffle:focus-visible,
+.study-btn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.study-switch {
+  position: relative;
+  width: 2rem;
+  height: 1.15rem;
+  border-radius: 1rem;
+  background: var(--border);
+  transition: background 0.2s;
+}
+.study-switch::after {
+  content: "";
+  position: absolute;
+  top: 0.14rem;
+  left: 0.14rem;
+  width: 0.87rem;
+  height: 0.87rem;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s;
+}
+.study-shuffle[aria-checked="true"] .study-switch {
+  background: var(--lg-tint, var(--active-bg));
+}
+.study-shuffle[aria-checked="true"] .study-switch::after {
+  transform: translateX(0.85rem);
+}
+.study-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+}
+.study-progress .study-bar {
+  flex: 1;
+}
+.study-stat {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ---------- the stack ---------- */
+.study-stack {
+  position: relative;
+  margin: 0 0.6rem 2.2rem;
+}
+.study-ghost {
+  position: absolute;
+  inset: 0;
+  border-radius: 1.4rem;
+  border: 0.1rem solid var(--lg-card-border, var(--border-card));
+  background: var(--lg-card, var(--card-bg));
+  box-shadow: var(--lg-card-shadow, none);
+  pointer-events: none;
+}
+.study-ghost.g1 {
+  transform: translateY(0.9rem) scale(0.965);
+  opacity: 0.8;
+}
+.study-ghost.g2 {
+  transform: translateY(1.7rem) scale(0.93);
+  opacity: 0.55;
+}
+.study-card {
+  position: relative;
+  max-height: calc(100vh - 20rem);
+  min-height: 12rem;
+  overflow-y: auto;
+  border-radius: 1.4rem;
+  border: 0.1rem solid var(--border-card);
+  background: var(--study-solid);
+  box-shadow: var(--lg-card-shadow, 0 1rem 2.5rem -1.2rem rgba(0, 0, 0, 0.4));
+  touch-action: pan-y;
+  transition: transform 0.22s ease, opacity 0.22s ease;
+  will-change: transform;
+}
+.study-card.is-dragging {
+  transition: none;
+  cursor: grabbing;
+}
+.study-card.is-entering {
+  animation: study-rise 0.35s ease;
+}
+@keyframes study-rise {
+  from {
+    transform: translateY(0.9rem) scale(0.965);
+  }
+  to {
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .study-card,
+  .study-card.is-entering {
+    animation: none;
+    transition: none;
+  }
+}
+.study-card-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 0.95rem 1.4rem 0.7rem;
+  border-bottom: 0.1rem solid var(--border-soft);
+  background: var(--study-solid-head);
+}
+.study-card-title {
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--text);
+}
+.study-card-body {
+  padding: 0 1.4rem 1.2rem;
+}
+.study-card-body .rev-sec {
+  margin-top: 0.8rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.study-mark {
+  position: absolute;
+  top: 0.55rem;
+  right: 1rem;
+  z-index: 3;
+  padding: 0.25rem 0.9rem;
+  border-radius: 2rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  opacity: 0;
+  pointer-events: none;
+}
+.study-mark.is-got {
+  background: var(--easy-bg);
+  color: var(--easy-text);
+}
+.study-mark.is-again {
+  background: var(--medium-bg);
+  color: var(--medium-text);
+}
+
+/* ---------- buttons ---------- */
+.study-actions,
+.study-end-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+.study-btn {
+  font: inherit;
+  font-weight: 600;
+  min-width: 7.5rem;
+  padding: 0.65rem 1.4rem;
+  border-radius: 2rem;
+  border: 0.1rem solid var(--lg-card-border, var(--border-card));
+  background: var(--lg-pill, var(--surface));
+  color: var(--text-strong);
+  cursor: pointer;
+}
+.study-btn:hover:not(:disabled) {
+  background: var(--lg-pill-hover, var(--surface-hover));
+}
+.study-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.study-btn.is-again {
+  background: var(--medium-bg);
+  color: var(--medium-text);
+}
+.study-btn.is-got {
+  background: var(--easy-bg);
+  color: var(--easy-text);
+}
+.study-btn.is-undo {
+  min-width: 5.5rem;
+  font-weight: 500;
+}
+.study-keys {
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.study-end {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  border-radius: 1.4rem;
+  border: 0.1rem solid var(--lg-card-border, var(--border-card));
+  background: var(--lg-card, var(--card-bg));
+}
+.study-end h3 {
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+}
+.study-end p {
+  color: var(--text-muted);
+  margin-bottom: 1.2rem;
+}
+
+@media screen and (max-width: 600px) {
+  .study {
+    padding: 0 0.6rem;
+  }
+  .study-stack {
+    margin: 0 0.3rem 2rem;
+  }
+  .study-card {
+    max-height: calc(100vh - 21rem);
+  }
+  .study-keys {
+    display: none;
+  }
+  .study-btn {
+    flex: 1;
+    min-width: 0;
+  }
+  .study-card-body,
+  .study-card-head {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* ---------- phone layout (matches the Patterns screen of Coding Solutions) ---------- */
+@media screen and (max-width: 600px) {
+  body.study-on .page-header .title,
+  body.study-on .page-header .subtitle,
+  .study-modes {
+    display: none;
+  }
+  .study {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+  .study-picker.is-phone {
+    padding-bottom: 5.5rem;
+  }
+  .study-phone-heading {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0.9rem 1rem 0.6rem;
+  }
+  .study-track {
+    display: flex;
+    gap: 0.8rem;
+    padding: 0 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 1rem;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .study-track::-webkit-scrollbar {
+    display: none;
+  }
+  .study-course {
+    flex: 0 0 calc(100% - 2.6rem);
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    min-height: 24rem;
+    height: calc(100vh - 14.5rem);
+    height: calc(100dvh - 14.5rem);
+    padding: 1.1rem 1.1rem 0.9rem;
+    border-radius: 1.5rem;
+    border: 0.1rem solid var(--lg-card-border, var(--border-card));
+    background: var(--lg-card, var(--card-bg));
+    box-shadow: var(--lg-card-rim, none), var(--lg-card-shadow, none);
+  }
+  .study-course-name {
+    font-size: 1.35rem;
+    font-weight: 600;
+  }
+  .study-course-hint {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0.15rem 0 0.6rem;
+  }
+  .study-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.6rem;
+  }
+  .study-chip {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.15rem 0.65rem;
+    border-radius: 1rem;
+    background: var(--chip-bg);
+    color: var(--text-strong);
+  }
+  .study-chip.is-ok {
+    background: var(--easy-bg);
+    color: var(--easy-text);
+  }
+  .study-chip.is-warn {
+    background: var(--medium-bg);
+    color: var(--medium-text);
+  }
+  .study-course .study-bar {
+    margin-bottom: 0.4rem;
+  }
+  .study-titles {
+    list-style: none;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-mask-image: linear-gradient(#000 82%, transparent);
+    mask-image: linear-gradient(#000 82%, transparent);
+  }
+  .study-title {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    font-size: 0.88rem;
+    padding: 0.55rem 0;
+    background: none;
+    border: 0;
+    border-top: 0.1rem solid var(--border-soft);
+    color: var(--text-strong);
+    cursor: pointer;
+  }
+  .study-title.is-done {
+    color: var(--text-muted);
+  }
+  .study-tick {
+    width: 1rem;
+    flex: none;
+    color: var(--easy-text);
+  }
+  .study-shuffle.is-inline {
+    align-self: flex-start;
+    border: 0;
+    background: none;
+    padding: 0.55rem 0 0.35rem;
+  }
+  .study-course-actions {
+    display: flex;
+    gap: 0.6rem;
+    padding-top: 0.6rem;
+    border-top: 0.1rem solid var(--border-soft);
+  }
+  .study-btn {
+    min-width: 0;
+  }
+  .study-btn.is-primary {
+    flex: 1;
+    background: var(--active-bg);
+    color: var(--active-text);
+    border-color: var(--active-bg);
+  }
+  .study-btn.is-narrow {
+    flex: 0 0 7rem;
+  }
+
+  /* bottom bar: search, ‹ 1 / 31 ›, random course */
+  .study-pdock {
+    position: fixed;
+    left: 0.8rem;
+    right: 0.8rem;
+    bottom: 0.8rem;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .study-pdock-btn,
+  .study-pdock-mid {
+    border: 0.1rem solid var(--lg-card-border, var(--border-card));
+    background: var(--lg-pill, var(--surface));
+    color: var(--text-strong);
+    box-shadow: var(--lg-card-shadow, none);
+  }
+  .study-pdock-btn {
+    width: 2.9rem;
+    height: 2.9rem;
+    border-radius: 50%;
+    font-size: 1.15rem;
+    cursor: pointer;
+  }
+  .study-pdock-mid {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.25rem;
+    border-radius: 2rem;
+  }
+  .study-pdock-step {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    border: 0;
+    background: var(--surface);
+    color: var(--text-strong);
+    font-size: 1.2rem;
+    cursor: pointer;
+  }
+  .study-pdock-step:disabled {
+    opacity: 0.4;
+  }
+  .study-pdock-count {
+    min-width: 3.8rem;
+    padding: 0 0.4rem;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  /* search sheet */
+  body.study-sheet-open {
+    overflow: hidden;
+  }
+  .study-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+  }
+  .study-sheet-bar {
+    display: flex;
+    gap: 0.6rem;
+    padding: 0.8rem;
+    border-bottom: 0.1rem solid var(--border-soft);
+  }
+  .study-sheet-input {
+    flex: 1;
+    font: inherit;
+    padding: 0.6rem 0.9rem;
+    border-radius: 2rem;
+    border: 0.1rem solid var(--border);
+    background: var(--surface);
+    color: var(--text-strong);
+  }
+  .study-sheet-close {
+    font: inherit;
+    font-weight: 500;
+    border: 0;
+    background: none;
+    color: var(--text-strong);
+    cursor: pointer;
+  }
+  .study-results {
+    list-style: none;
+    overflow-y: auto;
+    padding: 0 0.8rem 2rem;
+  }
+  .study-result {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    width: 100%;
+    text-align: left;
+    font: inherit;
+    padding: 0.7rem 0;
+    background: none;
+    border: 0;
+    border-bottom: 0.1rem solid var(--border-soft);
+    color: var(--text-strong);
+    cursor: pointer;
+  }
+  .study-result-title {
+    font-size: 0.92rem;
+    font-weight: 500;
+  }
+  .study-result-course {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+  .study-no-results {
+    padding: 1rem 0;
+    color: var(--text-muted);
+  }
+
+  /* inside a course: no page header, the buttons stay at the bottom of the screen */
+  body.study-phone-deck .page-header,
+  body.study-phone-deck .theme-toggle {
+    display: none;
+  }
+  body.study-phone-deck .study-deck {
+    padding: 0.8rem 0.8rem 7rem;
+  }
+  body.study-phone-deck .study-card {
+    max-height: calc(100vh - 12.5rem);
+    max-height: calc(100dvh - 12.5rem);
+  }
+  body.study-phone-deck .study-actions {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    flex-wrap: nowrap;
+    padding: 1.4rem 0.9rem calc(0.9rem + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(rgba(0, 0, 0, 0), var(--bg) 45%);
+  }
+}
+
+/* Text inside a deck card gets the same spacing as the Browse view (the deck copy is not inside .q-body). */
+.study-card-body p {
+  margin-bottom: 0.75rem;
+}
+.study-card-body ul {
+  padding-left: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.study-card-body ol {
+  padding-left: 1.4rem;
+  margin-bottom: 0.75rem;
+}
+.study-card-body li + li {
+  margin-top: 0.25rem;
+}
+.study-card-body li > ul,
+.study-card-body li > ol {
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+.study-card-body h3 {
+  font-size: 1rem;
+  margin: 1rem 0 0.5rem;
+}
+.study-card-body blockquote {
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 1rem;
+  border-left: 0.3rem solid var(--border);
+  color: var(--text-muted);
+}
+.study-card-body .code-tabs,
+.study-card-body .table-wrap {
+  margin-bottom: 0.9rem;
+}
+.study-card-body .rev-crumb {
+  margin-bottom: 0.9rem;
+}
+@media screen and (max-width: 600px) {
+  .study-pdock-btn {
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+}

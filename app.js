@@ -4,6 +4,14 @@ const questions = document.querySelectorAll(".question");
 const noResults = document.getElementById("no-results");
 const filterCount = document.getElementById("filter-count");
 const filters = { difficulty: null, topic: null };
+// The Revision Cards page: cards have no difficulty, and search looks through their whole text.
+const isCards = document.body.dataset.page === "cards";
+const cardText = new WeakMap();
+const fullTextOf = (q) => {
+  if (!isCards) return "";
+  if (!cardText.has(q)) cardText.set(q, q.textContent.toLowerCase());
+  return cardText.get(q);
+};
 
 const difficultyOf = (q) => {
   const badge = q.querySelector(".q-meta .badge");
@@ -18,7 +26,7 @@ function applyFilters() {
   const term = search.value.trim().toLowerCase();
   let visible = 0;
   questions.forEach((q) => {
-    const text = (q.querySelector(".q-title").textContent + " " + (q.dataset.tags || "")).toLowerCase();
+    const text = (q.querySelector(".q-title").textContent + " " + (q.dataset.tags || "")).toLowerCase() + " " + fullTextOf(q);
     const match =
       text.includes(term) &&
       (!filters.difficulty || difficultyOf(q) === filters.difficulty) &&
@@ -180,12 +188,15 @@ if (groupBoxes.length) {
       const shown = [...g.querySelectorAll(".question")].filter((q) => !q.hidden);
       g.hidden = shown.length === 0;
       const tally = { easy: 0, medium: 0, hard: 0 };
-      shown.forEach((q) => tally[difficultyOf(q) || "medium"]++);
+      shown.forEach((q) => {
+        const d = difficultyOf(q) || (isCards ? null : "medium");
+        if (d) tally[d]++;
+      });
       const count = g.querySelector(".g-count");
       count.replaceChildren();
       const total = document.createElement("span");
       total.className = "g-total";
-      total.textContent = `${shown.length} problem${shown.length === 1 ? "" : "s"}`;
+      total.textContent = `${shown.length} ${g.dataset.unit || "problem"}${shown.length === 1 ? "" : "s"}`;
       count.append(total);
       ["easy", "medium", "hard"].forEach((d) => {
         if (!tally[d]) return;
@@ -323,6 +334,8 @@ function dedent(text) {
   return lines.map((l) => l.slice(indent)).join("\n");
 }
 
+// Code that contains <script> or <!-- is stored with a backslash after the "<" (data-esc), so the page can hold it.
+const srcText = (src) => (src.dataset.esc ? src.textContent.replace(/<\\(!--|\/?script)/gi, "<$1") : src.textContent);
 const LANG_KEY = "solutions-preferred-lang";
 const allTabGroups = [];
 
@@ -379,7 +392,7 @@ document.querySelectorAll(".code-tabs").forEach((container, gi) => {
     pre.setAttribute("aria-labelledby", btn.id);
     pre.tabIndex = 0;
     const code = document.createElement("code");
-    code.textContent = dedent(src.textContent);
+    code.textContent = dedent(srcText(src));
     pre.appendChild(code);
 
     group.langs.push(lang);
@@ -402,12 +415,22 @@ document.querySelectorAll(".code-tabs").forEach((container, gi) => {
   // Code + highlight markers for the visualizer (read before clearing).
   const vizSources = Array.from(sources).map((src) => ({
     lang: src.dataset.lang,
-    code: dedent(src.textContent),
+    code: dedent(srcText(src)),
     lines: src.dataset.vizLines ? JSON.parse(src.dataset.vizLines) : {},
   }));
 
   container.innerHTML = "";
-  container.appendChild(tablist);
+  // The language tabs, with a Copy button at the right end of the same row.
+  const tabbar = document.createElement("div");
+  tabbar.className = "tabbar";
+  const copyBtn = document.createElement("button");
+  copyBtn.type = "button";
+  copyBtn.className = "code-copy";
+  copyBtn.textContent = "Copy";
+  copyBtn.title = "Copy this code";
+  copyBtn.setAttribute("aria-label", "Copy this code");
+  tabbar.append(tablist, copyBtn);
+  container.appendChild(tabbar);
   group.panels.forEach((p) => container.appendChild(p));
   allTabGroups.push(group);
 
@@ -427,6 +450,48 @@ if (allTabGroups.length) {
   selectLang(saved || allTabGroups[0].langs[0]);
 }
 
+// ---------- Copy button ----------
+// One handler for every code block (including copies made by the study deck): it copies the
+// language tab that is showing, as plain text.
+function copyToClipboard(text) {
+  const fallback = () => {
+    const box = document.createElement("textarea");
+    box.value = text;
+    box.setAttribute("readonly", "");
+    box.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+    document.body.append(box);
+    box.select();
+    let ok = false;
+    try {
+      ok = document.execCommand("copy");
+    } catch (e) {
+      ok = false;
+    }
+    box.remove();
+    return ok;
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text).then(() => true, fallback);
+  }
+  return Promise.resolve(fallback());
+}
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest && e.target.closest(".code-copy");
+  if (!btn) return;
+  const pre = btn.parentElement.parentElement.querySelector("pre:not([hidden])");
+  if (!pre) return;
+  const label = btn.dataset.label || btn.textContent;
+  btn.dataset.label = label;
+  copyToClipboard(pre.textContent).then((ok) => {
+    btn.textContent = ok ? "Copied" : "Press Ctrl+C";
+    btn.classList.toggle("is-copied", ok);
+    clearTimeout(btn.copyTimer);
+    btn.copyTimer = setTimeout(() => {
+      btn.textContent = label;
+      btn.classList.remove("is-copied");
+    }, 1600);
+  });
+});
 // ---------- Phones: shrink code to fit the screen width ----------
 // On narrow screens each code block's font is reduced until its longest line
 // fits, but never below CODE_MIN_PX. Blocks that still don't fit scroll
@@ -507,7 +572,7 @@ questions.forEach((q) => {
 const BROAD_TAGS = new Set(["Array", "String", "Math"]);
 questions.forEach((q) => {
   const body = q.querySelector(".q-body");
-  if (!body) return;
+  if (!body || isCards) return; // revision cards share a course tag, so "Same pattern" would list the whole course
   const groups = topicsOf(q)
     .filter((t) => !BROAD_TAGS.has(t))
     .map((tag) => ({ tag, others: [...questions].filter((o) => o !== q && topicsOf(o).includes(tag)) }))

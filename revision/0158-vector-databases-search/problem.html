@@ -1,0 +1,52 @@
+<details class="question" id="q-vector-databases-039-search" data-group="vector-databases" data-sec="vector-databases-s038">
+  <summary>
+    <span class="q-title">Search</span>
+    <span class="q-meta">
+      <span class="tag">Vector Databases</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Vector Databases › 8. Query vs Search › Search</p>
+      <p>Prerequisites: index on the vector field, collection loaded, <strong>same embedding model</strong> as the data, <strong>same metric</strong> as the index.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+search_params = {
+    "metric_type": "L2",
+    "offset": 0,
+    "ignore_growing": False,        # False = include not-yet-sealed (new) data; True = faster, may miss new data
+    "params": {"nprobe": 10}
+}
+search_string = "machine learning"
+search_embed = embeddings_model.embed_query(search_string)
+
+s_results = course_collection.search(
+    data=[search_embed],             # list of query vectors
+    anns_field="desc_embedding",     # vector field to search
+    param=search_params,
+    limit=10,
+    expr=None,                       # optional scalar filter
+    output_fields=["title"],
+    consistency_level="Strong"
+)
+print(type(s_results[0]))            # pymilvus Hits
+
+for i in s_results[0]:
+    print(i.id, str(round(i.distance, 2)), "\t", i.entity.get("title"))
+        </script>
+      </div>
+      <p>Hit has <code>.id</code>, <code>.distance</code>, <code>.entity.get(field)</code>. Results are sorted by distance. Multiple query vectors in <code>data</code> return one result list each (<code>results[0]</code>, <code>results[1]</code>, ...).</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Range</th><th>More similar when</th></tr></thead>
+          <tbody>
+            <tr><td>L2</td><td>0 to inf</td><td>lower</td></tr>
+            <tr><td>COSINE</td><td>-1 to 1</td><td>closer to 1</td></tr>
+            <tr><td>IP</td><td>-inf to inf</td><td>higher</td></tr>
+          </tbody>
+        </table>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-vector-databases-038-query">← Previous</a><span class="rev-pos">39 / 73</span><a href="#q-vector-databases-040-search-always-returns-results-use-a-thre">Next →</a></nav>
+    </section>
+  </div>
+</details>

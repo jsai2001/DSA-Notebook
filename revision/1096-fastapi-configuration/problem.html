@@ -1,0 +1,68 @@
+<details class="question" id="q-fastapi-019-configuration" data-group="fastapi" data-sec="fastapi-s020">
+  <summary>
+    <span class="q-title">Configuration</span>
+    <span class="q-meta">
+      <span class="tag">FastAPI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">FastAPI › 6. Production-Ready Code › Configuration</p>
+      <p>Code stays the same; configuration changes behavior (port, log level, auth server). Layers, each overriding the previous: <strong>defaults in code → config file → environment variables → command-line arguments</strong>.</p>
+      <p>Dynaconf, <code>config.py</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from dynaconf import Dynaconf
+settings = Dynaconf(
+    envvar_prefix='SERVER',
+    settings_files=['settings.yaml', '.secrets.yaml'],
+)
+        </script>
+      </div>
+      <p><code>settings.yaml</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+---
+port: 8080
+        </script>
+      </div>
+      <ul>
+        <li><code>envvar_prefix='SERVER'</code>: env vars like <code>SERVER_PORT=9999</code> are picked up.</li>
+        <li><code>.secrets.yaml</code> holds secrets (auth tokens) and is kept out of Git.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from fastapi import FastAPI
+app = FastAPI()
+
+@app.get('/health')
+def health():
+    return {'error': None}
+
+if __name__ == '__main__':
+    from argparse import ArgumentParser
+    import uvicorn
+    from config import settings
+
+    parser = ArgumentParser()
+    parser.add_argument('--port', type=int, default=settings.port)
+    args = parser.parse_args()
+    settings.update(vars(args))
+    # Always validate configuration!
+    if settings.port < 0 or settings.port > 65_535:
+        raise SystemExit(f'error: invalid port - {settings.port}')
+    uvicorn.run(app, port=settings.port)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+python server.py                       # settings.yaml (port 8080)
+python server.py --port 9999           # CLI overrides
+SERVER_PORT=9999 python server.py      # env var overrides
+        </script>
+      </div>
+      <p><strong>Validate configuration.</strong> Bad config causes many production outages.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fastapi-018-example-query-logs-with-content-negotiat">← Previous</a><span class="rev-pos">19 / 26</span><a href="#q-fastapi-020-logging-and-metrics">Next →</a></nav>
+    </section>
+  </div>
+</details>

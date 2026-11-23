@@ -1,0 +1,100 @@
+<details class="question" id="q-advanced-rag-033-demo-query-images-with-text" data-group="advanced-rag" data-sec="advanced-rag-s032">
+  <summary>
+    <span class="q-title">Demo: query images with text</span>
+    <span class="q-meta">
+      <span class="tag">Advanced RAG</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Advanced RAG › 10. Multimodal RAG › Demo: query images with text</p>
+      <p>Query an image DB with <strong>text</strong>. Helpers resize base64 images for the OpenAI call and split retrieved docs into images vs text.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from io import BytesIO
+from PIL import Image
+import base64
+
+def resize_base64_image(base64_string: str, size=(128, 128)) -> str:
+    """Resize a base64-encoded image for feeding into OpenAI."""
+    img_data = base64.b64decode(base64_string)
+    img = Image.open(BytesIO(img_data))
+    img = img.resize(size)
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+def is_base64(s: str) -> bool:
+    """Check if a string is base64 encoded."""
+    try:
+        base64.b64decode(s)
+        return True
+    except Exception:
+        return False
+
+def split_image_text(docs: list) -> dict:
+    """Split retrieved documents into images and text."""
+    images = []
+    text = []
+    for doc in docs:
+        if is_base64(doc.page_content):
+            images.append(doc.page_content)
+        else:
+            text.append(doc.page_content)
+    return {"images": images, "text": text}
+        </script>
+      </div>
+      <p>Multimodal chain:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain_core.messages import HumanMessage
+from langchain_core.runnables import RunnableLambda, RunnablePassthrough
+from langchain_openai import ChatOpenAI
+from langchain_core.output_parsers import StrOutputParser
+
+def format_multimodal_prompt(data: dict) -> list:
+    """Format images and text into HumanMessage for the LLM."""
+    messages = []
+    for t in data.get("text", []):               # text context
+        messages.append({"type": "text", "text": t})
+    for img in data.get("images", []):           # image context
+        resized = resize_base64_image(img)
+        messages.append({
+            "type": "image_url",
+            "image_url": {"url": f"data:image/png;base64,{resized}"}
+        })
+    messages.append({"type": "text", "text": data.get("question", "")})  # question
+    return [HumanMessage(content=messages)]
+
+llm = ChatOpenAI(model="gpt-4o-mini")
+retriever = vector_store.as_retriever()
+
+chain = (
+    {
+        "context": retriever | RunnableLambda(split_image_text),
+        "question": RunnablePassthrough()
+    }
+    | RunnableLambda(
+        lambda x: format_multimodal_prompt({**x["context"], "question": x["question"]})
+    )
+    | llm
+    | StrOutputParser()
+)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Search for a rottweiler using TEXT: retrieves IMAGES
+response = chain.invoke("Find me a rottweiler")
+print(response)  # "The image features a rottweiler..."
+
+# Verify which image matched
+results = retriever.invoke("rottweiler")
+print(results[0].metadata["image_path"])  # images/dog_5.jpg
+        </script>
+      </div>
+      <p>How it works: (1) CLIP's text encoder embeds the query; (2) FAISS finds the nearest image embeddings (same space); (3) images are resized and base64-formatted; (4) GPT-4o mini describes them; (5) <code>RunnableLambda</code> replaces <code>RunnablePassthrough</code> because a function (splitting images/text) must run, not just pass a string through.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-advanced-rag-032-demo-embed-and-store">← Previous</a><span class="rev-pos">33 / 35</span><a href="#q-advanced-rag-034-11-anomalies-in-embeddings">Next →</a></nav>
+    </section>
+  </div>
+</details>

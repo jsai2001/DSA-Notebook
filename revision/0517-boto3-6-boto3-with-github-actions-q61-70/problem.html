@@ -1,0 +1,71 @@
+<details class="question" id="q-boto3-020-6-boto3-with-github-actions-q61-70" data-group="boto3" data-sec="boto3-s007">
+  <summary>
+    <span class="q-title">6. boto3 with GitHub Actions (Q61-70) (4/4)</span>
+    <span class="q-meta">
+      <span class="tag">Boto3</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Boto3 › 6. boto3 with GitHub Actions (Q61-70)</p>
+      <ul>
+        <li>Catch specific exceptions (<code>ClientError</code>).</li>
+        <li>Log error details.</li>
+        <li>Retry transient errors such as throttling.</li>
+        <li>Use <code>continue-on-error: true</code> for non-critical steps.</li>
+        <li>Exit with proper status codes.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# handle_errors.py
+import boto3
+from botocore.exceptions import ClientError
+import sys
+
+def safe_s3_operation(bucket_name):
+    s3_client = boto3.client('s3')
+    try:
+        s3_client.head_bucket(Bucket=bucket_name)
+        print(f"Bucket {bucket_name} exists")
+    except ClientError as e:
+        error_code = e.response['Error']['Code']
+        if error_code == '404':
+            print(f"Bucket {bucket_name} does not exist")
+        else:
+            print(f"Error: {e}")
+            sys.exit(1)
+
+if __name__ == "__main__":
+    safe_s3_operation('my-bucket')
+        </script>
+      </div>
+      <p><strong>Q70. Clean up unused EC2 instances.</strong> Terminate instances with a given tag older than a threshold (runs on the daily schedule above).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# cleanup_ec2.py
+import boto3
+from datetime import datetime, timedelta, timezone
+
+def cleanup_ec2_instances(tag_key, tag_value, max_age_days=7):
+    ec2_client = boto3.client('ec2')
+    response = ec2_client.describe_instances(
+        Filters=[{'Name': f'tag:{tag_key}', 'Values': [tag_value]}]
+    )
+    cutoff = datetime.now(timezone.utc) - timedelta(days=max_age_days)
+
+    for reservation in response['Reservations']:
+        for instance in reservation['Instances']:
+            launch_time = instance['LaunchTime']
+            if launch_time < cutoff:
+                instance_id = instance['InstanceId']
+                ec2_client.terminate_instances(InstanceIds=[instance_id])
+                print(f"Terminated instance: {instance_id}")
+
+if __name__ == "__main__":
+    cleanup_ec2_instances('Environment', 'Temp')
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-boto3-019-6-boto3-with-github-actions-q61-70">← Previous</a><span class="rev-pos">20 / 25</span><a href="#q-boto3-021-7-scenario-based-questions-q71-85">Next →</a></nav>
+    </section>
+  </div>
+</details>

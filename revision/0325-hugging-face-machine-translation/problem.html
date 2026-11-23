@@ -1,0 +1,39 @@
+<details class="question" id="q-hugging-face-012-machine-translation" data-group="hugging-face" data-sec="hugging-face-s012">
+  <summary>
+    <span class="q-title">Machine translation</span>
+    <span class="q-meta">
+      <span class="tag">Hugging Face Transformers</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Hugging Face Transformers › 4. Natural Language Generation › Machine translation</p>
+      <p>Translates with attention to context, not word-for-word. Typical architectures: GPT-3 and T5. Challenges: many languages and variants, and large models (smaller custom models can be built for narrow cases). Applications: real-time speech translation, enterprise documents, multilingual customer service, multilingual text analytics.</p>
+      <p>Here an explicit tokenizer and model are used instead of the translation pipeline, which helps when a tokenizer/model combination is not supported by the pipeline. Model: <code>t5-base</code>. T5 is <strong>text-to-text</strong>: one model does summarization, QA, and translation, chosen by a <strong>task prefix</strong> on the input.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+model = AutoModelForSeq2SeqLM.from_pretrained("t5-base")
+tokenizer = AutoTokenizer.from_pretrained("t5-base")
+source_english = "Acme is a technology company based in New York and Paris"
+# English → German (prefix tells T5 which task to perform)
+inputs_german = tokenizer("translate English to German: " + source_english,
+                          return_tensors="pt")
+outputs_german = model.generate(inputs_german["input_ids"], max_length=40)
+print("German:", tokenizer.decode(outputs_german[0], skip_special_tokens=True))
+# Acme ist ein Technologieunternehmen mit Sitz in New York und Paris.
+# English → French (same steps, different task prefix)
+inputs_french = tokenizer("translate English to French: " + source_english,
+                          return_tensors="pt")
+outputs_french = model.generate(inputs_french["input_ids"], max_length=40)
+print("French:", tokenizer.decode(outputs_french[0], skip_special_tokens=True))
+# Acme est une société technologique basée à New York et à Paris.
+        </script>
+      </div>
+      <ul>
+        <li><code>return_tensors="pt"</code>: PyTorch tensors. <code>input_ids</code>: IDs into the embedding matrix. <code>max_length</code>: output token limit. <code>skip_special_tokens=True</code>: strips <code>&lt;pad&gt;</code>, <code>&lt;/s&gt;</code> from the output.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-hugging-face-011-conversation-generation">← Previous</a><span class="rev-pos">12 / 26</span><a href="#q-hugging-face-013-5-transfer-learning-sentiment-model">Next →</a></nav>
+    </section>
+  </div>
+</details>

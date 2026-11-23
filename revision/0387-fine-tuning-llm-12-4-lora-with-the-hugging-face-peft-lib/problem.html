@@ -1,0 +1,75 @@
+<details class="question" id="q-fine-tuning-llm-048-12-4-lora-with-the-hugging-face-peft-lib" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s035">
+  <summary>
+    <span class="q-title">12.4 LoRA with the Hugging Face peft library (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 12. PEFT &amp; LoRA Concepts › 12.4 LoRA with the Hugging Face peft library</p>
+      <p><code>target_modules</code> picks which layers get adapters (for T5, attention <code>q</code> and <code>v</code>; for Llama-style models <code>q_proj</code>, <code>v_proj</code>, <code>k_proj</code>, <code>o_proj</code>, plus optionally <code>gate_proj</code>/<code>up_proj</code>/<code>down_proj</code>).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from peft import LoraConfig, get_peft_model, TaskType
+
+# Configure LoRA
+lora_config = LoraConfig(
+    task_type=TaskType.SEQ_2_SEQ_LM,
+    inference_mode=False,
+    r=8,  # Rank
+    lora_alpha=32,  # Scaling parameter
+    lora_dropout=0.1,
+    target_modules=["q", "v"]  # Target attention layers
+)
+
+# Apply LoRA to model
+def setup_lora_model(base_model, lora_config):
+    peft_model = get_peft_model(base_model, lora_config)
+
+    # Print trainable parameters
+    peft_model.print_trainable_parameters()
+
+    return peft_model
+
+# Usage
+lora_model = setup_lora_model(base_model, lora_config)
+        </script>
+      </div>
+      <ul>
+        <li>Intro-lecture variant: <code>r=16, lora_alpha=32, target_modules=["q","v"], lora_dropout=0.1, bias="none", task_type="SEQ_2_SEQ_LM"</code>; example output <code>trainable params: 294,912 || all params: 247,872,768 || trainable%: 0.12</code>.</li>
+      </ul>
+      <p>Training loop (PyTorch; only the LoRA params have <code>requires_grad</code>, so the optimiser effectively updates just those):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def train_peft_model(model, train_dataloader, num_epochs=3):
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
+
+    model.train()
+    for epoch in range(num_epochs):
+        total_loss = 0
+
+        for batch in train_dataloader:
+            optimizer.zero_grad()
+
+            outputs = model(**batch)
+            loss = outputs.loss
+
+            loss.backward()
+            optimizer.step()
+
+            total_loss += loss.item()
+
+        avg_loss = total_loss / len(train_dataloader)
+        print(f"Epoch {epoch+1}: Average Loss = {avg_loss:.4f}")
+
+    return model
+
+# Training
+trained_model = train_peft_model(lora_model, train_dataloader)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-047-12-3-lora-low-rank-adaptation-the-math">← Previous</a><span class="rev-pos">48 / 76</span><a href="#q-fine-tuning-llm-049-12-4-lora-with-the-hugging-face-peft-lib">Next →</a></nav>
+    </section>
+  </div>
+</details>

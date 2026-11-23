@@ -1,0 +1,55 @@
+<details class="question" id="q-crewai-019-managing-task-output" data-group="crewai" data-sec="crewai-s018">
+  <summary>
+    <span class="q-title">Managing task output</span>
+    <span class="q-meta">
+      <span class="tag">CrewAI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">CrewAI › 8. Tasks › Managing task output</p>
+      <p>Default output is a raw string, passed automatically to dependent tasks. Three parameters change the shape:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Parameter</th><th>Takes</th><th>Returns</th><th>Use for</th></tr></thead>
+          <tbody>
+            <tr><td><code>output_pydantic</code></td><td>Pydantic model class</td><td>Pydantic instance</td><td>Structured data inside Python</td></tr>
+            <tr><td><code>output_json</code></td><td>Pydantic model class</td><td>dict (JSON)</td><td>External APIs</td></tr>
+            <tr><td><code>output_file</code></td><td>File path (relative or absolute)</td><td>Written to disk</td><td>Documents, articles</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><code>output_pydantic</code> and <code>output_json</code> take the same model and differ only in return type.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from crewai import Task
+from pydantic import BaseModel
+
+class ItineraryOutput(BaseModel):
+    morning: str
+    afternoon: str
+    evening: str
+
+itinerary_task = Task(
+    description="Create a one-day itinerary for {location}.",
+    expected_output="A structured one-day plan.",
+    agent=itinerary_planner,
+    output_pydantic=ItineraryOutput      # or output_json=ItineraryOutput
+    # or output_file="outputs/itinerary.md"
+)
+        </script>
+      </div>
+      <p>After <code>crew.kickoff()</code>, <code>task.output</code> returns a <code>TaskOutput</code>. <code>.raw</code> is always available; <code>.pydantic</code> needs <code>output_pydantic</code>; <code>.json_dict</code> needs <code>output_json</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+print(itinerary_task.output.raw)
+plan = itinerary_task.output.pydantic
+print(plan.morning)
+data = itinerary_task.output.json_dict
+print(data["morning"])
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-crewai-018-yaml-method">← Previous</a><span class="rev-pos">19 / 32</span><a href="#q-crewai-020-task-level-tools">Next →</a></nav>
+    </section>
+  </div>
+</details>

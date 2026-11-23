@@ -1,0 +1,64 @@
+<details class="question" id="q-ml-algorithms-003-2-1-k-means" data-group="ml-algorithms" data-sec="ml-algorithms-s003">
+  <summary>
+    <span class="q-title">2.1 K-Means</span>
+    <span class="q-meta">
+      <span class="tag">ML Algorithms</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">ML Algorithms › 2. Clustering: K-Means, Choosing K, Interpreting Clusters › 2.1 K-Means</p>
+      <p>Unsupervised: you pass data without labels and get cluster labels back.</p>
+      <p><strong>Algorithm:</strong></p>
+      <ol>
+        <li>Choose <code>k</code>.</li>
+        <li>Pick <code>k</code> random points as initial <strong>centroids</strong>.</li>
+        <li>Assign each point to its nearest centroid.</li>
+        <li>Move each centroid to the middle of its cluster.</li>
+        <li>Repeat 3-4 until centroids stop moving (converge).</li>
+      </ol>
+      <p>K-means uses distance, so features must be on the <strong>same scale</strong>.</p>
+      <p>Demo that shows the centroids moving per iteration (<code>max_iter=i+1</code>) on Iris:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sklearn.cluster import KMeans
+import sklearn.datasets
+import matplotlib.pyplot as plt
+dataset = sklearn.datasets.load_iris(as_frame=True)
+X = (dataset
+     ['data']
+     .loc[:, ['sepal length (cm)', 'sepal width (cm)']]
+)
+y = dataset['target']
+# demonstration of k-means clustering with iris dataset
+# keep list of all centroids
+centroids = []
+# loop over a few iterations and plot the results
+for i in range(10):
+    model = KMeans(n_clusters=3, init='random', n_init=1,
+                    max_iter=i+1, random_state=42)
+    model.fit(X)
+    label = model.predict(X)
+    # plot the input data color by cluster
+    fig, ax = plt.subplots(figsize=(8, 6))
+    X.plot.scatter(x='sepal length (cm)', y='sepal width (cm)', c=label, cmap='viridis', ax=ax)
+    # plot the centers
+    centers = model.cluster_centers_
+    ax.scatter(centers[:, 0], centers[:, 1], marker='*', s=250, color='r', alpha=.5)
+    ax.set_title('Iteration: ' + str(i))
+    # plot previous centroids with reduced alpha value
+    if i > 0:
+        for centroid in centroids:
+            ax.scatter(centroid[:, 0], centroid[:, 1], marker='*', s=250, color='r', alpha=.1)
+    # save the current centroids
+    centroids.append(model.cluster_centers_)
+# plot the original data color by target
+fig, ax = plt.subplots(figsize=(8, 6))
+X.plot.scatter(x='sepal length (cm)', y='sepal width (cm)', c=y, cmap='viridis', ax=ax)
+ax.set_title('Original Data')
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ml-algorithms-002-1-overview-setup-the-scikit-learn-interf">← Previous</a><span class="rev-pos">3 / 34</span><a href="#q-ml-algorithms-004-2-2-choosing-k">Next →</a></nav>
+    </section>
+  </div>
+</details>

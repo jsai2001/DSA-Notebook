@@ -1,0 +1,49 @@
+<details class="question" id="q-restful-api-016-create-a-planet-post-jwt-protected" data-group="restful-api" data-sec="restful-api-s016">
+  <summary>
+    <span class="q-title">Create a planet (POST, JWT-protected)</span>
+    <span class="q-meta">
+      <span class="tag">RESTful API</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RESTful API › 6. CRUD Endpoints › Create a planet (POST, JWT-protected)</p>
+      <ul>
+        <li>Check for a duplicate name (409), read form fields, build a <code>Planet</code>, add and commit, return 201.</li>
+        <li><code>@jwt_required</code> goes <strong>below</strong> <code>@app.route</code>.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+@app.route('/add_planet', methods=['POST'])
+@jwt_required
+def add_planet():
+    planet_name = request.form['planet_name']
+    test = Planet.query.filter_by(planet_name=planet_name).first()
+    if test:
+        return jsonify({"message": "There is already a planet by that name"}), 409
+    planet_type = request.form['planet_type']
+    home_star = request.form['home_star']
+    mass = float(request.form['mass'])
+    radius = float(request.form['radius'])
+    distance = float(request.form['distance'])
+    new_planet = Planet(
+        planet_name=planet_name,
+        planet_type=planet_type,
+        home_star=home_star,
+        mass=mass,
+        radius=radius,
+        distance=distance
+    )
+    db.session.add(new_planet)
+    db.session.commit()
+    return jsonify({"message": "You added a planet"}), 201
+        </script>
+      </div>
+      <ul>
+        <li>No token returns 401 <code>Missing Authorization Header</code>. POST <code>/login</code>, then put the JWT in Postman's Authorization tab as a <strong>Bearer Token</strong>. Valid request returns 201. A duplicate name returns 409.</li>
+        <li>Form keys must match the code exactly.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-restful-api-015-read-one-planet-get">← Previous</a><span class="rev-pos">16 / 24</span><a href="#q-restful-api-017-update-a-planet-put-jwt-protected">Next →</a></nav>
+    </section>
+  </div>
+</details>

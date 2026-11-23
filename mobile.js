@@ -6,6 +6,8 @@
 // The page's own elements are reused in place (not moved), so app.js, viz.js and
 // present.js keep working on them.
 (function swipeDeck() {
+  // The Revision Cards tab has its own study deck (study.js).
+  if (document.body.dataset.page === "cards") return;
   // Phones only (or ?mobile=1 to try it on a computer).
   const forced = /[?&]mobile=1(&|$)/.test(location.search);
   if (!forced && !window.matchMedia("(max-width: 600px)").matches) return;

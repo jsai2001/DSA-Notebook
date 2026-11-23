@@ -1,0 +1,49 @@
+<details class="question" id="q-langchain-level-up-012-4-5-complete-rag-function" data-group="langchain-level-up" data-sec="langchain-level-up-s013">
+  <summary>
+    <span class="q-title">4.5 Complete RAG function</span>
+    <span class="q-meta">
+      <span class="tag">LangChain Level Up</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangChain Level Up › 4. RAG: Architecture &amp; the Red30 Shoes Q&amp;A Chatbot › 4.5 Complete RAG function</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def load_and_split(file_path):
+    raw_text = TextLoader(file_path).load()
+    splitter = CharacterTextSplitter(chunk_size=100, chunk_overlap=0, separator=".")
+    return splitter.split_documents(raw_text)
+
+def create_vector_store(chunks):
+    embeddings = OpenAIEmbeddings()
+    db = Chroma.from_documents(chunks, embeddings)
+    return db.as_retriever()
+
+def generate_response(query, retriever):
+    template = """You are a customer support specialist who can answer questions 
+    and assist users with general inquiries based on the following context:
+    {context}
+    """
+    prompt = ChatPromptTemplate.from_template(template + "\nQuestion: {question}")
+    model = ChatOpenAI()
+    output_parser = StrOutputParser()
+    chain = (
+        {"context": retriever, "question": RunnablePassthrough()}
+        | prompt
+        | model
+        | output_parser
+    )
+    return chain.invoke(query)
+
+chunks = load_and_split("docs/red30_faq.txt")
+retriever = create_vector_store(chunks)
+response = generate_response("What are the shipping costs?", retriever)
+print(response)
+        </script>
+      </div>
+      <p><strong>Pipeline summary:</strong> (1) Indexing: TextLoader → CharacterTextSplitter → OpenAIEmbeddings → Chroma. (2) Retrieval: query → retriever → relevant chunks into <code>{context}</code>; <code>RunnablePassthrough</code> → <code>{question}</code>. (3) Generation: enhanced prompt → ChatOpenAI → StrOutputParser. Test with <code>python main.py</code>; answers match the FAQ (e.g., 30-day returns, international shipping from $15).</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langchain-level-up-011-4-4-chain-without-vs-with-context">← Previous</a><span class="rev-pos">12 / 35</span><a href="#q-langchain-level-up-013-4-6-challenge-context-and-history-aware">Next →</a></nav>
+    </section>
+  </div>
+</details>

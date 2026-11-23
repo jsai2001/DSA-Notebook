@@ -1,0 +1,70 @@
+<details class="question" id="q-fastapi-018-example-query-logs-with-content-negotiat" data-group="fastapi" data-sec="fastapi-s019">
+  <summary>
+    <span class="q-title">Example: query logs with content negotiation</span>
+    <span class="q-meta">
+      <span class="tag">FastAPI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">FastAPI › 5. Sending Data › Example: query logs with content negotiation</p>
+      <p>Return JSON by default, CSV if <code>Accept: text/csv</code>, 404 if nothing matches, 400 on bad input.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import csv
+from datetime import datetime
+from http import HTTPStatus
+from io import StringIO
+from fastapi import FastAPI, Request, Response
+from pydantic import BaseModel
+import db
+app = FastAPI()
+
+class Log(BaseModel):
+    level: str
+    time: datetime
+    message: str
+
+class LogsResponse(BaseModel):
+    count: int
+    offset: int
+    logs: list[Log]
+
+@app.get('/logs')
+def query_logs(req: Request, count: int = 100, offset: int = 0):
+    if count < 1 or offset < 0:
+        return Response(status_code=HTTPStatus.BAD_REQUEST, content='bad count or offset')
+    mime_type = req.headers.get('Accept', 'application/json')
+    if mime_type == '*/*':  # Client didn't specify, default to JSON
+        mime_type = 'application/json'
+    if mime_type not in {'application/json', 'text/csv'}:
+        return Response(status_code=HTTPStatus.BAD_REQUEST, content='bad Accept')
+    records = list(db.query_logs(offset, count))
+    if not records:
+        return Response(status_code=HTTPStatus.NOT_FOUND)
+    fn = json_response if mime_type == 'application/json' else csv_response
+    return fn(records, offset)
+
+def json_response(records: list[dict], offset: int) -> LogsResponse:
+    logs = [Log(**r) for r in records]
+    return LogsResponse(count=len(records), offset=offset, logs=logs)
+
+def csv_response(logs: list[dict], _: int) -> Response:
+    io = StringIO()
+    writer = csv.DictWriter(io, fieldnames=['time', 'level', 'message'])
+    writer.writeheader()
+    writer.writerows(
+        {'time': log['time'].isoformat(), 'level': log['level'], 'message': log['message']}
+        for log in logs
+    )
+    return Response(content=io.getvalue(), media_type='text/csv')
+        </script>
+      </div>
+      <ul>
+        <li><strong>Content negotiation:</strong> the <code>Accept</code> header picks the format; <code>*/*</code> means "anything", so default to JSON; reject unsupported types with 400.</li>
+        <li>CSV: <code>StringIO</code> + <code>csv.DictWriter</code>, <code>datetime.isoformat()</code>, <code>media_type='text/csv'</code>.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fastapi-017-custom-error-handlers">← Previous</a><span class="rev-pos">18 / 26</span><a href="#q-fastapi-019-configuration">Next →</a></nav>
+    </section>
+  </div>
+</details>

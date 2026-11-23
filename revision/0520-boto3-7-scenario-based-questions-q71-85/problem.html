@@ -1,0 +1,71 @@
+<details class="question" id="q-boto3-023-7-scenario-based-questions-q71-85" data-group="boto3" data-sec="boto3-s008">
+  <summary>
+    <span class="q-title">7. Scenario-Based Questions (Q71-85) (3/5)</span>
+    <span class="q-meta">
+      <span class="tag">Boto3</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Boto3 › 7. Scenario-Based Questions (Q71-85)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# monitor_alarms.py
+import boto3
+import subprocess
+
+def monitor_alarms(alarm_name):
+    cw_client = boto3.client('cloudwatch')
+    response = cw_client.describe_alarms(AlarmNames=[alarm_name])
+    for alarm in response['MetricAlarms']:
+        if alarm['StateValue'] == 'ALARM':
+            print(f"Alarm {alarm_name} triggered!")
+            subprocess.run(['ansible-playbook', 'remediate.yml'], check=True)
+
+if __name__ == "__main__":
+    monitor_alarms('HighCPUAlarm')
+        </script>
+      </div>
+      <p><strong>Q78. EKS cluster not scaling as expected.</strong> Diagnose:</p>
+      <ul>
+        <li>Check node group config (desired, min, max) with boto3.</li>
+        <li>Check that the Cluster Autoscaler is deployed and configured.</li>
+        <li>Review CloudWatch logs.</li>
+        <li>Validate IAM permissions for scaling.</li>
+        <li>Fix by updating the node group scaling config.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+def check_eks_scaling(cluster_name, nodegroup_name):
+    eks_client = boto3.client('eks')
+    response = eks_client.describe_nodegroup(clusterName=cluster_name, nodegroupName=nodegroup_name)
+    scaling_config = response['nodegroup']['scalingConfig']
+    print(f"Desired: {scaling_config['desiredSize']}, Min: {scaling_config['minSize']}, Max: {scaling_config['maxSize']}")
+        </script>
+      </div>
+      <p><strong>Q79. Automate cleanup of unused S3 buckets.</strong> List buckets, delete those matching a tag or age, schedule in GitHub Actions, and add safeguards (dry run, confirmation). (Gotchas: <code>delete_bucket</code> fails on non-empty buckets, and <code>get_bucket_tagging</code> raises an error for buckets with no tags.)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# cleanup_s3.py
+import boto3
+
+def cleanup_s3_buckets(tag_key, tag_value):
+    s3_client = boto3.client('s3')
+    response = s3_client.list_buckets()
+    for bucket in response['Buckets']:
+        tags = s3_client.get_bucket_tagging(Bucket=bucket['Name']).get('TagSet', [])
+        if any(tag['Key'] == tag_key and tag['Value'] == tag_value for tag in tags):
+            s3_client.delete_bucket(Bucket=bucket['Name'])
+            print(f"Deleted bucket: {bucket['Name']}")
+
+if __name__ == "__main__":
+    cleanup_s3_buckets('Environment', 'Temp')
+        </script>
+      </div>
+      <p><strong>Q80. IAM role lacks DynamoDB permissions.</strong> Inspect the <code>AccessDenied</code> error, describe the role's policies with boto3, attach a policy allowing the needed <code>dynamodb:*</code> actions (scope it tighter in practice), rerun.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-boto3-022-7-scenario-based-questions-q71-85">← Previous</a><span class="rev-pos">23 / 25</span><a href="#q-boto3-024-7-scenario-based-questions-q71-85">Next →</a></nav>
+    </section>
+  </div>
+</details>

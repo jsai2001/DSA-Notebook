@@ -1,0 +1,61 @@
+<details class="question" id="q-ml-foundations-039-9-3-catboost" data-group="ml-foundations" data-sec="ml-foundations-s038">
+  <summary>
+    <span class="q-title">9.3 CatBoost (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">ML Foundations</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">ML Foundations › 9. Model Tuning › 9.3 CatBoost</p>
+      <p>Hyperparameter categories (alternate names in parentheses):</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Category</th><th>Parameters</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>Boosting</td><td><code>iterations</code> (<code>num_trees</code>, <code>n_estimators</code>), <code>learning_rate</code> (<code>eta</code>), <code>early_stopping_rounds</code></td><td>How many swings, how hard</td></tr>
+            <tr><td>Tree</td><td><code>depth</code> (<code>max_depth</code>), <code>grow_policy</code>, <code>min_child_samples</code> (<code>min_data_in_leaf</code>), <code>max_leaves</code> (<code>num_leaves</code>)</td><td>Shape of each tree</td></tr>
+            <tr><td>Sampling</td><td><code>subsample</code>, <code>sampling_frequency</code>, <code>rsm</code> (<code>colsample_bylevel</code>), <code>random_strength</code>, <code>bagging_temperature</code></td><td>What each tree sees</td></tr>
+            <tr><td>Regularization</td><td><code>l2_leaf_reg</code> (<code>reg_lambda</code>), <code>model_shrink_rate</code></td><td>Penalize over-reliance on features</td></tr>
+            <tr><td>Constraints</td><td><code>monotone_constraints</code>, <code>feature_weights</code></td><td>Force logical relations (more sqft means higher price); good for explaining to stakeholders</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Learning rate: high is like hitting as hard as you can (may overshoot); low is an easy swing (more accurate, needs more iterations). Lower often gives better models. View all parameters with <code>catboost.CatBoostRegressor?</code>.</p>
+      <p><strong>Early stopping</strong> halts training when the eval score hasn't improved for N rounds. It <strong>requires</strong> an <code>eval_set</code>. <code>iterations=3000</code> is the cap; here it stopped near iteration 357.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import catboost
+
+cr2 = catboost.CatBoostRegressor(
+    iterations=3000,
+    learning_rate=0.1,
+    early_stopping_rounds=10
+)
+
+X_train, X_test, y_train, y_test = train_test_split(raw.drop('price'), y,
+                                                    test_size=0.2, random_state=42)
+cr2.fit(X_train.to_pandas(), y_train.to_numpy(),
+        cat_features=['zipcode'], verbose=100,
+        early_stopping_rounds=10,
+        eval_set=(X_test.to_pandas(), y_test.to_numpy()))
+        </script>
+      </div>
+      <p>Here CatBoost is used directly (not in a pipeline): <code>cat_features=['zipcode']</code> lets it handle the categorical natively.</p>
+      <p>Validation curve for <code>max_depth</code> (plot code identical to Section 9.2 with title "Validation Curve with CatBoost"):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+param_range = range(1, 10)
+train_scores, test_scores = validation_curve(
+    cr2, X_train.to_pandas(), y_train.to_numpy(),
+    param_name="max_depth",
+    param_range=param_range,
+    scoring="neg_mean_squared_error", n_jobs=1,
+    fit_params=dict(early_stopping_rounds=10,
+                    eval_set=(X_test.to_pandas(), y_test.to_numpy())))
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ml-foundations-038-9-2-decision-tree-and-validation-curves">← Previous</a><span class="rev-pos">39 / 47</span><a href="#q-ml-foundations-040-9-3-catboost">Next →</a></nav>
+    </section>
+  </div>
+</details>

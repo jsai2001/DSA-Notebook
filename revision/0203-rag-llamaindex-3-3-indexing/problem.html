@@ -1,0 +1,77 @@
+<details class="question" id="q-rag-llamaindex-011-3-3-indexing" data-group="rag-llamaindex" data-sec="rag-llamaindex-s011">
+  <summary>
+    <span class="q-title">3.3 Indexing (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">RAG with LlamaIndex</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RAG with LlamaIndex › 3. LlamaIndex Fundamentals › 3.3 Indexing</p>
+      <p>An <strong>index</strong> is a data structure for fast retrieval of relevant context for a query. Indexes build Retrievers, Query Engines, and Chat Engines. Flow: raw text → Document → Nodes → embeddings → vector DB.</p>
+      <p>An <strong>embedding</strong> is a fixed-length numeric vector representing the meaning of a text. The length depends on the model, never on the input length.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Model</th><th>Dimensions</th></tr></thead>
+          <tbody>
+            <tr><td>Cohere embed-english-v3.0</td><td>1024</td></tr>
+            <tr><td>Cohere embed-english-light-v3.0</td><td>384</td></tr>
+            <tr><td>Cohere embed-english-v2.0</td><td>4096</td></tr>
+            <tr><td>OpenAI text-embedding-3-small</td><td>1536</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from llama_index.embeddings.cohere import CohereEmbedding
+
+embed_v3 = CohereEmbedding(model_name="embed-english-v3.0")
+embed_v3_light = CohereEmbedding(model_name="embed-english-light-v3.0")
+embed_v2 = CohereEmbedding(model_name="embed-english-v2.0")
+
+example_embedding = embed_v3.get_text_embedding("A")
+len(example_embedding)
+
+def get_embedding_dimensions(embed_model, list_of_strings):
+    embeddings = embed_model.get_text_embedding_batch(list_of_strings)
+    return [len(embedding) for embedding in embeddings]
+
+# Same output length for a 1-char string, a sentence, and a long paragraph
+get_embedding_dimensions(embed_v3, [string, string_2, string_3])
+
+# Cosine similarity between two embeddings
+embed_v3.similarity(
+    embed_v3.get_text_embedding("In embracing both the wisdom of the Sikh Gurus and the Stoic philosophers, ..."),
+    embed_v3.get_text_embedding(string_2),
+    mode="cosine"
+)
+        </script>
+      </div>
+      <p>Local embedding alternatives (check the <strong>MTEB leaderboard</strong>); <strong>FastEmbed</strong> models are lightweight, quantized, CPU-optimized:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# pip install llama-index-embeddings-huggingface
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+hf_embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5")
+
+# pip install llama-index-embeddings-fastembed
+from llama_index.embeddings.fastembed import FastEmbedEmbedding
+embed_model = FastEmbedEmbedding(model_name="BAAI/bge-large-en-v1.5-quantized")
+        </script>
+      </div>
+      <p><strong><code>VectorStoreIndex</code> creation</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>Use when</th></tr></thead>
+          <tbody>
+            <tr><td><code>VectorStoreIndex.from_documents(docs)</code></td><td>You have documents to embed and store (computes embeddings)</td></tr>
+            <tr><td><code>VectorStoreIndex.from_vector_store(store)</code></td><td>Embeddings already live in an external vector store such as Qdrant</td></tr>
+            <tr><td><code>VectorStoreIndex(nodes)</code></td><td>You parsed nodes yourself (more control)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Embedding calls cost time and money, so the notebook indexes only a 10,000-character slice of one book.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-rag-llamaindex-010-3-2-loading-data">← Previous</a><span class="rev-pos">11 / 64</span><a href="#q-rag-llamaindex-012-3-3-indexing">Next →</a></nav>
+    </section>
+  </div>
+</details>

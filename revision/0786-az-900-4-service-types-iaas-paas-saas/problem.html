@@ -1,0 +1,86 @@
+<details class="question" id="q-az-900-016-4-service-types-iaas-paas-saas" data-group="az-900" data-sec="az-900-s012">
+  <summary>
+    <span class="q-title">4. Service types: IaaS, PaaS, SaaS (3/3)</span>
+    <span class="q-meta">
+      <span class="tag">AZ-900</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AZ-900 › 4. Service types: IaaS, PaaS, SaaS</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# PaaS example — Azure App Service (no OS management, no patching, no middleware)
+az group create --name myPaaSRG --location eastus
+
+# Create an App Service Plan (the compute behind your app)
+az appservice plan create \
+  --name myPlan \
+  --resource-group myPaaSRG \
+  --sku B1 \
+  --is-linux
+
+# Create a web app (Python)
+az webapp create \
+  --resource-group myPaaSRG \
+  --plan myPlan \
+  --name myPaaSWebApp \
+  --runtime "PYTHON:3.11"
+
+# Deploy code directly from a local folder
+az webapp up \
+  --resource-group myPaaSRG \
+  --name myPaaSWebApp \
+  --runtime "PYTHON:3.11"
+
+# Turnkey features — enable with one command:
+
+# Auto-scaling
+az monitor autoscale create \
+  --resource-group myPaaSRG \
+  --resource myPlan \
+  --resource-type Microsoft.Web/serverfarms \
+  --name myAutoScale \
+  --min-count 1 --max-count 5 --count 1
+
+# Custom domain
+az webapp config hostname add \
+  --resource-group myPaaSRG \
+  --webapp-name myPaaSWebApp \
+  --hostname www.mysite.com
+
+# SSL certificate
+az webapp config ssl bind \
+  --resource-group myPaaSRG \
+  --name myPaaSWebApp \
+  --certificate-thumbprint <thumbprint> \
+  --ssl-type SNI
+
+# Continuous deployment from GitHub
+az webapp deployment source config \
+  --resource-group myPaaSRG \
+  --name myPaaSWebApp \
+  --repo-url https://github.com/user/repo \
+  --branch main
+        </script>
+      </div>
+      <p>SaaS: you only call the service's API (here Microsoft Graph for Microsoft 365). The same two calls in Python with <code>requests</code> add nothing new.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# SaaS — you don't deploy or manage anything
+# You interact via APIs or web interfaces
+
+# Example: Microsoft Graph API — interact with Microsoft 365 (SaaS) programmatically
+# Get current user's profile
+curl -H "Authorization: Bearer <access-token>" \
+  https://graph.microsoft.com/v1.0/me
+
+# List user's emails
+curl -H "Authorization: Bearer <access-token>" \
+  https://graph.microsoft.com/v1.0/me/messages
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-az-900-015-4-service-types-iaas-paas-saas">← Previous</a><span class="rev-pos">16 / 67</span><a href="#q-az-900-017-thought-experiment-choosing-a-cloud-mode">Next →</a></nav>
+    </section>
+  </div>
+</details>

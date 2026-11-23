@@ -1,0 +1,96 @@
+<details class="question" id="q-langgraph-011-2-5-langgraph-building-blocks" data-group="langgraph" data-sec="langgraph-s007">
+  <summary>
+    <span class="q-title">2.5 LangGraph building blocks (2/3)</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 2. Concepts: Chatbots, Agentic AI, State vs Memory, LangGraph › 2.5 LangGraph building blocks</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def safe_agent_run(user_input: str):
+    try:
+        return run_agent(user_input)
+    except Exception as e:
+        return f"Agent error: {str(e)}"
+
+# Add logging
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def logged_agent_node(state: AgentState):
+    logger.info(f"Processing: {state['current_step']}")
+    # Node logic here
+    return state
+        </script>
+      </div>
+      <p>Sequential pipeline (agent1 → agent2 → coordinator), then a streaming node:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+class LangGraphMultiAgent:
+    def __init__(self):
+        self.setup_workflow()
+
+    def setup_workflow(self):
+        # Multi-agent workflow state
+        class MultiAgentState(TypedDict):
+            task: str
+            agent1_result: str
+            agent2_result: str
+            final_output: str
+
+        # Create workflow
+        self.workflow = StateGraph(MultiAgentState)
+
+        # Add agent nodes
+        self.workflow.add_node("agent1", self.agent1_node)
+        self.workflow.add_node("agent2", self.agent2_node)
+        self.workflow.add_node("coordinator", self.coordinator_node)
+
+        # Define collaboration flow
+        self.workflow.add_edge("agent1", "agent2")
+        self.workflow.add_edge("agent2", "coordinator")
+        self.workflow.set_entry_point("agent1")
+
+    def agent1_node(self, state: MultiAgentState):
+        # Agent 1 processing
+        return {"agent1_result": f"Agent1 processed: {state['task']}"}
+
+    def agent2_node(self, state: MultiAgentState):
+        # Agent 2 processing
+        return {"agent2_result": f"Agent2 processed: {state['agent1_result']}"}
+
+    def coordinator_node(self, state: MultiAgentState):
+        # Combine results
+        final = f"Combined: {state['agent1_result']} + {state['agent2_result']}"
+        return {"final_output": final}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def create_streaming_workflow():
+    workflow = StateGraph(WorkflowState)
+
+    def streaming_node(state: WorkflowState):
+        # Simulate streaming processing
+        intermediate_results = []
+
+        for i in range(3):
+            result = f"Processing step {i+1}"
+            intermediate_results.append(result)
+            # In real implementation, this would stream to user
+            yield {"current_step": f"step_{i+1}", "partial_result": result}
+
+        return {"current_step": "completed", "final_result": intermediate_results}
+
+    workflow.add_node("streaming_processor", streaming_node)
+    return workflow.compile()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-010-2-5-langgraph-building-blocks">← Previous</a><span class="rev-pos">11 / 57</span><a href="#q-langgraph-012-2-5-langgraph-building-blocks">Next →</a></nav>
+    </section>
+  </div>
+</details>

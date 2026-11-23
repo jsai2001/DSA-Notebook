@@ -1,0 +1,73 @@
+<details class="question" id="q-az-900-008-high-availability" data-group="az-900" data-sec="az-900-s007">
+  <summary>
+    <span class="q-title">High availability</span>
+    <span class="q-meta">
+      <span class="tag">AZ-900</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AZ-900 › 3. Benefits of cloud: availability, scale, reliability, governance › High availability</p>
+      <p><strong>Availability</strong> means the app and its systems are accessible to users. <strong>High availability</strong> is 99% or higher, achieved with redundant systems.</p>
+      <p>Threats: network outage, application failure, system (VM) outage, power outage, failure of a system you depend on (such as a database server).</p>
+      <p>SLA uptime targets (worth memorizing):</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>SLA</th><th>Downtime per year</th><th>Downtime per month</th></tr></thead>
+          <tbody>
+            <tr><td>99%</td><td>3.65 days</td><td>7.3 hours</td></tr>
+            <tr><td>99.9%</td><td>8.76 hours</td><td>43.8 minutes</td></tr>
+            <tr><td>99.95%</td><td>4.38 hours</td><td>21.9 minutes</td></tr>
+            <tr><td>99.99%</td><td>52.6 minutes</td><td>4.38 minutes</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Check the availability of your VMs
+az vm get-instance-view \
+  --resource-group myRG \
+  --name myVM \
+  --query "instanceView.statuses[1]" \
+  --output table
+
+# Deploy a VM into an Availability Zone for high availability
+az vm create \
+  --resource-group myRG \
+  --name myHA-VM \
+  --image Ubuntu2204 \
+  --size Standard_B2s \
+  --zone 1 \
+  --admin-username azureuser \
+  --generate-ssh-keys
+
+# Create an Availability Set (protects against hardware failures within a datacenter)
+az vm availability-set create \
+  --resource-group myRG \
+  --name myAvailabilitySet \
+  --platform-fault-domain-count 2 \
+  --platform-update-domain-count 5
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Python SDK — check VM status across your subscription
+from azure.identity import DefaultAzureCredential
+from azure.mgmt.compute import ComputeManagementClient
+
+credential = DefaultAzureCredential()
+compute = ComputeManagementClient(credential, "<subscription-id>")
+
+for vm in compute.virtual_machines.list_all():
+    instance_view = compute.virtual_machines.instance_view(
+        vm.id.split("/")[4],  # resource group
+        vm.name
+    )
+    status = instance_view.statuses[-1].display_status
+    print(f"{vm.name}: {status}")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-az-900-007-consumption-based-model">← Previous</a><span class="rev-pos">8 / 67</span><a href="#q-az-900-009-scalability">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,74 @@
+<details class="question" id="q-flask-030-8-deployment-to-vercel" data-group="flask" data-sec="flask-s030">
+  <summary>
+    <span class="q-title">8. Deployment to Vercel</span>
+    <span class="q-meta">
+      <span class="tag">Flask</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Flask › 8. Deployment to Vercel</p>
+      <p>Vercel: easy deployment, auto-scaling, free tier, serverless functions, simple updates.</p>
+      <p>Steps: confirm <code>requirements.txt</code>, create <code>vercel.json</code> and <code>runtime.txt</code>, set up Postgres on Vercel, update the app config, set environment variables, deploy with the CLI.</p>
+      <p><code>requirements.txt</code> (<code>psycopg2-binary</code> is the PostgreSQL adapter):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Text">
+Flask
+Flask-SQLAlchemy
+Flask-WTF
+WTForms
+psycopg2-binary
+        </script>
+      </div>
+      <p><code>vercel.json</code> (build entry point + Python runtime, route all requests to <code>app.py</code>):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JSON">
+{
+    "version": 2,
+    "builds": [{ "src": "app.py", "use": "@vercel/python" }],
+    "routes": [{ "src": "/(.*)", "dest": "app.py" }]
+}
+        </script>
+      </div>
+      <p><code>runtime.txt</code> pins the Python version:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Text">
+python-3.9
+        </script>
+      </div>
+      <p>Production-ready <code>app.py</code> configuration:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import os
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "your-secret-key")
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("POSTGRES_URL", "sqlite:///health_tracker.db")
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db = SQLAlchemy(app)
+
+@app.before_first_request
+def create_tables():
+    db.create_all()
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Setting</th><th>Local</th><th>Vercel</th></tr></thead>
+          <tbody>
+            <tr><td>Database</td><td><code>sqlite:///health_tracker.db</code></td><td>PostgreSQL via <code>POSTGRES_URL</code></td></tr>
+            <tr><td>Secret key</td><td>Hardcoded fallback</td><td><code>SECRET_KEY</code> env var</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li><code>os.environ.get(name, default)</code> reads env vars with a local fallback. Never hardcode secrets.</li>
+        <li><code>@app.before_first_request</code> creates tables before the first request, so no manual <code>flask shell</code> in production.</li>
+        <li>Deployed project files: <code>app.py</code>, <code>forms.py</code>, <code>seed.py</code>, <code>requirements.txt</code>, <code>vercel.json</code>, <code>runtime.txt</code>, <code>static/css/style.css</code>, and templates <code>base/index/form/dashboard.html</code>.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-flask-029-dashboard-with-three-charts">← Previous</a><span class="rev-pos">30 / 32</span><a href="#q-flask-031-deploying-with-the-vercel-cli">Next →</a></nav>
+    </section>
+  </div>
+</details>

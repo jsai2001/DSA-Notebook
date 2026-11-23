@@ -1,0 +1,73 @@
+<details class="question" id="q-boto3-008-3-boto3-with-eks-kubernetes-q31-40" data-group="boto3" data-sec="boto3-s004">
+  <summary>
+    <span class="q-title">3. boto3 with EKS / Kubernetes (Q31-40) (1/3)</span>
+    <span class="q-meta">
+      <span class="tag">Boto3</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Boto3 › 3. boto3 with EKS / Kubernetes (Q31-40)</p>
+      <p>Use the <code>eks</code> client for cluster details, node groups and add-ons.</p>
+      <p><strong>Q31. Get EKS cluster details.</strong> <code>describe_cluster</code> returns status, endpoint, version.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+def get_eks_cluster_details(cluster_name, region='us-east-1'):
+    eks_client = boto3.client('eks', region_name=region)
+    response = eks_client.describe_cluster(name=cluster_name)
+    return response['cluster']
+
+# Example usage
+cluster_details = get_eks_cluster_details('my-eks-cluster')
+print(f"Cluster Name: {cluster_details['name']}, Status: {cluster_details['status']}")
+        </script>
+      </div>
+      <p><strong>Q32. List EKS clusters in a region.</strong> <code>list_clusters</code> with a paginator.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+def list_eks_clusters(region='us-east-1'):
+    eks_client = boto3.client('eks', region_name=region)
+    clusters = []
+    paginator = eks_client.get_paginator('list_clusters')
+    for page in paginator.paginate():
+        clusters.extend(page['clusters'])
+    return clusters
+
+# Example usage
+clusters = list_eks_clusters()
+for cluster in clusters:
+    print(f"Cluster: {cluster}")
+        </script>
+      </div>
+      <p><strong>Q33. Update cluster config (scale a node group).</strong> <code>update_nodegroup_config</code> with <code>scalingConfig</code>; needs the cluster and node group names.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+
+def scale_eks_nodegroup(cluster_name, nodegroup_name, desired_size, region='us-east-1'):
+    eks_client = boto3.client('eks', region_name=region)
+    response = eks_client.update_nodegroup_config(
+        clusterName=cluster_name,
+        nodegroupName=nodegroup_name,
+        scalingConfig={
+            'minSize': desired_size,
+            'maxSize': desired_size + 2,
+            'desiredSize': desired_size
+        }
+    )
+    return response
+
+# Example usage
+response = scale_eks_nodegroup('my-eks-cluster', 'my-nodegroup', 3)
+print(f"Nodegroup update initiated: {response['update']['id']}")
+        </script>
+      </div>
+      <p><strong>Q34. IAM roles for EKS service accounts (IRSA).</strong> Create a role whose trust policy lets the cluster's OIDC provider assume it via <code>sts:AssumeRoleWithWebIdentity</code>, scoped to one service account, then attach policies. Annotate the Kubernetes service account with the role ARN.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-boto3-007-2-core-aws-services-with-boto3-q16-30">← Previous</a><span class="rev-pos">8 / 25</span><a href="#q-boto3-009-3-boto3-with-eks-kubernetes-q31-40">Next →</a></nav>
+    </section>
+  </div>
+</details>

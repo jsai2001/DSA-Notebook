@@ -1,0 +1,86 @@
+<details class="question" id="q-langchain-level-up-019-6-3-challenge-solution-shoes-vs-shirts-f" data-group="langchain-level-up" data-sec="langchain-level-up-s020">
+  <summary>
+    <span class="q-title">6.3 Challenge/solution: shoes vs shirts FAQs</span>
+    <span class="q-meta">
+      <span class="tag">LangChain Level Up</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangChain Level Up › 6. Q&amp;A Agent with Multiple Data Sources &amp; Query Analysis › 6.3 Challenge/solution: shoes vs shirts FAQs</p>
+      <p>Two sources (<code>docs/red30_shoes_faq.txt</code>, <code>docs/red30_shirts_faq.txt</code>). The schema uses <code>category</code> instead of <code>person</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+class Search(BaseModel):
+    query: str = Field(description="Query to look up")
+    category: str = Field(description="Category to use — either 'shoes' or 'shirts'")
+        </script>
+      </div>
+      <p><strong>Step 1 — one index per source:</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import Chroma
+
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=100, chunk_overlap=0)
+
+documents_shoes = text_splitter.split_documents(raw_text_shoes)
+vector_store_shoes = Chroma.from_documents(documents_shoes, embeddings)
+retriever_shoes = vector_store_shoes.as_retriever()
+
+documents_shirts = text_splitter.split_documents(raw_text_shirts)
+vector_store_shirts = Chroma.from_documents(documents_shirts, embeddings)
+retriever_shirts = vector_store_shirts.as_retriever()
+
+retrievers = {"shoes": retriever_shoes, "shirts": retriever_shirts}
+        </script>
+      </div>
+      <p><strong>Step 2 — query analyzer picks the category</strong> (<code>RunnablePassthrough</code> turns the raw string into <code>{"question": ...}</code>):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain_core.runnables import RunnablePassthrough
+
+system_message = """You have the ability to issue search queries to get information 
+to help answer user information based on the clothes category (shirts or shoes)."""
+prompt_query = ChatPromptTemplate.from_messages([
+    ("system", system_message),
+    ("human", "{question}"),
+])
+structured_llm = llm_function_calling.with_structured_output(Search)
+query_analyzer = {"question": RunnablePassthrough()} | prompt_query | structured_llm
+
+structured_output = query_analyzer.invoke("How long do we have to return shirts?")
+# Search(query='return policy', category='shirts')
+        </script>
+      </div>
+      <p><strong>Step 3 — route, retrieve, generate in one <code>@chain</code>:</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain_core.output_parsers import StrOutputParser
+
+chat_prompt_template = ChatPromptTemplate.from_messages([
+    ("system", "You are a customer specialist who answers questions and assists users with general inquiries based on context."),
+    ("human", "Context: {context}\n\nQuestion: {question}"),
+])
+
+@chain
+def query(question: str):
+    structured_output = query_analyzer.invoke(question)
+    retriever = retrievers[structured_output.category]
+    rag_chain = (
+        {"context": retriever, "question": RunnablePassthrough()}
+        | chat_prompt_template
+        | llm
+        | StrOutputParser()
+    )
+    return rag_chain.invoke(question)
+
+print(query("How long do we have to return shirts?"))   # 30 days, original condition
+print(query("What type of shoes do you sell?"))         # casual, sports, business
+        </script>
+      </div>
+      <p>Execution flow: user query → <code>query_analyzer</code> (<code>category</code>) → <code>retrievers[category]</code> → RAG chain (context + prompt + LLM + parser) → answer.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langchain-level-up-018-6-2-routing-to-a-retriever-with-a-custom">← Previous</a><span class="rev-pos">19 / 35</span><a href="#q-langchain-level-up-020-7-semantic-search-with-mongodb-atlas-vec">Next →</a></nav>
+    </section>
+  </div>
+</details>

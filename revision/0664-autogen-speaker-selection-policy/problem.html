@@ -1,0 +1,65 @@
+<details class="question" id="q-autogen-032-speaker-selection-policy" data-group="autogen" data-sec="autogen-s028">
+  <summary>
+    <span class="q-title">Speaker selection policy</span>
+    <span class="q-meta">
+      <span class="tag">AutoGen</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AutoGen › 10. Group Chat and Speaker Policies › Speaker selection policy</p>
+      <p><code>allowed_or_disallowed_speaker_transitions</code> maps each agent to the agents it may hand off to.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+allowed_transitions = {
+    admin: [planner, engineer, executor, writer],
+    engineer: [admin, executor],
+    writer: [admin, planner],
+    executor: [admin, planner, engineer],
+    planner: [admin, engineer, writer]
+}
+
+group_chat = GroupChat(
+    agents=[admin, planner, engineer, executor, writer],
+    messages=[],
+    max_round=10,
+    allowed_or_disallowed_speaker_transitions=allowed_transitions,
+    speaker_transitions_type="allowed"
+)
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th><code>speaker_transitions_type</code></th><th>Dictionary means</th><th>Use</th></tr></thead>
+          <tbody>
+            <tr><td><code>"allowed"</code></td><td>Only these transitions are permitted</td><td>Strict, clear pathways</td></tr>
+            <tr><td><code>"disallowed"</code></td><td>These transitions are forbidden</td><td>Flexibility with guardrails</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+disallowed_transitions = {
+    engineer: [writer],   # engineer cannot talk directly to writer
+    executor: [writer]    # executor cannot talk directly to writer
+}
+        </script>
+      </div>
+      <p>Hierarchical structure via transitions:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+allowed_transitions = {
+    ceo: [manager1, manager2],
+    manager1: [worker1, worker2, ceo],
+    manager2: [worker3, worker4, ceo],
+    worker1: [manager1],
+    worker2: [manager1]
+}
+        </script>
+      </div>
+      <p><strong>Why policies:</strong> structured communication, logical information flow, mirrors org hierarchies, fewer wasted turns (lower token cost), forces review checkpoints.</p>
+      <p><strong>Gotchas:</strong> loops → set <code>max_round</code>, check circular transitions, add termination. Wrong agent speaking → check the policy dictionary, give the manager an LLM config, make sure agent names/objects match the policy keys. Poor collaboration → sharpen system messages, adjust transitions, add intermediate agents, raise <code>max_round</code>. Give each agent one focused role with no overlapping responsibilities, and test agents individually first.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-autogen-031-10-group-chat-and-speaker-policies">← Previous</a><span class="rev-pos">32 / 36</span><a href="#q-autogen-033-11-pattern-comparison-and-troubleshootin">Next →</a></nav>
+    </section>
+  </div>
+</details>

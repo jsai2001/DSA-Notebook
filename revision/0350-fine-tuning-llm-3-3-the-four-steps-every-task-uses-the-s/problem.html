@@ -1,0 +1,64 @@
+<details class="question" id="q-fine-tuning-llm-011-3-3-the-four-steps-every-task-uses-the-s" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s009">
+  <summary>
+    <span class="q-title">3.3 The four steps (every task uses the same loop)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 3. FLAN-T5 &amp; the 4-Step Prompting Workflow › 3.3 The four steps (every task uses the same loop)</p>
+      <ol>
+        <li><strong>Define</strong> the prompt (task prefix matters). 2. <strong>Tokenize</strong> it. 3. <strong><code>model.generate</code></strong>. 4. <strong>Decode</strong> with the tokenizer.</li>
+      </ol>
+      <p>Parameters: <code>return_tensors="tf"</code> (TensorFlow tensors), <code>max_length=512</code> (model's input token limit), <code>truncation=True</code> (cut long inputs), <code>padding=True</code> (pad short ones), <code>num_beams=5</code> (beam search width: higher = better quality, slower), <code>early_stopping=True</code> (stop when beams finish), <code>skip_special_tokens=True</code> when decoding. Output <code>max_length</code> is tuned per task (summarise 150, translate 40, QA 50). <code>temperature</code> controls randomness (0 = deterministic, 1 = creative) and only applies with <code>do_sample=True</code>.</p>
+      <p><strong>Summarisation</strong> (zero-shot; output: "Eat carrots"):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Define the prompt
+prompt = "summarize: Studies show that eating carrots helps improve vision. Carrots contain beta-carotene, a substance that the body converts into vitamin A, crucial for maintaining healthy eyesight."
+
+# Generate inputs
+inputs = tokenizer(prompt, return_tensors="tf", max_length=512, truncation=True, padding=True)
+
+# Generate outputs
+outputs = model.generate(inputs["input_ids"], max_length=150, num_beams=5, early_stopping=True)
+
+# Decode and print the summary
+print(tokenizer.decode(outputs[0], skip_special_tokens=True))
+        </script>
+      </div>
+      <p><strong>Translation</strong> (shorter <code>max_length=40</code>; output "El queso es delicioso."):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Define the translation prompt
+translation_prompt = "translate English to Spanish: Cheese is delicious."
+
+# Prepare inputs and generate outputs
+translation_inputs = tokenizer(translation_prompt, return_tensors="tf", max_length=512, truncation=True, padding=True)
+translation_outputs = model.generate(translation_inputs["input_ids"], max_length=40, num_beams=5, early_stopping=True)
+
+# Decode and display the translation
+print(tokenizer.decode(translation_outputs[0], skip_special_tokens=True))
+        </script>
+      </div>
+      <p><strong>Q&amp;A</strong> (context first, then a <code>question:</code> marker; output "over 13,000 miles long"):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Define the context and question
+context_question = "The Great Wall of China is over 13,000 miles long. question: How long is the Great Wall of China?"
+
+# Generate inputs
+question_inputs = tokenizer(context_question, return_tensors="tf", max_length=512, truncation=True, padding=True)
+
+# Generate outputs
+question_outputs = model.generate(question_inputs["input_ids"], max_length=50, num_beams=5, early_stopping=True)
+
+# Decode and print the answer
+print(tokenizer.decode(question_outputs[0], skip_special_tokens=True))
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-010-3-2-colab-model-setup">← Previous</a><span class="rev-pos">11 / 76</span><a href="#q-fine-tuning-llm-012-3-4-reusable-helpers">Next →</a></nav>
+    </section>
+  </div>
+</details>

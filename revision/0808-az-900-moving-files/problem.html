@@ -1,0 +1,73 @@
+<details class="question" id="q-az-900-038-moving-files" data-group="az-900" data-sec="az-900-s031">
+  <summary>
+    <span class="q-title">Moving files</span>
+    <span class="q-meta">
+      <span class="tag">AZ-900</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AZ-900 › 7. Storage and data migration › Moving files</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tool</th><th>Type</th><th>Best for</th></tr></thead>
+          <tbody>
+            <tr><td><strong>AzCopy</strong></td><td>CLI</td><td>Scripting, automation, bulk copies. Manages SAS, tiers</td></tr>
+            <tr><td><strong>Storage Explorer</strong></td><td>Desktop GUI (Windows/macOS/Linux)</td><td>Drag-and-drop, container and tier management, SAS generation</td></tr>
+            <tr><td><strong>Azure File Sync</strong></td><td>On-prem agent</td><td>Fast local access to Azure Files data</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>SAS (Shared Access Signature)</strong> token: gives others controlled, time-limited access with a start time, expiry and permissions (read, list, write...). It expires automatically.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Login to AzCopy
+azcopy login
+
+# Upload a single file to blob storage
+azcopy copy './photo.jpg' 'https://az900storage.blob.core.windows.net/pictures/photo.jpg'
+
+# Upload an entire directory
+azcopy copy './images/' 'https://az900storage.blob.core.windows.net/pictures/' --recursive
+
+# Download a blob
+azcopy copy 'https://az900storage.blob.core.windows.net/pictures/photo.jpg' './downloads/'
+
+# Copy between storage accounts
+azcopy copy \
+  'https://source.blob.core.windows.net/container/*' \
+  'https://destination.blob.core.windows.net/container/' \
+  --recursive
+
+# Sync a local directory with a blob container
+azcopy sync './images/' 'https://az900storage.blob.core.windows.net/pictures/'
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Generate a SAS token via CLI (equivalent to Storage Explorer's SAS feature)
+az storage container generate-sas \
+  --account-name az900storage \
+  --name pictures \
+  --permissions rl \
+  --expiry 2025-12-31T23:59:00Z \
+  --output tsv
+
+# Use the SAS token with AzCopy
+azcopy copy \
+  'https://az900storage.blob.core.windows.net/pictures/photo.jpg?<sas-token>' \
+  './downloads/'
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Register a server with Azure File Sync (PowerShell)
+# 1. Install the Azure File Sync agent on the on-premises server
+# 2. Register via PowerShell:
+Register-AzStorageSyncServer -ResourceGroupName "AZ900" -StorageSyncServiceName "myFileSyncService"
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-az-900-037-storage-account-types">← Previous</a><span class="rev-pos">38 / 67</span><a href="#q-az-900-039-migration-options">Next →</a></nav>
+    </section>
+  </div>
+</details>

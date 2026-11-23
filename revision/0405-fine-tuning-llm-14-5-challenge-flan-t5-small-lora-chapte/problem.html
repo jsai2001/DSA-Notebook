@@ -1,0 +1,41 @@
+<details class="question" id="q-fine-tuning-llm-066-14-5-challenge-flan-t5-small-lora-chapte" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s047">
+  <summary>
+    <span class="q-title">14.5 Challenge: FLAN-T5-small + LoRA (Chapter4_Solution)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 14. LoRA in TensorFlow: Implementation &amp; Experiments › 14.5 Challenge: FLAN-T5-small + LoRA (Chapter4_Solution)</p>
+      <p>Same pipeline with <strong>flan-t5-small</strong> (76M parameters; structure: embedding → encoder → decoder → LM head). Freezes <code>shared</code>, <code>encoder</code>, <code>decoder</code> and wraps <code>lm_head</code>, counts parameters with TF ops, trains 3 epochs at LR 1e-3 (batch 64 in the lecture variant), then computes BLEU.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Load the model
+model = TFAutoModelForSeq2SeqLM.from_pretrained('google/flan-t5-small')
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import tf_keras
+model.get_layer('encoder').trainable = False
+model.get_layer('shared').trainable = False
+model.get_layer('decoder').trainable = False
+model.layers[3] = LoRALayer(model.get_layer('lm_head'))
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+trainable_params = tf.reduce_sum([tf.reduce_prod(v.shape) for v in model.trainable_variables])
+non_trainable_params = tf.reduce_sum([tf.reduce_prod(v.shape) for v in model.non_trainable_variables])
+
+print(f'Trainable parameters: {trainable_params.numpy()}')
+print(f'Non-trainable parameters: {non_trainable_params.numpy()}')
+        </script>
+      </div>
+      <p>Compile/fit/evaluate are as in 14.3; BLEU evaluation is <code>translate_and_evaluate</code> from Section 11 (the notebook's data prep is identical to 14.1).</p>
+      <p><strong>Results (lecture):</strong> total 76M, trainable ~16M (~21%, again the <code>lm_head</code>: 512 × 32,128), training ~3 min (~40 s/epoch after warm-up), <strong>BLEU ≈ 0.11</strong> (0.3–0.4 would be very good; larger models score higher), validation loss ~11. Scale up by switching to flan-t5-base/large. For summarisation, evaluate with ROUGE instead of BLEU.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-065-14-4-experiments-rank-batch-size-demo-2">← Previous</a><span class="rev-pos">66 / 76</span><a href="#q-fine-tuning-llm-067-15-chapter-5-exercises">Next →</a></nav>
+    </section>
+  </div>
+</details>

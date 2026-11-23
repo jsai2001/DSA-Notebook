@@ -1,0 +1,85 @@
+<details class="question" id="q-az-900-043-rbac" data-group="az-900" data-sec="az-900-s036">
+  <summary>
+    <span class="q-title">RBAC</span>
+    <span class="q-meta">
+      <span class="tag">AZ-900</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AZ-900 › 8. Identity, access and security › RBAC</p>
+      <p>Controls what an authenticated identity can do. Three elements:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Element</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Security principal</strong></td><td>Who: user, group, service principal, managed identity</td></tr>
+            <tr><td><strong>Role definition</strong></td><td>What: permissions grouped in a role (built-in or custom)</td></tr>
+            <tr><td><strong>Scope</strong></td><td>Where: management group, subscription, resource group or resource</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>RBAC rules are <strong>additive</strong>, so a broader role at a higher scope overrides a more restrictive role at a lower scope.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Built-in role</th><th>Permissions</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Owner</strong></td><td>Full access and can assign roles</td></tr>
+            <tr><td><strong>Contributor</strong></td><td>Full access, cannot assign roles</td></tr>
+            <tr><td><strong>Reader</strong></td><td>View only</td></tr>
+            <tr><td><strong>Website Contributor</strong></td><td>Manage web apps</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# List all built-in roles
+az role definition list --query "[].{Name:roleName, Description:description}" -o table
+
+# List roles specific to web apps
+az role definition list --query "[?contains(roleName, 'Website')]" -o table
+
+# Assign "Website Contributor" role to a user on a web app
+az role assignment create \
+  --assignee "kelly@<tenant-domain>.onmicrosoft.com" \
+  --role "Website Contributor" \
+  --scope "/subscriptions/<sub-id>/resourceGroups/AZ900/providers/Microsoft.Web/sites/az900wa"
+
+# List role assignments for a resource
+az role assignment list \
+  --scope "/subscriptions/<sub-id>/resourceGroups/AZ900/providers/Microsoft.Web/sites/az900wa" \
+  --output table
+
+# Remove a role assignment
+az role assignment delete \
+  --assignee "kelly@<tenant-domain>.onmicrosoft.com" \
+  --role "Website Contributor" \
+  --scope "/subscriptions/<sub-id>/resourceGroups/AZ900/providers/Microsoft.Web/sites/az900wa"
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Create a custom role (JSON definition)
+az role definition create --role-definition '{
+  "Name": "Custom App Reader",
+  "Description": "Can view web apps but not modify them",
+  "Actions": [
+    "Microsoft.Web/sites/read"
+  ],
+  "NotActions": [],
+  "AssignableScopes": [
+    "/subscriptions/<sub-id>/resourceGroups/AZ900"
+  ]
+}'
+
+# Assign the custom role
+az role assignment create \
+  --assignee "jim@<tenant-domain>.onmicrosoft.com" \
+  --role "Custom App Reader" \
+  --resource-group AZ900
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-az-900-042-conditional-access">← Previous</a><span class="rev-pos">43 / 67</span><a href="#q-az-900-044-zero-trust-and-defense-in-depth">Next →</a></nav>
+    </section>
+  </div>
+</details>

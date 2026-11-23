@@ -1,0 +1,96 @@
+<details class="question" id="q-azure-ai-007-demo-handwriting-recognition-exercise-01" data-group="azure-ai" data-sec="azure-ai-s008">
+  <summary>
+    <span class="q-title">Demo: Handwriting recognition (exercise 01_06b)</span>
+    <span class="q-meta">
+      <span class="tag">Azure AI Services</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Azure AI Services › 2. Vision › Demo: Handwriting recognition (exercise 01_06b)</p>
+      <ul>
+        <li>Portal: Create resource -&gt; "vision" -&gt; pick <strong>Computer Vision</strong> (not Custom Vision, which is for training your own models). Free tier: 20 calls/min, 5,000 calls/month.</li>
+        <li>Dependencies are npm packages here; NuGet in .NET, PyPI in Python.</li>
+      </ul>
+      <p><code>.env</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang=".env">
+VISION_KEY="<key>"
+VISION_ENDPOINT="<endpoint>"
+        </script>
+      </div>
+      <p><code>package.json</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JSON">
+{
+  "name": "handwriting-recognition",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "@azure/cognitiveservices-computervision": "^8.2.0",
+    "dotenv": "^16.4.5",
+    "ms-rest-azure": "^2.5.7"
+  }
+}
+        </script>
+      </div>
+      <p><code>index.js</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+require('dotenv').config()
+const createReadStream = require('fs').createReadStream
+const ComputerVisionClient = require('@azure/cognitiveservices-computervision').ComputerVisionClient;
+const ApiKeyCredentials = require('@azure/ms-rest-js').ApiKeyCredentials;
+const sleep = require('util').promisify(setTimeout);
+const key = process.env.VISION_KEY;
+const endpoint = process.env.VISION_ENDPOINT;
+const computerVisionClient = new ComputerVisionClient(
+    new ApiKeyCredentials({ inHeader: { 'Ocp-Apim-Subscription-Key': key } }), endpoint);
+async function computerVision() {
+    const printedResult = await readTextFromFile(computerVisionClient, './my_handwriting.jpeg');
+    printRecognizedText(printedResult);
+    async function readTextFromFile(client, fileName) {
+        let operationResult = await client.readInStream(() => createReadStream(fileName));
+        let operation = operationResult.operationLocation.split('/').slice(-1)[0];
+        while (operationResult.status !== "succeeded") {
+            await sleep(1000);
+            operationResult = await client.getReadResult(operation);
+        }
+        return operationResult.analyzeResult.readResults;
+    }
+    function printRecognizedText(readResults) {
+        console.log('Recognized text:');
+        for (const page in readResults) {
+            if (readResults.length > 1) {
+                console.log(`Page: ${page}`);
+            }
+            const result = readResults[page];
+            if (result.lines.length) {
+                for (const line of result.lines) {
+                    console.log(line.words.map(w => w.text).join(' '));
+                }
+            }
+            else { console.log('No recognized text.'); }
+        }
+    }
+}
+computerVision();
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Piece</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>ApiKeyCredentials</code></td><td>Auth via <code>Ocp-Apim-Subscription-Key</code> header</td></tr>
+            <tr><td><code>readInStream()</code></td><td>Submit a file stream (use <code>client.read()</code> for a URL)</td></tr>
+            <tr><td><code>operationLocation</code></td><td>Read is <strong>asynchronous</strong>: you get a location to poll, not results</td></tr>
+            <tr><td><code>while</code> loop</td><td>Poll every second until status is <code>succeeded</code></td></tr>
+            <tr><td><code>readResults</code></td><td>Array of pages (1 for JPEG, many for PDF/TIFF)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Run: <code>node index.js</code> (prints the recognized handwriting).</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-azure-ai-006-face-service">← Previous</a><span class="rev-pos">7 / 39</span><a href="#q-azure-ai-008-3-speech">Next →</a></nav>
+    </section>
+  </div>
+</details>

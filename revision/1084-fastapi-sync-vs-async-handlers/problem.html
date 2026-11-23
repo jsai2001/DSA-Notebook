@@ -1,0 +1,52 @@
+<details class="question" id="q-fastapi-007-sync-vs-async-handlers" data-group="fastapi" data-sec="fastapi-s008">
+  <summary>
+    <span class="q-title">Sync vs async handlers</span>
+    <span class="q-meta">
+      <span class="tag">FastAPI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">FastAPI › 3. Handlers, Running the Server, Sync vs Async › Sync vs async handlers</p>
+      <p>FastAPI uses <strong>asyncio</strong> for I/O-bound concurrency. asyncio runs on a single thread, so a blocking call inside an <code>async</code> handler blocks every request.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import asyncio
+from time import sleep
+from fastapi import FastAPI
+app = FastAPI()
+
+# 1. Sync handler, blocking sleep: fine. FastAPI runs sync handlers in a thread pool.
+@app.get('/sleep/sys')
+def nsys_sleep():
+    sleep(1)
+    return {'error': None}
+
+# 2. Async handler, blocking sleep: NEVER. Blocks the event loop; requests queue up.
+@app.get('/sleep/async-sys')
+async def sys_sleep():
+    sleep(1)
+    return {'error': None}
+
+# 3. Async handler, asyncio.sleep: correct. Non-blocking, concurrent.
+@app.get('/sleep/async-aio')
+async def aio_sleep():
+    await asyncio.sleep(1)
+    return {'error': None}
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Handler (10 concurrent requests)</th><th>Total time</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>sync + <code>sleep</code></td><td>~1 s</td><td>thread pool</td></tr>
+            <tr><td>async + <code>sleep</code> (bad)</td><td>~10 s</td><td>event loop blocked, serialized</td></tr>
+            <tr><td>async + <code>asyncio.sleep</code></td><td>~1 s</td><td>non-blocking</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Recommendation:</strong> start with sync handlers; move to async only for performance reasons. A third-party library deep in the call chain may block without you knowing.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fastapi-006-running">← Previous</a><span class="rev-pos">7 / 26</span><a href="#q-fastapi-008-example-info-handler">Next →</a></nav>
+    </section>
+  </div>
+</details>

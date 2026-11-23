@@ -1,0 +1,58 @@
+<details class="question" id="q-langgraph-005-2-2-agentic-ai" data-group="langgraph" data-sec="langgraph-s004">
+  <summary>
+    <span class="q-title">2.2 Agentic AI (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 2. Concepts: Chatbots, Agentic AI, State vs Memory, LangGraph › 2.2 Agentic AI</p>
+      <p>Multi-agent with shared state (coordinator picks the specialist; each agent writes its own key):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+class MultiAgentState(TypedDict):
+    messages: List[str]
+    agent_results: dict
+    current_agent: str
+
+def coordinator_node(state: MultiAgentState):
+    # Determine which agent should handle the task
+    task_type = classify_task(state["messages"][-1])
+
+    return {"current_agent": task_type}
+
+def research_agent_node(state: MultiAgentState):
+    # Research-specific logic
+    result = search_tool.run(state["messages"][-1])
+    return {"agent_results": {"research": result}}
+
+def analysis_agent_node(state: MultiAgentState):
+    # Analysis-specific logic
+    data = state["agent_results"].get("research", "")
+    analysis = llm.invoke(f"Analyze this data: {data}")
+    return {"agent_results": {"analysis": analysis.content}}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Multi-agent graph
+multi_graph = StateGraph(MultiAgentState)
+
+multi_graph.add_node("coordinator", coordinator_node)
+multi_graph.add_node("researcher", research_agent_node)
+multi_graph.add_node("analyst", analysis_agent_node)
+
+multi_graph.add_conditional_edges(
+    "coordinator",
+    lambda x: x["current_agent"],
+    {"research": "researcher", "analysis": "analyst"}
+)
+
+multi_graph.set_entry_point("coordinator")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-004-2-2-agentic-ai">← Previous</a><span class="rev-pos">5 / 57</span><a href="#q-langgraph-006-2-3-agentic-chatbot-chatbot-module-agent">Next →</a></nav>
+    </section>
+  </div>
+</details>
