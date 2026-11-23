@@ -472,7 +472,7 @@
     sw.setAttribute("role", "switch");
     sw.setAttribute("aria-checked", String(st.shuffle));
     sw.title = "Shuffle the order of the sections. Cards inside a section stay in order.";
-    sw.innerHTML = '<span class="study-switch" aria-hidden="true"></span><span>Shuffle sections</span>';
+    sw.innerHTML = '<span class="study-switch" aria-hidden="true"></span><span>Shuffle<span class="study-sections"> sections</span></span>';
     sw.addEventListener("click", () => {
       setShuffle(course, !st.shuffle);
       renderDeck();

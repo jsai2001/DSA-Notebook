@@ -450,6 +450,36 @@ if (allTabGroups.length) {
   selectLang(saved || allTabGroups[0].langs[0]);
 }
 
+// ---------- Phones: the page tabs become a dropdown ----------
+// On a narrow screen only the current page shows, with a small arrow. Tapping it opens the
+// list of pages; tapping anywhere else closes it. (The CSS hides the other tabs.)
+const NAV_PHONE = window.matchMedia("(max-width: 600px)");
+function closeNavMenu(nav) {
+  nav.classList.remove("is-open");
+  nav.style.marginBottom = "";
+  const link = nav.querySelector('a[aria-current="page"]');
+  if (link) link.setAttribute("aria-expanded", "false");
+}
+document.addEventListener("click", (e) => {
+  const current = e.target.closest && e.target.closest('.site-nav a[aria-current="page"]');
+  if (current && NAV_PHONE.matches) {
+    e.preventDefault();
+    const nav = current.closest(".site-nav");
+    if (nav.classList.contains("is-open")) closeNavMenu(nav);
+    else {
+      // Open it without moving the page: take back the extra height as a negative bottom margin.
+      const closed = nav.offsetHeight;
+      nav.classList.add("is-open");
+      nav.style.marginBottom = `calc(${getComputedStyle(nav).marginBottom} - ${nav.offsetHeight - closed}px)`;
+      current.setAttribute("aria-expanded", "true");
+    }
+    return;
+  }
+  document.querySelectorAll(".site-nav.is-open").forEach((nav) => {
+    if (!nav.contains(e.target)) closeNavMenu(nav);
+  });
+});
+document.querySelectorAll('.site-nav a[aria-current="page"]').forEach((a) => a.setAttribute("aria-haspopup", "true"));
 // ---------- Copy button ----------
 // One handler for every code block (including copies made by the study deck): it copies the
 // language tab that is showing, as plain text.
