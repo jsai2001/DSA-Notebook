@@ -951,18 +951,24 @@ def main():
         for idx, (title, _c, _b, _s) in enumerate(planned):
             titles.setdefault(title, []).append(idx)
         rows = [(it["card"], 0, n, it["q"], it["blocks"], False) for n, it in enumerate(auto)]
-        hand = flips_dir / f"{course[0]}_Flip_Cards.md"
-        hand_items = parse_flip_file(hand) if hand.exists() else []
+        hand_files = sorted(flips_dir.glob(f"{course[0]}_Flip_Cards*.md"))
+        hand_items = [dict(it, file=f.name) for f in hand_files for it in parse_flip_file(f)]
+        hand = hand_files[0] if hand_files else flips_dir / f"{course[0]}_Flip_Cards.md"
         known_code = note_code_lines(path) if hand_items else set()
         for n, it in enumerate(hand_items):
             where = titles.get(it["card"])
+            nth = re.match(r"^(.*?)\s*\[(\d+)\]$", it["card"])
+            if not where and nth:
+                same = titles.get(nth.group(1)) or []
+                if 0 < int(nth.group(2)) <= len(same):
+                    where = [same[int(nth.group(2)) - 1]]
             if not where:
-                raise SystemExit(f"{hand.name}:{it['line']}: no card titled {it['card']!r} in {course[0]}")
+                raise SystemExit(f"{it.get('file', hand.name)}:{it['line']}: no card titled {it['card']!r} in {course[0]}")
             if len(where) > 1:
-                raise SystemExit(f"{hand.name}:{it['line']}: the title {it['card']!r} is used by {len(where)} cards; add the (k/n) part")
+                raise SystemExit(f"{it.get('file', hand.name)}:{it['line']}: the title {it['card']!r} is used by {len(where)} cards; write it as '## Card: {it['card']} [1]' (or [2], ...)")
             missing = [l for l in code_lines_of(it["blocks"]) if l not in known_code]
             if missing:
-                raise SystemExit(f"{hand.name}:{it['line']}: code not found in the note: {missing[0][:80]!r}")
+                raise SystemExit(f"{it.get('file', hand.name)}:{it['line']}: code not found in the note: {missing[0][:80]!r}")
             rows.append((where[0], 1, n, it["q"], it["blocks"], True))
         # auto items carry the card index already; hand-written ones were looked up above
         rows = [((r[0] if isinstance(r[0], int) else titles[r[0]][0]), r[1], r[2], r[3], r[4], r[5]) for r in rows]
