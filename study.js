@@ -206,8 +206,15 @@
 
   // On a phone the page itself doesn't scroll in Study mode: the deck stays put, and only the
   // content inside a card (or a course's title list) scrolls.
-  const syncScrollLock = () =>
-    document.documentElement.classList.toggle("study-lock", phone.matches && document.body.classList.contains("study-on"));
+  // With a deck open, at any screen size, the deck is sized to the screen ("study-fit") and the page
+  // does not scroll at all; the card (or the course's title list) is the only thing that scrolls.
+  const syncScrollLock = () => {
+    const html = document.documentElement.classList;
+    const body = document.body.classList;
+    const study = body.contains("study-on");
+    html.toggle("study-lock", phone.matches && study);
+    html.toggle("study-fit", study && body.contains("study-deck-open"));
+  };
   function setMode(mode) {
     const study = mode === "study";
     document.body.classList.toggle("study-on", study);
@@ -508,6 +515,7 @@
     current = course;
     syncPhoneClass();
     document.body.classList.add("study-deck-open");
+    syncScrollLock();
     picker.hidden = true;
     deckView.hidden = false;
     renderDeck();
@@ -517,6 +525,7 @@
     current = null;
     syncPhoneClass();
     document.body.classList.remove("study-deck-open");
+    syncScrollLock();
     deckView.hidden = true;
     picker.hidden = false;
     renderPicker();
@@ -545,8 +554,10 @@
 
     // header: back, name, shuffle switch
     const head = el("div", "study-head");
-    const back = el("button", "study-back", "← Courses");
+    const back = el("button", "study-back");
     back.type = "button";
+    back.setAttribute("aria-label", "Back to courses");
+    back.innerHTML = '← <span class="study-back-text">Courses</span>';
     back.addEventListener("click", closeCourse);
     const name = el("h2", "study-name", course.title || course.name);
     const sw = el("button", "study-shuffle");
@@ -580,6 +591,7 @@
 
     // the stack: the top card, with two more peeking out underneath
     const stack = el("div", "study-stack");
+    if (course.flip) stack.classList.add("is-flip");
     if (st.pile.length > 2) stack.append(el("div", "study-ghost g2"));
     if (st.pile.length > 1) stack.append(el("div", "study-ghost g1"));
     const card = course.byId.get(st.pile[0]);
