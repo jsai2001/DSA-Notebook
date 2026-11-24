@@ -1,0 +1,49 @@
+<details class="question" id="q-github-actions-057-common-problems" data-group="github-actions" data-sec="github-actions-s058">
+  <summary>
+    <span class="q-title">Common problems</span>
+    <span class="q-meta">
+      <span class="tag">GitHub Actions</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GitHub Actions › 9. Debugging, local testing and limits › Common problems</p>
+      <ul>
+        <li><strong>No runner available</strong>: wrong <code>runs-on</code> label or offline self-hosted runner.</li>
+        <li><strong>Network failures</strong>: external services down or unstable.</li>
+        <li><strong>Permission errors</strong>: missing <code>GITHUB_TOKEN</code> scopes.</li>
+        <li><strong>Concurrency conflicts</strong>: multiple runs triggered at once.</li>
+        <li><strong>Skipped workflows</strong>: <code>[skip ci]</code> in the commit message or a conditional <code>if</code>.</li>
+      </ul>
+      <p>Practices: enable <code>ACTIONS_STEP_DEBUG=true</code>, retry flaky steps, use <code>continue-on-error</code> for non-critical steps, and rotate exposed secrets immediately.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Robust Workflow
+on: push
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v3
+      - name: Retry network call
+        continue-on-error: true
+        run: |
+          for i in {1..3}; do curl http://example.com && break || sleep 5; done
+      - name: Debug output
+        if: failure()
+        run: echo "Previous step failed, check logs"
+      - name: Use secret securely
+        env:
+          SECRET: ${{ secrets.MY_SECRET }}
+        run: ./script.sh
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-github-actions-056-long-running-workflows">← Previous</a><span class="rev-pos">57 / 89</span><a href="#q-github-actions-058-limitations-of-github-actions">Next →</a></nav>
+    </section>
+  </div>
+</details>

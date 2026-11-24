@@ -1,0 +1,62 @@
+<details class="question" id="q-kubernetes-051-ansible-tasks-that-drive-kubectl" data-group="kubernetes" data-sec="kubernetes-s052">
+  <summary>
+    <span class="q-title">Ansible tasks that drive kubectl</span>
+    <span class="q-meta">
+      <span class="tag">Kubernetes</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Kubernetes › 16. Kubernetes with Ansible and GitHub Actions › Ansible tasks that drive kubectl</p>
+      <p><strong>Q. How do you use Ansible to apply a Kubernetes manifest and verify it?</strong> Apply <code>pod.yaml</code>, read the phase with jsonpath, and fail the play if the Pod is not Running.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Apply K8s
+  hosts: localhost
+  tasks:
+  - name: Apply
+    ansible.builtin.command: kubectl apply -f pod.yaml
+  - name: Verify
+    ansible.builtin.command: kubectl get pod nginx-pod -o jsonpath='{.status.phase}'
+    register: pod_status
+  - name: Fail if not running
+    ansible.builtin.fail: { msg: "Pod not Running" }
+    when: pod_status.stdout != "Running"
+        </script>
+      </div>
+      <p><strong>Q. How do you use Ansible to install <code>kubectl</code> and check the cluster?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Install kubectl
+  hosts: all
+  become: yes
+  tasks:
+  - name: Install
+    ansible.builtin.shell: |
+      curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+      chmod +x kubectl && mv kubectl /usr/local/bin/
+    args: { creates: /usr/local/bin/kubectl }
+  - name: Check cluster
+    ansible.builtin.command: kubectl cluster-info
+    register: cluster_info
+  - name: Debug
+    ansible.builtin.debug: { var: cluster_info.stdout }
+        </script>
+      </div>
+      <p>Run it with <code>ansible-playbook install_kubectl.yml</code>.</p>
+      <p><strong>Q. How do you use Ansible to update a ConfigMap and restart the Pods?</strong> Apply <code>configmap.yaml</code>, then restart the Deployment.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Update ConfigMap
+  hosts: localhost
+  tasks:
+  - name: Apply
+    ansible.builtin.command: kubectl apply -f configmap.yaml
+  - name: Restart
+    ansible.builtin.command: kubectl rollout restart deployment web-app -n default
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-kubernetes-050-nodes-and-services">← Previous</a><span class="rev-pos">51 / 63</span><a href="#q-kubernetes-052-checking-logs-and-exposing-services-with">Next →</a></nav>
+    </section>
+  </div>
+</details>

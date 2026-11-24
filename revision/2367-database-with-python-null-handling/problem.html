@@ -1,0 +1,42 @@
+<details class="question" id="q-database-with-python-139-null-handling" data-group="database-with-python" data-sec="database-with-python-s140">
+  <summary>
+    <span class="q-title">NULL handling</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › NULL handling</p>
+      <p><strong>Q. A script misreads NULL values from Snowflake. How do you handle them?</strong> NULL arrives as Python <code>None</code>. Check for <code>None</code>, use default values (<code>fillna</code> in pandas) and review the query logic.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import pandas as pd
+
+conn = snowflake.connector.connect(
+    user='your_user', password='your_password', account='your_account',
+    warehouse='your_warehouse', database='your_database', schema='your_schema'
+)
+
+try:
+    cursor = conn.cursor()
+    cursor.execute("SELECT column1, column2 FROM your_table")
+    df = pd.DataFrame(cursor.fetchall(), columns=[desc[0] for desc in cursor.description])
+
+    df.fillna({'column1': 'default_value', 'column2': 0}, inplace=True)
+    for index, row in df.iterrows():
+        column1 = row['column1'] if row['column1'] is not None else 'default_value'
+        column2 = row['column2'] if row['column2'] is not None else 0
+        print(f"Row {index}: {column1}, {column2}")
+except snowflake.connector.errors.ProgrammingError as e:
+    print(f"Error: {e}")
+finally:
+    cursor.close()
+    conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-138-cross-region-connection">← Previous</a><span class="rev-pos">139 / 147</span><a href="#q-database-with-python-140-query-tags-not-showing-in-history">Next →</a></nav>
+    </section>
+  </div>
+</details>

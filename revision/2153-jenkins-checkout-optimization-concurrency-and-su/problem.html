@@ -1,0 +1,43 @@
+<details class="question" id="q-jenkins-033-checkout-optimization-concurrency-and-su" data-group="jenkins" data-sec="jenkins-s034">
+  <summary>
+    <span class="q-title">Checkout optimization, concurrency and submodules</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 5. Triggers and SCM Integration › Checkout optimization, concurrency and submodules</p>
+      <p><strong>Q. What is Git sparse checkout, and how do you speed up large checkouts?</strong> Sparse checkout fetches only specified paths instead of the whole repo, which helps monorepos. Other options: shallow clone (<code>depth</code>), skipping tags, reference repos, and disabling unneeded submodules.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+checkout([$class: 'GitSCM',
+  branches: [[name: '*/main']],
+  extensions: [
+    [$class: 'CloneOption', depth: 1, shallow: true, noTags: true],
+    [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: 'services/api/']]]
+  ],
+  userRemoteConfigs: [[url: 'https://github.com/org/monorepo.git']]
+])
+        </script>
+      </div>
+      <p><strong>Q. How do you handle Git submodules during checkout?</strong> Enable the <code>SubmoduleOption</code> extension (recursive, with parent credentials) so submodules are initialized and updated.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+checkout([$class: 'GitSCM', branches: [[name: '*/main']],
+  extensions: [[$class: 'SubmoduleOption', recursiveSubmodules: true, parentCredentials: true]],
+  userRemoteConfigs: [[url: 'https://github.com/org/repo.git']]])
+        </script>
+      </div>
+      <p><strong>Q. How do you stop concurrent builds of the same branch?</strong> Add <code>disableConcurrentBuilds</code>: a new build of the same job or branch queues until the current one finishes, avoiding races on shared resources and deploys. <code>abortPrevious: true</code> cancels the older run instead.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+options { disableConcurrentBuilds() }
+// or: options { disableConcurrentBuilds(abortPrevious: true) }
+        </script>
+      </div>
+      <p><strong>Q. What is the Quiet Period?</strong> A configurable delay between a trigger firing and the build starting. It batches a burst of rapid commits into one build and avoids redundant runs.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-032-downstream-jobs-remote-triggers-and-webh">← Previous</a><span class="rev-pos">33 / 80</span><a href="#q-jenkins-034-running-scripts-from-a-pipeline">Next →</a></nav>
+    </section>
+  </div>
+</details>

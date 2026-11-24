@@ -1,0 +1,48 @@
+<details class="question" id="q-database-with-python-124-inconsistent-query-results" data-group="database-with-python" data-sec="database-with-python-s125">
+  <summary>
+    <span class="q-title">Inconsistent query results</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Inconsistent query results</p>
+      <p><strong>Q. A Snowflake query returns different results across runs. What could cause it and how do you investigate?</strong> Data updates between runs, result caching, transaction isolation and query logic errors. Disable the result cache to force fresh data, log the results, and check the query conditions. Snowflake's transaction isolation is READ COMMITTED.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+from snowflake.connector import DictCursor
+
+conn = snowflake.connector.connect(
+    user='your_user', password='your_password', account='your_account',
+    warehouse='your_warehouse', database='your_db', schema='your_schema'
+)
+
+query = """
+SELECT * FROM orders
+WHERE order_date = CURRENT_DATE
+"""
+
+try:
+    cursor = conn.cursor(DictCursor)
+    cursor.execute("ALTER SESSION SET USE_CACHED_RESULT = FALSE")   # fresh data
+    cursor.execute(query)
+    results = cursor.fetchall()
+
+    with open('query_log.txt', 'a') as f:
+        f.write(str(results))
+
+    if not results:
+        print("No results returned. Verify query conditions.")
+except Exception as e:
+    print(f"Error: {e}")
+finally:
+    cursor.close()
+    conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-123-large-result-set-and-memory">← Previous</a><span class="rev-pos">124 / 147</span><a href="#q-database-with-python-125-batch-insert-performance">Next →</a></nav>
+    </section>
+  </div>
+</details>

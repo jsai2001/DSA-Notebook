@@ -1,0 +1,62 @@
+<details class="question" id="q-lambda-049-testing-locally-and-handling-crashes" data-group="lambda" data-sec="lambda-s049">
+  <summary>
+    <span class="q-title">Testing locally and handling crashes</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 9. Monitoring, logging and testing › Testing locally and handling crashes</p>
+      <p><strong>Q87. How do you unit test Lambda functions without calling AWS?</strong> Keep business logic separate from the handler and test it directly. Mock AWS SDK calls with <strong>moto</strong> (Python) or <strong>aws-sdk-client-mock</strong> (JS), and pass a fake <code>event</code> and <code>context</code>. This runs fast in CI with no real AWS calls.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# test_handler.py: moto mocks DynamoDB, no real AWS
+from moto import mock_aws
+import boto3, app
+
+@mock_aws
+def test_handler():
+    boto3.client("dynamodb").create_table(...)   # in-memory mock
+    resp = app.lambda_handler({"id": "1"}, None)
+    assert resp["statusCode"] == 200
+        </script>
+      </div>
+      <p><strong>Q88. What local emulation tools exist (SAM CLI, LocalStack)?</strong></p>
+      <ul>
+        <li><strong>AWS SAM CLI</strong>: <code>sam local invoke</code> and <code>sam local start-api</code> run the function or API in a Docker container that emulates the Lambda runtime.</li>
+        <li><strong>LocalStack</strong>: emulates many AWS services (S3, DynamoDB, SQS, Lambda) locally for integration tests.</li>
+        <li>Also <code>serverless-offline</code> and direct handler calls in unit tests.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+sam local invoke MyFunction -e events/event.json
+sam local start-api        # serves the API at http://localhost:3000
+        </script>
+      </div>
+      <p><strong>Q89. How do you handle unhandled exceptions or crashes?</strong> Unhandled exceptions are logged to CloudWatch with the stack trace and increment the <code>Errors</code> metric. For sync calls the error returns to the caller. For async calls it triggers retries, then the DLQ or destination. Best practice: wrap handler logic in try/except, log structured errors, and let genuinely retryable failures throw so Lambda's retry and DLQ machinery engages.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def lambda_handler(event, context):
+    try:
+        return process(event)
+    except RetryableError:
+        raise                      # let Lambda retry / send to DLQ
+    except Exception as e:
+        log.exception("unrecoverable")   # stack trace to CloudWatch
+        return {"statusCode": 500}
+        </script>
+      </div>
+      <p><strong>Q90. How do CloudWatch Logs Insights queries help diagnose latency or failures?</strong> Logs Insights queries log groups with a purpose-built language to filter, aggregate and sort: find the slowest invocations, count errors or extract fields from JSON logs, far faster than scrolling streams.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Text">
+fields @timestamp, @duration, @message
+| filter @type = "REPORT"
+| sort @duration desc
+| limit 20
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-048-billing-from-logs-structured-logs-and-th">← Previous</a><span class="rev-pos">49 / 79</span><a href="#q-lambda-050-why-infrastructure-as-code">Next →</a></nav>
+    </section>
+  </div>
+</details>

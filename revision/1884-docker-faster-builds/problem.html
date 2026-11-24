@@ -1,0 +1,38 @@
+<details class="question" id="q-docker-055-faster-builds" data-group="docker" data-sec="docker-s056">
+  <summary>
+    <span class="q-title">Faster builds</span>
+    <span class="q-meta">
+      <span class="tag">Docker</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Docker › 15. On-Call: Image and Build Problems › Faster builds</p>
+      <p><strong>Q. How do you optimize a Dockerfile for faster builds?</strong> Cache dependencies by copying the dependency file first, use multi-stage builds, and minimize copied files.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Dockerfile">
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+        </script>
+      </div>
+      <p>Multi-stage:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Dockerfile">
+FROM node:16 AS builder
+WORKDIR /app
+COPY package.json .
+RUN npm install
+FROM node:16-slim
+COPY --from=builder /app /app
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker build --cache-from my_image:latest -t my_image .
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-docker-054-build-failures">← Previous</a><span class="rev-pos">55 / 77</span><a href="#q-docker-056-registry-and-base-image-problems">Next →</a></nav>
+    </section>
+  </div>
+</details>

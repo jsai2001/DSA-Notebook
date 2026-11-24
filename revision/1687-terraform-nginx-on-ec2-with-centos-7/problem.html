@@ -1,0 +1,39 @@
+<details class="question" id="q-terraform-063-nginx-on-ec2-with-centos-7" data-group="terraform" data-sec="terraform-s064">
+  <summary>
+    <span class="q-title">Nginx on EC2 with CentOS 7</span>
+    <span class="q-meta">
+      <span class="tag">Terraform</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Terraform › 16. Hands-On: Complete Stacks › Nginx on EC2 with CentOS 7</p>
+      <p>The network resources are identical to the Ubuntu stack. Only the AMI and user data change.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_instance" "nginx_ec2" {
+    ami           = "ami-0b2c7a2f6f2d513d4"  # CentOS 7 AMI (us-east-1)
+    instance_type = "t2.micro"
+    subnet_id     = aws_subnet.nginx_subnet.id
+    security_groups = [aws_security_group.nginx_sg.name]
+    key_name      = "my-key-pair"
+    user_data     = <<-EOF
+                                    #!/bin/bash
+                                    yum update -y
+                                    yum install -y epel-release
+                                    yum install -y nginx
+                                    systemctl start nginx
+                                    systemctl enable nginx
+                                    EOF
+    associate_public_ip_address = true
+}
+        </script>
+      </div>
+      <ul>
+        <li><strong>AMI</strong>: <code>ami-0b2c7a2f6f2d513d4</code> is CentOS 7 in <code>us-east-1</code>. Update it for other regions.</li>
+        <li><strong>User data</strong>: installs <code>epel-release</code> first because the EPEL repository provides Nginx. On CentOS use <code>yum install -y nginx</code> instead of <code>apt-get</code>.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-terraform-062-nginx-on-ec2-with-ubuntu-20-04-lts">← Previous</a><span class="rev-pos">63 / 142</span><a href="#q-terraform-064-connecting-an-rds-instance-to-an-ec2-ins">Next →</a></nav>
+    </section>
+  </div>
+</details>

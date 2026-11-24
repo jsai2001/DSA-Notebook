@@ -1,0 +1,26 @@
+<details class="question" id="q-terraform-086-ec2-instance-behind-a-load-balancer" data-group="terraform" data-sec="terraform-s085">
+  <summary>
+    <span class="q-title">EC2 instance behind a load balancer?</span>
+    <span class="q-meta">
+      <span class="tag">Terraform</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Terraform › 18. On-Call: Networking and Load Balancing › EC2 instance behind a load balancer?</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_vpc" "main" { cidr_block = "10.0.0.0/16" }
+resource "aws_subnet" "public" { vpc_id = aws_vpc.main.id, cidr_block = "10.0.1.0/24" }
+resource "aws_security_group" "alb_sg" { vpc_id = aws_vpc.main.id, ingress = { from_port = 80, to_port = 80, protocol = "tcp", cidr_blocks = ["0.0.0.0/0"] }, egress = { from_port = 0, to_port = 0, protocol = "-1", cidr_blocks = ["0.0.0.0/0"] } }
+resource "aws_lb" "example" { name = "my-alb", internal = false, load_balancer_type = "application", security_groups = [aws_security_group.alb_sg.id], subnets = [aws_subnet.public.id] }
+resource "aws_lb_target_group" "example" { name = "my-tg", port = 80, protocol = "HTTP", vpc_id = aws_vpc.main.id }
+resource "aws_lb_listener" "example" { load_balancer_arn = aws_lb.example.arn, port = 80, protocol = "HTTP", default_action = { type = "forward", target_group_arn = aws_lb_target_group.example.arn } }
+resource "aws_instance" "example" { ami = "ami-0c55b159cbfafe1f0", instance_type = "t2.micro", subnet_id = aws_subnet.public.id, security_groups = [aws_security_group.alb_sg.name] }
+resource "aws_lb_target_group_attachment" "example" { target_group_arn = aws_lb_target_group.example.arn, target_id = aws_instance.example.id, port = 80 }
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-terraform-085-nat-gateway-in-a-vpc">← Previous</a><span class="rev-pos">86 / 142</span><a href="#q-terraform-087-route-53-record-for-alb">Next →</a></nav>
+    </section>
+  </div>
+</details>

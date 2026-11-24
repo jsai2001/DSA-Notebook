@@ -1,0 +1,39 @@
+<details class="question" id="q-lambda-027-api-gateway-integrations-and-scheduling" data-group="lambda" data-sec="lambda-s028">
+  <summary>
+    <span class="q-title">API Gateway integrations and scheduling</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 4. Invocation models and event sources › API Gateway integrations and scheduling</p>
+      <p><strong>Q41. API Gateway Proxy Integration vs Custom Integration?</strong></p>
+      <ul>
+        <li><strong>Proxy (Lambda proxy) integration</strong>: API Gateway passes the entire raw request (path, headers, query, body) to Lambda as the standard <code>event</code>, and Lambda must return a <code>{statusCode, headers, body}</code> shape. Simple, flexible, minimal mapping config.</li>
+        <li><strong>Custom (non-proxy) integration</strong>: you use mapping templates (VTL) to transform the request and response between client and Lambda. More control and decoupling, more configuration.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+// Proxy integration must return this exact shape
+exports.handler = async (event) => ({
+  statusCode: 200,
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ msg: `Hello ${event.queryStringParameters?.name ?? "world"}` }),
+});
+        </script>
+      </div>
+      <p><strong>Q42. How do you trigger a function on a schedule?</strong> Use Amazon EventBridge (Scheduler or a rule) with a <code>rate()</code> or <code>cron()</code> expression. EventBridge invokes the function asynchronously.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+Events:
+  EveryFiveMinutes:
+    Type: Schedule
+    Properties:
+      Schedule: rate(5 minutes)        # or cron(0 12 * * ? *)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-026-stream-processing-poison-pills-and-bisec">← Previous</a><span class="rev-pos">27 / 79</span><a href="#q-lambda-028-root-user-iam-users-and-policies">Next →</a></nav>
+    </section>
+  </div>
+</details>

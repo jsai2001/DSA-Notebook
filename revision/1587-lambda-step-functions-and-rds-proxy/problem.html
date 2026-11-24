@@ -1,0 +1,38 @@
+<details class="question" id="q-lambda-042-step-functions-and-rds-proxy" data-group="lambda" data-sec="lambda-s043">
+  <summary>
+    <span class="q-title">Step Functions and RDS Proxy</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 8. Storage, state and integrations › Step Functions and RDS Proxy</p>
+      <p><strong>Q74. How does Step Functions orchestrate stateful workflows with Lambda?</strong> Step Functions is a managed state machine that coordinates several Lambdas (and other services) with sequencing, branching (<code>Choice</code>), parallelism (<code>Map</code>/<code>Parallel</code>), retries, error handling and wait states. The workflow state is external, so each Lambda stays stateless and short. It suits long-running, multi-step processes.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JSON">
+{ "ResizeImage": {
+    "Type": "Task",
+    "Resource": "arn:aws:lambda:...:function:resize",
+    "Retry": [{ "ErrorEquals": ["States.TaskFailed"], "MaxAttempts": 2 }],
+    "Next": "Notify" } }
+        </script>
+      </div>
+      <p><strong>Q75. What is the max payload Step Functions passes between Lambda tasks?</strong> 256 KB per state transition. For larger data pass a <strong>reference</strong> (for example an S3 key) and have the Lambdas read and write the real payload in S3.</p>
+      <p><strong>Q76. How do you manage DB connection pooling with RDS Proxy and Lambda?</strong> Lambda's rapid scaling can exhaust database connections. <strong>RDS Proxy</strong> sits between Lambda and RDS or Aurora, keeps a warm pool and multiplexes many Lambda connections onto fewer DB connections. Lambda connects to the proxy endpoint (IAM auth supported), which smooths spikes and improves failover. Pair it with reserved concurrency.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Connect to RDS through RDS Proxy (endpoint = proxy, not the DB directly)
+import os, pymysql
+conn = pymysql.connect(host=os.environ["PROXY_ENDPOINT"],  # created outside handler
+                       user=os.environ["DB_USER"], db="app")
+def lambda_handler(event, context):
+    with conn.cursor() as cur:
+        cur.execute("SELECT 1")
+        return cur.fetchone()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-041-efs-vs-tmp-vs-s3">← Previous</a><span class="rev-pos">42 / 79</span><a href="#q-lambda-043-dynamodb-streams-edge-functions-and-exte">Next →</a></nav>
+    </section>
+  </div>
+</details>

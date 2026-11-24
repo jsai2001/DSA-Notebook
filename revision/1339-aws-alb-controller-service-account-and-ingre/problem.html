@@ -1,0 +1,69 @@
+<details class="question" id="q-aws-069-alb-controller-service-account-and-ingre" data-group="aws" data-sec="aws-s070">
+  <summary>
+    <span class="q-title">ALB controller service account and Ingress</span>
+    <span class="q-meta">
+      <span class="tag">AWS</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS › 17. Terraform for AWS: Scaling and Load Balancing › ALB controller service account and Ingress</p>
+      <p>The service account carries the role ARN annotation. Deploy the controller, an app, a ClusterIP service and an ALB Ingress.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aws-load-balancer-controller
+  namespace: kube-system
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::<account_id>:role/AmazonEKSLoadBalancerControllerRole
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+kubectl apply -f v2_7_1_full.yaml
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-service
+spec:
+  type: ClusterIP
+  selector:
+    app: web
+  ports:
+    - port: 80
+      targetPort: 80
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-ingress
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web-service
+                port:
+                  number: 80
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-aws-068-kubernetes-autoscaling-on-eks-iam-for-th">← Previous</a><span class="rev-pos">69 / 94</span><a href="#q-aws-070-app-deployment-and-hpa">Next →</a></nav>
+    </section>
+  </div>
+</details>

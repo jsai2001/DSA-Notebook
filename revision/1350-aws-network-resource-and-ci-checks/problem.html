@@ -1,0 +1,70 @@
+<details class="question" id="q-aws-080-network-resource-and-ci-checks" data-group="aws" data-sec="aws-s081">
+  <summary>
+    <span class="q-title">Network, resource and CI checks</span>
+    <span class="q-meta">
+      <span class="tag">AWS</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS › 19. Troubleshooting ECR Image Pulls on EKS › Network, resource and CI checks</p>
+      <p>Step 4: validate network connectivity from inside the cluster, and check the EKS security groups and VPC endpoints.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+kubectl run -it test-pod --image=alpine --namespace <namespace> -- sh
+wget <aws-account-id>.dkr.ecr.<region>.amazonaws.com
+aws ec2 describe-vpc-endpoints --region <region>
+        </script>
+      </div>
+      <p>Step 5: check node resources, and adjust pod requests and limits if needed.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+kubectl get nodes
+kubectl describe node <node-name>
+kubectl top nodes
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+resources:
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+  requests:
+    cpu: "200m"
+    memory: "256Mi"
+        </script>
+      </div>
+      <p>Step 6: reapply the deployment and watch it.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+kubectl apply -f <deployment-file>.yaml
+kubectl get pods -n <namespace> -w
+kubectl logs <pod-name> -n <namespace>
+        </script>
+      </div>
+      <p>Step 7: prevent recurrence by validating the image in CI.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Validate ECR Image
+on: [push]
+jobs:
+  validate-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: <region>
+      - name: Check Image Existence
+        run: |
+          aws ecr describe-images --repository-name app --image-ids imageTag=latest || exit 1
+        </script>
+      </div>
+      <p>Outcome: the pod moves to <code>Running</code>, and the automation prevents the issue from returning.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-aws-079-automate-ecr-token-refresh">← Previous</a><span class="rev-pos">80 / 94</span><a href="#q-aws-081-eks-clusters-with-terraform">Next →</a></nav>
+    </section>
+  </div>
+</details>

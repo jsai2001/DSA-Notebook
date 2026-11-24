@@ -1,0 +1,76 @@
+<details class="question" id="q-github-actions-069-generating-workflow-files-with-python" data-group="github-actions" data-sec="github-actions-s070">
+  <summary>
+    <span class="q-title">Generating workflow files with Python</span>
+    <span class="q-meta">
+      <span class="tag">GitHub Actions</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GitHub Actions › 11. Python and GitHub Actions › Generating workflow files with Python</p>
+      <p><strong>Q. How do you create a workflow file dynamically with Python?</strong> Write YAML into <code>.github/workflows</code>, using the <code>yaml</code> library for correct formatting.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import yaml
+import os
+def create_workflow_file(filename, workflow_name, trigger, steps):
+    workflow = {
+        "name": workflow_name,
+        "on": trigger,
+        "jobs": {
+            "build": {
+                "runs-on": "ubuntu-latest",
+                "steps": steps
+            }
+        }
+    }
+    os.makedirs(".github/workflows", exist_ok=True)
+    with open(f".github/workflows/{filename}", "w") as f:
+        yaml.dump(workflow, f, default_flow_style=False)
+    print(f"Workflow file {filename} created!")
+# Example usage
+steps = [
+    {"uses": "actions/checkout@v3"},
+    {"name": "Set up Python", "uses": "actions/setup-python@v4", "with": {"python-version": "3.10"}},
+    {"name": "Run script", "run": "python script.py"}
+]
+create_workflow_file("dynamic.yml", "Dynamic Workflow", ["push"], steps)
+        </script>
+      </div>
+      <p><strong>Q. Scenario: automate creating workflows for multiple repositories.</strong> Use <code>PyGithub</code> to create the workflow file in each repo, generating YAML from a template.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from github import Github
+import yaml
+def create_workflow_in_repo(owner, repo_name, token, workflow_name, steps):
+    g = Github(token)
+    repo = g.get_repo(f"{owner}/{repo_name}")
+    workflow = {
+        "name": workflow_name,
+        "on": ["push"],
+        "jobs": {
+            "build": {
+                "runs-on": "ubuntu-latest",
+                "steps": steps
+            }
+        }
+    }
+    workflow_content = yaml.dump(workflow, default_flow_style=False)
+    repo.create_file(
+        path=f".github/workflows/{workflow_name.lower()}.yml",
+        message=f"Add {workflow_name} workflow",
+        content=workflow_content
+    )
+    print(f"Workflow created in {repo_name}")
+# Example usage
+steps = [
+    {"uses": "actions/checkout@v3"},
+    {"name": "Run script", "run": "python script.py"}
+]
+create_workflow_in_repo("my-org", "my-repo", token, "CI", steps)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-github-actions-068-running-a-python-script-in-a-workflow">← Previous</a><span class="rev-pos">69 / 89</span><a href="#q-github-actions-070-logs-and-secrets-through-the-api">Next →</a></nav>
+    </section>
+  </div>
+</details>

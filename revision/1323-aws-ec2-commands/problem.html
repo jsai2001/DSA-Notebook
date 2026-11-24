@@ -1,0 +1,57 @@
+<details class="question" id="q-aws-053-ec2-commands" data-group="aws" data-sec="aws-s054">
+  <summary>
+    <span class="q-title">EC2 commands</span>
+    <span class="q-meta">
+      <span class="tag">AWS</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS › 15. AWS CLI Operations Q&amp;A › EC2 commands</p>
+      <p><strong>Q. How do you find EC2 instances in a specific VPC?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws ec2 describe-instances --filters "Name=vpc-id,Values=vpc-12345678" --query "Reservations[].Instances[].InstanceId" --output text
+        </script>
+      </div>
+      <p><strong>Q. How do you stop all running EC2 instances in a region?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws ec2 stop-instances --instance-ids $(aws ec2 describe-instances --region us-east-1 --filters "Name=instance-state-name,Values=running" --query "Reservations[].Instances[].InstanceId" --output text)
+        </script>
+      </div>
+      <p><strong>Q. How do you tag untagged EC2 instances?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws ec2 describe-instances --query 'Reservations[*].Instances[?not_null(Tags)==`false`].[InstanceId]' --output text | xargs -I {} aws ec2 create-tags --resources {} --tags Key=Environment,Value=Dev
+        </script>
+      </div>
+      <p><strong>Q. How do you enable termination protection on EC2?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws ec2 modify-instance-attribute --instance-id <instance-id> --disable-api-termination
+        </script>
+      </div>
+      <p><strong>Q. How do you check the IAM role on an EC2 instance?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws ec2 describe-instances --instance-ids <instance-id> --query 'Reservations[0].Instances[0].IamInstanceProfile'
+        </script>
+      </div>
+      <p><strong>Q. How do you create a security group and allow port 80?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws ec2 create-security-group --group-name MySG --description "Allow HTTP" --vpc-id vpc-12345678
+aws ec2 authorize-security-group-ingress --group-name MySG --protocol tcp --port 80 --cidr 0.0.0.0/0
+        </script>
+      </div>
+      <p><strong>Q. How do you update an EC2 security group to allow HTTPS?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws ec2 authorize-security-group-ingress --group-id <security-group-id> --protocol tcp --port 443 --cidr 0.0.0.0/0
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-aws-052-verify-the-setup">← Previous</a><span class="rev-pos">53 / 94</span><a href="#q-aws-054-ebs-and-ami-commands">Next →</a></nav>
+    </section>
+  </div>
+</details>

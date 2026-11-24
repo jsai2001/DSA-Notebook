@@ -1,0 +1,53 @@
+<details class="question" id="q-database-with-python-114-environment-variable-mismatch" data-group="database-with-python" data-sec="database-with-python-s115">
+  <summary>
+    <span class="q-title">Environment variable mismatch</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Environment variable mismatch</p>
+      <p><strong>Q. Credentials in environment variables are wrong. How do you verify and fix it?</strong> Check that every required variable exists with <code>os.getenv()</code>, confirm names, load a <code>.env</code> file with <code>python-dotenv</code>, and report which variable is missing.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import os
+import logging
+from dotenv import load_dotenv
+
+logging.basicConfig(level=logging.DEBUG)
+load_dotenv()
+
+def verify_env_vars():
+    required_vars = ['SNOWFLAKE_USER', 'SNOWFLAKE_PASSWORD', 'SNOWFLAKE_ACCOUNT']
+    for var in required_vars:
+        if not os.getenv(var):
+            logging.error(f"Missing environment variable: {var}")
+            return False
+    return True
+
+try:
+    if verify_env_vars():
+        conn = snowflake.connector.connect(
+            user=os.getenv('SNOWFLAKE_USER'),
+            password=os.getenv('SNOWFLAKE_PASSWORD'),
+            account=os.getenv('SNOWFLAKE_ACCOUNT'),
+            warehouse=os.getenv('SNOWFLAKE_WAREHOUSE', 'default_warehouse'),
+            database=os.getenv('SNOWFLAKE_DATABASE', 'default_db'),
+            schema=os.getenv('SNOWFLAKE_SCHEMA', 'default_schema')
+        )
+        logging.info("Connection successful")
+    else:
+        logging.info("Check .env file or system environment variables")
+except snowflake.connector.errors.DatabaseError as e:
+    logging.error(f"Connection failed: {e}")
+finally:
+    if 'conn' in locals():
+        conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-113-connection-pooling-for-frequent-connecti">← Previous</a><span class="rev-pos">114 / 147</span><a href="#q-database-with-python-115-authentication-failure">Next →</a></nav>
+    </section>
+  </div>
+</details>

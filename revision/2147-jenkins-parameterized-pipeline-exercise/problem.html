@@ -1,0 +1,43 @@
+<details class="question" id="q-jenkins-027-parameterized-pipeline-exercise" data-group="jenkins" data-sec="jenkins-s028">
+  <summary>
+    <span class="q-title">Parameterized pipeline exercise</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 4. Parameters, Conditions and Approvals › Parameterized pipeline exercise</p>
+      <p>Requirements: parameters <code>ENVIRONMENT</code> (choice: development, staging, production), <code>API_KEY</code> (password, default <code>123ABC</code>) and <code>CHANGELOG</code> (text); stages Test, Deploy and Report; Deploy runs only for <code>production</code>; Report writes the changelog to a file named after the environment and archives it. Use the Declarative Directive Generator for the parameter snippets. The <code>choices</code> must be separate strings in a list (<code>['development', 'staging', 'production']</code>), not one string.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+pipeline {
+    agent any
+    parameters {
+        choice(name: 'ENVIRONMENT', choices: ['development', 'staging', 'production'], description: 'Select an environment for deployment')
+        password(name: 'API_KEY', defaultValue: '123ABC', description: 'Enter the API key')
+        text(name: 'CHANGELOG', defaultValue: '', description: 'Enter the changelog')
+    }
+    stages {
+        stage('Test') {
+            steps { echo "Running tests for ${params.ENVIRONMENT}..." }
+        }
+        stage('Deploy') {
+            when { expression { params.ENVIRONMENT == 'production' } }
+            steps { echo "Deploying to production with API key: ${params.API_KEY}" }
+        }
+        stage('Report') {
+            steps {
+                sh "echo '${params.CHANGELOG}' > ${params.ENVIRONMENT}.txt"
+                archiveArtifacts artifacts: "${params.ENVIRONMENT}.txt", allowEmptyArchive: true
+            }
+        }
+    }
+}
+        </script>
+      </div>
+      <p>Testing: with <code>development</code>, Deploy is skipped and <code>development.txt</code> holds the changelog; with <code>production</code>, Deploy runs and <code>production.txt</code> holds it. The API key shows as dots in the UI.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-026-conditional-deploy-example">← Previous</a><span class="rev-pos">27 / 80</span><a href="#q-jenkins-028-jenkinsfile-and-pipeline-as-code">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,95 @@
+<details class="question" id="q-aws-085-building-kubernetes-on-ec2" data-group="aws" data-sec="aws-s086">
+  <summary>
+    <span class="q-title">Building Kubernetes on EC2</span>
+    <span class="q-meta">
+      <span class="tag">AWS</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS › 20. AWS Integration Questions › Building Kubernetes on EC2</p>
+      <p><strong>Q. Ansible to configure EC2 as a Kubernetes node, GitHub Actions to verify?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Configure K8s
+  hosts: ec2_hosts
+  become: yes
+  tasks:
+  - name: Install
+    ansible.builtin.package: { name: kubelet, state: present }
+        </script>
+      </div>
+      <p>Verification uses the same <code>kubectl get nodes</code> workflow as above, with <code>KUBECONFIG</code> from secrets.</p>
+      <p><strong>Q. Terraform for ASG, Ansible for a Kubernetes agent?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+module "asg" {
+  source = "terraform-aws-modules/autoscaling/aws"
+  name = "my-asg"
+  min_size = 1
+  max_size = 3
+  vpc_zone_identifier = ["subnet-1"]
+}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Install K8s agent
+  hosts: asg_hosts
+  become: yes
+  tasks:
+  - name: Install
+    ansible.builtin.package: { name: kubeadm, state: present }
+        </script>
+      </div>
+      <p><strong>Q. Terraform for EC2, Ansible to join the node to a Kubernetes cluster?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_instance" "k8s_node" { ami = "ami-0c55b159cbfafe1f0", instance_type = "t2.medium" }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Join K8s
+  hosts: ec2_hosts
+  become: yes
+  tasks:
+  - name: Install
+    ansible.builtin.package: { name: kubeadm, state: present }
+  - name: Join
+    ansible.builtin.command: kubeadm join <master-ip>:6443 --token <token> --discovery-token-ca-cert-hash <hash>
+        </script>
+      </div>
+      <p><strong>Q. Ansible to build a Kubernetes cluster on EC2, GitHub Actions to verify?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Install K8s
+  hosts: ec2_hosts
+  become: yes
+  tasks:
+  - name: Install
+    ansible.builtin.package: { name: "{{ item }}", state: present }
+    loop: [kubeadm, kubelet, kubectl]
+  - name: Init master
+    ansible.builtin.command: kubeadm init --pod-network-cidr=10.244.0.0/16
+    when: inventory_hostname == "master"
+        </script>
+      </div>
+      <p><strong>Q. Ansible to install <code>kubectl</code> on EC2, GitHub Actions to deploy a pod?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Install kubectl
+  hosts: ec2_hosts
+  become: yes
+  tasks:
+  - name: Install
+    ansible.builtin.shell: |
+      curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+      chmod +x kubectl && mv kubectl /usr/local/bin/
+        </script>
+      </div>
+      <p>The deploy step is <code>kubectl apply -f pod.yaml</code> with <code>KUBECONFIG</code> from secrets, as in the other workflows.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-aws-084-ingress-security-group-and-cronjob-deplo">← Previous</a><span class="rev-pos">85 / 94</span><a href="#q-aws-086-s3-cloudfront-and-lambda-with-github-act">Next →</a></nav>
+    </section>
+  </div>
+</details>

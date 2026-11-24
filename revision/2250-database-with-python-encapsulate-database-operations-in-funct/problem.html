@@ -1,0 +1,47 @@
+<details class="question" id="q-database-with-python-022-encapsulate-database-operations-in-funct" data-group="database-with-python" data-sec="database-with-python-s023">
+  <summary>
+    <span class="q-title">Encapsulate database operations in functions</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 4. MySQL with Python › Encapsulate database operations in functions</p>
+      <p>Goal: separate business logic from database access. <code>add_project</code> inserts a project, reads its new id from <code>cursor.lastrowid</code> and inserts its tasks with parameterized <code>%s</code> placeholders. The caller commits.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def add_project(cursor, project_data, tasks_data):
+    project_sql = "INSERT INTO projects (title, description) VALUES (%s, %s)"
+    cursor.execute(project_sql, (project_data['title'], project_data['description']))
+    project_id = cursor.lastrowid  # id of the project just inserted
+
+    task_sql = "INSERT INTO tasks (project_id, description) VALUES (%s, %s)"
+    for task in tasks_data:
+        cursor.execute(task_sql, (project_id, task['description']))
+
+def main():
+    db = connect("projects")
+    if db:
+        cursor = db.cursor()
+        project_data = {'title': 'Clean the House', 'description': 'Deep clean all rooms'}
+        tasks_data = [
+            {'description': 'Clean bathroom'},
+            {'description': 'Clean kitchen'},
+            {'description': 'Clean living room'}
+        ]
+        add_project(cursor, project_data, tasks_data)
+        db.commit()
+
+        cursor.execute("SELECT * FROM projects")
+        print("Projects:", cursor.fetchall())
+        cursor.execute("SELECT * FROM tasks")
+        print("Tasks:", cursor.fetchall())
+        cursor.close()
+        db.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-021-keep-credentials-out-of-code">← Previous</a><span class="rev-pos">22 / 147</span><a href="#q-database-with-python-023-design-trade-offs-when-encapsulating">Next →</a></nav>
+    </section>
+  </div>
+</details>

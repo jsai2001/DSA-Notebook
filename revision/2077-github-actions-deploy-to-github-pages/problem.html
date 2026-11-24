@@ -1,0 +1,71 @@
+<details class="question" id="q-github-actions-046-deploy-to-github-pages" data-group="github-actions" data-sec="github-actions-s047">
+  <summary>
+    <span class="q-title">Deploy to GitHub Pages</span>
+    <span class="q-meta">
+      <span class="tag">GitHub Actions</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GitHub Actions › 8. Integrations: Packages, Pages, Terraform, CodeQL, Dependabot › Deploy to GitHub Pages</p>
+      <p>Pages hosts static sites from a repo. The workflow checks out the code, builds, uploads the output with <code>actions/upload-pages-artifact</code> and deploys with <code>actions/deploy-pages</code>. It needs <code>pages: write</code> and <code>id-token: write</code>. The repo must have Pages enabled (Settings &gt; Pages &gt; Source), the artifact <code>path</code> must match the build output directory, and single-page apps need a <code>404.html</code> or routing rules.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Deploy to GitHub Pages
+on:
+  push:
+    branches: [main]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+      - id: deployment
+        uses: actions/deploy-pages@v4
+        </script>
+      </div>
+      <p>For a Vite project, set the base URL in <code>vite.config.js</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+export default {
+  base: '/repository-name/',
+};
+        </script>
+      </div>
+      <p><strong>Q. Deploy a static site to GitHub Pages on a tag.</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Deploy Pages
+on:
+  push:
+    tags: ['v*']
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: npm install && npm run build
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-github-actions-045-github-packages">← Previous</a><span class="rev-pos">46 / 89</span><a href="#q-github-actions-047-terraform-in-a-workflow">Next →</a></nav>
+    </section>
+  </div>
+</details>

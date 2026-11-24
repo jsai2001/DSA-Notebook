@@ -1,0 +1,33 @@
+<details class="question" id="q-jenkins-055-multi-container-pods-ec2-agents-and-kani" data-group="jenkins" data-sec="jenkins-s056">
+  <summary>
+    <span class="q-title">Multi-container pods, EC2 agents and Kaniko</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 8. Agents and Distributed Builds › Multi-container pods, EC2 agents and Kaniko</p>
+      <p><strong>Q. How do you run several containers (Maven, AWS CLI) in one pod?</strong> Declare multiple containers in the pod YAML and target each with <code>container('name')</code>; they share the workspace volume.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+agent {
+  kubernetes { yaml '''
+    spec:
+      containers:
+      - {name: maven, image: maven:3.9, command: [cat], tty: true}
+      - {name: aws,   image: amazon/aws-cli, command: [cat], tty: true}
+  ''' }
+}
+stages {
+  stage('Build')  { steps { container('maven') { sh 'mvn package' } } }
+  stage('Deploy') { steps { container('aws')   { sh 'aws s3 cp target/app.jar s3://bucket/' } } }
+}
+        </script>
+      </div>
+      <p><strong>Q. How do you provision EC2 instances as agents with the AWS EC2 plugin?</strong> Configure an EC2 cloud with an AMI, instance type, IAM role, subnet and security group, and labels. When jobs need capacity Jenkins launches EC2 instances as agents (over SSH) and terminates idle ones per the retention strategy.</p>
+      <p><strong>Q. How does workspace persistence work in Kubernetes pods?</strong> By default an ephemeral pod's workspace vanishes with the pod. Mount a PVC (or use <code>workspaceVolume: dynamicPVC(...)</code>) so the workspace persists across steps, containers or reruns, which helps caches such as <code>.m2</code> and <code>node_modules</code>. Trade-offs: PVC lifecycle and cleanup, and RWX access constraints.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-054-ephemeral-agents">← Previous</a><span class="rev-pos">55 / 80</span><a href="#q-jenkins-056-building-images-in-kubernetes-agents">Next →</a></nav>
+    </section>
+  </div>
+</details>

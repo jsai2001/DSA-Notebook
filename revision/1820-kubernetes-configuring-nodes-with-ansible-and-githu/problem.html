@@ -1,0 +1,42 @@
+<details class="question" id="q-kubernetes-054-configuring-nodes-with-ansible-and-githu" data-group="kubernetes" data-sec="kubernetes-s055">
+  <summary>
+    <span class="q-title">Configuring nodes with Ansible and GitHub Actions</span>
+    <span class="q-meta">
+      <span class="tag">Kubernetes</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Kubernetes › 16. Kubernetes with Ansible and GitHub Actions › Configuring nodes with Ansible and GitHub Actions</p>
+      <p><strong>Q. How do you use GitHub Actions with Ansible to configure a Kubernetes node and verify it?</strong> The workflow installs Ansible, runs the playbook, then lists nodes with <code>kubectl</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Configure Node
+on: { push: { branches: [main] } }
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: sudo apt update && sudo apt install -y ansible
+    - run: ansible-playbook -i inventory.ini configure_node.yml
+    - uses: azure/setup-kubectl@v3
+    - run: echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+    - run: kubectl get nodes
+        </script>
+      </div>
+      <p>The playbook <code>configure_node.yml</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Configure node
+  hosts: k8s_nodes
+  become: yes
+  tasks:
+  - name: Install kubeadm
+    ansible.builtin.package: { name: kubeadm, state: present }
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-kubernetes-053-github-actions-workflows-that-run-kubect">← Previous</a><span class="rev-pos">54 / 63</span><a href="#q-kubernetes-055-why-use-python-for-kubernetes">Next →</a></nav>
+    </section>
+  </div>
+</details>

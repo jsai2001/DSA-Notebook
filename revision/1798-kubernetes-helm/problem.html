@@ -1,0 +1,77 @@
+<details class="question" id="q-kubernetes-032-helm" data-group="kubernetes" data-sec="kubernetes-s033">
+  <summary>
+    <span class="q-title">Helm</span>
+    <span class="q-meta">
+      <span class="tag">Kubernetes</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Kubernetes › 11. CI/CD, Helm and GitOps › Helm</p>
+      <p><strong>Q. What is Helm, and how does it simplify deployments?</strong> A package manager that uses charts to templatize and deploy applications.</p>
+      <p><strong>Q. What are Helm charts, and how do you create one?</strong> Bundled manifests. Run <code>helm create &lt;name&gt;</code> and edit <code>values.yaml</code>.</p>
+      <p>A simple web application chart has these files.</p>
+      <p><code>Chart.yaml</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: v2
+name: nginx-chart
+version: 0.1.0
+        </script>
+      </div>
+      <p><code>values.yaml</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+replicaCount: 3
+image:
+  repository: nginx
+  tag: latest
+service:
+  type: LoadBalancer
+  port: 80
+        </script>
+      </div>
+      <p><code>templates/deployment.yaml</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-nginx
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        ports:
+        - containerPort: 80
+        </script>
+      </div>
+      <p><code>templates/service.yaml</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-nginx-service
+spec:
+  selector:
+    app: nginx
+  ports:
+  - port: {{ .Values.service.port }}
+    targetPort: 80
+  type: {{ .Values.service.type }}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-kubernetes-031-gitops">← Previous</a><span class="rev-pos">32 / 63</span><a href="#q-kubernetes-033-extending-kubernetes">Next →</a></nav>
+    </section>
+  </div>
+</details>

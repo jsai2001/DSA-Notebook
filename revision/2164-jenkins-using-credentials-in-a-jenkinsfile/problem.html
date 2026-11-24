@@ -1,0 +1,51 @@
+<details class="question" id="q-jenkins-044-using-credentials-in-a-jenkinsfile" data-group="jenkins" data-sec="jenkins-s045">
+  <summary>
+    <span class="q-title">Using credentials in a Jenkinsfile</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 7. Security, Credentials and Access Control › Using credentials in a Jenkinsfile</p>
+      <p><strong>Q. How do you inject credentials securely?</strong> <code>withCredentials</code> binds a stored credential to environment variables for the duration of a block, then unbinds it, and Jenkins masks the values in logs. Alternatively use <code>credentials('id')</code> in an <code>environment</code> block. For username and password credentials it sets one variable holding <code>username:password</code> plus two derived variables, <code>&lt;NAME&gt;_USR</code> and <code>&lt;NAME&gt;_PSW</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+withCredentials([usernamePassword(credentialsId: 'dockerhub',
+    usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+  sh 'echo "$PASS" | docker login -u "$USER" --password-stdin'
+}
+// or environment block:
+environment { AWS_KEY = credentials('aws-access-key') }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+pipeline {
+    agent any
+    environment {
+        MY_CRED = credentials('my-credential-id')   // username:password
+    }
+    stages {
+        stage('Example') {
+            steps {
+                echo "Username: ${env.MY_CRED_USR}"  // MY_CRED_PSW holds the password
+            }
+        }
+    }
+}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+// Secret text with withCredentials
+withCredentials([string(credentialsId: 'my-api-key', variable: 'API_KEY')]) {
+    sh 'echo $API_KEY'
+}
+        </script>
+      </div>
+      <p>Use the string form of <code>withCredentials</code> for secret text credentials. Recreate the permission matrix when switching strategies and test as a restricted user.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-043-credentials-store-and-scopes">← Previous</a><span class="rev-pos">44 / 80</span><a href="#q-jenkins-045-secrets-hygiene-ssh-agent-and-vault">Next →</a></nav>
+    </section>
+  </div>
+</details>

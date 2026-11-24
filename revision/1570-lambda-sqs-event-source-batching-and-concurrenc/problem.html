@@ -1,0 +1,38 @@
+<details class="question" id="q-lambda-025-sqs-event-source-batching-and-concurrenc" data-group="lambda" data-sec="lambda-s026">
+  <summary>
+    <span class="q-title">SQS event source: batching and concurrency</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 4. Invocation models and event sources › SQS event source: batching and concurrency</p>
+      <p><strong>Q34. How does Lambda poll SQS, and what are batch size vs batch window?</strong> Lambda runs pollers that call <code>ReceiveMessage</code> and invoke your function with a batch. <strong>Batch size</strong> is the maximum records per invocation (up to 10,000 for standard SQS, within a 6 MB payload). <strong>Batch window</strong> (<code>MaximumBatchingWindowInSeconds</code>, 0 to 300) is how long Lambda waits to gather a fuller batch before invoking. Successful batches are deleted from the queue automatically. Failures return to the queue after the visibility timeout.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+Events:
+  FromQueue:
+    Type: SQS
+    Properties:
+      Queue: !GetAtt MyQueue.Arn
+      BatchSize: 10
+      MaximumBatchingWindowInSeconds: 20
+      FunctionResponseTypes: [ReportBatchItemFailures]   # partial batch success
+        </script>
+      </div>
+      <p><strong>Q40. How does Maximum Concurrency work with SQS as an event source?</strong> <code>MaximumConcurrency</code> (2 to 1000) on the SQS ESM caps how many concurrent invocations the poller drives. It protects downstream systems and stops a busy queue from consuming all account concurrency, without reserved concurrency (which throttled the pollers awkwardly).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+Events:
+  FromQueue:
+    Type: SQS
+    Properties:
+      Queue: !GetAtt MyQueue.Arn
+      ScalingConfig: { MaximumConcurrency: 50 }
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-024-async-failures-retries-and-dead-letter-h">← Previous</a><span class="rev-pos">25 / 79</span><a href="#q-lambda-026-stream-processing-poison-pills-and-bisec">Next →</a></nav>
+    </section>
+  </div>
+</details>

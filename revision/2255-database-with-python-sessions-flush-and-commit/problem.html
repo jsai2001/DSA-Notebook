@@ -1,0 +1,54 @@
+<details class="question" id="q-database-with-python-027-sessions-flush-and-commit" data-group="database-with-python" data-sec="database-with-python-s028">
+  <summary>
+    <span class="q-title">Sessions: flush and commit</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 4. MySQL with Python › Sessions: flush and commit</p>
+      <p>A <strong>Session</strong> manages a transaction (all-or-nothing) using the unit-of-work pattern. Changes accumulate and are only sent on <code>flush</code>.</p>
+      <ul>
+        <li><code>session.add()</code> queues a new object.</li>
+        <li><code>session.flush()</code> emits the SQL and fills in auto-assigned keys such as <code>project_id</code>.</li>
+        <li><code>session.commit()</code> makes the transaction permanent. <code>session.rollback()</code> undoes it. <code>session.close()</code> ends the session.</li>
+        <li>Flush after adding the project, otherwise <code>project_id</code> is missing when the tasks are saved and the foreign key fails.</li>
+        <li><code>bulk_save_objects</code> is efficient for many objects but skips some ORM features (event listeners). Use <code>session.add()</code> for a single task.</li>
+        <li><code>with Session(engine) as session:</code> closes the session automatically. Do not leave transactions open, because that holds database locks.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sqlalchemy.orm import Session
+
+with Session(engine) as session:
+    organize_closet_project = Project(
+        title="Organize Closet",
+        description="Sort and declutter closet items"
+    )
+    session.add(organize_closet_project)
+    session.flush()  # generates project_id
+
+    tasks = [
+        Task(project_id=organize_closet_project.project_id, description="Sort clothes"),
+        Task(project_id=organize_closet_project.project_id, description="Donate unused items")
+    ]
+    session.bulk_save_objects(tasks)
+    session.commit()
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+try:
+    with Session(engine) as session:
+        # ... insert operations ...
+        session.commit()
+except Exception as e:
+    print(f"Error: {e}")
+    session.rollback()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-026-foreign-key-and-relationship-in-the-orm">← Previous</a><span class="rev-pos">27 / 147</span><a href="#q-database-with-python-028-query-with-the-orm">Next →</a></nav>
+    </section>
+  </div>
+</details>

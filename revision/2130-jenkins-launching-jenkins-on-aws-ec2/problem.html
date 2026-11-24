@@ -1,0 +1,33 @@
+<details class="question" id="q-jenkins-010-launching-jenkins-on-aws-ec2" data-group="jenkins" data-sec="jenkins-s011">
+  <summary>
+    <span class="q-title">Launching Jenkins on AWS EC2</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 2. Installing a Jenkins Server › Launching Jenkins on AWS EC2</p>
+      <ol>
+        <li>Launch an EC2 instance with an Ubuntu Server 20.04 LTS AMI and type <code>t2.micro</code> (free tier). Raise the root volume to 30 GB for NGINX, Jenkins, plugins and Docker images. Tag it <code>Name: Jenkins server</code>.</li>
+        <li>Create a security group <code>Jenkins server</code> allowing HTTP port 80 from <code>0.0.0.0/0</code> (GitHub and browser access).</li>
+        <li>Create an RSA key pair, download it and protect the file.</li>
+        <li>Allocate an Elastic IP and associate it with the instance for a fixed address and persistent DNS.</li>
+        <li>Connect: <code>chmod 600 jenkins-server.pem</code>, then <code>ssh -i jenkins-server.pem ubuntu@&lt;public-dns&gt;</code>, then <code>sudo su -</code>.</li>
+        <li>Save the install script as <code>install.sh</code> and run <code>source install.sh</code>. It updates Ubuntu, installs NGINX and Jenkins, installs the suggested plugins, skips the setup wizard and prints the admin credentials.</li>
+        <li>Open the public DNS in a browser, log in with the printed admin password, optionally create a new admin user, and accept the default Jenkins URL.</li>
+      </ol>
+      <p>Afterwards verify that NGINX proxies requests to Jenkins on port 8080.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Security group via the AWS CLI
+aws ec2 create-security-group --group-name JenkinsServer --description "Jenkins server security group"
+aws ec2 authorize-security-group-ingress --group-name JenkinsServer --protocol tcp --port 80 --cidr 0.0.0.0/0
+# SSH rule (optional); tighten the CIDR for stricter access
+aws ec2 authorize-security-group-ingress --group-name JenkinsServer --protocol tcp --port 22 --cidr 0.0.0.0/0
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-009-requirements-and-where-to-host">← Previous</a><span class="rev-pos">10 / 80</span><a href="#q-jenkins-011-install-script-jenkins-behind-nginx">Next →</a></nav>
+    </section>
+  </div>
+</details>

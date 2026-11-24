@@ -1,0 +1,41 @@
+<details class="question" id="q-database-with-python-140-query-tags-not-showing-in-history" data-group="database-with-python" data-sec="database-with-python-s141">
+  <summary>
+    <span class="q-title">Query tags not showing in history</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Query tags not showing in history</p>
+      <p><strong>Q. Query tags set for cost tracking do not appear in query history. How do you debug it?</strong> Set the tag with <code>ALTER SESSION SET QUERY_TAG</code>, run the query, check the tag in <code>INFORMATION_SCHEMA.QUERY_HISTORY()</code>, and review session parameters (<code>SHOW PARAMETERS LIKE 'QUERY_TAG'</code>), tag visibility and permissions.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+
+conn = snowflake.connector.connect(
+    user='your_user', password='your_password', account='your_account',
+    warehouse='your_warehouse', database='your_database', schema='your_schema'
+)
+
+try:
+    cursor = conn.cursor()
+    cursor.execute("ALTER SESSION SET QUERY_TAG = 'cost_tracking_tag'")
+    cursor.execute("SELECT * FROM your_table LIMIT 1")
+    print(cursor.fetchall())
+
+    cursor.execute("SELECT * FROM TABLE(INFORMATION_SCHEMA.QUERY_HISTORY()) WHERE QUERY_TAG = 'cost_tracking_tag'")
+    print(cursor.fetchall())
+except snowflake.connector.errors.ProgrammingError as e:
+    print(f"Error: {e}")
+    cursor.execute("SHOW PARAMETERS LIKE 'QUERY_TAG'")
+    print(cursor.fetchall())
+finally:
+    cursor.close()
+    conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-139-null-handling">← Previous</a><span class="rev-pos">140 / 147</span><a href="#q-database-with-python-141-legacy-driver-conflict">Next →</a></nav>
+    </section>
+  </div>
+</details>

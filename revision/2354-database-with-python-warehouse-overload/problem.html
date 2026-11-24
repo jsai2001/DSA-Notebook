@@ -1,0 +1,46 @@
+<details class="question" id="q-database-with-python-126-warehouse-overload" data-group="database-with-python" data-sec="database-with-python-s127">
+  <summary>
+    <span class="q-title">Warehouse overload</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Warehouse overload</p>
+      <p><strong>Q. Your app overloads a Snowflake warehouse and queries slow down. How do you fix it?</strong> Scale the warehouse, tag queries for prioritization and tracking, split workloads into smaller queries, and monitor usage with built-in functions.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+from snowflake.connector import DictCursor
+
+conn = snowflake.connector.connect(
+    user='your_user', password='your_password', account='your_account',
+    warehouse='your_warehouse', database='your_db', schema='your_schema'
+)
+
+try:
+    cursor = conn.cursor(DictCursor)
+    cursor.execute("ALTER WAREHOUSE your_warehouse SET WAREHOUSE_SIZE = 'LARGE'")
+    cursor.execute("ALTER SESSION SET QUERY_TAG = 'high_priority_job'")
+
+    queries = [
+        "SELECT * FROM large_table WHERE region = 'A'",
+        "SELECT * FROM large_table WHERE region = 'B'"
+    ]
+    for query in queries:
+        cursor.execute(query)
+        results = cursor.fetchall()
+        print(f"Processed {len(results)} rows")
+
+    cursor.execute("SELECT * FROM TABLE(GET_WAREHOUSE_USAGE_HISTORY())")
+    print(cursor.fetchall())
+finally:
+    cursor.close()
+    conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-125-batch-insert-performance">← Previous</a><span class="rev-pos">126 / 147</span><a href="#q-database-with-python-127-connection-dropped-mid-query">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,32 @@
+<details class="question" id="q-lambda-036-concurrency-limits-and-throttling" data-group="lambda" data-sec="lambda-s037">
+  <summary>
+    <span class="q-title">Concurrency limits and throttling</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 7. Concurrency, scaling and limits › Concurrency limits and throttling</p>
+      <p><strong>Q59. What is the default regional concurrency limit in a new account?</strong> 1,000 concurrent executions per region (a soft limit, raised through a Service Quotas request), shared across all functions in that region and account.</p>
+      <p><strong>Q60. Reserved Concurrency vs Provisioned Concurrency?</strong></p>
+      <ul>
+        <li><strong>Reserved Concurrency</strong> carves out a guaranteed slice of the account limit for one function and also caps that function at that number. It manages <em>how much</em> concurrency a function can use, at no extra cost.</li>
+        <li><strong>Provisioned Concurrency</strong> pre-warms N environments so invocations skip cold starts. It manages <em>latency and readiness</em>, and you pay for the pre-warmed capacity.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws lambda put-function-concurrency --function-name f --reserved-concurrent-executions 100
+        </script>
+      </div>
+      <p><strong>Q61. What happens when a function exceeds its concurrency limit?</strong> Lambda throttles: it rejects extra concurrent invocations with a <code>429 TooManyRequestsException</code> (<code>ThrottleReason</code>). What happens next depends on the invocation type.</p>
+      <p><strong>Q62. How do sync calls react to throttling vs async calls?</strong></p>
+      <ul>
+        <li><strong>Synchronous</strong>: the caller immediately gets a <code>429</code> and must handle or retry it (API Gateway surfaces a 5xx or 429 to the client).</li>
+        <li><strong>Asynchronous</strong>: Lambda keeps the event in its internal queue and retries for up to about 6 hours with backoff. If it never succeeds, the event goes to the DLQ or on-failure destination. Async throttling is largely absorbed, while sync throttling is felt by the caller.</li>
+      </ul>
+      <p><strong>Q66. What status code does a throttled synchronous API Gateway request return?</strong> Lambda returns <code>429 TooManyRequestsException</code>. Depending on integration config, API Gateway may show the client a <code>429</code>, or a <code>502</code>/<code>500</code> if not mapped. The Lambda-level reason is a throttle.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-035-internet-access-and-vpc-endpoints">← Previous</a><span class="rev-pos">36 / 79</span><a href="#q-lambda-037-concurrency-math-and-burst-scaling">Next →</a></nav>
+    </section>
+  </div>
+</details>

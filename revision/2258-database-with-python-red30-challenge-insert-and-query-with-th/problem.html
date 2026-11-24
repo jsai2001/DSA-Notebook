@@ -1,0 +1,71 @@
+<details class="question" id="q-database-with-python-030-red30-challenge-insert-and-query-with-th" data-group="database-with-python" data-sec="database-with-python-s031">
+  <summary>
+    <span class="q-title">Red30 challenge: insert and query with the ORM</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 4. MySQL with Python › Red30 challenge: insert and query with the ORM</p>
+      <p>Two ways to find the largest purchase: <code>func.max(order_total)</code> with <code>session.execute(stmt).scalar()</code>, or <code>order_by(order_total.desc())</code>. The highest total in the sample is 1500 (John Doe's laptop). <code>Float</code> is used for the decimal columns; use <code>sqlalchemy.DECIMAL</code> for exact decimals. Verify in the shell with <code>SELECT * FROM sales;</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sqlalchemy import create_engine, Column, Integer, String, Float, select, func
+from sqlalchemy.orm import Session, declarative_base
+
+engine = create_engine("mysql+mysqlconnector://root:password@localhost:3306/Red30", echo=True)
+Base = declarative_base()
+
+class Sale(Base):
+    __tablename__ = "sales"
+    order_num = Column(Integer, primary_key=True)
+    order_type = Column(String(50))
+    cust_type = Column(String(50))
+    cust_name = Column(String(100))
+    prod_category = Column(String(50))
+    prod_number = Column(String(50))
+    prod_name = Column(String(100))
+    quantity = Column(Integer)
+    price = Column(Float)
+    discount = Column(Float)
+    order_total = Column(Float)
+
+    def __repr__(self):
+        return f"<Sale(order_num={self.order_num}, cust_name='{self.cust_name}', order_total={self.order_total})>"
+
+Base.metadata.create_all(engine)
+
+with Session(engine) as session:
+    sales_data = [
+        Sale(order_num=1, order_type="Online", cust_type="Individual", cust_name="John Doe",
+             prod_category="Electronics", prod_number="E123", prod_name="Laptop", quantity=1,
+             price=1500.00, discount=0.0, order_total=1500.00),
+        Sale(order_num=2, order_type="In-Store", cust_type="Business(Network)", cust_name="Tech Corp",
+             prod_category="Accessories", prod_number="A456", prod_name="Mouse", quantity=10,
+             price=20.00, discount=0.1, order_total=180.00),
+        Sale(order_num=3, order_type="Online", cust_type="Individual", cust_name="Jane Smith",
+             prod_category="Electronics", prod_number="E789", prod_name="Smartphone", quantity=1,
+             price=1000.00, discount=0.0, order_total=1000.00),
+        Sale(order_num=4, order_type="Online", cust_type="Individual", cust_name="Alice Brown",
+             prod_category="Software", prod_number="S101", prod_name="Antivirus", quantity=1,
+             price=50.00, discount=0.0, order_total=50.00),
+        Sale(order_num=5, order_type="In-Store", cust_type="Business(Network)", cust_name="Global Inc",
+             prod_category="Electronics", prod_number="E202", prod_name="Monitor", quantity=2,
+             price=200.00, discount=0.05, order_total=380.00)
+    ]
+    session.add_all(sales_data)
+    session.commit()
+
+    stmt = select(func.max(Sale.order_total))
+    print(f"Highest Order Total: {session.execute(stmt).scalar()}")
+
+    stmt = select(Sale).order_by(Sale.order_total.desc())
+    for order in session.scalars(stmt).all():
+        print(f"Order {order.order_num}: {order.cust_name}, Total: {order.order_total}")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-029-red30-challenge-database-and-sales-table">← Previous</a><span class="rev-pos">30 / 147</span><a href="#q-database-with-python-031-red30-challenge-reusable-query-and-plain">Next →</a></nav>
+    </section>
+  </div>
+</details>

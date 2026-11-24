@@ -1,0 +1,46 @@
+<details class="question" id="q-jenkins-050-adding-an-ssh-agent" data-group="jenkins" data-sec="jenkins-s051">
+  <summary>
+    <span class="q-title">Adding an SSH agent</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 8. Agents and Distributed Builds › Adding an SSH agent</p>
+      <p>Prerequisites: a server reachable by SSH from Jenkins, and a user and key (for example an EC2 instance).</p>
+      <ol>
+        <li>Manage Jenkins, Manage Nodes and Clouds, <strong>New Node</strong>. Name it (for example <code>Linux</code>) and choose <strong>Permanent Agent</strong>.</li>
+        <li>Set the remote root directory (for example <code>/home/ec2-user</code>) and a label such as <code>linux</code>.</li>
+        <li>Usage: "Only build jobs with label expressions matching this node".</li>
+        <li>Launch method: <strong>Launch agents via SSH</strong>; Host: DNS name or IP.</li>
+        <li>Credentials: Add, Jenkins, "SSH Username with Private Key", ID <code>linux</code>, username <code>ec2-user</code>, paste the full private key (no passphrase in the example).</li>
+        <li>Host Key Verification Strategy: Non verifying (used in the course). Availability: keep the agent online as much as possible. Save to connect.</li>
+        <li>Check the agent's Log for errors and confirm it is online.</li>
+      </ol>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+pipeline {
+    agent { label 'linux' }
+    stages {
+        stage('Source') {
+            steps { git url: 'https://github.com/your-repo/java-app.git', credentialsId: 'github-credentials' }
+        }
+        stage('Clean') {
+            steps { sh 'mvn clean' }
+        }
+        stage('Test') {
+            steps { sh 'mvn test' }
+        }
+        stage('Package') {
+            steps { sh 'mvn package' }
+        }
+    }
+}
+        </script>
+      </div>
+      <p>Build Now, then check Console Output for the message showing the job ran on the <code>linux</code> agent and its workspace path. Private repositories need Jenkins credentials; the public exercise repo does not.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-049-pipeline-considerations-for-agents">← Previous</a><span class="rev-pos">50 / 80</span><a href="#q-jenkins-051-docker-agents">Next →</a></nav>
+    </section>
+  </div>
+</details>

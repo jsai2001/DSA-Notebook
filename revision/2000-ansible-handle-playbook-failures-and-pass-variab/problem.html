@@ -1,0 +1,64 @@
+<details class="question" id="q-ansible-094-handle-playbook-failures-and-pass-variab" data-group="ansible" data-sec="ansible-s095">
+  <summary>
+    <span class="q-title">Handle playbook failures and pass variables</span>
+    <span class="q-meta">
+      <span class="tag">Ansible</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Ansible › 14. Ansible with Python › Handle playbook failures and pass variables</p>
+      <p><strong>Q. How do you handle Ansible playbook failures in a Python script?</strong> Check the return code (<code>rc</code>), parse the output or logs from <code>ansible-runner</code>, use try-except, and add retry logic if needed.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import ansible_runner
+
+try:
+    r = ansible_runner.run(
+        private_data_dir='/path/to/ansible/project',
+        playbook='deploy.yml'
+    )
+    if r.rc != 0:
+        print(f"Playbook failed with exit code: {r.rc}")
+        # Retry logic
+        max_attempts = 3
+        for attempt in range(max_attempts):
+            retry_r = ansible_runner.run(
+                private_data_dir='/path/to/ansible/project',
+                playbook='deploy.yml'
+            )
+            if retry_r.rc == 0:
+                print("Retry successful")
+                break
+            print(f"Retry {attempt + 1} failed")
+    else:
+        print("Playbook succeeded")
+except Exception as e:
+    print(f"Error running playbook: {e}")
+        </script>
+      </div>
+      <p><strong>Q. How do you pass variables to a playbook from a Python script?</strong> Use the <code>extravars</code> parameter of <code>ansible-runner</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import ansible_runner
+
+# Define extra variables
+extra_vars = {
+    'http_port': 8080,
+    'app_version': '1.2.3'
+}
+
+# Run playbook with extra variables
+r = ansible_runner.run(
+    private_data_dir='/path/to/ansible/project',
+    playbook='deploy.yml',
+    extravars=extra_vars
+)
+
+print(f"Playbook executed with status: {r.rc}")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ansible-093-generate-a-dynamic-inventory">← Previous</a><span class="rev-pos">94 / 125</span><a href="#q-ansible-095-validate-syntax-before-running">Next →</a></nav>
+    </section>
+  </div>
+</details>

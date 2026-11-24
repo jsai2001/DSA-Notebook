@@ -1,0 +1,48 @@
+<details class="question" id="q-github-actions-047-terraform-in-a-workflow" data-group="github-actions" data-sec="github-actions-s048">
+  <summary>
+    <span class="q-title">Terraform in a workflow</span>
+    <span class="q-meta">
+      <span class="tag">GitHub Actions</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GitHub Actions › 8. Integrations: Packages, Pages, Terraform, CodeQL, Dependabot › Terraform in a workflow</p>
+      <p><code>hashicorp/setup-terraform</code> installs Terraform. The workflow runs <code>terraform init</code>, <code>plan</code> and <code>apply</code>, with AWS credentials from secrets. Use a remote backend (such as an encrypted S3 bucket) for state, use <code>-auto-approve</code> only for non-production, and run <code>terraform fmt</code> and <code>terraform validate</code> in CI.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Deploy Infrastructure with Terraform
+on:
+  push:
+    branches: [main]
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.5.0'
+      - run: terraform init
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      - run: terraform plan -out=tfplan
+      - run: terraform apply -auto-approve tfplan
+        </script>
+      </div>
+      <p>Example <code>main.tf</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+provider "aws" {
+  region = "us-east-1"
+}
+resource "aws_s3_bucket" "example" {
+  bucket = "my-unique-bucket-name"
+}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-github-actions-046-deploy-to-github-pages">← Previous</a><span class="rev-pos">47 / 89</span><a href="#q-github-actions-048-codeql-code-scanning">Next →</a></nav>
+    </section>
+  </div>
+</details>

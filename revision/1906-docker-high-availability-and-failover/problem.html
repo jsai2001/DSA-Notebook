@@ -1,0 +1,48 @@
+<details class="question" id="q-docker-077-high-availability-and-failover" data-group="docker" data-sec="docker-s078">
+  <summary>
+    <span class="q-title">High availability and failover</span>
+    <span class="q-meta">
+      <span class="tag">Docker</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Docker › 20. On-Call: Disaster Recovery and High Availability › High availability and failover</p>
+      <p><strong>Q. How do you ensure high availability?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker swarm init
+docker service create --name app --replicas 3 -p 80:80 <image_name>
+HEALTHCHECK --interval=30s --timeout=3s CMD curl -f http://localhost/ || exit 1
+docker service update --health-cmd="curl -f http://localhost/ || exit 1" --health-interval=30s app
+        </script>
+      </div>
+      <p>Use multiple nodes, a load balancer, and health monitoring.</p>
+      <p><strong>Q. How do you implement failover for frequent outages?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker swarm init
+docker service create --name app --replicas 3 -p 80:80 <image_name>
+        </script>
+      </div>
+      <p>NGINX config:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Nginx">
+upstream app {
+    server <node1_ip>:80;
+    server <node2_ip>:80;
+    server <node3_ip>:80;
+}
+server { listen 80; location / { proxy_pass http://app; } }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+sudo systemctl reload nginx
+        </script>
+      </div>
+      <p>Spread replicas, use health checks, and test failover.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-docker-076-malware-recovery">← Previous</a><span class="rev-pos">77 / 77</span><span></span></nav>
+    </section>
+  </div>
+</details>

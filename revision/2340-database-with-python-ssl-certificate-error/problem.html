@@ -1,0 +1,46 @@
+<details class="question" id="q-database-with-python-112-ssl-certificate-error" data-group="database-with-python" data-sec="database-with-python-s113">
+  <summary>
+    <span class="q-title">SSL certificate error</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › SSL certificate error</p>
+      <p><strong>Q. SSL certificate verification fails when connecting to Snowflake. How do you diagnose and fix it?</strong> Check SSL settings, CA certificates and network proxies. <code>insecure_mode=True</code> bypasses verification and is only for debugging, never production. Point the CA bundle environment variable at the right certificate.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import logging
+import os
+
+logging.basicConfig(level=logging.DEBUG)
+
+try:
+    conn = snowflake.connector.connect(
+        user='your_user',
+        password='your_password',
+        account='your_account.region.cloud',
+        insecure_mode=False   # default SSL verification
+    )
+except snowflake.connector.errors.OperationalError as e:
+    logging.error(f"SSL error: {e}")
+    logging.warning("Attempting connection with insecure_mode=True (debugging only)")
+    conn = snowflake.connector.connect(
+        user='your_user',
+        password='your_password',
+        account='your_account.region.cloud',
+        insecure_mode=True
+    )
+    logging.info("Check CA certificates or proxy settings")
+    # os.environ['REQUESTS_CA_BUNDLE'] = '/path/to/ca-cert.pem'
+finally:
+    if 'conn' in locals():
+        conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-111-works-locally-fails-in-production-connec">← Previous</a><span class="rev-pos">112 / 147</span><a href="#q-database-with-python-113-connection-pooling-for-frequent-connecti">Next →</a></nav>
+    </section>
+  </div>
+</details>

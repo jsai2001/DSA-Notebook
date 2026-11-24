@@ -1,0 +1,38 @@
+<details class="question" id="q-docker-007-reducing-image-size" data-group="docker" data-sec="docker-s008">
+  <summary>
+    <span class="q-title">Reducing image size</span>
+    <span class="q-meta">
+      <span class="tag">Docker</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Docker › 2. Docker Images and Dockerfiles › Reducing image size</p>
+      <p><strong>Q. How do you reduce image size?</strong> Use a small base (for example alpine), chain <code>RUN</code> commands, clean up after installs, and use multi-stage builds.</p>
+      <p><strong>Q. What is a multi-stage build and why use it?</strong> It separates build from runtime, so the final image is smaller.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Dockerfile">
+FROM golang AS builder
+RUN go build -o app
+FROM alpine
+COPY --from=builder /app .
+        </script>
+      </div>
+      <p><strong>Q. How do you reduce Docker image size in practice (on-call view)?</strong> Use lightweight images, clean up after installs, minimize layers, and copy only the built output from a builder stage.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Dockerfile">
+FROM alpine:latest
+RUN apt-get update && apt-get install -y <package> && apt-get clean && rm -rf /var/lib/apt/lists/*
+FROM node:16 AS builder
+WORKDIR /app
+COPY package.json .
+RUN npm install
+FROM node:16-slim
+COPY --from=builder /app /app
+RUN rm -rf /app/unneeded_files
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-docker-006-dockerfile-instructions">← Previous</a><span class="rev-pos">7 / 77</span><a href="#q-docker-008-multi-architecture-images">Next →</a></nav>
+    </section>
+  </div>
+</details>

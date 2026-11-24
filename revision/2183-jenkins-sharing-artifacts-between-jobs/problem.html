@@ -1,0 +1,55 @@
+<details class="question" id="q-jenkins-063-sharing-artifacts-between-jobs" data-group="jenkins" data-sec="jenkins-s064">
+  <summary>
+    <span class="q-title">Sharing artifacts between jobs</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 10. Artifacts, Fingerprints and Test Reports › Sharing artifacts between jobs</p>
+      <p>The <strong>Copy Artifact</strong> plugin lets one job read artifacts from another through the <code>copyArtifacts</code> step. Install it under Manage Jenkins, Plugins. The job that creates the artifact must explicitly grant permission with <code>copyArtifactPermission</code> (a comma-separated list such as <code>'job1,job2'</code>; <code>'*'</code> allows every job and should be used cautiously). Without permission the pipeline fails with <code>Permission to copy artifact is missing for create-artifact-job</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+// Job A: create-artifact-job
+pipeline {
+    agent any
+    options {
+        copyArtifactPermission('read-artifact-job')
+    }
+    stages {
+        stage('Create Report') {
+            steps { writeFile file: 'report.txt', text: 'Sample report content' }
+        }
+    }
+    post {
+        always {
+            archiveArtifacts artifacts: 'report.txt', fingerprint: true
+        }
+    }
+}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+// Job B: read-artifact-job
+pipeline {
+    agent any
+    stages {
+        stage('Copy Artifact') {
+            steps {
+                copyArtifacts projectName: 'create-artifact-job',
+                              selector: specific('lastSuccessful'),
+                              target: 'copied_files',
+                              fingerprintArtifacts: true
+            }
+        }
+    }
+}
+        </script>
+      </div>
+      <p><code>projectName</code> is the source job, <code>selector</code> chooses the build (<code>lastSuccessful</code>, <code>lastCompleted</code>, or a specific build number), <code>target</code> is the workspace directory to copy into (default: workspace root) and <code>fingerprintArtifacts</code> records the usage.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-062-archiving-artifacts">← Previous</a><span class="rev-pos">63 / 80</span><a href="#q-jenkins-064-fingerprinting">Next →</a></nav>
+    </section>
+  </div>
+</details>

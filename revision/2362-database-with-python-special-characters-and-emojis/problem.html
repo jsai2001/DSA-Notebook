@@ -1,0 +1,44 @@
+<details class="question" id="q-database-with-python-134-special-characters-and-emojis" data-group="database-with-python" data-sec="database-with-python-s135">
+  <summary>
+    <span class="q-title">Special characters and emojis</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Special characters and emojis</p>
+      <p><strong>Q. Inserting emojis or special characters fails. How do you resolve it?</strong> Use UTF-8 end to end: Python stdout and string encoding, Snowflake string handling and the table collation. Always pass values as bind parameters.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import sys
+
+sys.stdout.reconfigure(encoding='utf-8')
+
+conn = snowflake.connector.connect(
+    user='your_user', password='your_password', account='your_account',
+    warehouse='your_warehouse', database='your_database', schema='your_schema'
+)
+
+try:
+    cursor = conn.cursor()
+    cursor.execute("CREATE OR REPLACE TABLE test_table (data VARCHAR(100)) COLLATE 'utf8'")
+    special_data = "Hello 😊 World"
+    cursor.execute(
+        "INSERT INTO test_table (data) VALUES (%s)",
+        (special_data.encode('utf-8').decode('utf-8'),)
+    )
+    conn.commit()
+    print("Data inserted successfully")
+except snowflake.connector.errors.ProgrammingError as e:
+    print(f"Error: {e}")   # check table collation and Python encoding are UTF-8
+finally:
+    cursor.close()
+    conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-133-moving-data-between-snowflake-and-postgr">← Previous</a><span class="rev-pos">134 / 147</span><a href="#q-database-with-python-135-dynamic-schema-switching">Next →</a></nav>
+    </section>
+  </div>
+</details>

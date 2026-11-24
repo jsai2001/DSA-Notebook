@@ -1,0 +1,72 @@
+<details class="question" id="q-github-actions-073-python-scenarios-debugging-and-credentia" data-group="github-actions" data-sec="github-actions-s074">
+  <summary>
+    <span class="q-title">Python scenarios: debugging and credentials</span>
+    <span class="q-meta">
+      <span class="tag">GitHub Actions</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GitHub Actions › 11. Python and GitHub Actions › Python scenarios: debugging and credentials</p>
+      <p><strong>Q. Scenario: a workflow fails because of a dependency issue in a Python script. How do you debug it?</strong> Check the logs, reproduce locally with the same environment, pin versions in <code>requirements.txt</code>, add debug output, and install dependencies in a separate step to isolate issues.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Debug Python Script
+on: [push]
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    - name: Install dependencies
+      run: pip install -r requirements.txt
+    - name: Run script with debug
+      run: python -m trace --trace script.py
+        </script>
+      </div>
+      <p><strong>Q. Scenario: a workflow exposes AWS credentials in logs. How do you secure it?</strong> Store credentials in secrets, make sure sensitive data is not printed, and check Python scripts for accidental logging.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Secure AWS Workflow
+on: [push]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    - name: Run script
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      run: python deploy.py
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# deploy.py
+import boto3
+import os
+def deploy():
+    # Avoid printing credentials
+    session = boto3.Session(
+        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY")
+    )
+    s3 = session.client("s3")
+    s3.list_buckets()  # Example operation
+    print("Deployment completed")
+deploy()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-github-actions-072-python-scenarios">← Previous</a><span class="rev-pos">73 / 89</span><a href="#q-github-actions-074-role-of-github-actions-in-test-automatio">Next →</a></nav>
+    </section>
+  </div>
+</details>

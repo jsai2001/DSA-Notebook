@@ -1,0 +1,54 @@
+<details class="question" id="q-cloudwatch-063-api-canary-with-a-random-payload" data-group="cloudwatch" data-sec="cloudwatch-s064">
+  <summary>
+    <span class="q-title">API canary with a random payload</span>
+    <span class="q-meta">
+      <span class="tag">AWS CloudWatch</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS CloudWatch › 12. Synthetics Canaries › API canary with a random payload</p>
+      <p>Edit the script to generate a random <code>id</code> and <code>name</code> and reuse the id in the GET.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+const synthetics = require('Synthetics');
+const log = require('SyntheticsLogger');
+
+function generateRandomPayload() {
+    const randomId = Math.floor(Math.random() * 10000);
+    return { id: randomId, name: `canary-demo-${randomId}` };
+}
+
+exports.handler = async () => {
+    const randomPayload = generateRandomPayload();
+    let requestOptionsStep1 = {
+        hostname: 'api.example.com',
+        method: 'POST',
+        path: '/production',
+        protocol: 'https:',
+        body: JSON.stringify(randomPayload)
+    };
+    let response1 = await synthetics.executeHttpStep('Create new item', requestOptionsStep1);
+    log.info("Create Item Status: " + response1.statusCode);
+    if (response1.statusCode !== 200) {
+        throw new Error("Create item failed!");
+    }
+
+    let requestOptionsStep2 = {
+        hostname: 'api.example.com',
+        method: 'GET',
+        path: `/production/${randomPayload.id}`,
+        protocol: 'https:'
+    };
+    let response2 = await synthetics.executeHttpStep('Get created item', requestOptionsStep2);
+    log.info("Get Item Status: " + response2.statusCode);
+    if (response2.statusCode !== 200) {
+        throw new Error("Get item failed!");
+    }
+};
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-cloudwatch-062-api-canary-with-two-steps">← Previous</a><span class="rev-pos">63 / 108</span><a href="#q-cloudwatch-064-logging-request-and-response-bodies">Next →</a></nav>
+    </section>
+  </div>
+</details>

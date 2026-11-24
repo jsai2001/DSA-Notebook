@@ -1,0 +1,49 @@
+<details class="question" id="q-jenkins-068-challenge-maven-test-report-and-jar-arti" data-group="jenkins" data-sec="jenkins-s069">
+  <summary>
+    <span class="q-title">Challenge: Maven test report and JAR artifact</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 10. Artifacts, Fingerprints and Test Reports › Challenge: Maven test report and JAR artifact</p>
+      <p>Goal: for a Java app, run tests and publish a JUnit report, build a JAR and archive it only when tests pass, without failing the build when results or artifacts are absent. Configure Maven under Global Tool Configuration (for example <code>Maven 384</code>), confirm the JUnit plugin is installed, and use the Declarative Directive Generator (Tools) and the snippet generator (<code>junit</code>, <code>archiveArtifacts</code>) to produce the pieces.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+pipeline {
+    agent any
+    tools {
+        maven 'Maven 384'
+    }
+    stages {
+        stage('Clean') {
+            steps { sh 'mvn clean' }
+        }
+        stage('Test') {
+            steps { sh 'mvn test' }
+        }
+        stage('Package') {
+            steps { sh 'mvn package' }
+        }
+    }
+    post {
+        always {
+            junit testResults: '**/TEST-com.learningjenkins.apptest.xml', allowEmptyResults: true
+            archiveArtifacts artifacts: '**/hello-1.0-SNAPSHOT.jar', allowEmptyArchive: true, onlyIfSuccessful: true, fingerprint: true
+        }
+    }
+}
+        </script>
+      </div>
+      <p>How the <code>post</code> block works:</p>
+      <ul>
+        <li><code>always</code> runs regardless of success, failure or unstable.</li>
+        <li><code>junit testResults</code> takes an Ant-style pattern; <code>**/</code> searches all directories. <code>allowEmptyResults: true</code> keeps a missing report from failing the build.</li>
+        <li><code>archiveArtifacts</code> with <code>allowEmptyArchive: true</code> does not fail when no JAR exists; <code>onlyIfSuccessful: true</code> archives only from successful runs; <code>fingerprint: true</code> stores an MD5 so the artifact can be tracked across jobs (see See Fingerprints).</li>
+      </ul>
+      <p>The first run is slow because Maven is installed. A successful build shows an artifact icon for the JAR, and repeated builds extend the test trend graph.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-067-what-a-failing-test-does-to-the-pipeline">← Previous</a><span class="rev-pos">68 / 80</span><a href="#q-jenkins-069-jenkins-cli">Next →</a></nav>
+    </section>
+  </div>
+</details>

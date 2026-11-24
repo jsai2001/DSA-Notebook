@@ -1,0 +1,65 @@
+<details class="question" id="q-github-actions-087-lambda-sns-and-cloudwatch" data-group="github-actions" data-sec="github-actions-s088">
+  <summary>
+    <span class="q-title">Lambda, SNS and CloudWatch</span>
+    <span class="q-meta">
+      <span class="tag">GitHub Actions</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GitHub Actions › 13. Hands-on: AWS resources from workflows › Lambda, SNS and CloudWatch</p>
+      <p>Create a Lambda function:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Create Lambda Function
+  run: |
+    aws lambda create-function \
+      --function-name my-lambda-function \
+      --runtime nodejs18.x \
+      --role arn:aws:iam::123456789012:role/lambda-exec-role \
+      --handler index.handler \
+      --zip-file fileb://lambda-code.zip
+        </script>
+      </div>
+      <p>Create an SNS topic:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Create SNS Topic
+  run: |
+    aws sns create-topic \
+      --name my-sns-topic
+        </script>
+      </div>
+      <p>Subscribe the Lambda function to the topic:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Attach Lambda to SNS
+  run: |
+    aws sns subscribe \
+      --topic-arn arn:aws:sns:us-east-1:123456789012:my-sns-topic \
+      --protocol lambda \
+      --notification-endpoint arn:aws:lambda:us-east-1:123456789012:function:my-lambda-function
+        </script>
+      </div>
+      <p>Create a CloudWatch CPU alarm for an instance:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Create CloudWatch Alarm
+  run: |
+    aws cloudwatch put-metric-alarm \
+      --alarm-name ec2-cpu-alarm \
+      --metric-name CPUUtilization \
+      --namespace AWS/EC2 \
+      --statistic Average \
+      --period 300 \
+      --evaluation-periods 2 \
+      --threshold 80 \
+      --comparison-operator GreaterThanThreshold \
+      --dimensions Name=InstanceId,Value=i-1234567890abcdef0 \
+      --alarm-actions arn:aws:sns:us-east-1:123456789012:my-topic
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-github-actions-086-rds-security-group-and-snapshot">← Previous</a><span class="rev-pos">87 / 89</span><a href="#q-github-actions-088-route-53-record">Next →</a></nav>
+    </section>
+  </div>
+</details>

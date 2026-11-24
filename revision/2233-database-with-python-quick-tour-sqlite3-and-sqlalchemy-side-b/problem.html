@@ -1,0 +1,55 @@
+<details class="question" id="q-database-with-python-005-quick-tour-sqlite3-and-sqlalchemy-side-b" data-group="database-with-python" data-sec="database-with-python-s006">
+  <summary>
+    <span class="q-title">Quick tour: sqlite3 and SQLAlchemy side by side</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 1. Databases and the Python Database API › Quick tour: sqlite3 and SQLAlchemy side by side</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import sqlite3
+
+conn = sqlite3.connect('students.db')  # creates the file if missing
+cursor = conn.cursor()
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS students (
+        id INTEGER PRIMARY KEY,
+        name TEXT NOT NULL,
+        gpa REAL,
+        class_year INTEGER
+    )
+''')
+conn.commit()
+conn.close()
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sqlalchemy import create_engine, Column, Integer, String, Float
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+engine = create_engine('sqlite:///students.db', echo=True)
+Base = declarative_base()
+
+class Student(Base):
+    __tablename__ = 'students'
+    id = Column(Integer, primary_key=True)
+    name = Column(String, nullable=False)
+    gpa = Column(Float)
+    class_year = Column(Integer)
+
+Base.metadata.create_all(engine)
+Session = sessionmaker(bind=engine)
+session = Session()
+session.add(Student(name='Alice Smith', gpa=3.8, class_year=2023))
+session.commit()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-004-the-python-database-api">← Previous</a><span class="rev-pos">5 / 147</span><a href="#q-database-with-python-006-what-sqlite-is">Next →</a></nav>
+    </section>
+  </div>
+</details>

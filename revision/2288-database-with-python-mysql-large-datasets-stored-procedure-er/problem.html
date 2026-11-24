@@ -1,0 +1,43 @@
+<details class="question" id="q-database-with-python-060-mysql-large-datasets-stored-procedure-er" data-group="database-with-python" data-sec="database-with-python-s061">
+  <summary>
+    <span class="q-title">MySQL large datasets, stored procedure errors and security</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 6. MySQL Commands for Interviews › MySQL large datasets, stored procedure errors and security</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="SQL">
+DELETE FROM employees
+WHERE hire_date < '2020-01-01'
+LIMIT 1000;   -- batch delete
+
+DELIMITER //
+CREATE PROCEDURE SafeInsertEmployee(
+    IN p_first_name VARCHAR(50),
+    IN p_salary DECIMAL(10,2)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        SELECT 'Error occurred, transaction rolled back' AS message;
+    END;
+    START TRANSACTION;
+    INSERT INTO employees (first_name, salary) VALUES (p_first_name, p_salary);
+    COMMIT;
+    SELECT 'Insert successful' AS message;
+END //
+DELIMITER ;
+
+ALTER USER 'root'@'localhost' IDENTIFIED BY 'strong_password';
+FLUSH PRIVILEGES;
+        </script>
+      </div>
+      <p><strong>Q. How do you manage very large tables?</strong> Delete in batches, and use partitioning or archiving. <strong>Q. How do you harden MySQL?</strong> Remove anonymous users, disable remote root login, use SSL, and handle errors in stored procedures so production failures roll back cleanly.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-059-mysql-recursive-ctes-and-advanced-window">← Previous</a><span class="rev-pos">60 / 147</span><a href="#q-database-with-python-061-mysql-json-profiling-and-scaling">Next →</a></nav>
+    </section>
+  </div>
+</details>

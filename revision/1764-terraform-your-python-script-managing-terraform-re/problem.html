@@ -1,0 +1,40 @@
+<details class="question" id="q-terraform-140-your-python-script-managing-terraform-re" data-group="terraform" data-sec="terraform-s139">
+  <summary>
+    <span class="q-title">Your Python script managing Terraform resources is creating duplicate resources. How would you ensure idempotency in the script?</span>
+    <span class="q-meta">
+      <span class="tag">Terraform</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Terraform › 21. Terraform with Python › Your Python script managing Terraform resources is creating duplicate resources. How would you ensure idempotency in the script?</p>
+      <p>Ensure idempotency by:</p>
+      <ul>
+        <li><strong>Check Existing Resources</strong>: Use <code>boto3</code> to verify if resources exist before creating them.</li>
+        <li><strong>Use Terraform State</strong>: Check the Terraform state file to avoid duplicates.</li>
+        <li><strong>Implement Locking</strong>: Use S3 or DynamoDB for Terraform state locking.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+from python_terraform import Terraform
+
+def create_instance_if_not_exists(instance_name, working_dir):
+    ec2 = boto3.client("ec2")
+    response = ec2.describe_instances(Filters=[{"Name": "tag:Name", "Values": [instance_name]}])
+    if response["Reservations"]:
+        print(f"Instance {instance_name} already exists")
+        return
+
+    tf = Terraform(working_dir=working_dir)
+    tf.apply(var={"instance_name": instance_name}, skip_plan=True)
+    print(f"Instance {instance_name} created")
+
+# Example usage
+create_instance_if_not_exists("my-instance", "./terraform")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-terraform-139-your-terraform-configuration-is-failing">← Previous</a><span class="rev-pos">140 / 142</span><a href="#q-terraform-141-your-team-needs-to-automate-the-cleanup">Next →</a></nav>
+    </section>
+  </div>
+</details>

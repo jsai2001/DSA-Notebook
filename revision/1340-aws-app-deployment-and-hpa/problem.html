@@ -1,0 +1,76 @@
+<details class="question" id="q-aws-070-app-deployment-and-hpa" data-group="aws" data-sec="aws-s071">
+  <summary>
+    <span class="q-title">App deployment and HPA</span>
+    <span class="q-meta">
+      <span class="tag">AWS</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS › 17. Terraform for AWS: Scaling and Load Balancing › App deployment and HPA</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: "100m"
+          limits:
+            cpu: "200m"
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: web-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: web-app
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60
+        </script>
+      </div>
+      <p>The HPA reads CPU from the Metrics Server.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+kubectl scale deployment web-app --replicas=5 -n <namespace>
+        </script>
+      </div>
+      <ul>
+        <li>The ALB routes traffic to pods through the Ingress.</li>
+        <li>The HPA scales pods on CPU through the Metrics Server.</li>
+        <li>CloudWatch alarms trigger EC2 scaling.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-aws-069-alb-controller-service-account-and-ingre">← Previous</a><span class="rev-pos">70 / 94</span><a href="#q-aws-071-eks-cluster-with-one-node-group">Next →</a></nav>
+    </section>
+  </div>
+</details>

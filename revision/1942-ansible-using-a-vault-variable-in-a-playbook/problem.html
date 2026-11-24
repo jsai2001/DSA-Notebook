@@ -1,0 +1,48 @@
+<details class="question" id="q-ansible-036-using-a-vault-variable-in-a-playbook" data-group="ansible" data-sec="ansible-s037">
+  <summary>
+    <span class="q-title">Using a vault variable in a playbook</span>
+    <span class="q-meta">
+      <span class="tag">Ansible</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Ansible › 7. Variables, Facts and Vault › Using a vault variable in a playbook</p>
+      <p>Reference the encrypted file with <code>vars_files</code> and run with <code>--ask-vault-pass</code>; Ansible decrypts it in memory.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Use encrypted variable in playbook
+  hosts: dev-web1
+  vars_files:
+    - secrets.yml
+  tasks:
+    - name: Print the database password
+      ansible.builtin.debug:
+        msg: "The database password is {{ db_pass }}"
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+ansible-playbook playbook.yml --ask-vault-pass
+        </script>
+      </div>
+      <p>Instead of prompting, use <code>--vault-password-file vault_pass.txt</code> or a vault ID. A practical use is a MySQL user:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Configure database with encrypted password
+  hosts: dev-web1
+  vars_files:
+    - secrets.yml
+  tasks:
+    - name: Ensure database is configured
+      ansible.builtin.mysql_user:
+        name: app_user
+        password: "{{ db_pass }}"
+        priv: '*.*:ALL'
+        state: present
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ansible-035-encrypting-variables-with-vault">← Previous</a><span class="rev-pos">36 / 125</span><a href="#q-ansible-037-vault-commands-and-passwords">Next →</a></nav>
+    </section>
+  </div>
+</details>

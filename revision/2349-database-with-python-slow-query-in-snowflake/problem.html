@@ -1,0 +1,49 @@
+<details class="question" id="q-database-with-python-121-slow-query-in-snowflake" data-group="database-with-python" data-sec="database-with-python-s122">
+  <summary>
+    <span class="q-title">Slow query in Snowflake</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Slow query in Snowflake</p>
+      <p><strong>Q. A complex Snowflake query is slow. How do you improve it?</strong> Optimize the query (simplify joins and conditions, filter early), size the warehouse for the workload and use result caching so repeated queries are not recomputed.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+from snowflake.connector import DictCursor
+
+conn = snowflake.connector.connect(
+    user='your_user',
+    password='your_password',
+    account='your_account',
+    warehouse='OPTIMIZED_WAREHOUSE',   # appropriately sized warehouse
+    database='your_db',
+    schema='your_schema'
+)
+
+query = """
+SELECT c.customer_id, c.name, COUNT(o.order_id) as order_count
+FROM customers c
+JOIN orders o ON c.customer_id = o.customer_id
+WHERE o.order_date >= '2023-01-01'
+GROUP BY c.customer_id, c.name
+HAVING order_count > 10
+"""
+
+try:
+    cursor = conn.cursor(DictCursor)
+    cursor.execute("ALTER SESSION SET USE_CACHED_RESULT = TRUE")   # result caching
+    cursor.execute(query)
+    for row in cursor.fetchall():
+        print(row)
+finally:
+    cursor.close()
+    conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-120-expired-oauth-token">← Previous</a><span class="rev-pos">121 / 147</span><a href="#q-database-with-python-122-query-timeout">Next →</a></nav>
+    </section>
+  </div>
+</details>

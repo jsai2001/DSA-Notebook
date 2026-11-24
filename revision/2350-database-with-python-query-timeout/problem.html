@@ -1,0 +1,73 @@
+<details class="question" id="q-database-with-python-122-query-timeout" data-group="database-with-python" data-sec="database-with-python-s123">
+  <summary>
+    <span class="q-title">Query timeout</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Query timeout</p>
+      <p><strong>Q. A long query times out on Snowflake and on a generic SQL database. What do you do?</strong> Look at query complexity, raise the timeout (<code>QUERY_TIMEOUT</code> session parameter for Snowflake, <code>connect_timeout</code> for MySQL), add indexes on frequently queried columns in MySQL, and break big queries into pages with <code>LIMIT</code>/<code>OFFSET</code>. Standard Snowflake tables have no user-created indexes, so rely on warehouse size and clustering instead.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import mysql.connector
+from snowflake.connector.errors import ProgrammingError
+
+snowflake_conn = snowflake.connector.connect(
+    user='your_user',
+    password='your_password',
+    account='your_account',
+    warehouse='your_warehouse',
+    database='your_db',
+    schema='your_schema',
+    session_parameters={'QUERY_TIMEOUT': 300}   # 5 minutes
+)
+
+mysql_conn = mysql.connector.connect(
+    host='localhost',
+    user='your_user',
+    password='your_password',
+    database='your_db',
+    connect_timeout=300
+)
+
+snowflake_query = """
+SELECT * FROM large_table
+WHERE date_column BETWEEN '2023-01-01' AND '2023-12-31'
+"""
+mysql_query = """
+SELECT * FROM large_table
+WHERE date_column BETWEEN '2023-01-01' AND '2023-12-31'
+LIMIT 1000 OFFSET %s
+"""
+
+try:
+    snowflake_cursor = snowflake_conn.cursor()
+    snowflake_cursor.execute(snowflake_query)
+    snowflake_results = snowflake_cursor.fetchall()
+
+    mysql_cursor = mysql_conn.cursor()
+    offset = 0
+    while True:
+        mysql_cursor.execute(mysql_query, (offset,))
+        results = mysql_cursor.fetchall()
+        if not results:
+            break
+        offset += 1000
+except ProgrammingError as e:
+    print(f"Snowflake Error: {e}")
+except mysql.connector.Error as e:
+    print(f"MySQL Error: {e}")
+finally:
+    snowflake_cursor.close()
+    snowflake_conn.close()
+    mysql_cursor.close()
+    mysql_conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-121-slow-query-in-snowflake">← Previous</a><span class="rev-pos">122 / 147</span><a href="#q-database-with-python-123-large-result-set-and-memory">Next →</a></nav>
+    </section>
+  </div>
+</details>

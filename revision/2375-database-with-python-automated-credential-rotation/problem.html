@@ -1,0 +1,59 @@
+<details class="question" id="q-database-with-python-147-automated-credential-rotation" data-group="database-with-python" data-sec="database-with-python-s148">
+  <summary>
+    <span class="q-title">Automated credential rotation</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Automated credential rotation</p>
+      <p><strong>Q. Credentials must be rotated periodically. How do you automate it?</strong> Keep secrets in a secret manager (AWS Secrets Manager), fetch the new credentials, test them with a connection, and fall back to the old credentials on failure. Run the job on a schedule (AWS Lambda or cron).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import boto3
+import json
+import logging
+import os
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def get_new_credentials(secret_id):
+    client = boto3.client('secretsmanager')
+    response = client.get_secret_value(SecretId=secret_id)
+    return json.loads(response['SecretString'])
+
+def rotate_credentials(secret_id, config):
+    try:
+        new_creds = get_new_credentials(secret_id)
+        config['user'] = new_creds['user']
+        config['password'] = new_creds['password']
+        logger.info("Credentials rotated successfully")
+
+        conn = snowflake.connector.connect(**config)
+        cursor = conn.cursor()
+        cursor.execute("SELECT CURRENT_VERSION()")
+        logger.info("Connection test successful with new credentials")
+        conn.close()
+        return config
+    except Exception as e:
+        logger.error(f"Credential rotation failed: {e}")
+        raise   # roll back to previous credentials or fail over
+
+config = {
+    'user': os.getenv('SNOWFLAKE_USER'),
+    'password': os.getenv('SNOWFLAKE_PASSWORD'),
+    'account': os.getenv('SNOWFLAKE_ACCOUNT'),
+    'warehouse': os.getenv('SNOWFLAKE_WAREHOUSE'),
+    'database': os.getenv('SNOWFLAKE_DATABASE'),
+    'schema': os.getenv('SNOWFLAKE_SCHEMA')
+}
+updated_config = rotate_credentials('snowflake/credentials', config)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-146-compatibility-after-a-version-upgrade">← Previous</a><span class="rev-pos">147 / 147</span><span></span></nav>
+    </section>
+  </div>
+</details>

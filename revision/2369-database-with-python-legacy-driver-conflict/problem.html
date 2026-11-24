@@ -1,0 +1,53 @@
+<details class="question" id="q-database-with-python-141-legacy-driver-conflict" data-group="database-with-python" data-sec="database-with-python-s142">
+  <summary>
+    <span class="q-title">Legacy driver conflict</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Legacy driver conflict</p>
+      <p><strong>Q. An old MySQL driver conflicts with the newer Snowflake connector. How do you resolve it?</strong> Isolate the app in a virtual environment, pin compatible driver versions with <code>pip</code>, and verify with <code>pip list</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+python -m venv snowflake_env
+source snowflake_env/bin/activate        # Windows: snowflake_env\Scripts\activate
+pip install snowflake-connector-python==2.9.0 mysql-connector-python==8.0.33
+pip list
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import mysql.connector
+
+snow_conn = snowflake.connector.connect(
+    user='your_user', password='your_password', account='your_account',
+    warehouse='your_warehouse', database='your_database', schema='your_schema'
+)
+mysql_conn = mysql.connector.connect(
+    host='localhost', user='your_user', password='your_password', database='your_db'
+)
+
+try:
+    snow_cursor = snow_conn.cursor()
+    snow_cursor.execute("SELECT * FROM your_table LIMIT 1")
+    print(snow_cursor.fetchall())
+
+    mysql_cursor = mysql_conn.cursor()
+    mysql_cursor.execute("SELECT * FROM your_mysql_table LIMIT 1")
+    print(mysql_cursor.fetchall())
+except Exception as e:
+    print(f"Error: {e}")
+finally:
+    snow_cursor.close()
+    mysql_cursor.close()
+    snow_conn.close()
+    mysql_conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-140-query-tags-not-showing-in-history">← Previous</a><span class="rev-pos">141 / 147</span><a href="#q-database-with-python-142-snowflake-stream-not-detecting-changes">Next →</a></nav>
+    </section>
+  </div>
+</details>

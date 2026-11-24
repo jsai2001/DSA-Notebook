@@ -1,0 +1,47 @@
+<details class="question" id="q-lambda-052-a-sam-template-with-an-explicit-api" data-group="lambda" data-sec="lambda-s052">
+  <summary>
+    <span class="q-title">A SAM template with an explicit API</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 10. Infrastructure as Code and AWS SAM › A SAM template with an explicit API</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  MyApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      DefinitionBody:
+        swagger: '2.0'
+        paths:
+          /hello:
+            get:
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MyLambdaFunction.Arn}/invocations
+                httpMethod: POST
+  MyLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs18.x
+      CodeUri: .
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref MyApi
+            Path: /hello
+            Method: GET
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-051-what-aws-sam-is">← Previous</a><span class="rev-pos">52 / 79</span><a href="#q-lambda-053-installing-sam-and-creating-a-project">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,66 @@
+<details class="question" id="q-database-with-python-146-compatibility-after-a-version-upgrade" data-group="database-with-python" data-sec="database-with-python-s147">
+  <summary>
+    <span class="q-title">Compatibility after a version upgrade</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Compatibility after a version upgrade</p>
+      <p><strong>Q. A script breaks after a Snowflake version upgrade. How do you identify and fix it?</strong> Read the release notes, check <code>CURRENT_VERSION()</code>, upgrade <code>snowflake-connector-python</code>, and test in a staging environment first.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import logging
+import subprocess
+import os
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def check_snowflake_version(conn):
+    cursor = conn.cursor()
+    cursor.execute("SELECT CURRENT_VERSION()")
+    version = cursor.fetchone()[0]
+    logger.info(f"Current Snowflake version: {version}")
+    return version
+
+def update_snowflake_connector():
+    try:
+        subprocess.check_call(['pip', 'install', '--upgrade', 'snowflake-connector-python'])
+        logger.info("Snowflake connector updated successfully")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to update snowflake-connector-python: {e}")
+        raise
+
+def test_connection(config):
+    try:
+        conn = snowflake.connector.connect(**config)
+        check_snowflake_version(conn)
+        conn.cursor().execute("SELECT * FROM my_table LIMIT 1")
+        logger.info("Test query executed successfully")
+        conn.close()
+    except Exception as e:
+        logger.error(f"Compatibility issue detected: {e}")
+        update_snowflake_connector()
+        conn = snowflake.connector.connect(**config)
+        conn.cursor().execute("SELECT * FROM my_table LIMIT 1")
+        logger.info("Test query executed successfully after update")
+        conn.close()
+
+config = {
+    'user': os.getenv('SNOWFLAKE_USER'),
+    'password': os.getenv('SNOWFLAKE_PASSWORD'),
+    'account': os.getenv('SNOWFLAKE_ACCOUNT'),
+    'warehouse': os.getenv('SNOWFLAKE_WAREHOUSE'),
+    'database': os.getenv('SNOWFLAKE_DATABASE'),
+    'schema': os.getenv('SNOWFLAKE_SCHEMA')
+}
+test_connection(config)   # run in staging first
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-145-scheduled-maintenance-window">← Previous</a><span class="rev-pos">146 / 147</span><a href="#q-database-with-python-147-automated-credential-rotation">Next →</a></nav>
+    </section>
+  </div>
+</details>

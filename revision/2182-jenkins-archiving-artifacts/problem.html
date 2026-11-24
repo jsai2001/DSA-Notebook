@@ -1,0 +1,43 @@
+<details class="question" id="q-jenkins-062-archiving-artifacts" data-group="jenkins" data-sec="jenkins-s063">
+  <summary>
+    <span class="q-title">Archiving artifacts</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 10. Artifacts, Fingerprints and Test Reports › Archiving artifacts</p>
+      <p>Artifacts are objects a job produces that need to be saved, such as compiled binaries (Docker images, ZIP files) or text files (reports). <code>archiveArtifacts</code> is the core build step that identifies and saves them. It usually sits in the <code>post</code> section, which runs after all stages.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+pipeline {
+    agent any
+    stages {
+        // Pipeline stages
+    }
+    post {
+        always {
+            archiveArtifacts artifacts: 'report.txt', fingerprint: true
+        }
+    }
+}
+        </script>
+      </div>
+      <p><strong>Q. How do you archive artifacts, and what is the difference between artifacts and stashes?</strong> <code>archiveArtifacts</code> saves files to the controller, viewable and downloadable from the build page for the build's retention. A <strong>stash</strong> is temporary in-build storage for passing files between stages or agents and is deleted when the build ends. Archive for deliverables, stash for hand-offs within the pipeline.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+        </script>
+      </div>
+      <p><strong>Q. What is the difference between <code>stash</code>/<code>unstash</code> and <code>archiveArtifacts</code>?</strong> <code>stash</code>/<code>unstash</code> move files between stages or agents within one build (ephemeral, not shown in the UI). <code>archiveArtifacts</code> persists files to the controller and exposes them in the UI and API.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+stage('Build') { steps { sh 'make'; stash name: 'app', includes: 'dist/**' } }
+stage('Deploy'){ agent { label 'deployer' }; steps { unstash 'app'; sh './deploy.sh' } }
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-061-testing-and-versioning-libraries">← Previous</a><span class="rev-pos">62 / 80</span><a href="#q-jenkins-063-sharing-artifacts-between-jobs">Next →</a></nav>
+    </section>
+  </div>
+</details>

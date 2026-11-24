@@ -1,0 +1,42 @@
+<details class="question" id="q-jenkins-045-secrets-hygiene-ssh-agent-and-vault" data-group="jenkins" data-sec="jenkins-s046">
+  <summary>
+    <span class="q-title">Secrets hygiene, SSH Agent and Vault</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 7. Security, Credentials and Access Control › Secrets hygiene, SSH Agent and Vault</p>
+      <p><strong>Q. Why never hardcode tokens or passwords in steps, and how do you mask output?</strong> Hardcoded secrets leak into SCM, build logs and job config and cannot be rotated centrally. Use the Credentials store with <code>withCredentials</code> (Jenkins masks bound values in logs). The Mask Passwords plugin can redact custom secret strings. Do not <code>echo</code> secrets.</p>
+      <p>Several credentials can be bound in one <code>withCredentials</code> block:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+withCredentials([
+  usernamePassword(credentialsId: 'docker', usernameVariable: 'U', passwordVariable: 'P'),
+  string(credentialsId: 'npm-token', variable: 'NPM_TOKEN')
+]) {
+  sh 'echo "$P" | docker login -u "$U" --password-stdin'
+}
+        </script>
+      </div>
+      <p><strong>Q. What does the SSH Agent plugin do?</strong> It starts an <code>ssh-agent</code> for a build and loads a stored SSH private-key credential into it, so <code>git</code>, <code>ssh</code> and <code>scp</code> authenticate without the key being written to disk. The key is available only inside the wrapped block.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+sshagent(['deploy-ssh-key']) {
+  sh 'ssh deploy@server "systemctl restart app"'
+}
+        </script>
+      </div>
+      <p><strong>Q. How do you integrate Jenkins with Vault or AWS Secrets Manager?</strong> Use the HashiCorp Vault or AWS Secrets Manager Credentials Provider plugin. Secrets stay in the external manager (single source of truth, rotation, audit) and are fetched at runtime, so there are no long-lived copies in Jenkins.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+withVault(vaultSecrets: [[path: 'secret/app', secretValues: [[envVar: 'DB_PASS', vaultKey: 'password']]]]) {
+  sh 'deploy --password "$DB_PASS"'
+}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-044-using-credentials-in-a-jenkinsfile">← Previous</a><span class="rev-pos">45 / 80</span><a href="#q-jenkins-046-script-security-csrf-and-hardening">Next →</a></nav>
+    </section>
+  </div>
+</details>

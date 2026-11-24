@@ -1,0 +1,44 @@
+<details class="question" id="q-docker-047-ports-and-dns" data-group="docker" data-sec="docker-s048">
+  <summary>
+    <span class="q-title">Ports and DNS</span>
+    <span class="q-meta">
+      <span class="tag">Docker</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Docker › 13. On-Call: Networking Problems › Ports and DNS</p>
+      <p><strong>Q. Containerized app not accessible via the mapped port?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker inspect <container_id> | grep -i port
+docker exec <container_id> netstat -tuln
+curl http://localhost:<host_port>
+sudo iptables -L -n
+sudo iptables -A INPUT -p tcp --dport <host_port> -j ACCEPT
+        </script>
+      </div>
+      <p>Verify the port mapping, that the app binds to <code>0.0.0.0</code>, and that no host service conflicts.</p>
+      <p><strong>Q. Port conflict: "Bind for 0.0.0.0:80 failed"?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+sudo netstat -tulnp | grep :80
+sudo kill <pid>
+docker run -p 8080:80 <image_name>
+        </script>
+      </div>
+      <p>Check for conflicting containers (<code>docker ps</code>) and avoid duplicate port usage.</p>
+      <p><strong>Q. Container cannot resolve DNS names?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker exec <container_id> nslookup google.com
+docker inspect <container_id> | grep -i dns
+docker run --dns 8.8.8.8 <image_name>
+cat /etc/resolv.conf
+        </script>
+      </div>
+      <p>Verify host DNS, check network policies (port 53), and restart after DNS changes.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-docker-046-connectivity-failures">← Previous</a><span class="rev-pos">47 / 77</span><a href="#q-docker-048-packet-loss-502-errors-and-slowness">Next →</a></nav>
+    </section>
+  </div>
+</details>

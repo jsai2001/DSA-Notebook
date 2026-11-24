@@ -1,0 +1,45 @@
+<details class="question" id="q-kubernetes-053-github-actions-workflows-that-run-kubect" data-group="kubernetes" data-sec="kubernetes-s054">
+  <summary>
+    <span class="q-title">GitHub Actions workflows that run kubectl</span>
+    <span class="q-meta">
+      <span class="tag">Kubernetes</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Kubernetes › 16. Kubernetes with Ansible and GitHub Actions › GitHub Actions workflows that run kubectl</p>
+      <p><strong>Q. How do you scale a Kubernetes deployment from GitHub Actions on a version tag?</strong> Write the kubeconfig from a secret, then run <code>kubectl scale</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Scale K8s
+on: { push: { tags: ['v*'] } }
+jobs:
+  scale:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: azure/setup-kubectl@v3
+    - run: echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+    - run: kubectl scale deployment web-app --replicas=5 -n default
+        </script>
+      </div>
+      <p><strong>Q. How do you restart a rollout from GitHub Actions when config changes?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Restart Deployment
+on: { push: { branches: [main], paths: ['config/*'] } }
+jobs:
+  restart:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: azure/setup-kubectl@v3
+    - run: echo "${{ secrets.KUBECONFIG }}" > $HOME/.kube/config
+    - run: kubectl apply -f config/configmap.yaml
+    - run: kubectl rollout restart deployment web-app -n default
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-kubernetes-052-checking-logs-and-exposing-services-with">← Previous</a><span class="rev-pos">53 / 63</span><a href="#q-kubernetes-054-configuring-nodes-with-ansible-and-githu">Next →</a></nav>
+    </section>
+  </div>
+</details>

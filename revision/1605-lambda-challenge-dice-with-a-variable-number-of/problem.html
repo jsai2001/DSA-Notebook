@@ -1,0 +1,75 @@
+<details class="question" id="q-lambda-060-challenge-dice-with-a-variable-number-of" data-group="lambda" data-sec="lambda-s060">
+  <summary>
+    <span class="q-title">Challenge: dice with a variable number of sides</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 10. Infrastructure as Code and AWS SAM › Challenge: dice with a variable number of sides</p>
+      <p>A GET request with an optional <code>sides</code> query parameter rolls a die of that size, defaulting to 6 when the parameter is missing or invalid (<code>?sides=abc</code>, negative values). Add a function with path <code>/roll</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+Resources:
+  RollVariableDiceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: roll-variable-dice/
+      Handler: app.lambdaHandler
+      Runtime: nodejs18.x
+      Events:
+        RollVariableDiceAPI:
+          Type: Api
+          Properties:
+            Path: /roll
+            Method: get
+Outputs:
+  RollVariableDiceApi:
+    Description: API Gateway endpoint URL for variable dice roll
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/roll/
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+export const lambdaHandler = async (event) => {
+    console.log('Roll Variable Dice Run');
+    try {
+        const queryParams = event.queryStringParameters || {};
+        let sides = 6; // Default to 6-sided dice
+        if (queryParams.sides) {
+            const parsedSides = parseInt(queryParams.sides);
+            if (!isNaN(parsedSides) && parsedSides > 0) {
+                sides = parsedSides;
+            }
+        }
+        const result = rollDice(sides);
+        return {
+            statusCode: 200,
+            body: JSON.stringify(`The result is ${result}`)
+        };
+    } catch (error) {
+        console.error('Error:', error);
+        return {
+            statusCode: 500,
+            body: JSON.stringify('Error rolling dice')
+        };
+    }
+};
+
+function rollDice(sides) {
+    return Math.floor(Math.random() * sides) + 1;
+}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+curl https://<api-id>.execute-api.<region>.amazonaws.com/Prod/roll?sides=4
+sam logs --name RollVariableDiceFunction --stack-name sam-first-project --region <region> --tail
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-059-viewing-logs-with-sam-logs">← Previous</a><span class="rev-pos">60 / 79</span><a href="#q-lambda-061-challenge-solution-dice-with-a-descripti">Next →</a></nav>
+    </section>
+  </div>
+</details>

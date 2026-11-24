@@ -1,0 +1,70 @@
+<details class="question" id="q-database-with-python-129-data-type-mismatch" data-group="database-with-python" data-sec="database-with-python-s130">
+  <summary>
+    <span class="q-title">Data type mismatch</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Data type mismatch</p>
+      <p><strong>Q. An insert fails with a data type mismatch. How do you find and fix it?</strong> Read the table schema (<code>DESCRIBE TABLE</code>), compare it with your values, cast inputs to the right type (Snowflake data type mapping) and read the error logs.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+conn_params = {
+    'account': 'your_account', 'user': 'your_user', 'password': 'your_password',
+    'database': 'your_database', 'schema': 'your_schema'
+}
+
+def get_column_types(table_name):
+    conn = snowflake.connector.connect(**conn_params)
+    cursor = conn.cursor()
+    cursor.execute(f"DESCRIBE TABLE {table_name}")
+    schema = {row[0]: row[1] for row in cursor.fetchall()}   # name -> type
+    cursor.close()
+    conn.close()
+    return schema
+
+def insert_data(table_name, data):
+    try:
+        schema = get_column_types(table_name)
+        logging.info(f"Table schema: {schema}")
+
+        for row in data:
+            for key, value in row.items():
+                col_type = schema[key.upper()]
+                if 'NUMBER' in col_type and isinstance(value, str):
+                    row[key] = int(float(value)) if value else None
+                elif 'FLOAT' in col_type and isinstance(value, str):
+                    row[key] = float(value) if value else None
+
+        conn = snowflake.connector.connect(**conn_params)
+        cursor = conn.cursor()
+        columns = ', '.join(data[0].keys())
+        placeholders = ', '.join(['%s'] * len(data[0]))
+        query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
+        cursor.executemany(query, [list(row.values()) for row in data])
+        conn.commit()
+        cursor.close()
+        conn.close()
+        logging.info("Data inserted successfully")
+    except snowflake.connector.errors.ProgrammingError as e:
+        logging.error(f"Data type mismatch: {e}")
+        raise
+
+data = [
+    {'id': '1', 'name': 'John', 'salary': '50000.0'},
+    {'id': '2', 'name': 'Jane', 'salary': '60000.0'}
+]
+insert_data('employees', data)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-128-syntax-error-in-a-dynamic-query">← Previous</a><span class="rev-pos">129 / 147</span><a href="#q-database-with-python-130-transaction-rollback">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,49 @@
+<details class="question" id="q-docker-048-packet-loss-502-errors-and-slowness" data-group="docker" data-sec="docker-s049">
+  <summary>
+    <span class="q-title">Packet loss, 502 errors and slowness</span>
+    <span class="q-meta">
+      <span class="tag">Docker</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Docker › 13. On-Call: Networking Problems › Packet loss, 502 errors and slowness</p>
+      <p><strong>Q. Container dropping packets intermittently?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker inspect <container_id> | grep -i network
+docker exec <container_id> tcpdump -i eth0
+sudo tcpdump -i docker0
+docker stats <container_id>
+        </script>
+      </div>
+      <p>Check for congestion, MTU settings or network driver issues (<code>ifconfig</code>).</p>
+      <p><strong>Q. Containerized web server returns 502 Bad Gateway?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker logs <container_id>
+docker exec <web_container_id> curl http://<backend_service>:<port>
+docker inspect <container_id> | grep -i network
+        </script>
+      </div>
+      <p>NGINX config:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Nginx">
+server { listen 80; location / { proxy_pass http://<backend_service>:<port>; } }
+        </script>
+      </div>
+      <p>Verify backend health, network configuration and proxy settings.</p>
+      <p><strong>Q. Slow container network performance?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker stats <container_id>
+docker run -it --rm <image_name> iperf -c <target_ip>
+sudo iftop -i docker0
+docker network inspect <network_name> | grep -i mtu
+        </script>
+      </div>
+      <p>Compare with other containers, check congestion or QoS, and verify the network driver.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-docker-047-ports-and-dns">← Previous</a><span class="rev-pos">48 / 77</span><a href="#q-docker-049-restricting-traffic-between-containers">Next →</a></nav>
+    </section>
+  </div>
+</details>

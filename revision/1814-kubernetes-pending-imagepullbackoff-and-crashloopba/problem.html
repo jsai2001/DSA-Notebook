@@ -1,0 +1,45 @@
+<details class="question" id="q-kubernetes-048-pending-imagepullbackoff-and-crashloopba" data-group="kubernetes" data-sec="kubernetes-s049">
+  <summary>
+    <span class="q-title">Pending, ImagePullBackOff and CrashLoopBackOff</span>
+    <span class="q-meta">
+      <span class="tag">Kubernetes</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Kubernetes › 15. kubectl On-Call Tasks › Pending, ImagePullBackOff and CrashLoopBackOff</p>
+      <p><strong>Q. How do you troubleshoot a Pod stuck in Pending?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+kubectl get pod <pod-name> -n <namespace>
+kubectl describe pod <pod-name> -n <namespace>
+kubectl get nodes
+kubectl describe quota -n <namespace>
+kubectl logs -n kube-system -l component=kube-scheduler
+        </script>
+      </div>
+      <p><strong>Q. How do you debug ImagePullBackOff?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+kubectl get pod <pod-name> -n <namespace>
+kubectl describe pod <pod-name> -n <namespace>
+docker pull <image-name:tag>
+kubectl get secret <secret-name> -n <namespace>
+        </script>
+      </div>
+      <p><strong>Q. How do you delete Pods in CrashLoopBackOff?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+kubectl get pods -n <namespace> -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.status.containerStatuses[0].state.waiting.reason}{"\n"}{end}' | grep CrashLoopBackOff | awk '{print $1}' | xargs kubectl delete pod -n <namespace>
+        </script>
+      </div>
+      <p><strong>Q. How do you force delete a Pod stuck in Terminating?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+kubectl delete pod <pod-name> -n <namespace> --force --grace-period=0
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-kubernetes-047-listing-logs-and-exec">← Previous</a><span class="rev-pos">48 / 63</span><a href="#q-kubernetes-049-scaling-rollouts-and-patching">Next →</a></nav>
+    </section>
+  </div>
+</details>

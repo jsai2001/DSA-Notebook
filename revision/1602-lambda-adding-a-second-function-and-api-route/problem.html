@@ -1,0 +1,65 @@
+<details class="question" id="q-lambda-057-adding-a-second-function-and-api-route" data-group="lambda" data-sec="lambda-s057">
+  <summary>
+    <span class="q-title">Adding a second function and API route</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 10. Infrastructure as Code and AWS SAM › Adding a second function and API route</p>
+      <p>Add a resource to <code>template.yaml</code>, create its folder (<code>roll-dice/</code>) and an <code>app.mjs</code> handler (ES modules). SAM creates the API Gateway automatically for simple Api events. Mind YAML indentation. Test with <code>sam build</code>, <code>sam local invoke RollADiceFunction -e events/event.json</code> and <code>sam local start-api</code> then <code>curl http://localhost:3000/dice</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+Resources:
+  RollADiceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: roll-dice/
+      Handler: app.lambdaHandler
+      Runtime: nodejs18.x
+      Events:
+        RollADiceAPI:
+          Type: Api
+          Properties:
+            Path: /dice
+            Method: get
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+export const lambdaHandler = async (event) => {
+    console.log('Roll Dice Run');
+    try {
+        const result = rollDice(6); // 6-sided dice
+        return {
+            statusCode: 200,
+            body: JSON.stringify({ message: result })
+        };
+    } catch (error) {
+        console.error('Error:', error);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ message: 'Error rolling dice' })
+        };
+    }
+};
+
+function rollDice(sides) {
+    return Math.floor(Math.random() * sides) + 1;
+}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Text">
+START RequestId: ...
+Roll Dice Run
+END RequestId: ...
+REPORT Duration: ... ms
+{"statusCode":200,"body":"{\"message\":2}"}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-056-building-and-testing-locally-with-sam">← Previous</a><span class="rev-pos">57 / 79</span><a href="#q-lambda-058-deploying-a-sam-project">Next →</a></nav>
+    </section>
+  </div>
+</details>

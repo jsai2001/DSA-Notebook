@@ -1,0 +1,62 @@
+<details class="question" id="q-database-with-python-131-deadlock-in-mysql" data-group="database-with-python" data-sec="database-with-python-s132">
+  <summary>
+    <span class="q-title">Deadlock in MySQL</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Deadlock in MySQL</p>
+      <p><strong>Q. Concurrent updates cause a MySQL deadlock. How do you troubleshoot and prevent it?</strong> Retry the transaction, keep a consistent query and lock order, keep transactions short, and use a suitable isolation level such as READ COMMITTED.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import pymysql
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+conn_params = {
+    'host': 'localhost', 'user': 'your_user',
+    'password': 'your_password', 'database': 'your_database'
+}
+
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=5),
+    retry=retry_if_exception_type(pymysql.err.OperationalError)
+)
+def execute_concurrent_update(query):
+    conn = None
+    try:
+        conn = pymysql.connect(**conn_params, charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
+        conn.autocommit(False)
+        cursor = conn.cursor()
+        cursor.execute("SET TRANSACTION ISOLATION LEVEL READ COMMITTED")
+        logging.info(f"Executing: {query}")
+        cursor.execute(query)
+        conn.commit()
+        cursor.close()
+        logging.info("Update successful")
+    except pymysql.err.OperationalError as e:
+        logging.error(f"Deadlock detected: {e}")
+        if conn:
+            conn.rollback()
+        raise
+    except Exception as e:
+        logging.error(f"Unexpected error: {e}")
+        if conn:
+            conn.rollback()
+        raise
+    finally:
+        if conn:
+            conn.close()
+
+execute_concurrent_update("UPDATE employees SET salary = salary + 1000 WHERE id = 1")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-130-transaction-rollback">← Previous</a><span class="rev-pos">131 / 147</span><a href="#q-database-with-python-132-time-travel-query-failure">Next →</a></nav>
+    </section>
+  </div>
+</details>

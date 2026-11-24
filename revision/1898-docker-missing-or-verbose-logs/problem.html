@@ -1,0 +1,49 @@
+<details class="question" id="q-docker-069-missing-or-verbose-logs" data-group="docker" data-sec="docker-s070">
+  <summary>
+    <span class="q-title">Missing or verbose logs</span>
+    <span class="q-meta">
+      <span class="tag">Docker</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Docker › 19. On-Call: Logging and Debugging › Missing or verbose logs</p>
+      <p><strong>Q. No logs from the containerized app?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker inspect <container_name> | grep LogConfig
+docker run --log-driver=json-file --log-opt max-size=10m <container_name>
+docker logs <container_name>
+        </script>
+      </div>
+      <p>Configure the <code>json-file</code> driver and verify logs. Ensure the app writes to stdout/stderr and check driver compatibility.</p>
+      <p><strong>Q. How do you increase log verbosity for crashes?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker inspect <container_name> | grep LogConfig
+docker run --log-driver=json-file --log-opt max-size=50m <container_name> --verbose
+docker logs <container_name>
+        </script>
+      </div>
+      <p>Enable verbose mode and increase log size. Verify the app supports verbose and monitor storage.</p>
+      <p><strong>Q. How do you enable debugging for silent failures?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker run --log-driver=json-file --log-opt max-size=10m <container_name> --debug
+docker events --filter 'container=<container_name>'
+docker logs <container_name>
+        </script>
+      </div>
+      <p>Enable debug and monitor events and logs. Verify debug support and check the config for suppressed logs.</p>
+      <p><strong>Q. How do you redirect container logs to a file?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker run --log-driver=json-file --log-opt max-size=10m -v /host/path:/logs <container_name>
+docker exec <container_name> sh -c 'echo "log output" > /logs/app.log'
+        </script>
+      </div>
+      <p>Use a volume for log files. Check permissions and monitor log growth.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-docker-068-monitoring-setup-benchmarking-and-profil">← Previous</a><span class="rev-pos">69 / 77</span><a href="#q-docker-070-centralized-logging">Next →</a></nav>
+    </section>
+  </div>
+</details>

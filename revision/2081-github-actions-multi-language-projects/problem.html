@@ -1,0 +1,58 @@
+<details class="question" id="q-github-actions-050-multi-language-projects" data-group="github-actions" data-sec="github-actions-s051">
+  <summary>
+    <span class="q-title">Multi-language projects</span>
+    <span class="q-meta">
+      <span class="tag">GitHub Actions</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GitHub Actions › 8. Integrations: Packages, Pages, Terraform, CodeQL, Dependabot › Multi-language projects</p>
+      <p>Use the setup actions (<code>setup-node</code>, <code>setup-python</code>) in one workflow, cache dependencies for each language, and split jobs by language for parallelism in large projects.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Test Multi-Language Project
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npm test
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install pytest
+      - run: pytest
+        </script>
+      </div>
+      <p>Matrix across versions of both languages:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ['18', '20']
+        python-version: ['3.9', '3.11']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm test
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pytest
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-github-actions-049-dependabot">← Previous</a><span class="rev-pos">50 / 89</span><a href="#q-github-actions-051-monorepos">Next →</a></nav>
+    </section>
+  </div>
+</details>

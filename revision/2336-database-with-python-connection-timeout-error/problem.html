@@ -1,0 +1,51 @@
+<details class="question" id="q-database-with-python-108-connection-timeout-error" data-group="database-with-python" data-sec="database-with-python-s109">
+  <summary>
+    <span class="q-title">Connection timeout error</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Connection timeout error</p>
+      <p><strong>Q. A <code>snowflake.connector</code> connection times out. How do you troubleshoot it?</strong> Check network reachability, firewall rules for outbound 443, the Snowflake account configuration and the connection parameters. Set a login timeout and a network timeout, test the socket, then retry with a longer timeout.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import logging
+import socket
+
+logging.basicConfig(level=logging.DEBUG)
+
+try:
+    conn = snowflake.connector.connect(
+        user='your_user',
+        password='your_password',
+        account='your_account.region.cloud',
+        login_timeout=10,
+        network_timeout=30
+    )
+    logging.info("Connection successful")
+except snowflake.connector.errors.OperationalError as e:
+    logging.error(f"Connection timeout: {e}")
+    try:
+        socket.create_connection(("snowflake.com", 443), timeout=5)
+        logging.info("Network is reachable")
+    except socket.timeout:
+        logging.error("Network issue: unable to reach Snowflake")
+    logging.info("Check firewall rules for outbound connections to Snowflake")
+    conn = snowflake.connector.connect(
+        user='your_user',
+        password='your_password',
+        account='your_account.region.cloud',
+        login_timeout=30   # increased timeout
+    )
+finally:
+    if 'conn' in locals():
+        conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-107-practical-scenarios-concurrency-and-depl">← Previous</a><span class="rev-pos">108 / 147</span><a href="#q-database-with-python-109-invalid-account-name">Next →</a></nav>
+    </section>
+  </div>
+</details>

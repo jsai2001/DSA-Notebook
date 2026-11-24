@@ -1,0 +1,93 @@
+<details class="question" id="q-aws-084-ingress-security-group-and-cronjob-deplo" data-group="aws" data-sec="aws-s085">
+  <summary>
+    <span class="q-title">Ingress, security group and CronJob deployments</span>
+    <span class="q-meta">
+      <span class="tag">AWS</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS › 20. AWS Integration Questions › Ingress, security group and CronJob deployments</p>
+      <p><strong>Q. GitHub Actions for Ansible on EC2, then deploy a Kubernetes Ingress?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Setup EC2
+  hosts: ec2_hosts
+  become: yes
+  tasks:
+  - name: Install
+    ansible.builtin.package: { name: nginx, state: present }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Deploy Ingress
+on: push
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - run: ansible-playbook -i inventory.ini setup_ec2.yml
+    - run: kubectl apply -f ingress.yaml
+      env: { KUBECONFIG: ${{ secrets.KUBECONFIG }} }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata: { name: "web-ingress" }
+spec: { rules: [{ http: { paths: [{ path: "/", pathType: "Prefix", backend: { service: { name: "web", port: { number: 80 } } } } ] } } ] }
+        </script>
+      </div>
+      <p><strong>Q. Ansible to update an EC2 security group, GitHub Actions to deploy a Kubernetes service?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Update SG
+  hosts: localhost
+  tasks:
+  - name: Add rule
+    amazon.aws.ec2_security_group: { name: "my-sg", rules: [{ proto: "tcp", from_port: 80, to_port: 80, cidr_ip: "0.0.0.0/0" }] }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Deploy Service
+on: push
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - run: ansible-playbook update_sg.yml
+    - run: kubectl apply -f service.yaml
+      env: { KUBECONFIG: ${{ secrets.KUBECONFIG }} }
+        </script>
+      </div>
+      <p><strong>Q. Ansible for EC2, GitHub Actions to deploy a Kubernetes CronJob?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Deploy CronJob
+on: push
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - run: kubectl apply -f cronjob.yaml
+      env: { KUBECONFIG: ${{ secrets.KUBECONFIG }} }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: batch/v1
+kind: CronJob
+metadata: { name: "test-cron" }
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate: { spec: { template: { spec: { containers: [{ name: "test", image: "busybox", command: ["echo", "Hello"] }] } } } }
+        </script>
+      </div>
+      <p>The Ansible step is the same <code>curl</code> install play as above.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-aws-083-ansible-on-ec2-with-github-actions">← Previous</a><span class="rev-pos">84 / 94</span><a href="#q-aws-085-building-kubernetes-on-ec2">Next →</a></nav>
+    </section>
+  </div>
+</details>

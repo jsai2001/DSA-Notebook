@@ -1,0 +1,44 @@
+<details class="question" id="q-jenkins-059-loading-a-library-and-writing-a-custom-s" data-group="jenkins" data-sec="jenkins-s060">
+  <summary>
+    <span class="q-title">Loading a library and writing a custom step</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 9. Shared Libraries and Groovy › Loading a library and writing a custom step</p>
+      <p><strong>Q. How do you load a library implicitly vs explicitly?</strong></p>
+      <ul>
+        <li><strong>Implicit</strong>: a Global Shared Library configured with "Load implicitly" is available in every pipeline.</li>
+        <li><strong>Explicit</strong>: <code>@Library('my-lib@main') _</code> at the top of the Jenkinsfile, pinning a branch, tag or commit.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+@Library('shared-pipeline@v2.1') _
+pipeline { agent any; stages { stage('Deploy'){ steps { deployApp env: 'prod' } } } }
+        </script>
+      </div>
+      <p><strong>Q. How do you write a custom step in <code>vars/</code> with an argument map?</strong> Define a <code>call</code> method taking a <code>Map</code> of named arguments with defaults; the file name becomes the step name.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+// vars/deployApp.groovy
+def call(Map args = [:]) {
+  String env     = args.env ?: 'dev'
+  String version = args.version ?: env.BUILD_NUMBER
+  echo "Deploying ${version} to ${env}"
+  sh "./deploy.sh ${env} ${version}"
+}
+// usage: deployApp env: 'prod', version: '1.4.0'
+        </script>
+      </div>
+      <p><strong>Q. What is the difference between <code>vars/*.groovy</code> globals and <code>src/</code> classes?</strong> <code>vars</code> files expose a step-like global (with <code>call()</code> making it invocable as <code>name(args)</code>), good for the pipeline-facing DSL. <code>src</code> classes are regular Groovy or OOP for structured, reusable and unit-testable logic. Use <code>vars</code> for the API surface and <code>src</code> for the implementation.</p>
+      <p><strong>Q. What is the difference between Global and Folder-level Shared Libraries?</strong></p>
+      <ul>
+        <li><strong>Global</strong>: configured in Manage Jenkins, available instance-wide, can be trusted (runs outside the sandbox) and loaded implicitly.</li>
+        <li><strong>Folder-level</strong>: configured on a folder, scoped to jobs in it, always sandboxed and untrusted. Use for team-specific libraries and to limit the blast radius.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-058-what-a-shared-library-is">← Previous</a><span class="rev-pos">59 / 80</span><a href="#q-jenkins-060-groovy-in-pipelines-cps-and-noncps">Next →</a></nav>
+    </section>
+  </div>
+</details>

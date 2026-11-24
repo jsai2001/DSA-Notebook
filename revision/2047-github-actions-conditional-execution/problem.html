@@ -1,0 +1,60 @@
+<details class="question" id="q-github-actions-016-conditional-execution" data-group="github-actions" data-sec="github-actions-s017">
+  <summary>
+    <span class="q-title">Conditional execution</span>
+    <span class="q-meta">
+      <span class="tag">GitHub Actions</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GitHub Actions › 3. Job control: matrix, needs, outputs, conditions › Conditional execution</p>
+      <p><strong>Q. What is the <code>if</code> conditional, and how is it used?</strong> It controls whether a step or job runs, using expressions.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+steps:
+  - if: github.event_name == 'push'
+    run: echo "Push only"
+        </script>
+      </div>
+      <p><strong>Q. How do you run steps differently for pull requests and pushes?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+steps:
+  - if: github.event_name == 'pull_request'
+    run: npm test
+  - if: github.event_name == 'push'
+    run: npm run deploy
+        </script>
+      </div>
+      <p><strong>Q. How do you run a job only on a given branch?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: echo "Building on main"
+        </script>
+      </div>
+      <p><strong>Q. How do you handle failures (for example continue on error)?</strong> Use <code>continue-on-error: true</code> on a step, or <code>if: failure()</code> to run a step after a failure. Combine them to handle errors gracefully, and avoid overusing <code>continue-on-error</code> because it can mask real issues.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+steps:
+  - uses: actions/checkout@v3
+  - name: Optional step
+    continue-on-error: true
+    run: curl http://optional-service.com
+  - name: Log if failed
+    if: failure()
+    run: echo "Optional step failed, continuing"
+  - name: Critical step
+    run: ./build.sh
+        </script>
+      </div>
+      <p>Typical uses of <code>continue-on-error</code>: notifications to services that may be down, optional linting, and metrics collection that is not critical to deployment.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-github-actions-015-passing-data-between-steps">← Previous</a><span class="rev-pos">16 / 89</span><a href="#q-github-actions-017-timeouts">Next →</a></nav>
+    </section>
+  </div>
+</details>

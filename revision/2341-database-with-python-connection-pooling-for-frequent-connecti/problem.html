@@ -1,0 +1,53 @@
+<details class="question" id="q-database-with-python-113-connection-pooling-for-frequent-connecti" data-group="database-with-python" data-sec="database-with-python-s114">
+  <summary>
+    <span class="q-title">Connection pooling for frequent connections</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Connection pooling for frequent connections</p>
+      <p><strong>Q. Frequent connection opens cause delays. How do you pool connections?</strong> Use SQLAlchemy's <code>QueuePool</code> (<code>pool_size</code> is the base number of connections, <code>max_overflow</code> allows extras, <code>pool_timeout</code> is the wait for a free connection). Snowflake has no traditional client-side pooling, so keep connections minimal and reuse them.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sqlalchemy import create_engine
+from sqlalchemy.pool import QueuePool
+import snowflake.connector
+import logging
+
+mysql_url = "mysql+mysqlconnector://your_user:your_password@localhost/your_database"
+
+try:
+    mysql_engine = create_engine(
+        mysql_url,
+        poolclass=QueuePool,
+        pool_size=5,
+        max_overflow=10,
+        pool_timeout=30
+    )
+    with mysql_engine.connect() as conn:
+        conn.execute("SELECT 1")
+        logging.info("MySQL pooled connection successful")
+
+    snowflake_conn = snowflake.connector.connect(
+        user='your_user',
+        password='your_password',
+        account='your_account.region.cloud',
+        warehouse='your_warehouse',
+        database='your_database',
+        schema='your_schema'
+    )
+except Exception as e:
+    logging.error(f"Connection error: {e}")
+finally:
+    if 'snowflake_conn' in locals():
+        snowflake_conn.close()
+    if 'mysql_engine' in locals():
+        mysql_engine.dispose()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-112-ssl-certificate-error">← Previous</a><span class="rev-pos">113 / 147</span><a href="#q-database-with-python-114-environment-variable-mismatch">Next →</a></nav>
+    </section>
+  </div>
+</details>

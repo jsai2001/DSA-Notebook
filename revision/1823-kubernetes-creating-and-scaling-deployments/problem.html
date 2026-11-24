@@ -1,0 +1,65 @@
+<details class="question" id="q-kubernetes-057-creating-and-scaling-deployments" data-group="kubernetes" data-sec="kubernetes-s058">
+  <summary>
+    <span class="q-title">Creating and scaling Deployments</span>
+    <span class="q-meta">
+      <span class="tag">Kubernetes</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Kubernetes › 17. Kubernetes with Python › Creating and scaling Deployments</p>
+      <p><strong>Q. How do you deploy a Kubernetes Deployment with the <code>kubernetes</code> client?</strong> Build a <code>V1Deployment</code> and create it with <code>AppsV1Api</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from kubernetes import client, config
+config.load_kube_config()
+apps_v1 = client.AppsV1Api()
+deployment = client.V1Deployment(
+    metadata=client.V1ObjectMeta(name="nginx-deployment"),
+    spec=client.V1DeploymentSpec(
+        replicas=3,
+        selector=client.V1LabelSelector(match_labels={"app": "nginx"}),
+        template=client.V1PodTemplateSpec(
+            metadata=client.V1ObjectMeta(labels={"app": "nginx"}),
+            spec=client.V1PodSpec(
+                containers=[
+                    client.V1Container(
+                        name="nginx",
+                        image="nginx:latest",
+                        ports=[client.V1ContainerPort(container_port=80)]
+                    )
+                ]
+            )
+        )
+    )
+)
+namespace = "default"
+apps_v1.create_namespaced_deployment(namespace=namespace, body=deployment)
+print("Deployment created successfully")
+        </script>
+      </div>
+      <p><strong>Q. How do you scale a Deployment programmatically?</strong> Use <code>AppsV1Api.patch_namespaced_deployment_scale</code> with the deployment name and namespace.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from kubernetes import client, config
+config.load_kube_config()
+apps_v1 = client.AppsV1Api()
+namespace = "default"
+deployment_name = "nginx-deployment"
+replicas = 5
+scale = client.V1Scale(
+    metadata=client.V1ObjectMeta(name=deployment_name, namespace=namespace),
+    spec=client.V1ScaleSpec(replicas=replicas)
+)
+apps_v1.patch_namespaced_deployment_scale(
+    name=deployment_name,
+    namespace=namespace,
+    body=scale
+)
+print(f"Scaled {deployment_name} to {replicas} replicas")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-kubernetes-056-authenticating-and-listing-pods">← Previous</a><span class="rev-pos">57 / 63</span><a href="#q-kubernetes-058-configmaps-and-services">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,46 @@
+<details class="question" id="q-kubernetes-056-authenticating-and-listing-pods" data-group="kubernetes" data-sec="kubernetes-s057">
+  <summary>
+    <span class="q-title">Authenticating and listing Pods</span>
+    <span class="q-meta">
+      <span class="tag">Kubernetes</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Kubernetes › 17. Kubernetes with Python › Authenticating and listing Pods</p>
+      <p><strong>Q. How do you authenticate a Python script to a Kubernetes cluster's API?</strong></p>
+      <ul>
+        <li><strong>Kubeconfig file</strong>: <code>config.load_kube_config()</code> reads <code>~/.kube/config</code>.</li>
+        <li><strong>In-cluster config</strong>: inside a Pod, use <code>config.load_incluster_config()</code> with a service account token.</li>
+        <li><strong>Manual token</strong>: provide a bearer token and cluster URL explicitly.</li>
+        <li><strong>Certificates</strong>: use client certificates.</li>
+      </ul>
+      <p>In-cluster example:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from kubernetes import client, config
+# Assumes running in a pod with a service account
+config.load_incluster_config()
+v1 = client.CoreV1Api()
+pods = v1.list_pod_for_all_namespaces()
+for pod in pods.items:
+    print(f"Pod: {pod.metadata.name}")
+        </script>
+      </div>
+      <p><strong>Q. How do you list all Pods in a namespace with the <code>kubernetes</code> client?</strong> Use <code>CoreV1Api.list_namespaced_pod</code>. Configure credentials with a kubeconfig or service account token.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from kubernetes import client, config
+# Use config.load_incluster_config() when running in a cluster
+config.load_kube_config()
+v1 = client.CoreV1Api()
+namespace = "default"
+pods = v1.list_namespaced_pod(namespace=namespace)
+for pod in pods.items:
+    print(f"Pod: {pod.metadata.name}, Status: {pod.status.phase}")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-kubernetes-055-why-use-python-for-kubernetes">← Previous</a><span class="rev-pos">56 / 63</span><a href="#q-kubernetes-057-creating-and-scaling-deployments">Next →</a></nav>
+    </section>
+  </div>
+</details>

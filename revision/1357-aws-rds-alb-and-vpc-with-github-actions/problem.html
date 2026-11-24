@@ -1,0 +1,97 @@
+<details class="question" id="q-aws-087-rds-alb-and-vpc-with-github-actions" data-group="aws" data-sec="aws-s088">
+  <summary>
+    <span class="q-title">RDS, ALB and VPC with GitHub Actions</span>
+    <span class="q-meta">
+      <span class="tag">AWS</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS › 20. AWS Integration Questions › RDS, ALB and VPC with GitHub Actions</p>
+      <p><strong>Q. GitHub Actions for Terraform RDS, connect a Kubernetes app?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_db_instance" "db" { identifier = "my-rds", engine = "mysql", instance_class = "db.t3.micro" }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Deploy RDS
+on: push
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: hashicorp/setup-terraform@v2
+    - run: terraform init && terraform apply -auto-approve
+    - run: kubectl apply -f app.yaml
+      env: { KUBECONFIG: ${{ secrets.KUBECONFIG }} }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: v1
+kind: Pod
+metadata: { name: "app" }
+spec: { containers: [{ name: "app", image: "mysql:5.7", env: [{ name: "MYSQL_HOST", value: "my-rds.endpoint" }] }] }
+        </script>
+      </div>
+      <p><strong>Q. GitHub Actions for a Terraform ALB, Kubernetes Ingress?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_lb" "app_lb" { name = "app-lb", load_balancer_type = "application", subnets = ["subnet-1", "subnet-2"] }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Deploy ALB
+on: push
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: hashicorp/setup-terraform@v2
+    - run: terraform init && terraform apply -auto-approve
+    - run: kubectl apply -f ingress.yaml
+      env: { KUBECONFIG: ${{ secrets.KUBECONFIG }} }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata: { name: "app-ingress" }
+spec: { rules: [{ http: { paths: [{ path: "/", pathType: "Prefix", backend: { service: { name: "app", port: { number: 80 } } } } ] } } ] }
+        </script>
+      </div>
+      <p><strong>Q. Terraform for an ALB, expose a Kubernetes service with <code>kubectl</code>?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_lb" "my_alb" { name = "my-alb", load_balancer_type = "application", subnets = ["subnet-1", "subnet-2"] }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+kubectl expose service web-service --type=LoadBalancer --name=web-lb --port=80
+kubectl annotate service web-lb "service.beta.kubernetes.io/aws-load-balancer-arn=arn:aws:elasticloadbalancing:us-east-1:123:loadbalancer/app/my-alb/abc123"
+        </script>
+      </div>
+      <p><strong>Q. Terraform for a VPC, Ansible for Kubernetes networking?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+module "vpc" { source = "terraform-aws-modules/vpc/aws", vpc_name = "k8s-vpc" }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Setup networking
+  hosts: localhost
+  tasks:
+  - name: Apply
+    ansible.builtin.command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-aws-086-s3-cloudfront-and-lambda-with-github-act">← Previous</a><span class="rev-pos">87 / 94</span><a href="#q-aws-088-messaging-data-and-alerting-integrations">Next →</a></nav>
+    </section>
+  </div>
+</details>

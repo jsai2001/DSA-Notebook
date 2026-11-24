@@ -1,0 +1,46 @@
+<details class="question" id="q-cloudwatch-100-delayed-log-data" data-group="cloudwatch" data-sec="cloudwatch-s101">
+  <summary>
+    <span class="q-title">Delayed log data</span>
+    <span class="q-meta">
+      <span class="tag">AWS CloudWatch</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS CloudWatch › 18. Troubleshooting Logs › Delayed log data</p>
+      <p><strong>Q. Log data arrives late. What do you do?</strong> Check agent metrics and increase the buffer.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws cloudwatch get-metric-statistics --namespace AWS/Logs --metric-name IncomingLogEvents --dimensions Name=LogGroupName,Value=my-app-logs --start-time $(date -u -Iseconds -d '-1 hour') --end-time $(date -u -Iseconds) --period 300 --statistics Sum
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JSON">
+{
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/application.log",
+            "log_group_name": "my-app-logs",
+            "log_stream_name": "{instance_id}",
+            "buffer_duration": 5000
+          }
+        ]
+      }
+    }
+  }
+}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a start
+        </script>
+      </div>
+      <p>Look at <code>IncomingLogEvents</code> under AWS/Logs, then update the agent config on the instance.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-cloudwatch-099-duplicate-log-entries">← Previous</a><span class="rev-pos">100 / 108</span><a href="#q-cloudwatch-101-logs-insights-query-returning-incomplete">Next →</a></nav>
+    </section>
+  </div>
+</details>

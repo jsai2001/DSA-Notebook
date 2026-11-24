@@ -1,0 +1,67 @@
+<details class="question" id="q-kubernetes-063-analyzing-resource-usage-with-python" data-group="kubernetes" data-sec="kubernetes-s064">
+  <summary>
+    <span class="q-title">Analyzing resource usage with Python</span>
+    <span class="q-meta">
+      <span class="tag">Kubernetes</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Kubernetes › 17. Kubernetes with Python › Analyzing resource usage with Python</p>
+      <p><strong>Q. A cluster is running out of resources. How do you analyze usage with Python and suggest optimizations?</strong> Use the <code>kubernetes</code> client and Metrics API to compare usage with limits.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from kubernetes import client, config
+
+def analyze_k8s_resources(namespace):
+    config.load_kube_config()
+    v1 = client.CoreV1Api()
+    metrics_api = client.CustomObjectsApi()
+    pods = v1.list_namespaced_pod(namespace)
+    for pod in pods.items:
+        metrics = metrics_api.get_namespaced_custom_object(
+            group="metrics.k8s.io", version="v1beta1", namespace=namespace, plural="pods", name=pod.metadata.name
+        )
+        for container in metrics["containers"]:
+            cpu = container["usage"]["cpu"].rstrip("n")
+            memory = container["usage"]["memory"].rstrip("Ki")
+            print(f"Pod: {pod.metadata.name}, Container: {container['name']}, CPU: {cpu}n, Memory: {memory}Ki")
+            if int(cpu) > 500:  # Example threshold
+                print(f"Recommendation: Reduce CPU limit for {container['name']}")
+
+analyze_k8s_resources("default")
+        </script>
+      </div>
+      <p><strong>Q. A Python script calling the Kubernetes API is timing out on a large cluster. How do you optimize it?</strong></p>
+      <ul>
+        <li><strong>Use pagination</strong>: limit results with <code>limit</code> and <code>continue</code>.</li>
+        <li><strong>Increase the timeout</strong>: adjust the HTTP client timeout.</li>
+        <li><strong>Cache results</strong>: store frequently accessed data locally.</li>
+        <li><strong>Parallelize requests</strong>: use <code>concurrent.futures</code>.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from kubernetes import client, config
+
+def list_pods_optimized(namespace):
+    config.load_kube_config()
+    v1 = client.CoreV1Api()
+    pods = []
+    limit = 100
+    continue_token = None
+    while True:
+        response = v1.list_namespaced_pod(namespace, limit=limit, _continue=continue_token)
+        pods.extend(response.items)
+        continue_token = response.metadata._continue
+        if not continue_token:
+            break
+    for pod in pods:
+        print(f"Pod: {pod.metadata.name}")
+
+list_pods_optimized("default")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-kubernetes-062-python-autoscaling-and-resource-analysis">← Previous</a><span class="rev-pos">63 / 63</span><span></span></nav>
+    </section>
+  </div>
+</details>

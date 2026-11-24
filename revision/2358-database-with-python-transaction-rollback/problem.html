@@ -1,0 +1,56 @@
+<details class="question" id="q-database-with-python-130-transaction-rollback" data-group="database-with-python" data-sec="database-with-python-s131">
+  <summary>
+    <span class="q-title">Transaction rollback</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Transaction rollback</p>
+      <p><strong>Q. A script fails to roll back after an error. How do you manage transactions properly?</strong> Turn off autocommit, run all statements, commit on success and roll back in the exception handler, then close the connection in <code>finally</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+conn_params = {
+    'account': 'your_account', 'user': 'your_user', 'password': 'your_password',
+    'database': 'your_database', 'schema': 'your_schema'
+}
+
+def execute_transaction(queries):
+    conn = None
+    try:
+        conn = snowflake.connector.connect(**conn_params)
+        conn.autocommit(False)   # explicit transaction control
+        cursor = conn.cursor()
+        for query in queries:
+            logging.info(f"Executing: {query}")
+            cursor.execute(query)
+        conn.commit()
+        logging.info("Transaction committed successfully")
+        cursor.close()
+    except Exception as e:
+        logging.error(f"Transaction failed: {e}")
+        if conn:
+            conn.rollback()
+            logging.info("Transaction rolled back")
+        raise
+    finally:
+        if conn:
+            conn.close()
+
+queries = [
+    "INSERT INTO employees (id, name) VALUES (1, 'John')",
+    "UPDATE employees SET salary = 50000 WHERE id = 1"
+]
+execute_transaction(queries)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-129-data-type-mismatch">← Previous</a><span class="rev-pos">130 / 147</span><a href="#q-database-with-python-131-deadlock-in-mysql">Next →</a></nav>
+    </section>
+  </div>
+</details>

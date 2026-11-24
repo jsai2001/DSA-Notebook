@@ -1,0 +1,43 @@
+<details class="question" id="q-lambda-005-configuration-runtimes-and-limits" data-group="lambda" data-sec="lambda-s006">
+  <summary>
+    <span class="q-title">Configuration, runtimes and limits</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 1. What Lambda is › Configuration, runtimes and limits</p>
+      <p><strong>Q2. What are the core components of an AWS Lambda function configuration?</strong> Handler (entry point), runtime (execution environment), execution role (IAM permissions), memory (128 MB to 10,240 MB, which also sets CPU), timeout (up to 15 min), the deployment package (zip or container image), environment variables, trigger or event source config, concurrency settings, layers, ephemeral <code>/tmp</code> storage size and optional VPC config.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+# SAM: the core configuration knobs in one place
+MyFunction:
+  Type: AWS::Serverless::Function
+  Properties:
+    Handler: app.lambda_handler      # entry point (file.function)
+    Runtime: python3.12              # execution environment
+    MemorySize: 512                  # MB, also scales CPU/network
+    Timeout: 30                      # seconds (max 900)
+    Role: !GetAtt MyRole.Arn         # IAM execution role
+    EphemeralStorage: { Size: 512 }  # /tmp size in MB (512-10240)
+    Environment:
+      Variables: { TABLE_NAME: Users }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# The handler receives (event, context)
+def lambda_handler(event, context):
+    return {"statusCode": 200, "body": "ok"}
+        </script>
+      </div>
+      <p><strong>Q5. Which native runtimes does Lambda support out of the box?</strong> Node.js, Python, Java, .NET (C#), Ruby and Go (via the provided runtime family). Anything else runs through Custom Runtimes using the Runtime API, or by packaging an OCI container image.</p>
+      <p><strong>Q9. What is the max execution timeout for a single invocation?</strong> 900 seconds (15 minutes).</p>
+      <p><strong>Q10. What is the maximum payload size for synchronous vs asynchronous calls?</strong> Synchronous: 6 MB request/response. Asynchronous: 256 KB event payload.</p>
+      <p><strong>Q11. How does the pricing model work?</strong> You pay for (a) the number of requests and (b) GB-seconds = allocated memory (GB) x execution duration (billed per 1 ms). More memory costs more per ms but can finish faster. There is a monthly free tier. Provisioned Concurrency and ephemeral storage above the default are billed separately.</p>
+      <p><strong>Q12. What is the default <code>/tmp</code> storage and its maximum?</strong> Default 512 MB, configurable up to 10,240 MB (10 GB). It is scratch space that may persist across warm invocations but is not durable.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-004-lambda-vs-ec2-and-the-execution-model">← Previous</a><span class="rev-pos">5 / 79</span><a href="#q-lambda-006-packaging-zip-vs-container-image-and-cus">Next →</a></nav>
+    </section>
+  </div>
+</details>

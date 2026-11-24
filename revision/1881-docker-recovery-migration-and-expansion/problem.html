@@ -1,0 +1,49 @@
+<details class="question" id="q-docker-052-recovery-migration-and-expansion" data-group="docker" data-sec="docker-s053">
+  <summary>
+    <span class="q-title">Recovery, migration and expansion</span>
+    <span class="q-meta">
+      <span class="tag">Docker</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Docker › 14. On-Call: Storage and Volume Problems › Recovery, migration and expansion</p>
+      <p><strong>Q. How do you recover a corrupted volume?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker volume inspect <volume_name>
+docker run --rm -v <volume_name>:/data -it busybox sh
+fsck /path/to/volume
+tar -xzf /backup/volume_backup.tar.gz -C /var/lib/docker/volumes/<volume_name>/_data
+docker volume create new_volume
+docker run -v new_volume:/app <image_name>
+        </script>
+      </div>
+      <p>Maintain backups, test restored data, and use recovery containers.</p>
+      <p><strong>Q. How do you migrate a volume to a new host?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker stop <container_id>
+tar -czf volume_backup.tar.gz -C /var/lib/docker/volumes/<volume_name>/_data .
+scp volume_backup.tar.gz user@new_host:/tmp
+docker volume create <volume_name>
+tar -xzf /tmp/volume_backup.tar.gz -C /var/lib/docker/volumes/<volume_name>/_data
+docker run -v <volume_name>:/app <image_name>
+        </script>
+      </div>
+      <p>Ensure Docker version compatibility, verify permissions, and test after migration.</p>
+      <p><strong>Q. How do you expand database container storage?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker exec <container_id> df -h
+docker volume create new_volume
+docker run --rm -v <old_volume>:/old -v new_volume:/new busybox sh -c "cp -a /old/. /new/"
+docker stop <container_id>
+docker run -v new_volume:/data <image_name>
+        </script>
+      </div>
+      <p>Minimize downtime, verify data integrity, and ensure host disk space.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-docker-051-disk-usage">← Previous</a><span class="rev-pos">52 / 77</span><a href="#q-docker-053-nfs-and-persistence">Next →</a></nav>
+    </section>
+  </div>
+</details>

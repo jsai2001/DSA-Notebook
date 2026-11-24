@@ -1,0 +1,47 @@
+<details class="question" id="q-database-with-python-132-time-travel-query-failure" data-group="database-with-python" data-sec="database-with-python-s133">
+  <summary>
+    <span class="q-title">Time Travel query failure</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Time Travel query failure</p>
+      <p><strong>Q. A Time Travel query fails with "Invalid timestamp". How do you troubleshoot it?</strong> Check the table's retention period, make sure the timestamp is within it, use the right timestamp format (UTC with <code>::TIMESTAMP_TZ</code>), and verify the <code>AT (TIMESTAMP =&gt; ...)</code> syntax.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+from datetime import datetime
+import pytz
+
+conn = snowflake.connector.connect(
+    user='your_user', password='your_password', account='your_account',
+    warehouse='your_warehouse', database='your_database', schema='your_schema'
+)
+
+timestamp = datetime.now(pytz.UTC).strftime('%Y-%m-%d %H:%M:%S %Z')
+try:
+    cursor = conn.cursor()
+    cursor.execute("SHOW TABLES LIKE 'your_table'")
+    retention_period = cursor.fetchone()[6]   # retention time in days
+    print(f"Table retention period: {retention_period} days")
+
+    query = f"""
+    SELECT * FROM your_table
+    AT (TIMESTAMP => '{timestamp}'::TIMESTAMP_TZ)
+    """
+    cursor.execute(query)
+    print(cursor.fetchall())
+except snowflake.connector.errors.ProgrammingError as e:
+    print(f"Error: {e}")
+    print("Verify timestamp is within table's retention period and format is correct.")
+finally:
+    cursor.close()
+    conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-131-deadlock-in-mysql">← Previous</a><span class="rev-pos">132 / 147</span><a href="#q-database-with-python-133-moving-data-between-snowflake-and-postgr">Next →</a></nav>
+    </section>
+  </div>
+</details>

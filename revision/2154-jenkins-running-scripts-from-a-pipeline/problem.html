@@ -1,0 +1,61 @@
+<details class="question" id="q-jenkins-034-running-scripts-from-a-pipeline" data-group="jenkins" data-sec="jenkins-s035">
+  <summary>
+    <span class="q-title">Running scripts from a pipeline</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 5. Triggers and SCM Integration › Running scripts from a pipeline</p>
+      <p>Keep complex build logic in scripts stored in the repo so the pipeline stays clear and easy to debug.</p>
+      <ul>
+        <li><code>sh</code>: run commands or scripts with the default shell on Linux, Unix or macOS.</li>
+        <li><code>bat</code>: the Windows equivalent.</li>
+        <li><code>dir</code>: change the working directory for the steps inside it, with a path relative to the workspace or absolute. <code>${WORKSPACE}</code> gives the checkout directory.</li>
+        <li>Use relative paths for scripts inside the repo and absolute paths for scripts outside the workspace, in the format the agent OS expects.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+pipeline {
+    agent any
+    stages {
+        stage('Make Script Executable') {
+            steps { sh 'chmod +x scripts/fibonacci.sh' }
+        }
+        stage('Run Script with Relative Path') {
+            steps { sh './scripts/fibonacci.sh 60' }
+        }
+        stage('Run Script with Full Path') {
+            steps { sh '${WORKSPACE}/scripts/fibonacci.sh 60' }
+        }
+        stage('Run Script in Directory') {
+            steps {
+                dir('scripts') {
+                    sh './fibonacci.sh 60'
+                }
+            }
+        }
+    }
+}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+#!/bin/bash
+n=$1
+a=0
+b=1
+for ((i=0; i<n; i++)); do
+    echo $a
+    fn=$((a + b))
+    a=$b
+    b=$fn
+done
+        </script>
+      </div>
+      <p>Run the job once so Jenkins registers the parameter, then use Build with Parameters (for example <code>60</code>). If a stage fails, check that the script is executable and the path matches the agent's OS. All stages should print identical output.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-033-checkout-optimization-concurrency-and-su">← Previous</a><span class="rev-pos">34 / 80</span><a href="#q-jenkins-035-prepare-the-repository-and-the-job">Next →</a></nav>
+    </section>
+  </div>
+</details>

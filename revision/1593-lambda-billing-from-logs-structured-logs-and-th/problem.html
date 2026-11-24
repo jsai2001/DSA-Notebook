@@ -1,0 +1,40 @@
+<details class="question" id="q-lambda-048-billing-from-logs-structured-logs-and-th" data-group="lambda" data-sec="lambda-s048">
+  <summary>
+    <span class="q-title">Billing from logs, structured logs and the context object</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 9. Monitoring, logging and testing › Billing from logs, structured logs and the context object</p>
+      <p><strong>Q84. How do you compute total billable duration from <code>REPORT</code> logs?</strong> Each <code>REPORT</code> line shows <code>Billed Duration</code> (ms, rounded up to the nearest 1 ms) and <code>Memory Size</code>. Cost is about the sum of (Billed Duration in seconds x Memory in GB) x price per GB-second, plus the per-request cost. Sum <code>Billed Duration</code> across invocations (or use CloudWatch <code>Duration</code> x count) to estimate billable time.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Text">
+REPORT RequestId: ...  Duration: 123.45 ms  Billed Duration: 124 ms  Memory Size: 128 MB  Max Memory Used: 50 MB
+        </script>
+      </div>
+      <p><strong>Q85. How do you write structured JSON logs for aggregators?</strong> Emit single-line JSON so CloudWatch Logs Insights and aggregators (Datadog, ELK) can parse fields. Set the function's log format to <strong>JSON</strong> (advanced logging controls) and/or log JSON yourself with a request id or correlation id.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import json, logging
+log = logging.getLogger(); log.setLevel(logging.INFO)
+def lambda_handler(event, context):
+    log.info(json.dumps({
+        "level": "INFO", "requestId": context.aws_request_id,
+        "action": "order.created", "orderId": event.get("id")}))
+        </script>
+      </div>
+      <p><strong>Q86. What is the <code>context</code> object, and what does it provide?</strong> Runtime information about the invocation: <code>aws_request_id</code>, <code>function_name</code>, <code>function_version</code>, <code>memory_limit_in_mb</code>, <code>log_group_name</code>/<code>log_stream_name</code>, <code>invoked_function_arn</code> and <code>get_remaining_time_in_millis()</code> (time left before timeout, useful to bail out or checkpoint).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def lambda_handler(event, context):
+    if context.get_remaining_time_in_millis() < 2000:
+        return {"status": "deferred"}      # not enough time left
+    return process(event)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-047-logs-metrics-and-x-ray">← Previous</a><span class="rev-pos">48 / 79</span><a href="#q-lambda-049-testing-locally-and-handling-crashes">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,40 @@
+<details class="question" id="q-docker-071-debugging-inside-containers" data-group="docker" data-sec="docker-s072">
+  <summary>
+    <span class="q-title">Debugging inside containers</span>
+    <span class="q-meta">
+      <span class="tag">Docker</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Docker › 19. On-Call: Logging and Debugging › Debugging inside containers</p>
+      <p><strong>Q. How do you debug a container process with <code>strace</code> or <code>gdb</code>?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker exec -it <container_name> apt-get update && apt-get install -y strace gdb
+docker exec -it <container_name> strace -p $(pgrep process_name)
+docker exec -it <container_name> gdb --pid=$(pgrep process_name)
+        </script>
+      </div>
+      <p>Ensure the tools are available and avoid impacting production.</p>
+      <p><strong>Q. How do you confirm a container memory leak?</strong> Use <code>valgrind</code> to detect leaks.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker exec -it <container_name> apt-get update && apt-get install -y valgrind
+docker exec -it <container_name> valgrind --leak-check=full --log-file=/tmp/valgrind.log process_name
+        </script>
+      </div>
+      <p>Ensure debug symbols and account for overhead.</p>
+      <p><strong>Q. How do you extract context from cryptic errors?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker logs <container_name> --tail 100
+docker inspect <container_name> | grep Env
+docker exec <container_name> cat /path/to/config
+        </script>
+      </div>
+      <p>Review logs, environment and configs. Correlate errors with settings and enable debug mode.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-docker-070-centralized-logging">← Previous</a><span class="rev-pos">71 / 77</span><a href="#q-docker-072-host-journal-logs">Next →</a></nav>
+    </section>
+  </div>
+</details>

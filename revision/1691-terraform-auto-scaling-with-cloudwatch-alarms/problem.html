@@ -1,0 +1,135 @@
+<details class="question" id="q-terraform-067-auto-scaling-with-cloudwatch-alarms" data-group="terraform" data-sec="terraform-s066">
+  <summary>
+    <span class="q-title">Auto Scaling with CloudWatch Alarms (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">Terraform</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Terraform › 16. Hands-On: Complete Stacks › Auto Scaling with CloudWatch Alarms</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+provider "aws" {
+    region = "us-east-1" # Replace with your region
+}
+
+# VPC and Subnet (assumed pre-existing, or create them)
+data "aws_vpc" "default" {
+    default = true
+}
+
+data "aws_subnets" "default" {
+    filter {
+        name   = "vpc-id"
+        values = [data.aws_vpc.default.id]
+    }
+}
+
+# Security Group
+resource "aws_security_group" "web_sg" {
+    vpc_id = data.aws_vpc.default.id
+    ingress {
+        from_port   = 80
+        to_port     = 80
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+    ingress {
+        from_port   = 22
+        to_port     = 22
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+    egress {
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+}
+
+# Launch Template with CloudWatch Agent
+resource "aws_launch_template" "web_template" {
+    name_prefix   = "MyWebServerTemplate"
+    image_id      = "<ami-id>" # Replace with your AMI ID
+    instance_type = "t2.micro"
+    key_name      = "<key-pair-name>" # Replace with your key pair
+
+    network_interfaces {
+        associate_public_ip_address = true
+        security_groups             = [aws_security_group.web_sg.id]
+    }
+
+    user_data = base64encode(<<-EOF
+                            #!/bin/bash
+                            yum install -y amazon-cloudwatch-agent
+                            echo '{"metrics":{"namespace":"CWAgent","metrics_collected":{"mem":{"measurement":["mem_used_percent"]}}}}' > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+                            /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+                            EOF
+    )
+}
+
+# Auto Scaling Group
+resource "aws_autoscaling_group" "web_asg" {
+    name                = "MyWebServerASG"
+    min_size            = 1
+    max_size            = 4
+    desired_capacity    = 2
+    vpc_zone_identifier = data.aws_subnets.default.ids
+    launch_template {
+        id      = aws_launch_template.web_template.id
+        version = "$Latest"
+    }
+}
+
+# Scaling Policy (Step Scaling)
+resource "aws_autoscaling_policy" "step_scaling" {
+    name                   = "MyStepScalingPolicy"
+    policy_type            = "StepScaling"
+    adjustment_type        = "ChangeInCapacity"
+    autoscaling_group_name = aws_autoscaling_group.web_asg.name
+
+    step_adjustment {
+        scaling_adjustment          = 1
+        metric_interval_lower_bound = 0
+    }
+}
+
+# CloudWatch Alarm for CPU (50% Threshold)
+resource "aws_cloudwatch_metric_alarm" "cpu_alarm" {
+    alarm_name          = "HighCPUAlarm"
+    comparison_operator = "GreaterThanThreshold"
+    evaluation_periods  = 2
+    metric_name         = "CPUUtilization"
+    namespace           = "AWS/EC2"
+    period              = 300
+    statistic           = "Average"
+    threshold           = 50
+    dimensions = {
+        AutoScalingGroupName = aws_autoscaling_group.web_asg.name
+    }
+    alarm_actions = [aws_autoscaling_policy.step_scaling.arn]
+}
+
+# CloudWatch Alarm for Memory (70% Threshold)
+resource "aws_cloudwatch_metric_alarm" "memory_alarm" {
+    alarm_name          = "HighMemoryAlarm"
+    comparison_operator = "GreaterThanThreshold"
+    evaluation_periods  = 2
+    metric_name         = "mem_used_percent"
+    namespace           = "CWAgent"
+    period              = 300
+    statistic           = "Average"
+    threshold           = 70
+    dimensions = {
+        AutoScalingGroupName = aws_autoscaling_group.web_asg.name
+    }
+    alarm_actions = [aws_autoscaling_policy.step_scaling.arn]
+}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-terraform-066-auto-scaling-with-cloudwatch-alarms">← Previous</a><span class="rev-pos">67 / 142</span><a href="#q-terraform-068-applying-the-auto-scaling-stack">Next →</a></nav>
+    </section>
+  </div>
+</details>

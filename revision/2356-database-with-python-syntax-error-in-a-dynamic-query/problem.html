@@ -1,0 +1,55 @@
+<details class="question" id="q-database-with-python-128-syntax-error-in-a-dynamic-query" data-group="database-with-python" data-sec="database-with-python-s129">
+  <summary>
+    <span class="q-title">Syntax error in a dynamic query</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Syntax error in a dynamic query</p>
+      <p><strong>Q. A dynamically built query fails with a syntax error. How do you debug and prevent it?</strong> Log the final query text with its parameters, use parameterized queries instead of string building, validate the SQL and test it.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import logging
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+conn_params = {
+    'account': 'your_account',
+    'user': 'your_user',
+    'password': 'your_password',
+    'database': 'your_database',
+    'schema': 'your_schema'
+}
+
+def execute_safe_query(query, params=None):
+    try:
+        conn = snowflake.connector.connect(**conn_params)
+        cursor = conn.cursor()
+        logging.debug(f"Executing query: {query} with params: {params}")
+        cursor.execute(query, params or ())
+        results = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return results
+    except snowflake.connector.errors.ProgrammingError as e:
+        logging.error(f"Syntax error in query: {e}")
+        raise
+    except Exception as e:
+        logging.error(f"Unexpected error: {e}")
+        raise
+
+try:
+    query = "SELECT * FROM employees WHERE department = %s AND salary > %s"
+    results = execute_safe_query(query, ('Engineering', 50000))
+    print(results)
+except Exception as e:
+    print(f"Query failed: {e}")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-127-connection-dropped-mid-query">← Previous</a><span class="rev-pos">128 / 147</span><a href="#q-database-with-python-129-data-type-mismatch">Next →</a></nav>
+    </section>
+  </div>
+</details>

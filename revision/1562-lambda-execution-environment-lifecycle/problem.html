@@ -1,0 +1,34 @@
+<details class="question" id="q-lambda-017-execution-environment-lifecycle" data-group="lambda" data-sec="lambda-s018">
+  <summary>
+    <span class="q-title">Execution environment lifecycle</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 3. Execution lifecycle, cold starts and performance › Execution environment lifecycle</p>
+      <p><strong>Q16. Walk through the lifecycle of an execution environment (Init, Invoke, Shutdown).</strong></p>
+      <ul>
+        <li><strong>Init</strong>: AWS creates the microVM, downloads code, starts the runtime and runs your initialization code (everything outside the handler). Extensions register here.</li>
+        <li><strong>Invoke</strong>: the handler runs for each event. A warm environment skips Init and goes straight here.</li>
+        <li><strong>Shutdown</strong>: when the environment is idle or reclaimed, Lambda sends a shutdown signal and extensions get a short window to clean up. Your handler is not called.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Python: code placement maps to the lifecycle
+import boto3
+
+# --- INIT phase: runs ONCE per environment, reused across warm invokes ---
+ddb = boto3.client("dynamodb")   # create clients here, not in the handler
+
+def lambda_handler(event, context):
+    # --- INVOKE phase: runs on EVERY event ---
+    return ddb.get_item(TableName="Users", Key={"id": {"S": event["id"]}})
+        </script>
+      </div>
+      <p><strong>Q26. What happens during Shutdown, and how can you use extension hooks?</strong> When Lambda reclaims an idle environment, external extensions receive a <code>SHUTDOWN</code> event with a limited window (typically up to about 2 s) to flush logs and metrics, close connections or export telemetry. Use these hooks to clean up gracefully instead of losing buffered data.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-016-challenge-add-two-numbers-from-a-post-re">← Previous</a><span class="rev-pos">17 / 79</span><a href="#q-lambda-018-cold-starts-and-how-to-reduce-them">Next →</a></nav>
+    </section>
+  </div>
+</details>

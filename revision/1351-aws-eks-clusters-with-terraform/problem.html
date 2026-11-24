@@ -1,0 +1,89 @@
+<details class="question" id="q-aws-081-eks-clusters-with-terraform" data-group="aws" data-sec="aws-s082">
+  <summary>
+    <span class="q-title">EKS clusters with Terraform</span>
+    <span class="q-meta">
+      <span class="tag">AWS</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS › 20. AWS Integration Questions › EKS clusters with Terraform</p>
+      <p><strong>Q. How do you deploy a Kubernetes pod on EKS with Terraform and verify it?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+module "eks" { source = "terraform-aws-modules/eks/aws", cluster_name = "my-eks" }
+resource "kubernetes_pod" "nginx" {
+  metadata: { name: "nginx-pod" }
+  spec: { container: [{ image: "nginx:latest", name: "nginx" }] }
+}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+terraform apply
+aws eks update-kubeconfig --name my-eks
+kubectl get pod nginx-pod
+        </script>
+      </div>
+      <p><strong>Q. Terraform for EKS and a VPC, deployed through GitHub Actions?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+module "vpc" { source = "terraform-aws-modules/vpc/aws" }
+module "eks" { source = "terraform-aws-modules/eks/aws", subnet_ids = module.vpc.private_subnets, vpc_id = module.vpc.vpc_id }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Deploy VPC and EKS
+on: push
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: hashicorp/setup-terraform@v2
+    - run: terraform init && terraform apply -auto-approve
+      env: { AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}, AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }} }
+        </script>
+      </div>
+      <p><strong>Q. GitHub Actions for Terraform EKS, then scale with <code>kubectl</code>?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Deploy EKS
+on: push
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: hashicorp/setup-terraform@v2
+    - run: terraform init && terraform apply -auto-approve
+    - uses: azure/setup-kubectl@v3
+    - run: |
+        aws eks update-kubeconfig --name my-eks
+        kubectl scale deployment web-app --replicas=3
+      env: { AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}, AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }} }
+        </script>
+      </div>
+      <p><strong>Q. Terraform for EKS, GitHub Actions to test pod scaling?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+module "eks" { source = "terraform-aws-modules/eks/aws", cluster_name = "test-eks" }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Test Scaling
+on: push
+jobs:
+  scale:
+    runs-on: ubuntu-latest
+    steps:
+    - run: |
+        aws eks update-kubeconfig --name test-eks
+        kubectl scale deployment test-app --replicas=5
+      env: { AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}, AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }} }
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-aws-080-network-resource-and-ci-checks">← Previous</a><span class="rev-pos">81 / 94</span><a href="#q-aws-082-eks-with-ansible-and-monitoring-pods">Next →</a></nav>
+    </section>
+  </div>
+</details>

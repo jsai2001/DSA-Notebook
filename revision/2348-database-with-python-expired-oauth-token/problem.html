@@ -1,0 +1,63 @@
+<details class="question" id="q-database-with-python-120-expired-oauth-token" data-group="database-with-python" data-sec="database-with-python-s121">
+  <summary>
+    <span class="q-title">Expired OAuth token</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Expired OAuth token</p>
+      <p><strong>Q. OAuth authentication fails with "Token expired". How do you refresh the token?</strong> Use the OAuth refresh-token flow, then connect with <code>authenticator='oauth'</code> and the new access token. On a "Token expired" error, refresh and reconnect.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import os
+import requests
+
+def refresh_oauth_token(refresh_token, client_id, client_secret):
+    url = "https://<snowflake_account>.snowflakecomputing.com/oauth/token"
+    data = {
+        "grant_type": "refresh_token",
+        "refresh_token": refresh_token,
+        "client_id": client_id,
+        "client_secret": client_secret
+    }
+    response = requests.post(url, data=data)
+    return response.json()['access_token']
+
+def connect_with_token(access_token):
+    return snowflake.connector.connect(
+        user=os.getenv('SNOWFLAKE_USER'),
+        account=os.getenv('SNOWFLAKE_ACCOUNT'),
+        authenticator='oauth',
+        token=access_token,
+        warehouse='COMPUTE_WH',
+        database='TEST_DB',
+        schema='PUBLIC'
+    )
+
+try:
+    access_token = refresh_oauth_token(
+        refresh_token=os.getenv('SNOWFLAKE_REFRESH_TOKEN'),
+        client_id=os.getenv('SNOWFLAKE_CLIENT_ID'),
+        client_secret=os.getenv('SNOWFLAKE_CLIENT_SECRET')
+    )
+    conn = connect_with_token(access_token)
+except snowflake.connector.errors.DatabaseError as e:
+    if "Token expired" in str(e):
+        print("Token expired. Refreshing token...")
+        access_token = refresh_oauth_token(
+            os.getenv('SNOWFLAKE_REFRESH_TOKEN'),
+            os.getenv('SNOWFLAKE_CLIENT_ID'),
+            os.getenv('SNOWFLAKE_CLIENT_SECRET')
+        )
+        conn = connect_with_token(access_token)
+finally:
+    conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-119-sql-injection">← Previous</a><span class="rev-pos">120 / 147</span><a href="#q-database-with-python-121-slow-query-in-snowflake">Next →</a></nav>
+    </section>
+  </div>
+</details>

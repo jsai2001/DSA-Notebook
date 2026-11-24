@@ -1,0 +1,45 @@
+<details class="question" id="q-aws-057-scaling-load-balancer-and-database-comma" data-group="aws" data-sec="aws-s058">
+  <summary>
+    <span class="q-title">Scaling, load balancer and database commands</span>
+    <span class="q-meta">
+      <span class="tag">AWS</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS › 15. AWS CLI Operations Q&amp;A › Scaling, load balancer and database commands</p>
+      <p><strong>Q. How do you scale an Auto Scaling group to 5 instances?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws autoscaling set-desired-capacity --auto-scaling-group-name my-asg --desired-capacity 5
+        </script>
+      </div>
+      <p><strong>Q. How do you check ELB health and remove an unhealthy instance?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws elb describe-instance-health --load-balancer-name <elb-name>
+aws elb deregister-instances-from-load-balancer --load-balancer-name <elb-name> --instances <instance-id>
+        </script>
+      </div>
+      <p><strong>Q. How do you check RDS status and reboot if it is not available?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+STATUS=$(aws rds describe-db-instances --db-instance-identifier my-rds --query "DBInstances[0].DBInstanceStatus" --output text); [ "$STATUS" != "available" ] && aws rds reboot-db-instance --db-instance-identifier my-rds
+        </script>
+      </div>
+      <p><strong>Q. How do you restore RDS from a snapshot?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws rds restore-db-instance-from-db-snapshot --db-instance-identifier <new-db-name> --db-snapshot-identifier <snapshot-id>
+        </script>
+      </div>
+      <p><strong>Q. How do you list DynamoDB tables with their throughput?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+for table in $(aws dynamodb list-tables --query 'TableNames' --output text); do aws dynamodb describe-table --table-name $table --query 'Table.{Name:TableName,ReadCapacity:ProvisionedThroughput.ReadCapacityUnits,WriteCapacity:ProvisionedThroughput.WriteCapacityUnits}' --output table; done
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-aws-056-iam-cloudtrail-and-cloudwatch-commands">← Previous</a><span class="rev-pos">57 / 94</span><a href="#q-aws-058-lambda-containers-and-messaging-commands">Next →</a></nav>
+    </section>
+  </div>
+</details>

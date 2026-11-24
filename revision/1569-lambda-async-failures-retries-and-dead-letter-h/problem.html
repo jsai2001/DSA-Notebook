@@ -1,0 +1,24 @@
+<details class="question" id="q-lambda-024-async-failures-retries-and-dead-letter-h" data-group="lambda" data-sec="lambda-s025">
+  <summary>
+    <span class="q-title">Async failures, retries and dead letter handling</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 4. Invocation models and event sources › Async failures, retries and dead letter handling</p>
+      <p><strong>Q32. What happens when an asynchronous invocation fails?</strong> Lambda retries automatically twice (3 attempts in total) with delays. If it still fails, the event goes to the configured <strong>Dead Letter Queue</strong> (SQS or SNS) or <strong>On-failure Destination</strong>. Tune <code>MaximumRetryAttempts</code> (0 to 2) and <code>MaximumEventAge</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws lambda put-function-event-invoke-config --function-name f \
+  --maximum-retry-attempts 1 --maximum-event-age-in-seconds 3600 \
+  --destination-config '{"OnFailure":{"Destination":"arn:aws:sqs:...:dlq"}}'
+        </script>
+      </div>
+      <p><strong>Q36. DLQ vs Lambda Destinations?</strong> A DLQ (SQS or SNS) captures only the <strong>failed event payload</strong> after async retries run out. <strong>Destinations</strong> route on <strong>success or failure</strong> and send full context (request plus response or error) to SQS, SNS, EventBridge or another Lambda. They are the modern, more informative option for async invocations.</p>
+      <p><strong>Q37. When use Destinations over SQS/SNS DLQs?</strong> Prefer Destinations when you want success routing, full invocation context (not just the payload) or workflow chaining. Use a plain DLQ when you only need failed payloads for later reprocessing and want the simplest setup. A DLQ applies to async invocations and to ESM sources. Destinations apply to async invocations and to stream ESMs.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-023-synchronous-asynchronous-and-event-sourc">← Previous</a><span class="rev-pos">24 / 79</span><a href="#q-lambda-025-sqs-event-source-batching-and-concurrenc">Next →</a></nav>
+    </section>
+  </div>
+</details>

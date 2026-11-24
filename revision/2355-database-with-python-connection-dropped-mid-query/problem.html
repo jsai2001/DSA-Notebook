@@ -1,0 +1,58 @@
+<details class="question" id="q-database-with-python-127-connection-dropped-mid-query" data-group="database-with-python" data-sec="database-with-python-s128">
+  <summary>
+    <span class="q-title">Connection dropped mid-query</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Connection dropped mid-query</p>
+      <p><strong>Q. The connection drops during a long query. How do you handle it gracefully?</strong> Retry with exponential backoff (the <code>tenacity</code> library), set connection timeouts and reconnect inside the retried function.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from snowflake.connector.errors import OperationalError
+
+conn_params = {
+    'account': 'your_account',
+    'user': 'your_user',
+    'password': 'your_password',
+    'database': 'your_database',
+    'schema': 'your_schema',
+    'warehouse': 'your_warehouse',
+    'login_timeout': 30
+}
+
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=4, max=10),
+    retry=retry_if_exception_type(OperationalError)
+)
+def execute_query(query):
+    try:
+        conn = snowflake.connector.connect(**conn_params)
+        cursor = conn.cursor()
+        cursor.execute(query)
+        results = cursor.fetchall()
+        cursor.close()
+        conn.close()
+        return results
+    except OperationalError as e:
+        print(f"Connection error: {e}. Retrying...")
+        raise   # re-raise so the decorator retries
+    except Exception as e:
+        print(f"Error: {e}")
+        raise
+
+try:
+    print(execute_query("SELECT * FROM large_table"))
+except Exception as e:
+    print(f"Failed after retries: {e}")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-126-warehouse-overload">← Previous</a><span class="rev-pos">127 / 147</span><a href="#q-database-with-python-128-syntax-error-in-a-dynamic-query">Next →</a></nav>
+    </section>
+  </div>
+</details>

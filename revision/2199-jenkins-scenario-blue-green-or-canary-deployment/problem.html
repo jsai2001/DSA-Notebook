@@ -1,0 +1,26 @@
+<details class="question" id="q-jenkins-079-scenario-blue-green-or-canary-deployment" data-group="jenkins" data-sec="jenkins-s080">
+  <summary>
+    <span class="q-title">Scenario: blue/green or canary deployment</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 12. DevSecOps Integrations and Scenarios › Scenario: blue/green or canary deployment</p>
+      <p><strong>Q. How do you design a zero-downtime blue/green or canary pipeline?</strong> <strong>Blue/green</strong>: deploy the new version to an idle green environment, run smoke tests, then switch the load balancer or service from blue to green (rollback is switching back). <strong>Canary</strong>: route a small percentage of traffic to the new version, watch metrics and error rates, then ramp up or roll back. In Jenkins use stages for deploy-green, test, <code>input</code> approval (or an automated metric gate), traffic shift and verify, with automatic rollback on failure.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+stage('Switch traffic') {
+  steps {
+    sh 'kubectl apply -f green-deploy.yaml && ./smoke-test.sh green'
+    input message: 'Cut over to green?', ok: 'Switch'
+    sh 'kubectl patch service app -p \'{"spec":{"selector":{"slot":"green"}}}\''
+  }
+}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-078-scenario-migrating-200-freestyle-jobs-to">← Previous</a><span class="rev-pos">79 / 80</span><a href="#q-jenkins-080-scenario-flaky-scm-checkout">Next →</a></nav>
+    </section>
+  </div>
+</details>

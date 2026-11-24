@@ -1,0 +1,67 @@
+<details class="question" id="q-github-actions-036-linting" data-group="github-actions" data-sec="github-actions-s037">
+  <summary>
+    <span class="q-title">Linting</span>
+    <span class="q-meta">
+      <span class="tag">GitHub Actions</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GitHub Actions › 7. Ready-made workflows › Linting</p>
+      <p><strong>Q. Lint on push to main.</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Lint Code
+on:
+  push:
+    branches: [main]
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with: { node-version: '16' }
+      - run: npm install
+      - run: npm run lint
+        </script>
+      </div>
+      <p><strong>Q. How do you run static analysis or linting in Python?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- run: pip install flake8
+- run: flake8 .
+        </script>
+      </div>
+      <p><strong>Q. Lint a pull request and comment the result on it.</strong> Save the report, flag a failure, then post it with <code>github-script</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+on: pull_request
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install
+      - id: lint
+        run: npm run lint -- --output-file eslint-report.txt || echo "LINT_FAILED=true" >> $GITHUB_ENV
+      - if: env.LINT_FAILED == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('eslint-report.txt', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `Linting failed:\n\`\`\`\n${report}\n\`\`\``
+            });
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-github-actions-035-build-and-test-a-node-js-app">← Previous</a><span class="rev-pos">36 / 89</span><a href="#q-github-actions-037-code-quality-gate">Next →</a></nav>
+    </section>
+  </div>
+</details>

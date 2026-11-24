@@ -1,0 +1,43 @@
+<details class="question" id="q-terraform-058-attach-a-lambda-function-to-an-sns-topic" data-group="terraform" data-sec="terraform-s059">
+  <summary>
+    <span class="q-title">Attach a Lambda Function to an SNS Topic using Terraform</span>
+    <span class="q-meta">
+      <span class="tag">Terraform</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Terraform › 15. Hands-On: IAM, Serverless, Messaging, Containers and Monitoring › Attach a Lambda Function to an SNS Topic using Terraform</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_sns_topic" "my_sns_topic" {
+    name = "my-sns-topic"
+}
+
+resource "aws_lambda_function" "my_lambda" {
+    function_name = "my-lambda-function"
+    handler       = "index.handler"
+    runtime       = "nodejs18.x"
+    role          = "arn:aws:iam::123456789012:role/lambda-exec-role"
+    filename      = "lambda-code.zip"
+}
+
+resource "aws_sns_topic_subscription" "lambda_sns" {
+    topic_arn = aws_sns_topic.my_sns_topic.arn
+    protocol  = "lambda"
+    endpoint  = aws_lambda_function.my_lambda.arn
+}
+
+resource "aws_lambda_permission" "sns_invoke" {
+    statement_id  = "AllowExecutionFromSNS"
+    action        = "lambda:InvokeFunction"
+    function_name = aws_lambda_function.my_lambda.function_name
+    principal     = "sns.amazonaws.com"
+    source_arn    = aws_sns_topic.my_sns_topic.arn
+}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-terraform-057-create-an-sns-topic-using-terraform">← Previous</a><span class="rev-pos">58 / 142</span><a href="#q-terraform-059-create-an-ecs-cluster-using-terraform">Next →</a></nav>
+    </section>
+  </div>
+</details>

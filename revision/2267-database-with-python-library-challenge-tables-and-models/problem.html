@@ -1,0 +1,54 @@
+<details class="question" id="q-database-with-python-039-library-challenge-tables-and-models" data-group="database-with-python" data-sec="database-with-python-s040">
+  <summary>
+    <span class="q-title">Library challenge: tables and models</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 5. PostgreSQL with Python › Library challenge: tables and models</p>
+      <p>Create a Postgres database <code>library</code> with <code>authors</code>, <code>books</code> and a junction table <code>AuthorBooks</code> (<code>bookauthor_id</code>, <code>author_id</code>, <code>book_id</code>). The junction table allows many books per author and many authors per book. Tables are defined explicitly (no automap) and created with <code>Base.metadata.create_all(engine)</code>. Install with <code>pip3 install sqlalchemy psycopg2</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="SQL">
+CREATE DATABASE library;
+\c library
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
+from sqlalchemy.orm import registry, relationship, Session
+from sqlalchemy.ext.declarative import declarative_base
+
+engine = create_engine('postgresql+psycopg2://user:password@localhost/library')
+mapper_registry = registry()
+Base = declarative_base(registry=mapper_registry)
+
+class Author(Base):
+    __tablename__ = 'authors'
+    author_id = Column(Integer, primary_key=True)
+    first_name = Column(String)
+    last_name = Column(String)
+
+class Book(Base):
+    __tablename__ = 'books'
+    book_id = Column(Integer, primary_key=True)
+    title = Column(String)
+    number_of_pages = Column(Integer)
+
+class BookAuthor(Base):
+    __tablename__ = 'bookauthors'
+    bookauthor_id = Column(Integer, primary_key=True)
+    author_id = Column(Integer, ForeignKey('authors.author_id'))
+    book_id = Column(Integer, ForeignKey('books.book_id'))
+    author = relationship("Author")
+    book = relationship("Book")
+
+Base.metadata.create_all(engine)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-038-sqlalchemy-orm-with-postgres-crud-with-a">← Previous</a><span class="rev-pos">39 / 147</span><a href="#q-database-with-python-040-library-challenge-add-a-book-in-one-tran">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,49 @@
+<details class="question" id="q-docker-050-permissions-and-missing-paths" data-group="docker" data-sec="docker-s051">
+  <summary>
+    <span class="q-title">Permissions and missing paths</span>
+    <span class="q-meta">
+      <span class="tag">Docker</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Docker › 14. On-Call: Storage and Volume Problems › Permissions and missing paths</p>
+      <p><strong>Q. Container cannot write to a mounted volume?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+ls -ld /path/to/volume
+chmod -R 775 /path/to/volume
+chown -R user:group /path/to/volume
+docker inspect <container_id> | jq '.Mounts'
+setenforce 0
+docker restart <container_id>
+        </script>
+      </div>
+      <p>Align host and container permissions, and check SELinux/AppArmor.</p>
+      <p><strong>Q. Bind mount changes not reflected on the host?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker inspect <container_id> | jq '.Mounts'
+ls -ld /path/to/host/mount
+chmod -R 775 /path/to/host/mount
+docker exec <container_id> id
+docker run -v /path/to/host/mount:/app:rw <image_name>
+chcon -R -t container_file_t /path/to/host/mount
+        </script>
+      </div>
+      <p>Confirm the <code>rw</code> flag, align permissions, and check SELinux.</p>
+      <p><strong>Q. Volume error: "no such file or directory"?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker volume ls
+ls -ld /path/to/host/mount
+mkdir -p /path/to/host/mount
+docker run -v /path/to/host/mount:/app <image_name>
+cat Dockerfile | grep VOLUME
+        </script>
+      </div>
+      <p>Ensure the volume or path exists, check path spelling, and verify the Docker commands.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-docker-049-restricting-traffic-between-containers">← Previous</a><span class="rev-pos">50 / 77</span><a href="#q-docker-051-disk-usage">Next →</a></nav>
+    </section>
+  </div>
+</details>

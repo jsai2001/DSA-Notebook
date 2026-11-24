@@ -1,0 +1,34 @@
+<details class="question" id="q-lambda-018-cold-starts-and-how-to-reduce-them" data-group="lambda" data-sec="lambda-s019">
+  <summary>
+    <span class="q-title">Cold starts and how to reduce them</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 3. Execution lifecycle, cold starts and performance › Cold starts and how to reduce them</p>
+      <p><strong>Q17. What causes a cold start, and how does it affect latency?</strong> A cold start happens when no warm environment is available, so Lambda must run the Init phase (spin up the microVM, load the runtime, run your init code) before invoking. This adds latency, from tens of ms to a few seconds depending on runtime and package size. Warm invocations skip it. Cold starts are most visible with spiky traffic, large packages, VPC-attached functions and heavy runtimes such as Java and .NET.</p>
+      <p><strong>Q18. What is Provisioned Concurrency, and how does it remove cold starts?</strong> Provisioned Concurrency (PC) pre-initializes a set number of execution environments and keeps them warm, so invocations skip Init and get consistent low latency. You pay for the provisioned capacity whether it is used or not. It is often paired with Application Auto Scaling and used on a function alias or version.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws lambda put-provisioned-concurrency-config \
+  --function-name my-func --qualifier PROD \
+  --provisioned-concurrent-executions 20
+        </script>
+      </div>
+      <p><strong>Q19. What is Lambda SnapStart, and how does it work for Java?</strong> SnapStart (first for Java, now broader) snapshots the memory and disk of the initialized environment after Init, encrypts and caches it, and restores from that snapshot on invoke instead of re-running Init. It can cut Java cold starts sharply at no extra cost. Caveat: uniqueness. Anything created once at Init (random seeds, connection tokens) is captured in the snapshot, so use runtime hooks (<code>afterRestore</code>) to regenerate per-restore state.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Technique</th><th>Removes cold start?</th><th>Extra cost?</th><th>Best for</th></tr></thead>
+          <tbody>
+            <tr><td>Provisioned Concurrency</td><td>Yes</td><td>Yes (pre-warmed capacity)</td><td>Predictable, latency-sensitive traffic</td></tr>
+            <tr><td>SnapStart</td><td>Largely</td><td>No</td><td>Java (and supported runtimes)</td></tr>
+            <tr><td>Smaller package / lazy load</td><td>Reduces</td><td>No</td><td>Every function</td></tr>
+          </tbody>
+        </table>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-017-execution-environment-lifecycle">← Previous</a><span class="rev-pos">18 / 79</span><a href="#q-lambda-019-package-size-and-runtime-choice">Next →</a></nav>
+    </section>
+  </div>
+</details>

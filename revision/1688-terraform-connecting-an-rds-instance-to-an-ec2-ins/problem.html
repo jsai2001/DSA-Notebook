@@ -1,0 +1,79 @@
+<details class="question" id="q-terraform-064-connecting-an-rds-instance-to-an-ec2-ins" data-group="terraform" data-sec="terraform-s065">
+  <summary>
+    <span class="q-title">Connecting an RDS Instance to an EC2 Instance (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">Terraform</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Terraform › 16. Hands-On: Complete Stacks › Connecting an RDS Instance to an EC2 Instance</p>
+      <p>The EC2 instance reaches the RDS instance over the network using security groups and a VPC.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+# VPC
+resource "aws_vpc" "my_vpc" {
+    cidr_block = "10.0.0.0/16"
+}
+
+# Subnet
+resource "aws_subnet" "my_subnet" {
+    vpc_id     = aws_vpc.my_vpc.id
+    cidr_block = "10.0.1.0/24"
+}
+
+# Security Group for EC2
+resource "aws_security_group" "ec2_sg" {
+    vpc_id = aws_vpc.my_vpc.id
+    egress {
+        from_port   = 0
+        to_port     = 0
+        protocol    = "-1"
+        cidr_blocks = ["0.0.0.0/0"]
+    }
+}
+
+# Security Group for RDS
+resource "aws_security_group" "rds_sg" {
+    vpc_id = aws_vpc.my_vpc.id
+    ingress {
+        from_port       = 3306
+        to_port         = 3306
+        protocol        = "tcp"
+        security_groups = [aws_security_group.ec2_sg.id]
+    }
+}
+
+# RDS Subnet Group
+resource "aws_db_subnet_group" "my_subnet_group" {
+    name       = "my-subnet-group"
+    subnet_ids = [aws_subnet.my_subnet.id]
+}
+
+# RDS Instance
+resource "aws_db_instance" "my_rds" {
+    identifier           = "my-rds-instance"
+    engine               = "mysql"
+    instance_class       = "db.t3.micro"
+    allocated_storage    = 20
+    username             = "admin"
+    password             = "MySecurePassword123"
+    vpc_security_group_ids = [aws_security_group.rds_sg.id]
+    db_subnet_group_name = aws_db_subnet_group.my_subnet_group.name
+    skip_final_snapshot  = true
+}
+
+# EC2 Instance
+resource "aws_instance" "my_ec2" {
+    ami           = "ami-0c55b159cbfafe1f0"
+    instance_type = "t2.micro"
+    subnet_id     = aws_subnet.my_subnet.id
+    security_groups = [aws_security_group.ec2_sg.name]
+    key_name      = "my-key-pair"
+}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-terraform-063-nginx-on-ec2-with-centos-7">← Previous</a><span class="rev-pos">64 / 142</span><a href="#q-terraform-065-connecting-an-rds-instance-to-an-ec2-ins">Next →</a></nav>
+    </section>
+  </div>
+</details>

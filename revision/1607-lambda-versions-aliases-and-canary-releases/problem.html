@@ -1,0 +1,35 @@
+<details class="question" id="q-lambda-062-versions-aliases-and-canary-releases" data-group="lambda" data-sec="lambda-s062">
+  <summary>
+    <span class="q-title">Versions, aliases and canary releases</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 11. Deployment, versions and aliases › Versions, aliases and canary releases</p>
+      <p><strong>Q93. How do versions and aliases support blue/green or canary deployments?</strong> Publishing a <strong>version</strong> creates an immutable snapshot (<code>$LATEST</code> is mutable, numbered versions are frozen). An <strong>alias</strong> is a named reference (for example <code>PROD</code>) to a version and can split traffic between two versions by weight. That enables blue/green (flip the alias) and canary (shift a small percentage first) without changing callers.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws lambda publish-version --function-name f
+# send 10% of PROD traffic to v2, 90% to v1 (canary)
+aws lambda update-alias --function-name f --name PROD \
+  --function-version 1 --routing-config '{"AdditionalVersionWeights":{"2":0.1}}'
+        </script>
+      </div>
+      <p><strong>Q94. How does CodeDeploy manage weighted alias traffic shifting?</strong> CodeDeploy automates alias shifting with deployment configs such as <strong>Canary</strong> (for example 10% for 5 minutes, then 100%) or <strong>Linear</strong> (for example +10% every minute). It watches CloudWatch alarms during the shift and <strong>rolls back automatically</strong> to the previous version if alarms trip. SAM wires this up with <code>DeploymentPreference</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+MyFunction:
+  Type: AWS::Serverless::Function
+  Properties:
+    AutoPublishAlias: live
+    DeploymentPreference:
+      Type: Canary10Percent5Minutes
+      Alarms: [!Ref ErrorAlarm]
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-061-challenge-solution-dice-with-a-descripti">← Previous</a><span class="rev-pos">62 / 79</span><a href="#q-lambda-063-image-thumbnails-without-timing-out">Next →</a></nav>
+    </section>
+  </div>
+</details>

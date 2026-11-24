@@ -1,0 +1,66 @@
+<details class="question" id="q-lambda-054-the-template-yaml-and-handler" data-group="lambda" data-sec="lambda-s054">
+  <summary>
+    <span class="q-title">The template.yaml and handler</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 10. Infrastructure as Code and AWS SAM › The template.yaml and handler</p>
+      <p><code>template.yaml</code> has a Description, <strong>Globals</strong> (for example function timeout 3 s), <strong>Resources</strong> (the function and its API Gateway trigger) and <strong>Outputs</strong> (API endpoint URL, function ARN, implicit IAM role ARN).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: A simple SAM project
+Globals:
+  Function:
+    Timeout: 3
+Resources:
+  HelloWorldFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: hello-world/
+      Handler: app.lambdaHandler
+      Runtime: nodejs18.x
+      Architectures:
+        - x86_64
+      Events:
+        HelloWorld:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: get
+Outputs:
+  HelloWorldApi:
+    Description: API Gateway endpoint URL
+    Value:
+      Fn::Sub: https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/
+  HelloWorldFunction:
+    Description: Lambda Function ARN
+    Value:
+      Fn::GetAtt: HelloWorldFunction.Arn
+  HelloWorldFunctionIamRole:
+    Description: Implicit IAM Role ARN
+    Value:
+      Fn::GetAtt: HelloWorldFunctionRole.Arn
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+exports.lambdaHandler = async (event) => {
+    const response = {
+        statusCode: 200,
+        body: JSON.stringify({
+            message: 'Hello from Lambda!'
+        })
+    };
+    return response;
+};
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-053-installing-sam-and-creating-a-project">← Previous</a><span class="rev-pos">54 / 79</span><a href="#q-lambda-055-the-same-project-with-python">Next →</a></nav>
+    </section>
+  </div>
+</details>

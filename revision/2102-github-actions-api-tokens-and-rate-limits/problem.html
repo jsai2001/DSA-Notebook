@@ -1,0 +1,59 @@
+<details class="question" id="q-github-actions-071-api-tokens-and-rate-limits" data-group="github-actions" data-sec="github-actions-s072">
+  <summary>
+    <span class="q-title">API tokens and rate limits</span>
+    <span class="q-meta">
+      <span class="tag">GitHub Actions</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GitHub Actions › 11. Python and GitHub Actions › API tokens and rate limits</p>
+      <p><strong>Q. How do you secure GitHub API tokens in Python scripts for Actions automation?</strong></p>
+      <ul>
+        <li>Store tokens in Actions secrets and read them with <code>${{ secrets.TOKEN }}</code>.</li>
+        <li>Pass secrets to scripts as environment variables.</li>
+        <li>Never hardcode tokens in scripts or the repo.</li>
+        <li>Use short-lived tokens with minimal permissions.</li>
+        <li>Audit and rotate tokens regularly.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Secure Python Script
+on: [push]
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Run Python script
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: python script.py
+        </script>
+      </div>
+      <p><strong>Q. How do you handle GitHub API rate limits in Python?</strong></p>
+      <ul>
+        <li>Monitor the <code>X-RateLimit-Remaining</code> header.</li>
+        <li>Use exponential backoff (<code>backoff</code>, <code>ratelimit</code>).</li>
+        <li>On HTTP 429, wait for the <code>Retry-After</code> duration.</li>
+        <li>Use conditional requests (ETags, <code>If-Modified-Since</code>) to reduce calls.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import requests
+import time
+def make_github_request(url, token):
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/vnd.github.v3+json"}
+    response = requests.get(url, headers=headers)
+    if response.status_code == 429:
+        retry_after = int(response.headers.get("Retry-After", 60))
+        time.sleep(retry_after)
+        return make_github_request(url, token)
+    response.raise_for_status()
+    return response.json()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-github-actions-070-logs-and-secrets-through-the-api">← Previous</a><span class="rev-pos">71 / 89</span><a href="#q-github-actions-072-python-scenarios">Next →</a></nav>
+    </section>
+  </div>
+</details>

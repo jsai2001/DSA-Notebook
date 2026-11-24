@@ -1,0 +1,88 @@
+<details class="question" id="q-database-with-python-011-users-challenge-three-ways-to-build-the" data-group="database-with-python" data-sec="database-with-python-s012">
+  <summary>
+    <span class="q-title">Users challenge: three ways to build the same table</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 2. SQLite with Python › Users challenge: three ways to build the same table</p>
+      <p>The task is a <code>Users</code> table (<code>User_Id</code>, <code>First_Name</code>, <code>Last_Name</code>, <code>Email_Address</code>), five rows with at least two <code>gmail.com</code> addresses, and a query for all email addresses. <code>User_Id</code> is an auto-incrementing primary key. It uniquely identifies records and supports foreign keys. Auto-increment is convenient but adds overhead, so it is not ideal in production.</p>
+      <p><strong>Version 1: sqlite3 module</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import sqlite3
+
+conn = sqlite3.connect('users-sqlite.db')
+cursor = conn.cursor()
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS Users (
+        User_Id INTEGER PRIMARY KEY AUTOINCREMENT,
+        First_Name TEXT,
+        Last_Name TEXT,
+        Email_Address TEXT
+    )
+''')
+users = [
+    ('John', 'Doe', 'john.doe@gmail.com'),
+    ('Jane', 'Smith', 'jane.smith@gmail.com'),
+    ('Alice', 'Johnson', 'alice.j@example.com'),
+    ('Bob', 'Brown', 'bob.b@example.com'),
+    ('Emma', 'Davis', 'emma.davis@example.com')
+]
+cursor.executemany('INSERT INTO Users (First_Name, Last_Name, Email_Address) VALUES (?, ?, ?)', users)
+conn.commit()
+cursor.execute('SELECT Email_Address FROM Users')
+for row in cursor.fetchall():
+    print(row[0])
+conn.close()
+        </script>
+      </div>
+      <p><strong>Version 2: SQLAlchemy, insert row by row</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String
+
+engine = create_engine('sqlite:///users-sqlite.db')
+metadata = MetaData()
+users_table = Table('Users', metadata,
+                    Column('User_Id', Integer, primary_key=True, autoincrement=True),
+                    Column('First_Name', String),
+                    Column('Last_Name', String),
+                    Column('Email_Address', String))
+metadata.create_all(engine)
+
+users = [
+    {'First_Name': 'John', 'Last_Name': 'Doe', 'Email_Address': 'john.doe@gmail.com'},
+    {'First_Name': 'Jane', 'Last_Name': 'Smith', 'Email_Address': 'jane.smith@gmail.com'},
+    {'First_Name': 'Alice', 'Last_Name': 'Johnson', 'Email_Address': 'alice.j@example.com'},
+    {'First_Name': 'Bob', 'Last_Name': 'Brown', 'Email_Address': 'bob.b@example.com'},
+    {'First_Name': 'Emma', 'Last_Name': 'Davis', 'Email_Address': 'emma.davis@example.com'}
+]
+with engine.connect() as conn:
+    for user in users:
+        conn.execute(users_table.insert().values(**user))
+    result = conn.execute(users_table.select())
+    for row in result:
+        print(row)
+        </script>
+      </div>
+      <p><strong>Version 3: SQLAlchemy expression language (readable bulk insert)</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, select, insert
+
+# engine, metadata, users_table and users list are defined exactly as in Version 2
+with engine.connect() as conn:
+    conn.execute(insert(users_table), users)
+    result = conn.execute(select(users_table))
+    for row in result:
+        print(row)
+        </script>
+      </div>
+      <p>Each version creates the table, inserts the rows and reads them back, and SQLAlchemy handles the primary-key increment. The <code>sqlite3</code> module suits direct SQL on lightweight apps. SQLAlchemy abstracts the SQL, and the engine makes it easy to switch backends later (for example SQLite to PostgreSQL).</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-010-filter-with-a-parameterized-query">← Previous</a><span class="rev-pos">11 / 147</span><a href="#q-database-with-python-012-what-sqlalchemy-is">Next →</a></nav>
+    </section>
+  </div>
+</details>

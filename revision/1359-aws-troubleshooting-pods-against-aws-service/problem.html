@@ -1,0 +1,123 @@
+<details class="question" id="q-aws-089-troubleshooting-pods-against-aws-service" data-group="aws" data-sec="aws-s090">
+  <summary>
+    <span class="q-title">Troubleshooting pods against AWS services</span>
+    <span class="q-meta">
+      <span class="tag">AWS</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS › 20. AWS Integration Questions › Troubleshooting pods against AWS services</p>
+      <p><strong>Q. How do you troubleshoot a Kubernetes pod on EKS and update the AWS security group with Terraform?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+kubectl get pod <pod-name>
+kubectl describe pod <pod-name>
+kubectl logs <pod-name>
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_security_group_rule" "allow_pod" {
+  type = "ingress"
+  from_port = 80
+  to_port = 80
+  protocol = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+  security_group_id = "sg-123"
+}
+        </script>
+      </div>
+      <p><strong>Q. How do you troubleshoot an RDS connection from a Kubernetes pod, with a Terraform fix?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+kubectl exec -it <pod-name> -- ping <rds-endpoint>
+kubectl describe pod <pod-name>
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_security_group_rule" "rds_access" {
+  type = "ingress"
+  from_port = 3306
+  to_port = 3306
+  protocol = "tcp"
+  source_security_group_id = "sg-pod"
+  security_group_id = "sg-rds"
+}
+        </script>
+      </div>
+      <p><strong>Q. How do you troubleshoot a pod failing to pull from ECR, with a Terraform fix?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+kubectl describe pod <pod-name>
+aws ecr get-login-password | docker login --username AWS --password-stdin <ecr-repo>
+kubectl create secret docker-registry ecr-secret --docker-server=<ecr-repo> --docker-username=AWS --docker-password=<password>
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "kubernetes_pod" "fix" { spec: { image_pull_secrets: [{ name: "ecr-secret" }] } }
+        </script>
+      </div>
+      <p><strong>Q. How do you troubleshoot pod networking on EKS, with a Terraform VPC fix?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+kubectl exec -it <pod-name> -- ping 8.8.8.8
+kubectl describe pod <pod-name>
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_vpc" "eks_vpc" { cidr_block = "10.0.0.0/16", enable_dns_hostnames = true }
+resource "aws_route" "internet" { route_table_id = "rt-123", destination_cidr_block = "0.0.0.0/0", gateway_id = "igw-123" }
+        </script>
+      </div>
+      <p><strong>Q. How do you troubleshoot an AWS ELB that is not routing to Kubernetes pods?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+kubectl get svc <service-name> -o wide
+kubectl describe pod <pod-name>
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_lb_target_group_attachment" "fix" { target_group_arn = "arn:aws:elasticloadbalancing:us-east-1:123:targetgroup/my-tg/abc", target_id = "i-123" }
+        </script>
+      </div>
+      <p><strong>Q. How do you troubleshoot S3 access from a Kubernetes pod, with a Terraform IAM fix?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+kubectl exec -it <pod-name> -- aws s3 ls s3://my-bucket
+kubectl describe pod <pod-name>
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_iam_role_policy" "s3_access" {
+  role = "eks-node-role"
+  policy = jsonencode({ Statement: [{ Effect: "Allow", Action: "s3:*", Resource: "arn:aws:s3:::my-bucket/*" }] })
+}
+        </script>
+      </div>
+      <p><strong>Q. How do you troubleshoot a Kubernetes pod crash on EKS, with a Terraform resource fix?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+kubectl logs <pod-name>
+kubectl describe pod <pod-name>
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_eks_node_group" "fix" {
+  cluster_name = "my-eks"
+  node_group_name = "fixed-nodes"
+  scaling_config: { desired_size: 2, max_size: 3, min_size: 1 }
+  instance_types: ["t3.large"]
+}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-aws-088-messaging-data-and-alerting-integrations">← Previous</a><span class="rev-pos">89 / 94</span><a href="#q-aws-090-ansible-vs-terraform-on-aws">Next →</a></nav>
+    </section>
+  </div>
+</details>

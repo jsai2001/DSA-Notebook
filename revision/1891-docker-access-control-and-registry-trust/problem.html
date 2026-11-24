@@ -1,0 +1,36 @@
+<details class="question" id="q-docker-062-access-control-and-registry-trust" data-group="docker" data-sec="docker-s063">
+  <summary>
+    <span class="q-title">Access control and registry trust</span>
+    <span class="q-meta">
+      <span class="tag">Docker</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Docker › 16. On-Call: Security Incidents › Access control and registry trust</p>
+      <p><strong>Q. How do you implement Docker role-based access control?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+useradd -m dockeruser
+groupadd docker
+usermod -aG docker dockeruser
+chown root:docker /var/run/docker.sock
+chmod 660 /var/run/docker.sock
+docker context create restricted --docker host=unix:///var/run/docker.sock
+        </script>
+      </div>
+      <p>Limit the <code>docker</code> group, use TLS, and audit permissions.</p>
+      <p><strong>Q. How do you verify a registry for malicious images?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image <registry>/<image_name>
+docker trust inspect <registry>/<image_name>
+docker pull --disable-content-trust=false <registry>/<image_name>
+docker login <registry>
+        </script>
+      </div>
+      <p>Use trusted registries, enable Docker Content Trust, and scan regularly.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-docker-061-credentials-and-vulnerable-libraries">← Previous</a><span class="rev-pos">62 / 77</span><a href="#q-docker-063-compose-problems">Next →</a></nav>
+    </section>
+  </div>
+</details>

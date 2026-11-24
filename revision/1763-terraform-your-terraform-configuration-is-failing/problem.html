@@ -1,0 +1,39 @@
+<details class="question" id="q-terraform-139-your-terraform-configuration-is-failing" data-group="terraform" data-sec="terraform-s138">
+  <summary>
+    <span class="q-title">Your Terraform configuration is failing because of an invalid AWS region. How would you use Python to validate the configuration before applying it?</span>
+    <span class="q-meta">
+      <span class="tag">Terraform</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Terraform › 21. Terraform with Python › Your Terraform configuration is failing because of an invalid AWS region. How would you use Python to validate the configuration before applying it?</p>
+      <p>Use <code>boto3</code> to validate the AWS region and <code>python-terraform</code> to check the Terraform configuration.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+import botocore
+from python_terraform import Terraform
+
+def validate_terraform_config(working_dir, region):
+    ec2 = boto3.client("ec2", region_name=region)
+    try:
+        ec2.describe_regions(RegionNames=[region])
+        print(f"Region {region} is valid")
+    except botocore.exceptions.ClientError:
+        raise Exception(f"Invalid AWS region: {region}")
+
+    tf = Terraform(working_dir=working_dir)
+    return_code, stdout, stderr = tf.validate()
+    if return_code != 0:
+        raise Exception(f"Terraform validation failed: {stderr}")
+    print("Terraform configuration is valid")
+
+# Example usage
+validate_terraform_config("./terraform", "us-east-1")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-terraform-138-a-terraform-configuration-is-causing-res">← Previous</a><span class="rev-pos">139 / 142</span><a href="#q-terraform-140-your-python-script-managing-terraform-re">Next →</a></nav>
+    </section>
+  </div>
+</details>

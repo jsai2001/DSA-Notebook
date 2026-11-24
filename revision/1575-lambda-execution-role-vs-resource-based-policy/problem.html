@@ -1,0 +1,37 @@
+<details class="question" id="q-lambda-030-execution-role-vs-resource-based-policy" data-group="lambda" data-sec="lambda-s031">
+  <summary>
+    <span class="q-title">Execution role vs resource-based policy</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 5. Security and permissions › Execution role vs resource-based policy</p>
+      <p><strong>Q43. What is the execution role, and what is a resource-based policy?</strong></p>
+      <ul>
+        <li><strong>Execution role</strong> (identity-based, the IAM role the function assumes): defines what the function's code may do to <em>other</em> AWS services (read a DynamoDB table, write to S3). This is <em>outbound</em> permission.</li>
+        <li><strong>Resource-based policy</strong> (attached to the function): defines <em>who</em> may <em>invoke</em> the function (for example "allow S3 bucket X to invoke me"). This is <em>inbound</em> permission.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JSON">
+{ "Effect": "Allow", "Principal": {"Service": "s3.amazonaws.com"},
+  "Action": "lambda:InvokeFunction", "Resource": "arn:aws:lambda:...:function:f",
+  "Condition": {"ArnLike": {"AWS:SourceArn": "arn:aws:s3:::my-bucket"}} }
+        </script>
+      </div>
+      <p><strong>Q44. How do you give a function access to an S3 bucket?</strong> Attach an IAM policy to the function's <strong>execution role</strong> that grants the needed S3 actions on the specific bucket or prefix (least privilege).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JSON">
+{ "Version": "2012-10-17", "Statement": [{
+  "Effect": "Allow",
+  "Action": ["s3:GetObject", "s3:PutObject"],
+  "Resource": "arn:aws:s3:::my-bucket/*"
+}]}
+        </script>
+      </div>
+      <p><strong>Q54. What is least privilege for Lambda IAM roles?</strong> Grant the execution role only the exact actions on the exact resources the function needs. No <code>Action: "*"</code> or <code>Resource: "*"</code>. Scope to specific ARNs and prefixes and use conditions. This limits the blast radius if the function or its credentials are compromised.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-029-iam-users-groups-and-cli-credentials">← Previous</a><span class="rev-pos">30 / 79</span><a href="#q-lambda-031-secrets-environment-variables-and-encryp">Next →</a></nav>
+    </section>
+  </div>
+</details>

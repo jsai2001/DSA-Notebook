@@ -1,0 +1,71 @@
+<details class="question" id="q-docker-054-build-failures" data-group="docker" data-sec="docker-s055">
+  <summary>
+    <span class="q-title">Build failures</span>
+    <span class="q-meta">
+      <span class="tag">Docker</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Docker › 15. On-Call: Image and Build Problems › Build failures</p>
+      <p><strong>Q. Build fails: "COPY failed: no such file or directory"?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+cat Dockerfile | grep COPY
+ls -l ./xyz
+        </script>
+      </div>
+      <p>Fix: <code>COPY ./xyz /app/xyz</code></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker build -t my_image .
+        </script>
+      </div>
+      <p>Verify file paths and that the files are in the build context.</p>
+      <p><strong>Q. Missing dependency in a custom image?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker logs <container_id>
+cat Dockerfile
+        </script>
+      </div>
+      <p>Add: <code>RUN apt-get update &amp;&amp; apt-get install -y &lt;dependency&gt;</code></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker build -t my_image .
+docker run my_image
+        </script>
+      </div>
+      <p>Check logs, update the Dockerfile, and test after the rebuild.</p>
+      <p><strong>Q. Build fails due to a network timeout?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+ping archive.ubuntu.com
+        </script>
+      </div>
+      <p>Use a mirror: <code>RUN echo "deb http://mirror.example.com/ubuntu focal main" &gt; /etc/apt/sources.list</code></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker build --build-arg APT_TIMEOUT=300 -t my_image .
+docker build --no-cache -t my_image .
+        </script>
+      </div>
+      <p>Verify the network, use reliable mirrors, and cache packages locally.</p>
+      <p><strong>Q. Inconsistent Dockerfile builds?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+cat Dockerfile
+        </script>
+      </div>
+      <p>Pin versions: <code>FROM node:16.13.2; RUN npm install express@4.17.1</code></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker build --no-cache -t my_image .
+docker run -it <builder_image> bash
+        </script>
+      </div>
+      <p>Pin package versions, avoid variable outputs, and standardize the build environment.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-docker-053-nfs-and-persistence">← Previous</a><span class="rev-pos">54 / 77</span><a href="#q-docker-055-faster-builds">Next →</a></nav>
+    </section>
+  </div>
+</details>

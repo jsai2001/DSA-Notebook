@@ -1,0 +1,42 @@
+<details class="question" id="q-jenkins-052-speeding-up-a-docker-agent-build-with-a" data-group="jenkins" data-sec="jenkins-s053">
+  <summary>
+    <span class="q-title">Speeding up a Docker agent build with a workspace cache</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 8. Agents and Distributed Builds › Speeding up a Docker agent build with a workspace cache</p>
+      <p>Problem: a Hugo (Go) build with a <code>golang</code> image takes about 4 minutes every run because the Go cache sits in <code>/tmp</code> inside the container, which is destroyed after each build. Jenkins mounts the workspace as a volume, so moving the cache there persists it.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+pipeline {
+    agent {
+        docker {
+            image 'golang:latest'
+            args '--name go-container'
+        }
+    }
+    environment {
+        GOCACHE = '/var/jenkins_home/workspace/hugo-pipeline'   // was '/tmp'
+    }
+    stages {
+        stage('Checkout') {
+            steps { git url: 'https://github.com/gohugoio/hugo.git', credentialsId: 'github-credentials' }
+        }
+        stage('Build') {
+            steps { sh 'go build' }
+        }
+        stage('Test') {
+            steps { sh './hugo version' }
+        }
+    }
+}
+        </script>
+      </div>
+      <p>The first run builds the cache (about 4 minutes); the second reuses it and drops to about 17 seconds. The workspace path may vary, so use the path shown in the pipeline configuration or logs.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-051-docker-agents">← Previous</a><span class="rev-pos">52 / 80</span><a href="#q-jenkins-053-kubernetes-and-cloud-agents">Next →</a></nav>
+    </section>
+  </div>
+</details>

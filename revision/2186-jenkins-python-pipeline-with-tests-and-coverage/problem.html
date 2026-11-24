@@ -1,0 +1,49 @@
+<details class="question" id="q-jenkins-066-python-pipeline-with-tests-and-coverage" data-group="jenkins" data-sec="jenkins-s067">
+  <summary>
+    <span class="q-title">Python pipeline with tests and coverage</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 10. Artifacts, Fingerprints and Test Reports › Python pipeline with tests and coverage</p>
+      <p>A five-stage Python pipeline: Setup (install dependencies), Lint (syntax), Test (JUnit report plus Cobertura coverage), Build and Deploy. The server needs Python 3 and <code>python3-venv</code> (Ubuntu), Git, and the JUnit and Code Coverage API plugins. Verify with <code>python3 --version</code> and <code>python3 -m venv test &amp;&amp; . test/bin/activate</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+pipeline {
+    agent any
+    stages {
+        stage('Setup') {
+            steps { sh 'pip install -r requirements.txt' }
+        }
+        stage('Lint') {
+            steps { sh 'pylint *.py' }
+        }
+        stage('Test') {
+            steps {
+                sh 'pytest --junitxml=report.xml --cov=. --cov-report=xml:coverage.xml'
+            }
+            post {
+                always {
+                    junit 'report.xml'
+                    publishCoverage adapters: [coberturaAdapter('coverage.xml')]
+                }
+            }
+        }
+        stage('Build') {
+            steps { sh 'python setup.py build' }
+        }
+        stage('Deploy') {
+            steps { sh 'echo Deploying application' }
+        }
+    }
+}
+        </script>
+      </div>
+      <p>On Windows install Python and Git manually and fix the Python and pip paths in the Jenkinsfile. Set the branch specifier to <code>main</code> and the script path to the Jenkinsfile location when using the exercise repo.</p>
+      <p>Viewing reports: test results appear as a trend graph on the project page, and the Test Results link shows passes, failures and skips with package drill-down. Coverage shows a trend graph, a Coverage Report overview and package details, and a File Coverage tab with line-by-line source.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-065-junit-reports-and-code-coverage">← Previous</a><span class="rev-pos">66 / 80</span><a href="#q-jenkins-067-what-a-failing-test-does-to-the-pipeline">Next →</a></nav>
+    </section>
+  </div>
+</details>

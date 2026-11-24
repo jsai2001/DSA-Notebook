@@ -1,0 +1,37 @@
+<details class="question" id="q-aws-064-auto-scaling-group-and-scaling-policy" data-group="aws" data-sec="aws-s065">
+  <summary>
+    <span class="q-title">Auto Scaling group and scaling policy</span>
+    <span class="q-meta">
+      <span class="tag">AWS</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS › 17. Terraform for AWS: Scaling and Load Balancing › Auto Scaling group and scaling policy</p>
+      <p>The Auto Scaling group uses the template and registers instances with the ALB target group.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_autoscaling_group" "web_asg" {
+  desired_capacity     = 2
+  max_size             = 4
+  min_size             = 1
+  vpc_zone_identifier  = [aws_subnet.public1.id, aws_subnet.public2.id]
+  launch_template {
+    id      = aws_launch_template.web_template.id
+    version = "$Latest"
+  }
+  target_group_arns = [aws_lb_target_group.web_tg.arn]
+}
+resource "aws_autoscaling_policy" "scale_out" {
+  name                   = "scale-out"
+  scaling_adjustment     = 1
+  adjustment_type        = "ChangeInCapacity"
+  cooldown               = 300
+  autoscaling_group_name = aws_autoscaling_group.web_asg.name
+}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-aws-063-ec2-launch-template">← Previous</a><span class="rev-pos">64 / 94</span><a href="#q-aws-065-cloudwatch-alarm-that-triggers-scaling">Next →</a></nav>
+    </section>
+  </div>
+</details>

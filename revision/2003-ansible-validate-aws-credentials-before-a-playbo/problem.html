@@ -1,0 +1,42 @@
+<details class="question" id="q-ansible-097-validate-aws-credentials-before-a-playbo" data-group="ansible" data-sec="ansible-s098">
+  <summary>
+    <span class="q-title">Validate AWS credentials before a playbook</span>
+    <span class="q-meta">
+      <span class="tag">Ansible</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Ansible › 14. Ansible with Python › Validate AWS credentials before a playbook</p>
+      <p><strong>Q. Scenario: the playbook fails provisioning EC2 because of incorrect credentials. How would Python validate credentials first?</strong> Make a simple API call such as <code>sts.get_caller_identity</code> with <code>boto3</code>, and run the playbook only if it succeeds.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+import subprocess
+import botocore
+
+def validate_aws_credentials():
+    try:
+        sts = boto3.client("sts")
+        sts.get_caller_identity()
+        print("AWS credentials are valid")
+        return True
+    except botocore.exceptions.ClientError as e:
+        print(f"Invalid AWS credentials: {e}")
+        return False
+
+def run_ansible_playbook(playbook_path):
+    if validate_aws_credentials():
+        subprocess.run(["ansible-playbook", playbook_path], check=True)
+        print("Ansible playbook executed successfully")
+    else:
+        print("Aborting playbook execution due to invalid credentials")
+
+# Example usage
+run_ansible_playbook("provision_ec2.yml")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ansible-096-integrate-ansible-with-aws-ec2-through-b">← Previous</a><span class="rev-pos">97 / 125</span><a href="#q-ansible-098-speed-up-a-slow-playbook-across-many-ins">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,37 @@
+<details class="question" id="q-lambda-020-reusing-state-across-warm-invocations" data-group="lambda" data-sec="lambda-s021">
+  <summary>
+    <span class="q-title">Reusing state across warm invocations</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 3. Execution lifecycle, cold starts and performance › Reusing state across warm invocations</p>
+      <p><strong>Q20. How does global variable initialization work between warm invocations?</strong> Variables initialized outside the handler live in the execution environment and persist across warm invocations. That is how you cache SDK clients, DB connections and config. Do not rely on it for correctness (environments are transient), but use it for performance.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+// Node.js: cached across warm invokes
+const cache = {};                    // survives between invocations
+exports.handler = async (event) => {
+  if (!cache.config) cache.config = await loadConfig(); // loaded once
+  return cache.config[event.key];
+};
+        </script>
+      </div>
+      <p><strong>Q21. Why instantiate DB connections or SDK clients outside the handler?</strong> Init runs once per environment and the objects are then reused across warm invocations. Creating a connection or client inside the handler rebuilds it on every request, adding latency and risking connection exhaustion.</p>
+      <p><strong>Q28. How do you reuse HTTP connection pools across invocations?</strong> Create the HTTP client or agent outside the handler so keep-alive pools survive warm invocations. For the AWS SDK, keep-alive is the default in SDK v3 and is enabled by <code>AWS_NODEJS_CONNECTION_REUSE_ENABLED=1</code> in v2.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+// Node.js: reuse a keep-alive HTTP pool across invocations
+const https = require("https");
+const agent = new https.Agent({ keepAlive: true, maxSockets: 50 });
+exports.handler = async (event) => {
+  return callApi(event, { agent });  // pool persists while env is warm
+};
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-019-package-size-and-runtime-choice">← Previous</a><span class="rev-pos">20 / 79</span><a href="#q-lambda-021-tuning-memory-and-lazy-loading">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,59 @@
+<details class="question" id="q-ansible-092-parse-playbook-output-and-log-results" data-group="ansible" data-sec="ansible-s093">
+  <summary>
+    <span class="q-title">Parse playbook output and log results</span>
+    <span class="q-meta">
+      <span class="tag">Ansible</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Ansible › 14. Ansible with Python › Parse playbook output and log results</p>
+      <p><strong>Q. How do you parse Ansible playbook output and extract results?</strong> Run the playbook with <code>ansible-runner</code> and parse the JSON events under the <code>job_events</code> folder of the artifacts directory in the <code>private_data_dir</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import ansible_runner
+import json
+import os
+
+# Run playbook
+r = ansible_runner.run(
+    private_data_dir='/path/to/ansible/project',
+    playbook='deploy.yml'
+)
+
+# Parse results
+artifacts_dir = os.path.join(r.config.artifact_dir, 'job_events')
+for event_file in os.listdir(artifacts_dir):
+    with open(os.path.join(artifacts_dir, event_file)) as f:
+        event_data = json.load(f)
+        if 'event_data' in event_data and 'task' in event_data['event_data']:
+            task = event_data['event_data']['task']
+            result = event_data['event_data'].get('res', {})
+            print(f"Task: {task}, Result: {result}")
+        </script>
+      </div>
+      <p><strong>Q. Run a playbook and log the results to a file?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import ansible_runner
+import json
+
+# Run playbook
+r = ansible_runner.run(
+    private_data_dir='/path/to/ansible/project',
+    playbook='deploy.yml'
+)
+
+# Log results
+with open('ansible_log.json', 'w') as f:
+    json.dump({
+        'status': 'success' if r.rc == 0 else 'failed',
+        'return_code': r.rc,
+        'stats': r.stats
+    }, f, indent=2)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ansible-091-run-a-playbook-with-ansible-runner">← Previous</a><span class="rev-pos">92 / 125</span><a href="#q-ansible-093-generate-a-dynamic-inventory">Next →</a></nav>
+    </section>
+  </div>
+</details>

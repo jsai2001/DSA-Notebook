@@ -1,0 +1,44 @@
+<details class="question" id="q-docker-074-backups-and-restores" data-group="docker" data-sec="docker-s075">
+  <summary>
+    <span class="q-title">Backups and restores</span>
+    <span class="q-meta">
+      <span class="tag">Docker</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Docker › 20. On-Call: Disaster Recovery and High Availability › Backups and restores</p>
+      <p><strong>Q. How do you back up a Dockerized database?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker exec <mysql_container> mysqldump -u root -p<password> --all-databases > backup.sql
+scp backup.sql user@remote_host:/backups/
+echo "0 2 * * * docker exec <mysql_container> mysqldump -u root -p<password> --all-databases > /backups/backup_$(date +\%F).sql" | crontab -
+        </script>
+      </div>
+      <p>Use app-specific tools, encrypt backups, and test restoration.</p>
+      <p><strong>Q. How do you restore a corrupted volume?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker stop <container_id>
+tar -xzf /backups/volume_backup.tar.gz -C /var/lib/docker/volumes/<volume_name>
+docker start <container_id>
+docker exec <container_id> ls /data
+        </script>
+      </div>
+      <p>Back up regularly, verify integrity, and test the app after the restore.</p>
+      <p><strong>Q. How do you recover from filesystem corruption?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+sudo fsck /dev/sdX
+sudo apt remove docker.io
+sudo apt install docker.io
+docker-compose -f docker-compose.yml up -d
+tar -xzf /backups/volume_backup.tar.gz -C /var/lib/docker/volumes/
+        </script>
+      </div>
+      <p>Back up <code>/var/lib/docker</code>, verify the filesystem, and test containers.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-docker-073-restarting-and-restoring">← Previous</a><span class="rev-pos">74 / 77</span><a href="#q-docker-075-swarm-recovery">Next →</a></nav>
+    </section>
+  </div>
+</details>

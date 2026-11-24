@@ -1,0 +1,39 @@
+<details class="question" id="q-terraform-141-your-team-needs-to-automate-the-cleanup" data-group="terraform" data-sec="terraform-s140">
+  <summary>
+    <span class="q-title">Your team needs to automate the cleanup of unused AWS resources using Python and Terraform. How would you identify and delete these resources?</span>
+    <span class="q-meta">
+      <span class="tag">Terraform</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Terraform › 21. Terraform with Python › Your team needs to automate the cleanup of unused AWS resources using Python and Terraform. How would you identify and delete these resources?</p>
+      <p>Use <code>boto3</code> to list resources and compare them with the Terraform state. Delete unused resources via <code>boto3</code> or update the Terraform configuration.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+import json
+
+def cleanup_unused_resources(terraform_state_file):
+    with open(terraform_state_file) as f:
+        tf_state = json.load(f)
+
+    ec2 = boto3.client("ec2")
+    response = ec2.describe_instances()
+
+    tf_instances = {r["attributes"]["instance_id"] for r in tf_state["resources"] if r["type"] == "aws_instance"}
+    aws_instances = {i["InstanceId"] for r in response["Reservations"] for i in r["Instances"]}
+
+    unused_instances = aws_instances - tf_instances
+    for instance_id in unused_instances:
+        ec2.terminate_instances(InstanceIds=[instance_id])
+        print(f"Terminated unused instance: {instance_id}")
+
+# Example usage
+cleanup_unused_resources("terraform.tfstate")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-terraform-140-your-python-script-managing-terraform-re">← Previous</a><span class="rev-pos">141 / 142</span><a href="#q-terraform-142-your-team-wants-to-enforce-consistent-ta">Next →</a></nav>
+    </section>
+  </div>
+</details>

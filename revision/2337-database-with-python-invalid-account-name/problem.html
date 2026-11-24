@@ -1,0 +1,48 @@
+<details class="question" id="q-database-with-python-109-invalid-account-name" data-group="database-with-python" data-sec="database-with-python-s110">
+  <summary>
+    <span class="q-title">Invalid account name</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Invalid account name</p>
+      <p><strong>Q. A script fails with "Invalid account name provided." What do you verify?</strong> The account URL format (<code>&lt;account&gt;.&lt;region&gt;.&lt;cloud&gt;</code> or just <code>&lt;account&gt;</code>), the region and the cloud provider (AWS, Azure, GCP). Check the account URL in the Snowflake admin console.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
+def verify_account_name(account):
+    parts = account.split('.')
+    if len(parts) == 1:
+        logging.info("No region/cloud specified, assuming default")
+    elif len(parts) == 3:
+        logging.info(f"Account: {parts[0]}, Region: {parts[1]}, Cloud: {parts[2]}")
+    else:
+        logging.error("Invalid account format")
+        return False
+    return True
+
+try:
+    account = 'your_account.region.cloud'   # e.g. myaccount.us-east-1.aws
+    if verify_account_name(account):
+        conn = snowflake.connector.connect(user='your_user', password='your_password', account=account)
+        logging.info("Connection successful")
+    else:
+        logging.error("Fix account name format and retry")
+except snowflake.connector.errors.DatabaseError as e:
+    logging.error(f"Connection failed: {e}")
+    logging.info("Verify account name format: <account>.<region>.<cloud>")
+finally:
+    if 'conn' in locals():
+        conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-108-connection-timeout-error">← Previous</a><span class="rev-pos">109 / 147</span><a href="#q-database-with-python-110-missing-database-driver">Next →</a></nav>
+    </section>
+  </div>
+</details>

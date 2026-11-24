@@ -1,0 +1,41 @@
+<details class="question" id="q-cloudwatch-016-publishing-from-a-node-js-app-measuring" data-group="cloudwatch" data-sec="cloudwatch-s017">
+  <summary>
+    <span class="q-title">Publishing from a Node.js app: measuring response time</span>
+    <span class="q-meta">
+      <span class="tag">AWS CloudWatch</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS CloudWatch › 4. Custom Metrics › Publishing from a Node.js app: measuring response time</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+// server.js (partial)
+const { publishMetric } = require('./cloudwatchMetrics');
+const axios = require('axios');
+
+async function makeApiRequest() {
+  const startTime = Date.now();
+  try {
+    const response = await axios.get(process.env.API_ENDPOINT);
+    const responseTime = Date.now() - startTime;
+
+    const dimensions = [
+      { Name: 'Environment', Value: 'Production' },
+      { Name: 'Endpoint', Value: '/api' },
+      { Name: 'HttpMethod', Value: 'GET' }
+    ];
+
+    await publishMetric('ResponseTime', responseTime, 'Milliseconds', dimensions);
+    return response.data;
+  } catch (error) {
+    console.error('API request failed:', error);
+  }
+}
+        </script>
+      </div>
+      <p>Run <code>node server.js</code>, send requests, and watch the console for success or error messages. If nothing publishes, re-check the <code>.env</code> values (keys, region, namespace).</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-cloudwatch-015-publishing-from-a-node-js-app-cloudwatch">← Previous</a><span class="rev-pos">16 / 108</span><a href="#q-cloudwatch-017-viewing-custom-metrics">Next →</a></nav>
+    </section>
+  </div>
+</details>

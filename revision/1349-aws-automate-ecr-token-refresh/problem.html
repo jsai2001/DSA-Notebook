@@ -1,0 +1,35 @@
+<details class="question" id="q-aws-079-automate-ecr-token-refresh" data-group="aws" data-sec="aws-s080">
+  <summary>
+    <span class="q-title">Automate ECR token refresh</span>
+    <span class="q-meta">
+      <span class="tag">AWS</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS › 19. Troubleshooting ECR Image Pulls on EKS › Automate ECR token refresh</p>
+      <p>ECR tokens expire, so refresh the secret with a script.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+import subprocess
+import base64
+
+def update_ecr_secret():
+    ecr_client = boto3.client('ecr', region_name='<region>')
+    token = ecr_client.get_authorization_token()['authorizationData'][0]
+    password = base64.b64decode(token['authorizationToken']).decode('utf-8').split(':')[1]
+    cmd = f"""kubectl create secret docker-registry ecr-secret \
+        --docker-server={token['proxyEndpoint']} \
+        --docker-username=AWS \
+        --docker-password={password} \
+        --namespace <namespace> --dry-run=client -o yaml | kubectl apply -f -"""
+    subprocess.run(cmd, shell=True, check=True)
+
+update_ecr_secret()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-aws-078-fix-registry-authentication">← Previous</a><span class="rev-pos">79 / 94</span><a href="#q-aws-080-network-resource-and-ci-checks">Next →</a></nav>
+    </section>
+  </div>
+</details>

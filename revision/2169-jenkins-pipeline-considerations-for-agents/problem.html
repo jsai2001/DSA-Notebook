@@ -1,0 +1,57 @@
+<details class="question" id="q-jenkins-049-pipeline-considerations-for-agents" data-group="jenkins" data-sec="jenkins-s050">
+  <summary>
+    <span class="q-title">Pipeline considerations for agents</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 8. Agents and Distributed Builds › Pipeline considerations for agents</p>
+      <ol>
+        <li><strong>Agent selection</strong>: <code>agent any</code> runs on the first available agent. With several nodes use labels to pick agents with the right capabilities.</li>
+        <li><strong>Tools</strong>: configure tools (for example Maven) under Manage Jenkins, Global Tool Configuration, with a name such as <code>Maven-3.8.4</code> and automatic install enabled, then reference them in the <code>tools</code> block. Jenkins provisions the right version on whichever agent runs the stage. For containers, bake tools into the agent image instead.</li>
+        <li><strong>Code checkout</strong>: the first checkout happens on the controller only to read the Jenkinsfile. Code is not automatically on the agent, so add a checkout step.</li>
+      </ol>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+pipeline {
+    agent { label 'maven-agent' }
+    stages {
+        stage('Build') {
+            steps { echo 'Running on Maven agent' }
+        }
+    }
+}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+pipeline {
+    agent any
+    tools { maven 'Maven-3.8.4' }
+    stages {
+        stage('Checkout') {
+            steps { checkout scm }
+        }
+        stage('Build') {
+            steps { sh 'mvn clean install' }
+        }
+    }
+}
+        </script>
+      </div>
+      <p><strong>Q. How do you manage tool installations across different agents?</strong> Define installers in Global Tool Configuration and reference them with a <code>tools</code> block.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+pipeline {
+  agent any
+  tools { maven 'Maven-3.9'; jdk 'JDK-17' }   // names from Global Tool Config
+  stages { stage('Build') { steps { sh 'mvn -v && mvn package' } } }
+}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-048-nodes-agents-and-when-to-use-them">← Previous</a><span class="rev-pos">49 / 80</span><a href="#q-jenkins-050-adding-an-ssh-agent">Next →</a></nav>
+    </section>
+  </div>
+</details>

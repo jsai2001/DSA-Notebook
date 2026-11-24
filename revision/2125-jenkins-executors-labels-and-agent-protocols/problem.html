@@ -1,0 +1,31 @@
+<details class="question" id="q-jenkins-005-executors-labels-and-agent-protocols" data-group="jenkins" data-sec="jenkins-s006">
+  <summary>
+    <span class="q-title">Executors, labels and agent protocols</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 1. Jenkins Fundamentals and Architecture › Executors, labels and agent protocols</p>
+      <p><strong>Q. What is a Jenkins executor, and how many per agent?</strong> An executor is a slot on a node that runs one build at a time; a node with N executors runs N concurrent builds. Rule of thumb: about one executor per CPU core, fewer for memory-heavy or I/O-heavy builds. Too many causes contention or OOM; too few wastes capacity. Keep the controller's executors at 0.</p>
+      <p><strong>Q. What are Jenkins labels?</strong> Tags assigned to agents (for example <code>linux</code>, <code>docker</code>, <code>maven</code>). A pipeline requests a label so the build runs only on matching agents. Labels support expressions such as <code>linux &amp;&amp; docker</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+pipeline {
+  agent { label 'linux && docker' }   // run only on agents with both labels
+  stages { stage('Build') { steps { sh 'make' } } }
+}
+        </script>
+      </div>
+      <p><strong>Q. How does Jenkins authenticate agents, and which protocols are used?</strong></p>
+      <ul>
+        <li><strong>SSH</strong>: the controller connects out to the agent using SSH credentials (controller-initiated).</li>
+        <li><strong>Inbound (JNLP)</strong>: the agent connects in to the controller using a secret or agent token (agent-initiated; good behind NAT or firewalls).</li>
+      </ul>
+      <p>Agents are validated through these secrets and keys, and you can also lock down which agent commands the controller trusts.</p>
+      <p><strong>Q. What are the default ports?</strong> Web UI: 8080 (HTTP). The inbound (JNLP) agent port is configured separately (often 50000) under Manage Jenkins, Security; it can be fixed or random.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-004-controller-and-agent-architecture">← Previous</a><span class="rev-pos">5 / 80</span><a href="#q-jenkins-006-freestyle-vs-pipeline-jobs-and-plugins">Next →</a></nav>
+    </section>
+  </div>
+</details>

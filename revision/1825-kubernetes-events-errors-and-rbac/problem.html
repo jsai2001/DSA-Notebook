@@ -1,0 +1,80 @@
+<details class="question" id="q-kubernetes-059-events-errors-and-rbac" data-group="kubernetes" data-sec="kubernetes-s060">
+  <summary>
+    <span class="q-title">Events, errors and RBAC</span>
+    <span class="q-meta">
+      <span class="tag">Kubernetes</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Kubernetes › 17. Kubernetes with Python › Events, errors and RBAC</p>
+      <p><strong>Q. How do you monitor Kubernetes events with Python?</strong> Call <code>list_namespaced_event</code>, or open a watch stream with <code>watch.Watch</code> for real-time events.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from kubernetes import client, config, watch
+config.load_kube_config()
+v1 = client.CoreV1Api()
+namespace = "default"
+w = watch.Watch()
+for event in w.stream(v1.list_namespaced_event, namespace=namespace):
+    evt = event['object']
+    print(f"Event: {evt.type}, Reason: {evt.reason}, Message: {evt.message}")
+        </script>
+      </div>
+      <p><strong>Q. How do you handle Kubernetes API errors in Python?</strong> Catch <code>ApiException</code> and check the status code and reason (404 not found, 403 unauthorized).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from kubernetes import client, config
+from kubernetes.client.rest import ApiException
+config.load_kube_config()
+v1 = client.CoreV1Api()
+try:
+    namespace = "default"
+    pod_name = "non-existent-pod"
+    v1.read_namespaced_pod(name=pod_name, namespace=namespace)
+except ApiException as e:
+    if e.status == 404:
+        print(f"Pod {pod_name} not found")
+    elif e.status == 403:
+        print("Permission denied")
+    else:
+        print(f"Error: {e}")
+        </script>
+      </div>
+      <p><strong>Q. How do you manage Kubernetes RBAC policies with Python?</strong> Use <code>RbacAuthorizationV1Api</code> to create, update, or delete <code>Role</code>, <code>RoleBinding</code>, <code>ClusterRole</code>, and <code>ClusterRoleBinding</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from kubernetes import client, config
+config.load_kube_config()
+rbac_v1 = client.RbacAuthorizationV1Api()
+role = client.V1Role(
+    metadata=client.V1ObjectMeta(name="pod-reader"),
+    rules=[
+        client.V1PolicyRule(
+            api_groups=[""],
+            resources=["pods"],
+            verbs=["get", "list", "watch"]
+        )
+    ]
+)
+namespace = "default"
+rbac_v1.create_namespaced_role(namespace=namespace, body=role)
+role_binding = client.V1RoleBinding(
+    metadata=client.V1ObjectMeta(name="pod-reader-binding"),
+    subjects=[
+        client.V1Subject(kind="User", name="jane", api_group="rbac.authorization.k8s.io")
+    ],
+    role_ref=client.V1RoleRef(
+        kind="Role",
+        name="pod-reader",
+        api_group="rbac.authorization.k8s.io"
+    )
+)
+rbac_v1.create_namespaced_role_binding(namespace=namespace, body=role_binding)
+print("Role and RoleBinding created successfully")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-kubernetes-058-configmaps-and-services">← Previous</a><span class="rev-pos">59 / 63</span><a href="#q-kubernetes-060-operators-and-custom-controllers">Next →</a></nav>
+    </section>
+  </div>
+</details>

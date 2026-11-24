@@ -1,0 +1,54 @@
+<details class="question" id="q-docker-045-recreating-scaling-and-updating" data-group="docker" data-sec="docker-s046">
+  <summary>
+    <span class="q-title">Recreating, scaling and updating</span>
+    <span class="q-meta">
+      <span class="tag">Docker</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Docker › 12. On-Call: Container Failures › Recreating, scaling and updating</p>
+      <p><strong>Q. How do you recreate an accidentally deleted container?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker inspect <image_name> | grep -i cmd
+docker run -d --name <container_name> -p <host_port>:<container_port> -v <volume_path> <image_name>
+docker-compose up -d
+        </script>
+      </div>
+      <p>Store configuration in Compose files or scripts, verify volumes, and check environment variables.</p>
+      <p><strong>Q. How do you scale a Dockerized application?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker-compose up -d --scale <service_name>=3
+docker swarm init
+docker service create --replicas 3 --name <service_name> <image_name>
+docker run -d -p 80:80 nginx
+        </script>
+      </div>
+      <p>NGINX config:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Nginx">
+upstream app {
+    server container1:8080;
+    server container2:8080;
+    server container3:8080;
+}
+server { listen 80; location / { proxy_pass http://app; } }
+        </script>
+      </div>
+      <p>The app must be stateless. Monitor resources (<code>docker stats</code>) and use an external load balancer in production.</p>
+      <p><strong>Q. How do you update a container to the latest application version?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker pull <image_name>:latest
+docker-compose up -d
+docker service update --image <image_name>:latest <service_name>
+docker exec <container_id> <app_version_command>
+        </script>
+      </div>
+      <p>Test in staging, ensure data compatibility, and use health checks.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-docker-044-unresponsive-or-unreachable-containers">← Previous</a><span class="rev-pos">45 / 77</span><a href="#q-docker-046-connectivity-failures">Next →</a></nav>
+    </section>
+  </div>
+</details>

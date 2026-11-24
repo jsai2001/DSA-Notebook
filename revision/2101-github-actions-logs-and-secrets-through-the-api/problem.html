@@ -1,0 +1,51 @@
+<details class="question" id="q-github-actions-070-logs-and-secrets-through-the-api" data-group="github-actions" data-sec="github-actions-s071">
+  <summary>
+    <span class="q-title">Logs and secrets through the API</span>
+    <span class="q-meta">
+      <span class="tag">GitHub Actions</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GitHub Actions › 11. Python and GitHub Actions › Logs and secrets through the API</p>
+      <p><strong>Q. How do you download workflow logs with the GitHub API?</strong> Use <code>GET /repos/{owner}/{repo}/actions/runs/{run_id}/logs</code>, which returns a ZIP file.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import requests
+import zipfile
+import io
+def download_workflow_logs(owner, repo, run_id, token):
+    url = f"https://api.github.com/repos/{owner}/{repo}/actions/runs/{run_id}/logs"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    response = requests.get(url, headers=headers, stream=True)
+    if response.status_code == 200:
+        with zipfile.ZipFile(io.BytesIO(response.content)) as z:
+            z.extractall("workflow_logs")
+        print("Logs downloaded and extracted!")
+    else:
+        print(f"Failed to download logs: {response.status_code}")
+        </script>
+      </div>
+      <p><strong>Q. How can Python automate the creation of Actions secrets?</strong> Use <code>PUT /repos/{owner}/{repo}/actions/secrets/{secret_name}</code>. The value must be encrypted with the repository's public key (PyNaCl sealed box).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from github import Github
+from nacl import public
+def create_secret(owner, repo, secret_name, secret_value, token):
+    g = Github(token)
+    repo = g.get_repo(f"{owner}/{repo}")
+    public_key = repo.get_public_key()
+    public_key_obj = public.PublicKey(public_key.key.encode(), encoder=public.Base64Encoder)
+    sealed_box = public.SealedBox(public_key_obj)
+    encrypted_value = sealed_box.encrypt(secret_value.encode())
+    repo.create_secret(secret_name, encrypted_value.hex())
+    print(f"Secret {secret_name} created!")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-github-actions-069-generating-workflow-files-with-python">← Previous</a><span class="rev-pos">70 / 89</span><a href="#q-github-actions-071-api-tokens-and-rate-limits">Next →</a></nav>
+    </section>
+  </div>
+</details>

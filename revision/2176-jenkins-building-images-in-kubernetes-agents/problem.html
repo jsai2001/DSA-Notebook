@@ -1,0 +1,41 @@
+<details class="question" id="q-jenkins-056-building-images-in-kubernetes-agents" data-group="jenkins" data-sec="jenkins-s057">
+  <summary>
+    <span class="q-title">Building images in Kubernetes agents</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 8. Agents and Distributed Builds › Building images in Kubernetes agents</p>
+      <p><strong>Q. How do you run Docker-in-Docker or Kaniko in Kubernetes agents to build images?</strong> DinD runs a Docker daemon in a sidecar and needs privileged mode, which is a security concern. Kaniko builds images in userspace without a Docker daemon or privileged access, so it is preferred in Kubernetes. It pushes straight to a registry using mounted credentials.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+container('kaniko') {
+  sh '/kaniko/executor --context `pwd` --dockerfile Dockerfile --destination registry/app:$BUILD_NUMBER'
+}
+        </script>
+      </div>
+      <p>A pod that builds with Maven and then pushes an image with Kaniko (the <code>debug</code> executor image provides a shell):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+pipeline {
+  agent { kubernetes { yaml '''
+    spec:
+      containers:
+      - {name: maven,  image: maven:3.9,       command: [cat], tty: true}
+      - {name: kaniko, image: gcr.io/kaniko-project/executor:debug, command: [cat], tty: true}
+  ''' } }
+  stages {
+    stage('Build') { steps { container('maven')  { sh 'mvn package' } } }
+    stage('Image') { steps { container('kaniko') {
+      sh '/kaniko/executor --context `pwd` --dockerfile Dockerfile --destination reg/app:$BUILD_NUMBER'
+    } } }
+  }
+}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-055-multi-container-pods-ec2-agents-and-kani">← Previous</a><span class="rev-pos">56 / 80</span><a href="#q-jenkins-057-launch-methods-retention-and-offline-nod">Next →</a></nav>
+    </section>
+  </div>
+</details>

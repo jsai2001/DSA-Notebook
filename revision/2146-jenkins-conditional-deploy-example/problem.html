@@ -1,0 +1,41 @@
+<details class="question" id="q-jenkins-026-conditional-deploy-example" data-group="jenkins" data-sec="jenkins-s027">
+  <summary>
+    <span class="q-title">Conditional deploy example</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 4. Parameters, Conditions and Approvals › Conditional deploy example</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+pipeline {
+    agent any
+    parameters {
+        choice(name: 'ENVIRONMENT', choices: ['dev', 'staging', 'prod'], description: 'Select deployment environment')
+    }
+    stages {
+        stage('Build') {
+            steps { echo "Building for ${params.ENVIRONMENT} environment..." }
+        }
+        stage('Deploy to Non-Production') {
+            when { expression { params.ENVIRONMENT != 'prod' } }
+            steps { echo "Deploying to ${params.ENVIRONMENT} environment..." }
+        }
+        stage('Deploy to Production') {
+            when { expression { params.ENVIRONMENT == 'prod' } }
+            steps {
+                input message: 'Confirm deployment to production?', ok: 'Deploy'
+                echo "Deploying to production..."
+            }
+        }
+    }
+}
+        </script>
+      </div>
+      <p>For <code>dev</code> or <code>staging</code> the production stage is skipped and the non-production stage deploys automatically. For <code>prod</code> the pipeline pauses at the <code>input</code> step until someone clicks Deploy.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-025-manual-approvals-with-input">← Previous</a><span class="rev-pos">26 / 80</span><a href="#q-jenkins-027-parameterized-pipeline-exercise">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,39 @@
+<details class="question" id="q-docker-042-container-fails-to-start" data-group="docker" data-sec="docker-s043">
+  <summary>
+    <span class="q-title">Container fails to start</span>
+    <span class="q-meta">
+      <span class="tag">Docker</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Docker › 12. On-Call: Container Failures › Container fails to start</p>
+      <p><strong>Q. Container fails to start: "OCI runtime create failed: no such file or directory: /bin/bash"?</strong> The image lacks <code>/bin/bash</code> or the entrypoint is wrong.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker inspect <image_name> | grep -i entrypoint
+docker run -it <image_name> /bin/sh -c "ls /bin/bash"
+        </script>
+      </div>
+      <ul>
+        <li>Install bash: <code>RUN apt-get update &amp;&amp; apt-get install -y bash</code></li>
+        <li>Or use <code>/bin/sh</code>: <code>docker run -it --entrypoint /bin/sh &lt;image_name&gt;</code></li>
+        <li>Ensure the base image has the required shell. Minimal images (for example alpine) may only have <code>sh</code>.</li>
+      </ul>
+      <p><strong>Q. Container stuck in "Created" state?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker ps -a
+docker inspect <container_id> | jq '.State.Error'
+journalctl -u docker.service
+docker start <container_id>
+        </script>
+      </div>
+      <ul>
+        <li>Recreate if needed: <code>docker rm &lt;container_id&gt; &amp;&amp; docker run &lt;image_name&gt;</code></li>
+        <li>Verify the Docker daemon (<code>systemctl status docker</code>), resources and architecture compatibility.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-docker-041-s3-sns-and-cloudwatch-logs">← Previous</a><span class="rev-pos">42 / 77</span><a href="#q-docker-043-memory-and-exit-codes">Next →</a></nav>
+    </section>
+  </div>
+</details>

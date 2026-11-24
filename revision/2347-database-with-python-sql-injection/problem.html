@@ -1,0 +1,46 @@
+<details class="question" id="q-database-with-python-119-sql-injection" data-group="database-with-python" data-sec="database-with-python-s120">
+  <summary>
+    <span class="q-title">SQL injection</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › SQL injection</p>
+      <p><strong>Q. A script builds MySQL queries by string concatenation. How do you prevent SQL injection?</strong> Use parameterized queries (bind variables in the Snowflake connector, bound parameters in SQLAlchemy).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import os
+from sqlalchemy import create_engine
+
+conn = snowflake.connector.connect(
+    user=os.getenv('SNOWFLAKE_USER'),
+    password=os.getenv('SNOWFLAKE_PASSWORD'),
+    account=os.getenv('SNOWFLAKE_ACCOUNT'),
+    warehouse='COMPUTE_WH',
+    database='TEST_DB',
+    schema='PUBLIC'
+)
+user_input = "user_input"
+try:
+    cursor = conn.cursor()
+    query = "SELECT * FROM TEST_TABLE WHERE column_name = %s"
+    cursor.execute(query, (user_input,))
+    results = cursor.fetchall()
+except Exception as e:
+    print(f"Query error: {e}")
+finally:
+    conn.close()
+
+# MySQL with SQLAlchemy
+engine = create_engine(f"mysql+pymysql://{os.getenv('MYSQL_USER')}:{os.getenv('MYSQL_PASSWORD')}@localhost/TEST_DB")
+with engine.connect() as conn:
+    result = conn.execute("SELECT * FROM TEST_TABLE WHERE column_name = %s", (user_input,))
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-118-key-pair-authentication-failure">← Previous</a><span class="rev-pos">119 / 147</span><a href="#q-database-with-python-120-expired-oauth-token">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,59 @@
+<details class="question" id="q-aws-071-eks-cluster-with-one-node-group" data-group="aws" data-sec="aws-s072">
+  <summary>
+    <span class="q-title">EKS cluster with one node group</span>
+    <span class="q-meta">
+      <span class="tag">AWS</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS › 18. Terraform for AWS: EKS, VPC, S3, RDS and IAM › EKS cluster with one node group</p>
+      <p><strong>Q. How do you create an EKS cluster with a single node group in Terraform?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_eks_cluster" "example" {
+  name     = "my-eks-cluster"
+  role_arn = aws_iam_role.eks_role.arn
+  vpc_config {
+    subnet_ids = [aws_subnet.private1.id, aws_subnet.private2.id]
+  }
+}
+resource "aws_eks_node_group" "example" {
+  cluster_name    = aws_eks_cluster.example.name
+  node_group_name = "my-node-group"
+  node_role_arn   = aws_iam_role.node_role.arn
+  subnet_ids      = [aws_subnet.private1.id, aws_subnet.private2.id]
+  scaling_config {
+    desired_size = 1
+    max_size     = 2
+    min_size     = 1
+  }
+}
+resource "aws_iam_role" "eks_role" {
+  name = "eks-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = { Service = "eks.amazonaws.com" }
+    }]
+  })
+}
+resource "aws_iam_role" "node_role" {
+  name = "eks-node-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = { Service = "ec2.amazonaws.com" }
+    }]
+  })
+}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-aws-070-app-deployment-and-hpa">← Previous</a><span class="rev-pos">71 / 94</span><a href="#q-aws-072-vpc-peering">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,44 @@
+<details class="question" id="q-database-with-python-117-insufficient-privileges" data-group="database-with-python" data-sec="database-with-python-s118">
+  <summary>
+    <span class="q-title">Insufficient privileges</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Insufficient privileges</p>
+      <p><strong>Q. The script connects but queries fail with "Insufficient privileges". How do you diagnose it?</strong> Check which role is active (<code>CURRENT_ROLE()</code>), grant the needed permissions, or connect with (or <code>USE ROLE</code>) the correct role.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import os
+
+conn = snowflake.connector.connect(
+    user=os.getenv('SNOWFLAKE_USER'),
+    password=os.getenv('SNOWFLAKE_PASSWORD'),
+    account=os.getenv('SNOWFLAKE_ACCOUNT'),
+    warehouse='COMPUTE_WH',
+    database='TEST_DB',
+    schema='PUBLIC',
+    role='REQUIRED_ROLE'
+)
+
+cursor = conn.cursor()
+try:
+    cursor.execute("SELECT CURRENT_ROLE()")
+    print(f"Current role: {cursor.fetchone()[0]}")
+    cursor.execute("SELECT * FROM TEST_TABLE LIMIT 1")
+except snowflake.connector.errors.ProgrammingError as e:
+    if "Insufficient privileges" in str(e):
+        print("Insufficient privileges. Verify role permissions or use a different role.")
+        cursor.execute("USE ROLE REQUIRED_ROLE")
+    raise
+finally:
+    conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-116-hardcoded-credentials">← Previous</a><span class="rev-pos">117 / 147</span><a href="#q-database-with-python-118-key-pair-authentication-failure">Next →</a></nav>
+    </section>
+  </div>
+</details>

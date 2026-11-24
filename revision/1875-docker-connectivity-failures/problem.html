@@ -1,0 +1,56 @@
+<details class="question" id="q-docker-046-connectivity-failures" data-group="docker" data-sec="docker-s047">
+  <summary>
+    <span class="q-title">Connectivity failures</span>
+    <span class="q-meta">
+      <span class="tag">Docker</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Docker › 13. On-Call: Networking Problems › Connectivity failures</p>
+      <p><strong>Q. Container cannot connect to an external database?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker inspect <container_id> | grep -i network
+docker exec <container_id> ping <db_host>
+docker exec <container_id> nslookup <db_host>
+sudo iptables -L -n
+sudo iptables -A INPUT -p tcp --dport <db_port> -j ACCEPT
+        </script>
+      </div>
+      <p>Verify the database host and port, the network mode, and firewall or security groups.</p>
+      <p><strong>Q. Containers in the same network cannot communicate?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker network ls
+docker inspect <container_id> | grep -i network
+docker exec <container1_id> ping <container2_name>
+docker network create mynet
+docker network connect mynet <container_id>
+        </script>
+      </div>
+      <p>Docker Compose:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+version: '3'
+services:
+  app1: { image: <image1>, networks: [mynet] }
+  app2: { image: <image2>, networks: [mynet] }
+networks: { mynet: { driver: bridge } }
+        </script>
+      </div>
+      <p>Use container names for DNS, check network policies, and restart after changes.</p>
+      <p><strong>Q. Container blocked from an external API by a firewall?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+sudo iptables -L -n -v
+docker exec <container_id> curl <api_url>
+sudo iptables -A OUTPUT -p tcp --dport <api_port> -j ACCEPT
+ip route
+        </script>
+      </div>
+      <p>Verify firewall rules and cloud security groups, then test connectivity.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-docker-045-recreating-scaling-and-updating">← Previous</a><span class="rev-pos">46 / 77</span><a href="#q-docker-047-ports-and-dns">Next →</a></nav>
+    </section>
+  </div>
+</details>

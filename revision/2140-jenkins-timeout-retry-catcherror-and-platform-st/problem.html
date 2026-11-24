@@ -1,0 +1,39 @@
+<details class="question" id="q-jenkins-020-timeout-retry-catcherror-and-platform-st" data-group="jenkins" data-sec="jenkins-s021">
+  <summary>
+    <span class="q-title">Timeout, retry, catchError and platform steps</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 3. Declarative Pipeline Basics › Timeout, retry, catchError and platform steps</p>
+      <p><strong>Q. How do <code>timeout</code>, <code>retry</code> and <code>catchError</code> work?</strong></p>
+      <ul>
+        <li><code>timeout</code>: abort a block that exceeds a duration.</li>
+        <li><code>retry(n)</code>: re-run a block up to n times on failure.</li>
+        <li><code>catchError</code>: continue the pipeline but set the build result (for example UNSTABLE) instead of failing hard.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+steps {
+  retry(3) { timeout(time: 5, unit: 'MINUTES') { sh './flaky.sh' } }
+  catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') { sh './optional.sh' }
+}
+        </script>
+      </div>
+      <p><strong>Q. What is the difference between <code>sh</code>, <code>bat</code> and <code>powershell</code> steps?</strong> <code>sh</code> runs shell commands on Unix, Linux and macOS agents; <code>bat</code> runs Windows batch and <code>powershell</code> runs PowerShell on Windows agents. Pick by agent OS (target it with labels): <code>sh</code> will not work on a Windows agent and vice versa.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+stage('Build') {
+  steps {
+    sh 'mvn -B clean package'          // Linux agent
+    // bat 'mvn -B clean package'      // Windows agent
+  }
+}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-019-parallel-stages-and-matrix">← Previous</a><span class="rev-pos">20 / 80</span><a href="#q-jenkins-021-replay-and-restart-from-a-stage">Next →</a></nav>
+    </section>
+  </div>
+</details>

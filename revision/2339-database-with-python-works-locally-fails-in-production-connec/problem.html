@@ -1,0 +1,53 @@
+<details class="question" id="q-database-with-python-111-works-locally-fails-in-production-connec" data-group="database-with-python" data-sec="database-with-python-s112">
+  <summary>
+    <span class="q-title">Works locally, fails in production (&quot;Connection refused&quot;)</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Works locally, fails in production (&quot;Connection refused&quot;)</p>
+      <p><strong>Q. A Snowflake script works locally but fails in production. Which parameters differ between environments?</strong> Account, warehouse, database, schema, role and the environment-specific credentials. Load them per environment from configuration and environment variables.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import os
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
+def load_env_config(env='prod'):
+    configs = {
+        'dev': {'account': 'dev_account.region.cloud', 'warehouse': 'dev_warehouse',
+                'database': 'dev_db', 'schema': 'dev_schema', 'role': 'dev_role'},
+        'prod': {'account': 'prod_account.region.cloud', 'warehouse': 'prod_warehouse',
+                 'database': 'prod_db', 'schema': 'prod_schema', 'role': 'prod_role'}
+    }
+    return configs.get(env, configs['prod'])
+
+try:
+    env = os.getenv('ENV', 'prod')
+    config = load_env_config(env)
+    conn = snowflake.connector.connect(
+        user=os.getenv('SNOWFLAKE_USER'),
+        password=os.getenv('SNOWFLAKE_PASSWORD'),
+        account=config['account'],
+        warehouse=config['warehouse'],
+        database=config['database'],
+        schema=config['schema'],
+        role=config['role']
+    )
+    logging.info(f"Connected to Snowflake in {env} environment")
+except snowflake.connector.errors.OperationalError as e:
+    logging.error(f"Connection failed: {e}")
+    logging.info(f"Current config: {config}")
+finally:
+    if 'conn' in locals():
+        conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-110-missing-database-driver">← Previous</a><span class="rev-pos">111 / 147</span><a href="#q-database-with-python-112-ssl-certificate-error">Next →</a></nav>
+    </section>
+  </div>
+</details>

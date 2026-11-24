@@ -1,0 +1,116 @@
+<details class="question" id="q-aws-086-s3-cloudfront-and-lambda-with-github-act" data-group="aws" data-sec="aws-s087">
+  <summary>
+    <span class="q-title">S3, CloudFront and Lambda with GitHub Actions</span>
+    <span class="q-meta">
+      <span class="tag">AWS</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS › 20. AWS Integration Questions › S3, CloudFront and Lambda with GitHub Actions</p>
+      <p><strong>Q. Terraform for an S3 bucket, GitHub Actions to upload files?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_s3_bucket" "my_bucket" { bucket = "my-unique-bucket-123" }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Upload S3
+on: push
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: aws-actions/configure-aws-credentials@v2
+      with: { aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}, aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} }
+    - run: aws s3 cp file.txt s3://my-unique-bucket-123/
+        </script>
+      </div>
+      <p><strong>Q. Terraform for CloudFront, GitHub Actions to sync assets?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_cloudfront_distribution" "cdn" {
+  origin: { domain_name: "my-bucket.s3.amazonaws.com", origin_id: "S3-my-bucket" }
+  enabled: true
+}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Sync CloudFront
+on: push
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: aws-actions/configure-aws-credentials@v2
+      with: { aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}, aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} }
+    - run: aws s3 sync ./assets s3://my-bucket/
+        </script>
+      </div>
+      <p><strong>Q. GitHub Actions to deploy AWS Lambda, and a Kubernetes pod to monitor it?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Deploy Lambda
+on: push
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: aws-actions/configure-aws-credentials@v2
+      with: { aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}, aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} }
+    - run: zip -r lambda.zip . && aws lambda update-function-code --function-name my-lambda --zip-file fileb://lambda.zip
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: v1
+kind: Pod
+metadata: { name: "lambda-monitor" }
+spec: { containers: [{ name: "monitor", image: "amazon/aws-cli", command: ["aws", "lambda", "get-function", "--function-name", "my-lambda"] }] }
+        </script>
+      </div>
+      <p><strong>Q. GitHub Actions to deploy Lambda, a Kubernetes pod to log invocations?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- run: aws lambda update-function-code --function-name my-lambda --zip-file fileb://lambda.zip
+- run: kubectl apply -f logger.yaml
+  env: { KUBECONFIG: ${{ secrets.KUBECONFIG }} }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: v1
+kind: Pod
+metadata: { name: "lambda-logger" }
+spec: { containers: [{ name: "logger", image: "amazon/aws-cli", command: ["aws", "logs", "filter-log-events", "--log-group-name", "/aws/lambda/my-lambda"] }] }
+        </script>
+      </div>
+      <p><strong>Q. Terraform for a Lambda timeout fix, GitHub Actions to trigger a Kubernetes job?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_lambda_function" "fix" { function_name = "my-lambda", timeout = 60, filename = "lambda.zip", handler = "index.handler", runtime = "nodejs16.x" }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: batch/v1
+kind: Job
+metadata: { name: "lambda-check" }
+spec:
+  template:
+    spec:
+      containers:
+      - name: check
+        image: amazon/aws-cli
+        command: ["aws", "lambda", "get-function", "--function-name", "my-lambda"]
+        </script>
+      </div>
+      <p>The trigger workflow runs <code>kubectl apply -f job.yaml</code> with <code>KUBECONFIG</code> from secrets.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-aws-085-building-kubernetes-on-ec2">← Previous</a><span class="rev-pos">86 / 94</span><a href="#q-aws-087-rds-alb-and-vpc-with-github-actions">Next →</a></nav>
+    </section>
+  </div>
+</details>

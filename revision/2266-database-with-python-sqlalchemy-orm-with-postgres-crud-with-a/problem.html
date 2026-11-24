@@ -1,0 +1,49 @@
+<details class="question" id="q-database-with-python-038-sqlalchemy-orm-with-postgres-crud-with-a" data-group="database-with-python" data-sec="database-with-python-s039">
+  <summary>
+    <span class="q-title">SQLAlchemy ORM with Postgres (CRUD with automap)</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 5. PostgreSQL with Python › SQLAlchemy ORM with Postgres (CRUD with automap)</p>
+      <p>The ORM uses classes instead of tables. Define the schema by hand (clear structure) or autoload it with <code>automap_base</code>: <code>Base.prepare(engine, reflect=True)</code> and read the model from <code>Base.classes.sales</code>. Objects bound to a session are tracked, so changing attributes and committing updates the row. Always commit to persist, and close sessions.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sqlalchemy import create_engine
+from sqlalchemy.ext.automap import automap_base
+from sqlalchemy.orm import Session
+
+engine = create_engine('postgresql+psycopg2://user:password@localhost/red30')
+Base = automap_base()
+Base.prepare(engine, reflect=True)
+Sales = Base.classes.sales
+
+session = Session(engine)
+
+# Read: smallest sale
+smallest_sale = session.query(Sales).order_by(Sales.order_total).first()
+print(f"Smallest sale total: {smallest_sale.order_total}")
+
+# Create
+new_sale = Sales(order_number='1105910', quantity=3, order_total=60)
+session.add(new_sale)
+session.commit()
+
+# Update: change attributes, commit
+new_sale.quantity = 2
+new_sale.order_total = 39
+session.commit()
+updated_sale = session.query(Sales).filter_by(order_number='1105910').first()
+print(f"Updated quantity: {updated_sale.quantity}, total: {updated_sale.order_total}")
+
+# Delete
+session.delete(updated_sale)
+session.commit()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-037-sqlalchemy-core-with-postgres-crud">← Previous</a><span class="rev-pos">38 / 147</span><a href="#q-database-with-python-039-library-challenge-tables-and-models">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,41 @@
+<details class="question" id="q-lambda-073-permission-denied-for-s3-and-role-trust" data-group="lambda" data-sec="lambda-s073">
+  <summary>
+    <span class="q-title">Permission denied for S3 and role trust problems</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 13. On-call troubleshooting › Permission denied for S3 and role trust problems</p>
+      <p><strong>Symptom: "Permission denied" for S3.</strong> Add S3 permissions to the execution role (Lambda &gt; Permissions &gt; Execution role &gt; IAM console &gt; inline policy).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws iam put-role-policy --role-name <lambda-role-name> --policy-name s3-access --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [{"Effect": "Allow", "Action": ["s3:GetObject", "s3:PutObject"], "Resource": "arn:aws:s3:::<bucket-name>/*"}]
+}'
+        </script>
+      </div>
+      <p><strong>Symptom: Lambda cannot assume its execution role.</strong> Fix the trust policy so it names the Lambda service (IAM &gt; Roles &gt; role &gt; Trust relationships &gt; Edit).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws iam update-assume-role-policy --role-name <lambda-role-name> --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [{"Effect": "Allow", "Principal": {"Service": "lambda.amazonaws.com"}, "Action": "sts:AssumeRole"}]
+}'
+        </script>
+      </div>
+      <p><strong>Symptom: Lambda cannot publish to SNS.</strong> Add <code>sns:Publish</code> on the topic to the role.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws iam put-role-policy --role-name <lambda-role-name> --policy-name sns-access --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [{"Effect": "Allow", "Action": "sns:Publish", "Resource": "arn:aws:sns:<region>:<account-id>:<topic-name>"}]
+}'
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-072-runtime-errors">← Previous</a><span class="rev-pos">73 / 79</span><a href="#q-lambda-074-high-latency-concurrency-limits-and-cold">Next →</a></nav>
+    </section>
+  </div>
+</details>

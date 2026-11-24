@@ -1,0 +1,46 @@
+<details class="question" id="q-database-with-python-116-hardcoded-credentials" data-group="database-with-python" data-sec="database-with-python-s117">
+  <summary>
+    <span class="q-title">Hardcoded credentials</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Hardcoded credentials</p>
+      <p><strong>Q. You find hardcoded Snowflake credentials in code review. How do you refactor?</strong> Move them to environment variables, a secret manager such as AWS Secrets Manager, or the <code>keyring</code> library.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import os
+import boto3
+from dotenv import load_dotenv
+
+load_dotenv()
+
+def get_snowflake_credentials(secret_name, region_name):
+    client = boto3.client('secretsmanager', region_name=region_name)
+    response = client.get_secret_value(SecretId=secret_name)
+    return response['SecretString'].split(':')
+
+secret_name = "snowflake/credentials"
+region_name = "us-west-2"
+user, password = (get_snowflake_credentials(secret_name, region_name)
+                  if os.getenv('USE_SECRETS')
+                  else (os.getenv('SNOWFLAKE_USER'), os.getenv('SNOWFLAKE_PASSWORD')))
+
+conn = snowflake.connector.connect(
+    user=user,
+    password=password,
+    account=os.getenv('SNOWFLAKE_ACCOUNT'),
+    warehouse='COMPUTE_WH',
+    database='TEST_DB',
+    schema='PUBLIC'
+)
+conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-115-authentication-failure">← Previous</a><span class="rev-pos">116 / 147</span><a href="#q-database-with-python-117-insufficient-privileges">Next →</a></nav>
+    </section>
+  </div>
+</details>

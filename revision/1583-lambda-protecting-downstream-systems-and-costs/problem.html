@@ -1,0 +1,23 @@
+<details class="question" id="q-lambda-038-protecting-downstream-systems-and-costs" data-group="lambda" data-sec="lambda-s039">
+  <summary>
+    <span class="q-title">Protecting downstream systems and costs</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 7. Concurrency, scaling and limits › Protecting downstream systems and costs</p>
+      <p><strong>Q65. How does Reserved Concurrency protect downstream resources such as databases?</strong> Capping a function's maximum concurrency limits how many simultaneous connections it can open to a fragile downstream, such as an RDS instance with few connections. This stops Lambda's rapid scaling from overwhelming the database. Pair it with RDS Proxy for pooling.</p>
+      <p><strong>Q69. What if one function monopolizes all unreserved concurrency?</strong> Other functions get throttled because they compete for the same shared pool. Set <strong>reserved concurrency</strong> on high-traffic functions (to cap them) and reserve concurrency for critical functions so they always have headroom. For example, with a 1,000 pool: a critical function reserved 200 (guaranteed and capped), a batch function reserved 100, and the remaining 700 unreserved are shared by everything else.</p>
+      <p><strong>Q70. How do you prevent runaway cost from recursive loops?</strong> Lambda has built-in <strong>recursive loop detection</strong> (for example Lambda to SQS/SNS to the same Lambda) that stops the loop and notifies you. Also set <strong>reserved concurrency</strong> to cap the blast radius, add CloudWatch billing and concurrency alarms, avoid a function writing to its own trigger source, and use idempotency plus circuit breakers.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Cap a function so a runaway loop can't consume the whole account limit
+aws lambda put-function-concurrency --function-name f --reserved-concurrent-executions 10
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-037-concurrency-math-and-burst-scaling">← Previous</a><span class="rev-pos">38 / 79</span><a href="#q-lambda-039-soft-limits-vs-hard-limits">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,66 @@
+<details class="question" id="q-lambda-012-common-triggers-and-their-event-shapes" data-group="lambda" data-sec="lambda-s013">
+  <summary>
+    <span class="q-title">Common triggers and their event shapes</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 2. Console, programming model and triggers › Common triggers and their event shapes</p>
+      <ul>
+        <li><strong>API Gateway</strong>: routes an HTTP request (for example <code>GET /hello</code>) to the function. Used for serverless web backends.</li>
+        <li><strong>S3</strong>: fires on object create, update or delete. Used to enrich files or start workflow steps (process images on upload).</li>
+        <li><strong>DynamoDB</strong> (Streams): fires when a record is created, updated or deleted. Used for transactions or stored-procedure-like logic in a NoSQL database.</li>
+        <li><strong>SQS</strong>: fires on new queue messages. Decouples functions for scalable architectures.</li>
+        <li><strong>Kinesis</strong>: fires on new stream events. Handles high-volume real-time data (IoT, analytics).</li>
+      </ul>
+      <p>Each trigger gives a different <code>event</code> shape, so always validate it. The function needs IAM permission to the triggering service (for example <code>s3:GetObject</code>, <code>sqs:ReceiveMessage</code>), scoped finely.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+// S3
+exports.handler = async (event) => {
+    const file = event.Records[0].s3.object.key;
+    console.log('New file:', file);
+    return `Processed ${file}`;
+};
+// S3 event: { "Records": [ { "s3": { "bucket": { "name": "my-bucket" }, "object": { "key": "file.jpg" } } } ] }
+
+// DynamoDB stream
+exports.handler = async (event) => {
+    for (const record of event.Records) {
+        console.log('DynamoDB Record:', record.dynamodb);
+    }
+    return 'Processed records';
+};
+// DynamoDB event: { "Records": [ { "eventName": "INSERT", "dynamodb": { "NewImage": { "id": { "S": "123" } } } } ] }
+
+// Kinesis
+exports.handler = async (event) => {
+    for (const record of event.Records) {
+        const data = Buffer.from(record.kinesis.data, 'base64').toString();
+        console.log('Kinesis Data:', data);
+    }
+    return 'Stream processed';
+};
+// Kinesis event: { "Records": [ { "kinesis": { "data": "base64-encoded-data" } } ] }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JSON">
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject"],
+      "Resource": "arn:aws:s3:::my-bucket/*"
+    }
+  ]
+}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-011-the-three-execution-models-in-the-course">← Previous</a><span class="rev-pos">12 / 79</span><a href="#q-lambda-013-amazon-api-gateway-as-a-trigger">Next →</a></nav>
+    </section>
+  </div>
+</details>

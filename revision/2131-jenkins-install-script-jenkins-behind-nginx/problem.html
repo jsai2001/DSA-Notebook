@@ -1,0 +1,55 @@
+<details class="question" id="q-jenkins-011-install-script-jenkins-behind-nginx" data-group="jenkins" data-sec="jenkins-s012">
+  <summary>
+    <span class="q-title">Install script: Jenkins behind NGINX</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 2. Installing a Jenkins Server › Install script: Jenkins behind NGINX</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+#!/bin/bash
+apt-get update -y
+apt-get upgrade -y
+
+# Java (required for Jenkins)
+apt-get install -y openjdk-11-jdk
+
+# Jenkins repository and install
+wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | apt-key add -
+echo "deb https://pkg.jenkins.io/debian-stable binary/" > /etc/apt/sources.list.d/jenkins.list
+apt-get update -y
+apt-get install -y jenkins
+
+# NGINX as reverse proxy for Jenkins
+apt-get install -y nginx
+cat <<EOF > /etc/nginx/sites-available/jenkins
+server {
+    listen 80;
+    server_name jenkins.example.com;
+    location / {
+        proxy_pass http://localhost:8080;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    }
+}
+EOF
+ln -s /etc/nginx/sites-available/jenkins /etc/nginx/sites-enabled/
+systemctl restart nginx
+systemctl enable jenkins
+systemctl start jenkins
+
+# Print the initial admin password and URL
+echo "Admin user: admin"
+echo "Admin password: $(cat /var/lib/jenkins/secrets/initialAdminPassword)"
+echo "Access Jenkins at http://$(curl -s http://169.254.169.254/latest/meta-data/public-hostname)"
+        </script>
+      </div>
+      <p>Replace <code>jenkins.example.com</code> with the server's public DNS or IP. The earlier variant of this script used the <code>https://pkg.jenkins.io/debian/</code> repository instead of <code>debian-stable</code>; everything else is the same.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-010-launching-jenkins-on-aws-ec2">← Previous</a><span class="rev-pos">11 / 80</span><a href="#q-jenkins-012-your-first-pipeline">Next →</a></nav>
+    </section>
+  </div>
+</details>

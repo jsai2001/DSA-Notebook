@@ -1,0 +1,59 @@
+<details class="question" id="q-aws-047-api-gateway-in-front-of-lambda" data-group="aws" data-sec="aws-s048">
+  <summary>
+    <span class="q-title">API Gateway in front of Lambda</span>
+    <span class="q-meta">
+      <span class="tag">AWS</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS › 13. Hands-On: CloudFormation Templates › API Gateway in front of Lambda</p>
+      <p><strong>Q. How do you create an API Gateway and attach it to a Lambda function with CloudFormation?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+Resources:
+    MyApiGateway:
+        Type: AWS::ApiGateway::RestApi
+        Properties:
+            Name: my-api
+    MyResource:
+        Type: AWS::ApiGateway::Resource
+        Properties:
+            RestApiId: !Ref MyApiGateway
+            ParentId: !GetAtt MyApiGateway.RootResourceId
+            PathPart: "hello"
+    MyMethod:
+        Type: AWS::ApiGateway::Method
+        Properties:
+            RestApiId: !Ref MyApiGateway
+            ResourceId: !Ref MyResource
+            HttpMethod: GET
+            AuthorizationType: NONE
+            Integration:
+                Type: AWS
+                IntegrationHttpMethod: POST
+                Uri: !Sub arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/${MyLambdaFunction.Arn}/invocations
+    MyLambdaFunction:
+        Type: AWS::Lambda::Function
+        Properties:
+            FunctionName: my-lambda-function
+            Handler: index.handler
+            Runtime: nodejs18.x
+            Role: arn:aws:iam::123456789012:role/lambda-exec-role
+            Code:
+                S3Bucket: my-code-bucket
+                S3Key: lambda-code.zip
+    LambdaPermission:
+        Type: AWS::Lambda::Permission
+        Properties:
+            Action: lambda:InvokeFunction
+            FunctionName: !Ref MyLambdaFunction
+            Principal: apigateway.amazonaws.com
+            SourceArn: !Sub arn:aws:execute-api:us-east-1:123456789012:${MyApiGateway}/*/*/*
+        </script>
+      </div>
+      <p>The <code>AWS::Lambda::Permission</code> resource lets API Gateway invoke the function.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-aws-046-cloudwatch-alarm-for-ec2">← Previous</a><span class="rev-pos">47 / 94</span><a href="#q-aws-048-step-functions-state-machine">Next →</a></nav>
+    </section>
+  </div>
+</details>

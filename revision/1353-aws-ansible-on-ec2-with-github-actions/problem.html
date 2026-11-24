@@ -1,0 +1,95 @@
+<details class="question" id="q-aws-083-ansible-on-ec2-with-github-actions" data-group="aws" data-sec="aws-s084">
+  <summary>
+    <span class="q-title">Ansible on EC2 with GitHub Actions</span>
+    <span class="q-meta">
+      <span class="tag">AWS</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS › 20. AWS Integration Questions › Ansible on EC2 with GitHub Actions</p>
+      <p><strong>Q. Ansible to install Docker on EC2, GitHub Actions to deploy a Kubernetes manifest?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Install Docker
+  hosts: ec2_hosts
+  become: yes
+  tasks:
+  - name: Install
+    ansible.builtin.package: { name: docker.io, state: present }
+  - name: Start
+    ansible.builtin.service: { name: docker, state: started }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Deploy K8s
+on: push
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: ansible-playbook -i inventory.ini install_docker.yml
+    - uses: azure/setup-kubectl@v3
+    - run: kubectl apply -f pod.yaml
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: v1
+kind: Pod
+metadata: { name: "test-pod" }
+spec: { containers: [{ name: "test", image: "nginx" }] }
+        </script>
+      </div>
+      <p><strong>Q. Ansible to configure EC2, Terraform for a Kubernetes service?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Configure EC2
+  hosts: ec2_hosts
+  become: yes
+  tasks:
+  - name: Install
+    ansible.builtin.package: { name: curl, state: present }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "kubernetes_service" "web" {
+  metadata: { name: "web-service" }
+  spec:
+    selector: { app: "web" }
+    port: [{ port: 80, target_port: "8080" }]
+    type: "LoadBalancer"
+}
+        </script>
+      </div>
+      <p><strong>Q. Ansible to update EC2, GitHub Actions to test Kubernetes?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Update EC2
+  hosts: ec2_hosts
+  become: yes
+  tasks:
+  - name: Update
+    ansible.builtin.yum: { name: "*", state: latest }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Test K8s
+on: push
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: kubectl get nodes
+      env: { KUBECONFIG: ${{ secrets.KUBECONFIG }} }
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-aws-082-eks-with-ansible-and-monitoring-pods">← Previous</a><span class="rev-pos">83 / 94</span><a href="#q-aws-084-ingress-security-group-and-cronjob-deplo">Next →</a></nav>
+    </section>
+  </div>
+</details>

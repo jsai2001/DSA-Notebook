@@ -1,0 +1,50 @@
+<details class="question" id="q-docker-068-monitoring-setup-benchmarking-and-profil" data-group="docker" data-sec="docker-s069">
+  <summary>
+    <span class="q-title">Monitoring setup, benchmarking and profiling</span>
+    <span class="q-meta">
+      <span class="tag">Docker</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Docker › 18. On-Call: Performance and Monitoring › Monitoring setup, benchmarking and profiling</p>
+      <p><strong>Q. How do you set up monitoring?</strong> Monitor CPU, memory, I/O and network with Prometheus and Grafana.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker run -d --name prometheus -p 9090:9090 -v /path/to/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus
+docker run -d --name grafana -p 3000:3000 grafana/grafana
+        </script>
+      </div>
+      <p>Configure Prometheus scraping and set alerts.</p>
+      <p><strong>Q. How do you benchmark container performance?</strong> Simulate load and monitor metrics.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker run -it <container_name> stress --cpu 2 --io 1 --vm 1 --vm-bytes 128M --timeout 60s
+docker stats <container_name>
+perf stat -p $(docker top <container_name> | awk 'NR>1 {print $2}')
+        </script>
+      </div>
+      <p>Use realistic workloads and compare against baselines.</p>
+      <p><strong>Q. How do you profile container CPU usage?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker stats <container_name>
+docker top <container_name>
+perf stat -p $(docker top <container_name> | awk 'NR>1 {print $2}')
+docker update --cpus="0.5" <container_name>
+        </script>
+      </div>
+      <p>Monitor and limit CPU usage. Identify intensive processes and balance limits.</p>
+      <p><strong>Q. How do you capture intermittent container crashes?</strong> Stream logs, monitor events, and use Promtail/Loki.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker logs <container_name> --follow
+docker events --filter 'container=<container_name>'
+docker run -d --name promtail -v /var/log:/var/log loki/promtail -config.file=/etc/promtail/promtail.yml
+        </script>
+      </div>
+      <p>Correlate crashes with resources and ensure log capture.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-docker-067-memory-disk-and-network">← Previous</a><span class="rev-pos">68 / 77</span><a href="#q-docker-069-missing-or-verbose-logs">Next →</a></nav>
+    </section>
+  </div>
+</details>

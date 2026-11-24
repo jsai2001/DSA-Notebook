@@ -1,0 +1,51 @@
+<details class="question" id="q-database-with-python-037-sqlalchemy-core-with-postgres-crud" data-group="database-with-python" data-sec="database-with-python-s038">
+  <summary>
+    <span class="q-title">SQLAlchemy Core with Postgres (CRUD)</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 5. PostgreSQL with Python › SQLAlchemy Core with Postgres (CRUD)</p>
+      <p>The same engine works for Postgres with <code>postgresql+psycopg2://user:password@localhost/red30</code>. Install with <code>pip3 install sqlalchemy</code>. Tables that already exist are autoloaded with <code>Table(..., autoload_with=engine)</code>, so there is no need to define columns.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sqlalchemy import create_engine, MetaData, Table, select
+
+engine = create_engine('postgresql+psycopg2://user:password@localhost/red30')
+metadata = MetaData()
+sales_table = Table('sales', metadata, autoload_with=engine)
+
+with engine.connect() as connection:
+    # Read
+    for row in connection.execute(select(sales_table)):
+        print(row)
+
+    # Create
+    connection.execute(sales_table.insert().values(
+        order_number='1105910',
+        product_name='Understanding Artificial Intelligence',
+        quantity=3,
+        order_total=60
+    ))
+
+    # Update (refund case)
+    connection.execute(sales_table.update()
+        .where(sales_table.c.order_number == '1105910')
+        .values(quantity=2, order_total=39)
+    )
+    query = select(sales_table).where(sales_table.c.order_number == '1105910')
+    print(connection.execute(query).fetchone())
+
+    # Delete
+    connection.execute(sales_table.delete()
+        .where(sales_table.c.order_number == '1105910')
+    )
+    print(f"Row count: {connection.execute(query).rowcount}")  # 0 after delete
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-036-insert-dynamic-data-with-named-placehold">← Previous</a><span class="rev-pos">37 / 147</span><a href="#q-database-with-python-038-sqlalchemy-orm-with-postgres-crud-with-a">Next →</a></nav>
+    </section>
+  </div>
+</details>

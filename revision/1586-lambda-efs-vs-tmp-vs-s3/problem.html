@@ -1,0 +1,32 @@
+<details class="question" id="q-lambda-041-efs-vs-tmp-vs-s3" data-group="lambda" data-sec="lambda-s042">
+  <summary>
+    <span class="q-title">EFS vs /tmp vs S3</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 8. Storage, state and integrations › EFS vs /tmp vs S3</p>
+      <p><strong>Q72. How do you attach an EFS volume to a function?</strong> Put the function in the same VPC as the EFS mount target, create an <strong>EFS Access Point</strong>, and set the function's <code>FileSystemConfig</code> to mount it at a local path (for example <code>/mnt/data</code>). The execution role needs EFS permissions. The function then reads and writes EFS like a shared, durable local file system.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+MyFunction:
+  Type: AWS::Serverless::Function
+  Properties:
+    VpcConfig: { SubnetIds: [...], SecurityGroupIds: [...] }
+    FileSystemConfigs:
+      - Arn: !GetAtt AccessPoint.Arn
+        LocalMountPath: /mnt/data       # must start with /mnt
+        </script>
+      </div>
+      <p><strong>Q73. When use <code>/tmp</code>, EFS or S3?</strong></p>
+      <ul>
+        <li><strong><code>/tmp</code></strong> (512 MB to 10 GB): fast, local, ephemeral scratch space for one invocation or warm environment.</li>
+        <li><strong>EFS</strong>: a shared, durable, low-latency POSIX file system across many concurrent functions. Use for large models, shared state, or when you need a file system. Requires VPC.</li>
+        <li><strong>S3</strong>: durable, massively scalable object storage for inputs, outputs, artifacts and large blobs accessed over the API (no VPC needed).</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-040-stateless-design-and-where-to-keep-state">← Previous</a><span class="rev-pos">41 / 79</span><a href="#q-lambda-042-step-functions-and-rds-proxy">Next →</a></nav>
+    </section>
+  </div>
+</details>

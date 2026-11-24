@@ -1,0 +1,37 @@
+<details class="question" id="q-ansible-098-speed-up-a-slow-playbook-across-many-ins" data-group="ansible" data-sec="ansible-s099">
+  <summary>
+    <span class="q-title">Speed up a slow playbook across many instances</span>
+    <span class="q-meta">
+      <span class="tag">Ansible</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Ansible › 14. Ansible with Python › Speed up a slow playbook across many instances</p>
+      <p><strong>Q. Scenario: a playbook takes too long across many AWS instances. How would Python optimize it?</strong> Parallelize with <code>concurrent.futures</code> or group instances into batches, and validate instance availability with <code>boto3</code> first.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+import subprocess
+from concurrent.futures import ThreadPoolExecutor
+
+def run_ansible_playbook(instances, playbook_path):
+    ec2 = boto3.client("ec2")
+    response = ec2.describe_instances(InstanceIds=instances)
+    valid_instances = [i["InstanceId"] for r in response["Reservations"] for i in r["Instances"] if i["State"]["Name"] == "running"]
+
+    def execute_playbook(instance_id):
+        subprocess.run(["ansible-playbook", playbook_path, "-i", f"{instance_id},"], check=True)
+        print(f"Playbook executed on {instance_id}")
+
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        executor.map(execute_playbook, valid_instances)
+
+# Example usage
+run_ansible_playbook(["i-1234567890abcdef0", "i-0987654321fedcba0"], "deploy.yml")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ansible-097-validate-aws-credentials-before-a-playbo">← Previous</a><span class="rev-pos">98 / 125</span><a href="#q-ansible-099-automate-rds-backups-with-python-and-ans">Next →</a></nav>
+    </section>
+  </div>
+</details>

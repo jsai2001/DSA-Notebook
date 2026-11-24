@@ -1,0 +1,58 @@
+<details class="question" id="q-kubernetes-060-operators-and-custom-controllers" data-group="kubernetes" data-sec="kubernetes-s061">
+  <summary>
+    <span class="q-title">Operators and custom controllers</span>
+    <span class="q-meta">
+      <span class="tag">Kubernetes</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Kubernetes › 17. Kubernetes with Python › Operators and custom controllers</p>
+      <p><strong>Q. What is a Kubernetes operator, and how can Python create one?</strong> An operator is a custom controller that extends Kubernetes to manage complex applications. It uses custom resources and controllers to automate tasks like scaling or backups. In Python, use <code>kopf</code> (Kubernetes Operator Pythonic Framework) or the <code>kubernetes</code> client to define custom resources (CRDs), reconcile desired and actual state, and deploy the operator as a Pod in the cluster.</p>
+      <p><strong>Q. How can Python create a custom Kubernetes controller?</strong> A controller watches changes to custom resources and reconciles the desired state. Use the <code>kubernetes</code> client with <code>watch.Watch</code> to monitor CRDs, or use <code>kopf</code> or <code>operator-sdk</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import kopf
+from kubernetes import client, config
+config.load_kube_config()
+
+@kopf.on.create('example.com', 'v1', 'myresources')
+def create_fn(spec, name, namespace, **kwargs):
+    print(f"Creating resource {name} in namespace {namespace}")
+    # Add logic to reconcile the resource
+    return {'message': 'Resource created'}
+
+@kopf.on.update('example.com', 'v1', 'myresources')
+def update_fn(spec, name, namespace, **kwargs):
+    print(f"Updating resource {name} in namespace {namespace}")
+    # Add logic to update the resource
+        </script>
+      </div>
+      <p><strong>Q. A Python operator is not responding to custom resource events. How do you troubleshoot it?</strong></p>
+      <ul>
+        <li><strong>Check logs</strong>: inspect operator logs for errors.</li>
+        <li><strong>Verify RBAC</strong>: the operator needs permission to watch custom resources.</li>
+        <li><strong>Test event handling</strong>: simulate events to verify the handler.</li>
+        <li><strong>Debug code</strong>: add logging to the event loop.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from kubernetes import client, config, watch
+import logging
+logging.basicConfig(level=logging.INFO)
+
+def watch_custom_resources(namespace, group, version, plural):
+    config.load_kube_config()
+    custom_api = client.CustomObjectsApi()
+    w = watch.Watch()
+    for event in w.stream(custom_api.list_namespaced_custom_object, group, version, namespace, plural):
+        logging.info(f"Event: {event['type']}, Object: {event['object']['metadata']['name']}")
+        # Add event handling logic here
+
+watch_custom_resources("default", "example.com", "v1", "myresources")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-kubernetes-059-events-errors-and-rbac">← Previous</a><span class="rev-pos">60 / 63</span><a href="#q-kubernetes-061-python-troubleshooting-scenarios">Next →</a></nav>
+    </section>
+  </div>
+</details>

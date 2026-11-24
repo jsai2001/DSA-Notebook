@@ -1,0 +1,49 @@
+<details class="question" id="q-kubernetes-062-python-autoscaling-and-resource-analysis" data-group="kubernetes" data-sec="kubernetes-s063">
+  <summary>
+    <span class="q-title">Python autoscaling and resource analysis</span>
+    <span class="q-meta">
+      <span class="tag">Kubernetes</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Kubernetes › 17. Kubernetes with Python › Python autoscaling and resource analysis</p>
+      <p><strong>Q. How do you scale a deployment on CPU usage with Python and the Kubernetes API?</strong> Read CPU usage from the Metrics API and scale with the AppsV1 API.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from kubernetes import client, config
+import time
+
+def scale_deployment(namespace, deployment_name, cpu_threshold=70, max_replicas=10):
+    config.load_kube_config()
+    apps_v1 = client.AppsV1Api()
+    metrics_api = client.CustomObjectsApi()
+    while True:
+        deployment = apps_v1.read_namespaced_deployment(deployment_name, namespace)
+        current_replicas = deployment.spec.replicas
+        metrics = metrics_api.list_namespaced_custom_object(
+            group="metrics.k8s.io", version="v1beta1", namespace=namespace, plural="pods"
+        )
+        cpu_usage = 0
+        for item in metrics["items"]:
+            if item["metadata"]["name"].startswith(deployment_name):
+                cpu_usage += sum(int(c["usage"]["cpu"].rstrip("n")) for c in item["containers"])
+        if cpu_usage > cpu_threshold and current_replicas < max_replicas:
+            new_replicas = min(current_replicas + 1, max_replicas)
+            deployment.spec.replicas = new_replicas
+            apps_v1.patch_namespaced_deployment(deployment_name, namespace, deployment)
+            print(f"Scaled up to {new_replicas} replicas")
+        elif cpu_usage < cpu_threshold / 2 and current_replicas > 1:
+            new_replicas = max(current_replicas - 1, 1)
+            deployment.spec.replicas = new_replicas
+            apps_v1.patch_namespaced_deployment(deployment_name, namespace, deployment)
+            print(f"Scaled down to {new_replicas} replicas")
+        time.sleep(60)
+
+scale_deployment("default", "my-deployment")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-kubernetes-061-python-troubleshooting-scenarios">← Previous</a><span class="rev-pos">62 / 63</span><a href="#q-kubernetes-063-analyzing-resource-usage-with-python">Next →</a></nav>
+    </section>
+  </div>
+</details>

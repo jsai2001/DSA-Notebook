@@ -1,0 +1,35 @@
+<details class="question" id="q-database-with-python-075-postgresql-error-handling-and-full-text" data-group="database-with-python" data-sec="database-with-python-s076">
+  <summary>
+    <span class="q-title">PostgreSQL error handling and full-text search</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 7. PostgreSQL Commands for Interviews › PostgreSQL error handling and full-text search</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="SQL">
+CREATE OR REPLACE FUNCTION safe_insert_employee(p_first_name VARCHAR, p_salary NUMERIC)
+RETURNS TEXT AS $$
+BEGIN
+    INSERT INTO employees (first_name, salary) VALUES (p_first_name, p_salary);
+    RETURN 'Insert successful';
+EXCEPTION
+    WHEN OTHERS THEN
+        RETURN 'Error: ' || SQLERRM;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE INDEX idx_fts ON employees USING GIN(to_tsvector('english', first_name || ' ' || last_name));
+
+SELECT first_name, last_name
+FROM employees
+WHERE to_tsvector('english', first_name || ' ' || last_name) @@ to_tsquery('John & Doe');
+        </script>
+      </div>
+      <p><strong>Q. Full-text search vs LIKE?</strong> Full-text search with a GIN index is faster and understands words, while <code>LIKE</code> scans text.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-074-postgresql-partitioning">← Previous</a><span class="rev-pos">75 / 147</span><a href="#q-database-with-python-076-postgresql-inheritance-monitoring-and-co">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,46 @@
+<details class="question" id="q-database-with-python-136-stage-file-upload-failure" data-group="database-with-python" data-sec="database-with-python-s137">
+  <summary>
+    <span class="q-title">Stage file upload failure</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Stage file upload failure</p>
+      <p><strong>Q. Uploading a file to a Snowflake stage fails. What do you check?</strong> Stage configuration and permissions, the file format, that the file exists locally, and the upload method (<code>PUT</code>). Verify with <code>LIST @stage</code> and <code>SHOW STAGES</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import os
+
+conn = snowflake.connector.connect(
+    user='your_user', password='your_password', account='your_account',
+    warehouse='your_warehouse', database='your_database', schema='your_schema'
+)
+
+try:
+    cursor = conn.cursor()
+    cursor.execute("CREATE OR REPLACE STAGE my_stage FILE_FORMAT = (TYPE = CSV)")
+
+    file_path = "data.csv"
+    if not os.path.exists(file_path):
+        raise FileNotFoundError("File not found")
+
+    cursor.execute(f"PUT file://{file_path} @my_stage AUTO_COMPRESS = TRUE")
+    print("File uploaded successfully")
+    cursor.execute("LIST @my_stage")
+    print(cursor.fetchall())
+except snowflake.connector.errors.ProgrammingError as e:
+    print(f"Error: {e}")
+    cursor.execute("SHOW STAGES")
+    print(cursor.fetchall())
+finally:
+    cursor.close()
+    conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-135-dynamic-schema-switching">← Previous</a><span class="rev-pos">136 / 147</span><a href="#q-database-with-python-137-concurrent-connections-overload">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,52 @@
+<details class="question" id="q-database-with-python-133-moving-data-between-snowflake-and-postgr" data-group="database-with-python" data-sec="database-with-python-s134">
+  <summary>
+    <span class="q-title">Moving data between Snowflake and PostgreSQL</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Moving data between Snowflake and PostgreSQL</p>
+      <p><strong>Q. How do you design and troubleshoot a Snowflake to PostgreSQL transfer?</strong> Manage both connections, keep data types compatible (cast where needed), insert in a single PostgreSQL transaction (commit on success, roll back on error) and log type mismatches or connection issues.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import psycopg2
+import pandas as pd
+
+snow_conn = snowflake.connector.connect(
+    user='your_user', password='your_password', account='your_account',
+    warehouse='your_warehouse', database='your_database', schema='your_schema'
+)
+pg_conn = psycopg2.connect(
+    dbname='your_db', user='your_user', password='your_password',
+    host='localhost', port='5432'
+)
+
+try:
+    snow_cursor = snow_conn.cursor()
+    snow_cursor.execute("SELECT * FROM your_snowflake_table")
+    snow_data = pd.DataFrame(snow_cursor.fetchall(), columns=[desc[0] for desc in snow_cursor.description])
+    snow_data = snow_data.astype(str)   # avoid type mismatches
+
+    pg_cursor = pg_conn.cursor()
+    for _, row in snow_data.iterrows():
+        pg_cursor.execute(
+            "INSERT INTO your_pg_table (column1, column2) VALUES (%s, %s)",
+            (row['COLUMN1'], row['COLUMN2'])
+        )
+    pg_conn.commit()
+except Exception as e:
+    pg_conn.rollback()
+    print(f"Error: {e}")
+finally:
+    snow_cursor.close()
+    pg_conn.close()
+    snow_conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-132-time-travel-query-failure">← Previous</a><span class="rev-pos">133 / 147</span><a href="#q-database-with-python-134-special-characters-and-emojis">Next →</a></nav>
+    </section>
+  </div>
+</details>

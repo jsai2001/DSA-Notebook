@@ -1,0 +1,49 @@
+<details class="question" id="q-database-with-python-142-snowflake-stream-not-detecting-changes" data-group="database-with-python" data-sec="database-with-python-s143">
+  <summary>
+    <span class="q-title">Snowflake stream not detecting changes</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Snowflake stream not detecting changes</p>
+      <p><strong>Q. A script monitoring a Snowflake stream for change data capture sees no new data. What could be wrong?</strong> Stream configuration, change tracking on the table, the polling logic and the stream retention period. Check with <code>SHOW STREAMS</code> and <code>SHOW TABLES</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import time
+
+conn = snowflake.connector.connect(
+    user='your_user', password='your_password', account='your_account',
+    warehouse='your_warehouse', database='your_database', schema='your_schema'
+)
+
+try:
+    cursor = conn.cursor()
+    cursor.execute("CREATE OR REPLACE STREAM my_stream ON TABLE your_table")
+
+    while True:
+        cursor.execute("SELECT * FROM my_stream")
+        changes = cursor.fetchall()
+        if changes:
+            print(f"New changes detected: {changes}")
+        else:
+            print("No new changes")
+        time.sleep(60)   # poll every minute
+
+        cursor.execute("SHOW STREAMS LIKE 'my_stream'")
+        print(f"Stream retention: {cursor.fetchone()}")
+except snowflake.connector.errors.ProgrammingError as e:
+    print(f"Error: {e}")
+    cursor.execute("SHOW TABLES LIKE 'your_table'")
+    print(cursor.fetchall())
+finally:
+    cursor.close()
+    conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-141-legacy-driver-conflict">← Previous</a><span class="rev-pos">142 / 147</span><a href="#q-database-with-python-143-connection-leak-in-a-long-running-app">Next →</a></nav>
+    </section>
+  </div>
+</details>

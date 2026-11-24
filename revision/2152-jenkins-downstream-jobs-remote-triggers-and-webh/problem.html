@@ -1,0 +1,41 @@
+<details class="question" id="q-jenkins-032-downstream-jobs-remote-triggers-and-webh" data-group="jenkins" data-sec="jenkins-s033">
+  <summary>
+    <span class="q-title">Downstream jobs, remote triggers and webhook plugins</span>
+    <span class="q-meta">
+      <span class="tag">Jenkins</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Jenkins › 5. Triggers and SCM Integration › Downstream jobs, remote triggers and webhook plugins</p>
+      <p><strong>Q. How do you trigger downstream jobs and pass parameters?</strong> Use the <code>build</code> step with <code>parameters</code>. <code>wait</code> and <code>propagate</code> control blocking and result propagation.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+build job: 'deploy-service',
+  parameters: [string(name: 'VERSION', value: env.BUILD_NUMBER)],
+  wait: true, propagate: true
+        </script>
+      </div>
+      <p><strong>Q. How do you trigger a build remotely with cURL and an API token?</strong> Create a user API token, then POST to the job's <code>build</code> or <code>buildWithParameters</code> endpoint (with a crumb if CSRF protection is on). Trigger tokens can also be set per job.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+curl -X POST "https://jenkins.example.com/job/my-job/buildWithParameters?VERSION=1.2.3" \
+  --user "alice:11aabbccddeeff..."   # user:apiToken
+        </script>
+      </div>
+      <p><strong>Q. What is the Generic Webhook Trigger plugin?</strong> It lets any system trigger a job through one webhook URL and extracts fields from the JSON or XML payload into variables with JSONPath. The variables can feed an optional filter that decides whether to build.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Groovy">
+triggers {
+  GenericTrigger(
+    genericVariables: [[key: 'ref', value: '$.ref']],
+    token: 'my-token',
+    regexpFilterText: '$ref', regexpFilterExpression: 'refs/heads/main'
+  )
+}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-jenkins-031-multibranch-pipelines-and-organization-f">← Previous</a><span class="rev-pos">32 / 80</span><a href="#q-jenkins-033-checkout-optimization-concurrency-and-su">Next →</a></nav>
+    </section>
+  </div>
+</details>

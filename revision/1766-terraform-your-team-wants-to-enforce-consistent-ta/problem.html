@@ -1,0 +1,42 @@
+<details class="question" id="q-terraform-142-your-team-wants-to-enforce-consistent-ta" data-group="terraform" data-sec="terraform-s141">
+  <summary>
+    <span class="q-title">Your team wants to enforce consistent tagging across AWS resources using Terraform and Python. How would you implement this?</span>
+    <span class="q-meta">
+      <span class="tag">Terraform</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Terraform › 21. Terraform with Python › Your team wants to enforce consistent tagging across AWS resources using Terraform and Python. How would you implement this?</p>
+      <p>Use <code>boto3</code> to audit resource tags and <code>python-terraform</code> to update Terraform configurations with consistent tags.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+from python_terraform import Terraform
+
+def enforce_tags(working_dir, required_tags):
+    ec2 = boto3.client("ec2")
+    response = ec2.describe_instances()
+
+    for reservation in response["Reservations"]:
+        for instance in reservation["Instances"]:
+            instance_id = instance["InstanceId"]
+            current_tags = {t["Key"]: t["Value"] for t in instance.get("Tags", [])}
+            missing_tags = {k: v for k, v in required_tags.items() if k not in current_tags}
+            if missing_tags:
+                ec2.create_tags(Resources=[instance_id], Tags=[{"Key": k, "Value": v} for k, v in missing_tags.items()])
+                print(f"Updated tags for {instance_id}")
+
+    tf = Terraform(working_dir=working_dir)
+    tf.apply(var={"tags": required_tags}, skip_plan=True)
+    print("Terraform configuration updated with tags")
+
+# Example usage
+required_tags = {"Environment": "Production", "Owner": "TeamA"}
+enforce_tags("./terraform", required_tags)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-terraform-141-your-team-needs-to-automate-the-cleanup">← Previous</a><span class="rev-pos">142 / 142</span><span></span></nav>
+    </section>
+  </div>
+</details>

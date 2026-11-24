@@ -1,0 +1,42 @@
+<details class="question" id="q-database-with-python-118-key-pair-authentication-failure" data-group="database-with-python" data-sec="database-with-python-s119">
+  <summary>
+    <span class="q-title">Key pair authentication failure</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Key pair authentication failure</p>
+      <p><strong>Q. Key pair auth fails with "Invalid private key". What is wrong?</strong> Check the key format (PEM, PKCS8 <code>.p8</code>), the passphrase, file permissions (<code>chmod 600</code>) and the connector configuration.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import snowflake.connector
+import os
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.backends import default_backend
+
+with open("snowflake_key.p8", "rb") as key_file:
+    private_key = serialization.load_pem_private_key(
+        key_file.read(),
+        password=os.getenv('KEY_PASSPHRASE').encode() if os.getenv('KEY_PASSPHRASE') else None,
+        backend=default_backend()
+    )
+
+os.chmod("snowflake_key.p8", 0o600)   # secure permissions
+
+conn = snowflake.connector.connect(
+    user=os.getenv('SNOWFLAKE_USER'),
+    private_key=private_key,
+    account=os.getenv('SNOWFLAKE_ACCOUNT'),
+    warehouse='COMPUTE_WH',
+    database='TEST_DB',
+    schema='PUBLIC'
+)
+conn.close()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-117-insufficient-privileges">← Previous</a><span class="rev-pos">118 / 147</span><a href="#q-database-with-python-119-sql-injection">Next →</a></nav>
+    </section>
+  </div>
+</details>

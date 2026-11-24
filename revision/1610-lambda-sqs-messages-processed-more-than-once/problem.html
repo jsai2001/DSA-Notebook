@@ -1,0 +1,28 @@
+<details class="question" id="q-lambda-065-sqs-messages-processed-more-than-once" data-group="lambda" data-sec="lambda-s065">
+  <summary>
+    <span class="q-title">SQS messages processed more than once</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 12. Scenario-based questions › SQS messages processed more than once</p>
+      <p><strong>Q98. A Lambda on SQS runs fine but messages process multiple times. Why, and how do you fix it?</strong> Standard SQS is <strong>at-least-once</strong>, so duplicates are expected. A message also reappears if the visibility timeout expires before processing finishes, or if part of a batch fails and the whole batch returns. Fixes: set <strong>visibility timeout at least 6x the function timeout</strong>, enable <strong>partial batch responses</strong> (<code>ReportBatchItemFailures</code>) so only failed messages retry, make processing <strong>idempotent</strong>, or use a <strong>FIFO queue</strong>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Partial batch response: only failed messages return to the queue
+def lambda_handler(event, context):
+    failures = []
+    for r in event["Records"]:
+        try:
+            process(r)
+        except Exception:
+            failures.append({"itemIdentifier": r["messageId"]})
+    return {"batchItemFailures": failures}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-064-protecting-a-legacy-database-from-spikes">← Previous</a><span class="rev-pos">65 / 79</span><a href="#q-lambda-066-idempotent-processing">Next →</a></nav>
+    </section>
+  </div>
+</details>

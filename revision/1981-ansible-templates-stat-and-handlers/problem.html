@@ -1,0 +1,69 @@
+<details class="question" id="q-ansible-075-templates-stat-and-handlers" data-group="ansible" data-sec="ansible-s076">
+  <summary>
+    <span class="q-title">Templates, stat and handlers</span>
+    <span class="q-meta">
+      <span class="tag">Ansible</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Ansible › 12. On-Call Ansible Tasks › Templates, stat and handlers</p>
+      <p><strong>Q. Deploy the template <code>app.conf.j2</code>?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Deploy template
+  hosts: all
+  become: yes
+  tasks:
+  - name: Deploy
+    ansible.builtin.template: { src: app.conf.j2, dest: /etc/app.conf, owner: root, mode: "0644" }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+ansible-playbook deploy_template.yml
+        </script>
+      </div>
+      <p><strong>Q. Check if a file exists and print a debug message?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Check file
+  hosts: all
+  tasks:
+  - name: Check file
+    ansible.builtin.stat: { path: /etc/app.conf }
+    register: file_status
+  - name: Debug
+    ansible.builtin.debug: { msg: "File exists" }
+    when: file_status.stat.exists
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+ansible-playbook check_file.yml
+        </script>
+      </div>
+      <p><strong>Q. Playbook with a handler to restart <code>httpd</code>?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Manage httpd
+  hosts: webservers
+  become: yes
+  tasks:
+  - name: Deploy config
+    ansible.builtin.copy: { src: httpd.conf, dest: /etc/httpd/conf/httpd.conf, owner: root }
+    notify: Restart httpd
+  handlers:
+  - name: Restart httpd
+    ansible.builtin.service: { name: httpd, state: restarted }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+ansible-playbook httpd_config.yml
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ansible-074-users-facts-and-shell-output">← Previous</a><span class="rev-pos">75 / 125</span><a href="#q-ansible-076-loops-conditionals-and-cron">Next →</a></nav>
+    </section>
+  </div>
+</details>

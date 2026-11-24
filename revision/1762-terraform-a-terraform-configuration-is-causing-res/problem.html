@@ -1,0 +1,44 @@
+<details class="question" id="q-terraform-138-a-terraform-configuration-is-causing-res" data-group="terraform" data-sec="terraform-s137">
+  <summary>
+    <span class="q-title">A Terraform configuration is causing resource drift in AWS. How would you use Python to detect and reconcile the drift?</span>
+    <span class="q-meta">
+      <span class="tag">Terraform</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Terraform › 21. Terraform with Python › A Terraform configuration is causing resource drift in AWS. How would you use Python to detect and reconcile the drift?</p>
+      <p>Use <code>boto3</code> to compare the current AWS resource state with the Terraform state file. If drift is detected, update the Terraform configuration or reapply it.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+import json
+import subprocess
+
+def detect_drift(terraform_state_file, aws_region):
+    with open(terraform_state_file) as f:
+        tf_state = json.load(f)
+
+    ec2 = boto3.client("ec2", region_name=aws_region)
+    response = ec2.describe_instances()
+
+    tf_instances = {r["attributes"]["instance_id"] for r in tf_state["resources"] if r["type"] == "aws_instance"}
+    aws_instances = {i["InstanceId"] for r in response["Reservations"] for i in r["Instances"]}
+
+    drifted_instances = aws_instances - tf_instances
+    if drifted_instances:
+        print(f"Drift detected: {drifted_instances}")
+        # Reconcile by importing or destroying drifted resources
+        for instance_id in drifted_instances:
+            subprocess.run(["terraform", "import", f"aws_instance.instance_{instance_id}", instance_id], check=True)
+    else:
+        print("No drift detected")
+
+# Example usage
+detect_drift("terraform.tfstate", "us-east-1")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-terraform-137-your-team-needs-to-automate-the-deployme">← Previous</a><span class="rev-pos">138 / 142</span><a href="#q-terraform-139-your-terraform-configuration-is-failing">Next →</a></nav>
+    </section>
+  </div>
+</details>

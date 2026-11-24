@@ -1,0 +1,37 @@
+<details class="question" id="q-database-with-python-137-concurrent-connections-overload" data-group="database-with-python" data-sec="database-with-python-s138">
+  <summary>
+    <span class="q-title">Concurrent connections overload</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 9. On-Call Troubleshooting: Python Connecting to Databases › Concurrent connections overload</p>
+      <p><strong>Q. Many scripts exceed the Snowflake connection limit. How do you mitigate it?</strong> Pool connections (SQLAlchemy <code>pool_size</code> and <code>max_overflow</code>), limit concurrency, review the account settings and balance load across scripts. Call <code>engine.dispose()</code> to clean up.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sqlalchemy import create_engine
+from urllib.parse import quote_plus
+
+snowflake_url = (
+    f"snowflake://your_user:{quote_plus('your_password')}@your_account/"
+    f"your_database/your_schema?warehouse=your_warehouse"
+)
+engine = create_engine(snowflake_url, pool_size=5, max_overflow=10)
+
+try:
+    with engine.connect() as conn:
+        result = conn.execute("SELECT CURRENT_WAREHOUSE(), CURRENT_DATABASE()")
+        print(result.fetchall())
+        conn.execute("SELECT * FROM your_table LIMIT 1")
+except Exception as e:
+    print(f"Error: {e}")   # check Snowflake account connection limits
+finally:
+    engine.dispose()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-136-stage-file-upload-failure">← Previous</a><span class="rev-pos">137 / 147</span><a href="#q-database-with-python-138-cross-region-connection">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,51 @@
+<details class="question" id="q-database-with-python-036-insert-dynamic-data-with-named-placehold" data-group="database-with-python" data-sec="database-with-python-s037">
+  <summary>
+    <span class="q-title">Insert dynamic data with named placeholders</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 5. PostgreSQL with Python › Insert dynamic data with named placeholders</p>
+      <p><code>insert_sale</code> takes a cursor and the sale values, computes <code>order_total = quantity * price * (1 - discount)</code> (best moved into its own function for single responsibility), and passes a dictionary to named placeholders <code>%(key)s</code>. Parameterized execution prevents SQL injection. Possible improvements: a separate product database for prices, auto-assigned order numbers, error handling, and more SQL functions (<code>SELECT</code>, <code>UPDATE</code>, <code>DELETE</code>).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import psycopg2
+
+def insert_sale(cursor, order_number, product_number, quantity, price, discount=0):
+    order_total = quantity * price * (1 - discount)
+    sale_data = {
+        'order_number': order_number,
+        'product_number': product_number,
+        'quantity': quantity,
+        'price': price,
+        'discount': discount,
+        'order_total': order_total
+    }
+    query = """
+        INSERT INTO sales (order_number, product_number, quantity, price, discount, order_total)
+        VALUES (%(order_number)s, %(product_number)s, %(quantity)s, %(price)s, %(discount)s, %(order_total)s)
+    """
+    cursor.execute(query, sale_data)
+
+def main():
+    conn = psycopg2.connect(dbname="your_db", user="your_user", password="your_password", host="localhost")
+    cursor = conn.cursor()
+    order_number = input("Enter order number: ")
+    product_number = input("Enter product number: ")
+    quantity = int(input("Enter quantity: "))
+    price = float(input("Enter price: "))
+    insert_sale(cursor, order_number, product_number, quantity, price)
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+if __name__ == "__main__":
+    main()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-035-insert-data-with-executemany">← Previous</a><span class="rev-pos">36 / 147</span><a href="#q-database-with-python-037-sqlalchemy-core-with-postgres-crud">Next →</a></nav>
+    </section>
+  </div>
+</details>

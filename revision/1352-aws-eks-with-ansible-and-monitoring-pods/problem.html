@@ -1,0 +1,83 @@
+<details class="question" id="q-aws-082-eks-with-ansible-and-monitoring-pods" data-group="aws" data-sec="aws-s083">
+  <summary>
+    <span class="q-title">EKS with Ansible and monitoring pods</span>
+    <span class="q-meta">
+      <span class="tag">AWS</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS › 20. AWS Integration Questions › EKS with Ansible and monitoring pods</p>
+      <p><strong>Q. Terraform for EKS, Ansible for a monitoring pod?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+module "eks" { source = "terraform-aws-modules/eks/aws", cluster_name = "monitoring-eks" }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Deploy monitor
+  hosts: localhost
+  tasks:
+  - name: Apply
+    ansible.builtin.command: kubectl apply -f monitor.yaml
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: v1
+kind: Pod
+metadata: { name: "monitor" }
+spec: { containers: [{ name: "prometheus", image: "prom/prometheus" }] }
+        </script>
+      </div>
+      <p><strong>Q. Terraform for EKS, Ansible for the Kubernetes deploy, GitHub Actions to verify?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+module "eks" { source = "terraform-aws-modules/eks/aws", cluster_name = "my-eks" }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Deploy K8s
+  hosts: localhost
+  tasks:
+  - name: Apply
+    ansible.builtin.command: kubectl apply -f deployment.yaml
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Verify
+on: push
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+    - run: kubectl get deployment
+      env: { KUBECONFIG: ${{ secrets.KUBECONFIG }} }
+        </script>
+      </div>
+      <p><strong>Q. Terraform for ECS, GitHub Actions for a Kubernetes alternative?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+module "ecs" { source = "terraform-aws-modules/ecs/aws", cluster_name = "my-ecs" }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Deploy K8s
+on: push
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: kubectl apply -f k8s_deployment.yaml
+      env: { KUBECONFIG: ${{ secrets.KUBECONFIG }} }
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-aws-081-eks-clusters-with-terraform">← Previous</a><span class="rev-pos">82 / 94</span><a href="#q-aws-083-ansible-on-ec2-with-github-actions">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,59 @@
+<details class="question" id="q-database-with-python-040-library-challenge-add-a-book-in-one-tran" data-group="database-with-python" data-sec="database-with-python-s041">
+  <summary>
+    <span class="q-title">Library challenge: add a book in one transaction</span>
+    <span class="q-meta">
+      <span class="tag">Database with Python</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Database with Python › 5. PostgreSQL with Python › Library challenge: add a book in one transaction</p>
+      <p>Steps: collect the title, pages and author name. Skip if the book exists. Look up the author and add one if new. Flush so ids exist, create the <code>BookAuthor</code> pairing, then commit. Example run: "The Huntress" (560 pages, Kate Quinn), "The Institute" (576 pages, Steven King), and "The Diamond Eye" by Kate Quinn reuses her existing <code>author_id</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def add_book(session, title, pages, first_name, last_name):
+    existing_book = session.query(Book).filter_by(title=title).first()
+    if existing_book:
+        print(f"Book '{title}' already exists.")
+        return
+
+    existing_author = session.query(Author).filter_by(
+        first_name=first_name, last_name=last_name
+    ).first()
+
+    new_book = Book(title=title, number_of_pages=pages)
+    session.add(new_book)
+
+    if not existing_author:
+        new_author = Author(first_name=first_name, last_name=last_name)
+        session.add(new_author)
+        session.flush()  # generate author_id
+        author = new_author
+    else:
+        author = existing_author
+
+    session.flush()  # generate book_id
+
+    pairing = BookAuthor(author_id=author.author_id, book_id=new_book.book_id)
+    session.add(pairing)
+    session.commit()
+    print(f"Added book '{title}' by {first_name} {last_name}")
+
+def main():
+    session = Session(engine)
+    title = input("Enter book title: ")
+    pages = int(input("Enter number of pages: "))
+    first_name = input("Enter author's first name: ")
+    last_name = input("Enter author's last name: ")
+    add_book(session, title, pages, first_name, last_name)
+    session.close()
+
+if __name__ == "__main__":
+    main()
+        </script>
+      </div>
+      <p>Validate input (for example page counts), add error handling, and extend the model to several authors per book or queries such as all books by an author.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-database-with-python-039-library-challenge-tables-and-models">← Previous</a><span class="rev-pos">40 / 147</span><a href="#q-database-with-python-041-mysql-database-management">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,50 @@
+<details class="question" id="q-ansible-099-automate-rds-backups-with-python-and-ans" data-group="ansible" data-sec="ansible-s100">
+  <summary>
+    <span class="q-title">Automate RDS backups with Python and Ansible</span>
+    <span class="q-meta">
+      <span class="tag">Ansible</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Ansible › 14. Ansible with Python › Automate RDS backups with Python and Ansible</p>
+      <p><strong>Q. Scenario: automate the backup of an AWS RDS database using Python and Ansible. How would you design it?</strong> Use <code>boto3</code> to create the snapshot and wait until it is available, and an Ansible playbook to orchestrate the run.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+import time
+
+def create_rds_snapshot(db_instance_id, snapshot_id):
+    rds = boto3.client("rds")
+    rds.create_db_snapshot(DBInstanceIdentifier=db_instance_id, DBSnapshotIdentifier=snapshot_id)
+    print(f"Creating snapshot {snapshot_id}")
+
+    while True:
+        response = rds.describe_db_snapshots(DBSnapshotIdentifier=snapshot_id)
+        status = response["DBSnapshots"][0]["Status"]
+        if status == "available":
+            print("Snapshot created successfully")
+            break
+        time.sleep(30)
+
+# Example usage
+create_rds_snapshot("my-db-instance", "my-snapshot-2023")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+# Ansible playbook: backup_rds.yml
+- name: Backup RDS
+  hosts: localhost
+  tasks:
+    - name: Run Python script to create RDS snapshot
+      command: python create_rds_snapshot.py
+      environment:
+        AWS_ACCESS_KEY_ID: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+        AWS_SECRET_ACCESS_KEY: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ansible-098-speed-up-a-slow-playbook-across-many-ins">← Previous</a><span class="rev-pos">99 / 125</span><a href="#q-ansible-100-ansible-failing-on-kubernetes-nodes-with">Next →</a></nav>
+    </section>
+  </div>
+</details>

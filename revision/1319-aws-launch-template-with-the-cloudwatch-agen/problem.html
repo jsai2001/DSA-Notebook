@@ -1,0 +1,41 @@
+<details class="question" id="q-aws-049-launch-template-with-the-cloudwatch-agen" data-group="aws" data-sec="aws-s050">
+  <summary>
+    <span class="q-title">Launch template with the CloudWatch agent</span>
+    <span class="q-meta">
+      <span class="tag">AWS</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS › 14. Hands-On: Auto Scaling with CloudWatch Alarms › Launch template with the CloudWatch agent</p>
+      <p><strong>Q. How do you set up an Auto Scaling group that scales on CPU and memory utilization?</strong> Step 1: create a launch template whose user data installs the CloudWatch agent.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws ec2 create-launch-template \
+  --launch-template-name MyWebServerTemplate \
+  --version-description "v1" \
+  --launch-template-data '{
+    "ImageId": "<ami-id>",
+    "InstanceType": "t2.micro",
+    "KeyName": "<key-pair-name>",
+    "NetworkInterfaces": [{"AssociatePublicIpAddress": true, "DeviceIndex": 0, "SubnetId": "<subnet-id>", "Groups": ["<security-group-id>"]}],
+    "UserData": "'$(echo -e "#!/bin/bash\nyum install -y amazon-cloudwatch-agent\n/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-config-wizard" | base64)'"
+  }'
+        </script>
+      </div>
+      <p>Step 2: create the Auto Scaling group.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+aws autoscaling create-auto-scaling-group \
+  --auto-scaling-group-name MyWebServerASG \
+  --launch-template "LaunchTemplateName=MyWebServerTemplate,Version=1" \
+  --min-size 1 \
+  --max-size 4 \
+  --desired-capacity 2 \
+  --vpc-zone-identifier "<subnet-id-1>,<subnet-id-2>"
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-aws-048-step-functions-state-machine">← Previous</a><span class="rev-pos">49 / 94</span><a href="#q-aws-050-step-scaling-policy">Next →</a></nav>
+    </section>
+  </div>
+</details>

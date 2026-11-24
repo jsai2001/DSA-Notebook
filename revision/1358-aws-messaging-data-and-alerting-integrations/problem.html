@@ -1,0 +1,122 @@
+<details class="question" id="q-aws-088-messaging-data-and-alerting-integrations" data-group="aws" data-sec="aws-s089">
+  <summary>
+    <span class="q-title">Messaging, data and alerting integrations</span>
+    <span class="q-meta">
+      <span class="tag">AWS</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS › 20. AWS Integration Questions › Messaging, data and alerting integrations</p>
+      <p><strong>Q. Terraform for SQS, a Kubernetes pod to process it, deployed with Ansible?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_sqs_queue" "my_queue" { name = "my-queue" }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: v1
+kind: Pod
+metadata: { name: "sqs-processor" }
+spec: { containers: [{ name: "processor", image: "amazon/aws-cli", command: ["aws", "sqs", "receive-message", "--queue-url", "<queue-url>"] }] }
+        </script>
+      </div>
+      <p>The Ansible play runs <code>kubectl apply -f processor.yaml</code> on localhost.</p>
+      <p><strong>Q. Terraform for DynamoDB, Ansible to populate it from a Kubernetes pod?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_dynamodb_table" "my_table" { name = "my-table", billing_mode = "PAY_PER_REQUEST", hash_key = "id", attribute: [{ name: "id", type: "S" }] }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: v1
+kind: Pod
+metadata: { name: "dynamo-populator" }
+spec: { containers: [{ name: "populator", image: "amazon/aws-cli", command: ["aws", "dynamodb", "put-item", "--table-name", "my-table", "--item", "{\"id\": {\"S\": \"1\"}, \"data\": {\"S\": \"test\"}}"] }] }
+        </script>
+      </div>
+      <p>The Ansible play runs <code>kubectl apply -f populator.yaml</code> on localhost.</p>
+      <p><strong>Q. Terraform for S3 and a ConfigMap, Ansible to sync them?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_s3_bucket" "config" { bucket = "config-bucket-123" }
+resource "kubernetes_configmap" "app" {
+  metadata: { name: "app-config" }
+  data: { key: "value" }
+}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- name: Sync ConfigMap
+  hosts: localhost
+  tasks:
+  - name: Export
+    ansible.builtin.command: kubectl get configmap app-config -o yaml > config.yaml
+  - name: Upload
+    amazon.aws.aws_s3: { bucket: config-bucket-123, src: config.yaml, dest: config.yaml, mode: put }
+        </script>
+      </div>
+      <p><strong>Q. Terraform for a CloudWatch alarm, Ansible to alert from a Kubernetes pod?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_cloudwatch_metric_alarm" "cpu" {
+  alarm_name = "high-cpu"
+  comparison_operator = "GreaterThanThreshold"
+  threshold = "80"
+  metric_name = "CPUUtilization"
+  namespace = "AWS/EC2"
+}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: v1
+kind: Pod
+metadata: { name: "alert-pod" }
+spec: { containers: [{ name: "alert", image: "busybox", command: ["sh", "-c", "echo Alarm && sleep 3600"] }] }
+        </script>
+      </div>
+      <p>The Ansible play runs <code>kubectl apply -f alert.yaml</code> on localhost.</p>
+      <p><strong>Q. Terraform for SNS, GitHub Actions to notify on pod failure?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_sns_topic" "alerts" { name = "pod-failure-alerts" }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+name: Notify Failure
+on: workflow_run
+jobs:
+  notify:
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+    - uses: aws-actions/configure-aws-credentials@v2
+      with: { aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}, aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }} }
+    - run: aws sns publish --topic-arn ${{ secrets.SNS_TOPIC_ARN }} --message "Pod failed"
+        </script>
+      </div>
+      <p><strong>Q. Terraform for EBS, Ansible to attach it to a Kubernetes pod?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_ebs_volume" "data" { availability_zone = "us-east-1a", size = 10 }
+resource "aws_volume_attachment" "attach" { device_name = "/dev/xvdf", volume_id = aws_ebs_volume.data.id, instance_id = "i-123" }
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: { name: "data-pvc" }
+spec: { accessModes: ["ReadWriteOnce"], resources: { requests: { storage: "10Gi" } } }
+        </script>
+      </div>
+      <p>The Ansible play runs <code>kubectl apply -f pvc.yaml</code> on localhost.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-aws-087-rds-alb-and-vpc-with-github-actions">← Previous</a><span class="rev-pos">88 / 94</span><a href="#q-aws-089-troubleshooting-pods-against-aws-service">Next →</a></nav>
+    </section>
+  </div>
+</details>

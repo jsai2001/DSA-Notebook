@@ -1,0 +1,39 @@
+<details class="question" id="q-docker-039-load-balancer-dns-and-lambda" data-group="docker" data-sec="docker-s040">
+  <summary>
+    <span class="q-title">Load balancer, DNS and Lambda</span>
+    <span class="q-meta">
+      <span class="tag">Docker</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Docker › 11. Docker with AWS Services (Hands-On Recipes) › Load balancer, DNS and Lambda</p>
+      <p><strong>Q. How do you attach a container to a load balancer?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Assumes ALB is set up with a target group in AWS
+docker run -d -p 80:80 --name nginx nginx
+# Register container's EC2 instance with ALB target group via AWS CLI
+aws elbv2 register-targets --target-group-arn <TARGET_GROUP_ARN> --targets Id=<EC2_INSTANCE_ID>,Port=80
+        </script>
+      </div>
+      <p><strong>Q. How do you attach a container to a Route 53 domain?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+docker run -d -p 80:80 --name nginx nginx
+# Update Route 53 record via AWS CLI (run separately)
+aws route53 change-resource-record-sets --hosted-zone-id <ZONE_ID> --change-batch '{"Changes":[{"Action":"UPSERT","ResourceRecordSet":{"Name":"nginx.example.com","Type":"A","TTL":300,"ResourceRecords":[{"Value":"<EC2_PUBLIC_IP>"}]}}]}'
+        </script>
+      </div>
+      <p><strong>Q. How do you attach a container to a Lambda function trigger?</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Lambda trigger typically set up via AWS console/CLI; container runs app
+docker run -d -p 8080:8080 my-app
+# Configure Lambda to invoke via API Gateway or event source separately
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-docker-038-running-containers-on-aws-compute">← Previous</a><span class="rev-pos">39 / 77</span><a href="#q-docker-040-databases-and-caches">Next →</a></nav>
+    </section>
+  </div>
+</details>

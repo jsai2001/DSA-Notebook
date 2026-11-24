@@ -1,0 +1,45 @@
+<details class="question" id="q-cloudwatch-075-lambda-handler-that-validates-and-record" data-group="cloudwatch" data-sec="cloudwatch-s076">
+  <summary>
+    <span class="q-title">Lambda handler that validates and records exceptions</span>
+    <span class="q-meta">
+      <span class="tag">AWS CloudWatch</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS CloudWatch › 13. X-Ray Tracing › Lambda handler that validates and records exceptions</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from aws_xray_sdk.core import xray_recorder
+from aws_xray_sdk.ext.boto import patch_all
+import boto3
+import json
+
+patch_all()
+
+@xray_recorder.capture('putitemFunction')
+def lambda_handler(event, context):
+    subsegment = xray_recorder.begin_subsegment('dynamo_operation')
+    try:
+        dynamodb = boto3.client('dynamodb')
+        if 'key_id' not in event:
+            raise ValueError("Missing key ID in the item")
+        dynamodb.put_item(
+            TableName='Items',
+            Item={
+                'key_id': {'S': event['key_id']},
+                'data': {'S': event.get('data', 'default')}
+            }
+        )
+        return {'statusCode': 200, 'body': json.dumps({'message': 'Item added successfully'})}
+    except Exception as e:
+        xray_recorder.record_exception(e)
+        return {'statusCode': 400, 'body': json.dumps({'error': str(e)})}
+    finally:
+        xray_recorder.end_subsegment()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-cloudwatch-074-x-ray-with-api-gateway-and-lambda">← Previous</a><span class="rev-pos">75 / 108</span><a href="#q-cloudwatch-076-what-rum-collects">Next →</a></nav>
+    </section>
+  </div>
+</details>

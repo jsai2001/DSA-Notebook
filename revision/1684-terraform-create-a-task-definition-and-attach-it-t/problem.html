@@ -1,0 +1,48 @@
+<details class="question" id="q-terraform-060-create-a-task-definition-and-attach-it-t" data-group="terraform" data-sec="terraform-s061">
+  <summary>
+    <span class="q-title">Create a Task Definition and Attach it to an ECS Cluster using Terraform</span>
+    <span class="q-meta">
+      <span class="tag">Terraform</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Terraform › 15. Hands-On: IAM, Serverless, Messaging, Containers and Monitoring › Create a Task Definition and Attach it to an ECS Cluster using Terraform</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Hcl">
+resource "aws_ecs_task_definition" "my_task" {
+    family                   = "my-task"
+    network_mode             = "awsvpc"
+    requires_compatibilities = ["FARGATE"]
+    cpu                      = "256"
+    memory                   = "512"
+    execution_role_arn       = "arn:aws:iam::123456789012:role/ecs-task-execution-role"
+    container_definitions    = jsonencode([{
+        name  = "my-container"
+        image = "amazon/amazon-ecs-sample"
+        essential = true
+        portMappings = [{
+            containerPort = 80
+            hostPort      = 80
+        }]
+    }])
+}
+
+resource "aws_ecs_service" "my_service" {
+    name            = "my-ecs-service"
+    cluster         = aws_ecs_cluster.my_ecs_cluster.id
+    task_definition = aws_ecs_task_definition.my_task.arn
+    launch_type     = "FARGATE"
+    desired_count   = 1
+    network_configuration {
+        subnets          = ["subnet-12345678"]
+        security_groups  = ["sg-12345678"]
+        assign_public_ip = true
+    }
+}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-terraform-059-create-an-ecs-cluster-using-terraform">← Previous</a><span class="rev-pos">60 / 142</span><a href="#q-terraform-061-create-a-cloudwatch-alarm-for-an-ec2-ins">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,27 @@
+<details class="question" id="q-lambda-063-image-thumbnails-without-timing-out" data-group="lambda" data-sec="lambda-s063">
+  <summary>
+    <span class="q-title">Image thumbnails without timing out</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 12. Scenario-based questions › Image thumbnails without timing out</p>
+      <p><strong>Q96. An image uploaded to S3 must become 3 thumbnails. How do you design this with Lambda without timeouts?</strong> S3 <code>ObjectCreated</code> triggers Lambda <strong>asynchronously</strong>. Generate the three sizes in one invocation if it is quick. If it is heavy, <strong>fan out</strong>: one Lambda publishes 3 messages (SNS, SQS or EventBridge) and a worker Lambda resizes each in parallel. Right-size memory (more memory means more CPU and faster image work), stream to <code>/tmp</code>, and configure a DLQ or destination for failures. Fan-out keeps each invocation far below the timeout and parallelizes the work.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Fan-out: emit one message per target size
+import boto3, json, os
+sns = boto3.client("sns")
+def lambda_handler(event, context):
+    key = event["Records"][0]["s3"]["object"]["key"]
+    for size in (128, 256, 512):
+        sns.publish(TopicArn=os.environ["TOPIC"],
+                    Message=json.dumps({"key": key, "size": size}))
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-062-versions-aliases-and-canary-releases">← Previous</a><span class="rev-pos">63 / 79</span><a href="#q-lambda-064-protecting-a-legacy-database-from-spikes">Next →</a></nav>
+    </section>
+  </div>
+</details>

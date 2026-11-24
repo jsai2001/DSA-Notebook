@@ -63,6 +63,21 @@ COURSES = [
     ("RestfulAPI", "restful-api", "RESTful API", "Building RESTful APIs"),
     ("GraphQL", "graphql", "GraphQL", "GraphQL essential training"),
     ("Python_Automation", "python-automation", "Python Automation", "Using Python for automation"),
+    # Second batch: cloud and DevOps notes, built from all the notes on each topic
+    ("AgenticAI", "agentic-ai", "Agentic AI Fundamentals", "Architectures, frameworks and applications of agentic AI"),
+    ("AWS", "aws", "AWS", "AWS concepts, CLI and interview questions"),
+    ("CloudFormation", "cloudformation", "AWS CloudFormation", "Infrastructure as code with CloudFormation"),
+    ("CloudWatch", "cloudwatch", "AWS CloudWatch", "Metrics, logs, alarms and tracing on AWS"),
+    ("Lambda", "lambda", "AWS Lambda", "Serverless functions on AWS"),
+    ("Terraform", "terraform", "Terraform", "Infrastructure as code with Terraform"),
+    ("Kubernetes", "kubernetes", "Kubernetes", "Kubernetes concepts, kubectl and troubleshooting"),
+    ("Docker", "docker", "Docker", "Containers, images, networking and troubleshooting"),
+    ("Ansible", "ansible", "Ansible", "Configuration management with Ansible"),
+    ("GitHubActions", "github-actions", "GitHub Actions", "CI/CD workflows with GitHub Actions"),
+    ("Jenkins", "jenkins", "Jenkins", "Pipelines, agents and securing Jenkins"),
+    ("Linux", "linux", "Linux", "Linux administration and troubleshooting"),
+    ("DatabaseWithPython", "database-with-python", "Database with Python", "Working with databases from Python"),
+    ("SQL", "sql", "SQL", "SQL overview"),
 ]
 FIRST_BATCH = [c[0] for c in COURSES[:13]]
 
@@ -382,6 +397,9 @@ def inline(text):
     text = re.sub(r"(?<![\w_])_(?=[^\s_])(.+?)(?<=[^\s_])_(?![\w_])", r"<em>\1</em>", text)
     text = re.sub(r"~~(?=\S)(.+?)(?<=\S)~~", r"<del>\1</del>", text)
 
+    # An image (for example a build-status badge) can't be shown on a card: keep its description.
+    text = re.sub(r"!\[([^\]]*)\]\(([^)\s]+)(?:\s+&quot;[^)]*&quot;)?\)", r"\1", text)
+
     def link(m):
         label, url = m.group(1), m.group(2)
         if url.startswith("#"):
@@ -580,8 +598,8 @@ def build_sections(blocks):
             h3 = b["text"]
             in_toc = False
             continue
-        if in_toc and b["t"] in ("ul", "ol") and all(item and item[0]["t"] == "p" and "](#" in item[0]["text"] for item in b["items"]):
-            continue  # the table of contents itself; anything else under that heading is real content
+        if in_toc and b["t"] in ("ul", "ol"):
+            continue  # the contents list itself (with or without links); anything else under that heading is real content
         cur.append(b)
     flush()
     return sections
@@ -628,16 +646,14 @@ def raw_expected(path):
                 in_toc = level == 2 and bool(TOC_RE.match(re.sub(r"^[\d.\s]+", "", m.group(2)).strip()))
             if level <= 3:
                 continue
-        if in_toc:
-            if re.match(r"^\s*(?:\d+[.)]|[-*+])\s+", line) and ("](#" in line or toc_list):
-                toc_list = True
-                continue
-            if line.strip():
-                toc_list = False
+        if in_toc and re.match(r"^\s*(?:\d+[.)]|[-*+])\s+", line):
+            continue  # a line of the contents list
         keep.append((line, False))
-    keep = [l if code else re.sub(r"^\s*(?:[-*+]|\d+[.)])\s+", "", l) for l, code in keep]
+    def prose_line(l):
+        l = re.sub(r"^\s*(?:[-*+]|\d+[.)])\s+", "", l)  # list markers are not words
+        return re.sub(r"\]\([^)]*\)", "]", l)  # link targets are not words
+    keep = [l if code else prose_line(l) for l, code in keep]
     text = "\n".join(keep)
-    text = re.sub(r"\]\([^)]*\)", "]", text)
     return Counter(TOKEN.findall(text)), [normalise(c) for c in codes]
 
 
@@ -756,7 +772,8 @@ def main():
     args = ap.parse_args()
     source = Path(args.source).expanduser()
     if args.courses == "all":
-        wanted = [c[0] for c in COURSES]
+        # every course that has a note file (a course whose note isn't written yet is skipped)
+        wanted = [c[0] for c in COURSES if (source / f"{c[0]}_Complete_Revision_Notes.md").exists()]
     elif args.courses == "first":
         wanted = FIRST_BATCH
     else:

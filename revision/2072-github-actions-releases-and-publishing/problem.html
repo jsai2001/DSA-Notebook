@@ -1,0 +1,71 @@
+<details class="question" id="q-github-actions-041-releases-and-publishing" data-group="github-actions" data-sec="github-actions-s042">
+  <summary>
+    <span class="q-title">Releases and publishing</span>
+    <span class="q-meta">
+      <span class="tag">GitHub Actions</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GitHub Actions › 7. Ready-made workflows › Releases and publishing</p>
+      <p><strong>Q. Automate a GitHub release on a version tag.</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+on:
+  push:
+    tags:
+      - 'v*'
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: Release ${{ github.ref_name }}
+        </script>
+      </div>
+      <p><strong>Q. Auto-bump a version and release.</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+on: workflow_dispatch
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm version patch && git push --follow-tags
+      - uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        </script>
+      </div>
+      <p><strong>Q. How do you publish a package to npm or PyPI?</strong> Authenticate with a secret and run the publish command.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+- run: npm publish
+  env:
+    NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        </script>
+      </div>
+      <p><strong>Q. Auto-release a Python package to PyPI on a tag push.</strong> Trigger on tags, store the PyPI token as a secret, then build and publish with twine.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+on:
+  push:
+    tags: ['v*']
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - run: twine upload dist/*
+        env:
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-github-actions-040-deploy-after-tests-and-multi-stage-deplo">← Previous</a><span class="rev-pos">41 / 89</span><a href="#q-github-actions-042-notifications">Next →</a></nav>
+    </section>
+  </div>
+</details>

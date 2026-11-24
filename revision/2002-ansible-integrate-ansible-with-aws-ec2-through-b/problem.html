@@ -1,0 +1,46 @@
+<details class="question" id="q-ansible-096-integrate-ansible-with-aws-ec2-through-b" data-group="ansible" data-sec="ansible-s097">
+  <summary>
+    <span class="q-title">Integrate Ansible with AWS EC2 through boto3</span>
+    <span class="q-meta">
+      <span class="tag">Ansible</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Ansible › 14. Ansible with Python › Integrate Ansible with AWS EC2 through boto3</p>
+      <p><strong>Q. How can Python integrate Ansible with AWS services (EC2 provisioning)?</strong> Use <code>boto3</code> to read AWS state and pass the result to Ansible as inventory or variables. Here running EC2 instances become an inventory, then a playbook is run against it.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import boto3
+import yaml
+
+# Initialize boto3 client
+ec2 = boto3.client('ec2')
+
+# Get EC2 instances
+response = ec2.describe_instances()
+
+# Create inventory
+inventory = {'webservers': {'hosts': []}}
+for reservation in response['Reservations']:
+    for instance in reservation['Instances']:
+        if instance['State']['Name'] == 'running':
+            inventory['webservers']['hosts'].append(instance['PublicDnsName'])
+
+# Write inventory
+with open('inventory.yml', 'w') as f:
+    yaml.dump(inventory, f)
+
+# Run Ansible playbook
+import ansible_runner
+ansible_runner.run(
+    private_data_dir='/path/to/ansible/project',
+    playbook='configure_web.yml',
+    inventory='inventory.yml'
+)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ansible-095-validate-syntax-before-running">← Previous</a><span class="rev-pos">96 / 125</span><a href="#q-ansible-097-validate-aws-credentials-before-a-playbo">Next →</a></nav>
+    </section>
+  </div>
+</details>

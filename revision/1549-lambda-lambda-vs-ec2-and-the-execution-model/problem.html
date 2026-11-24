@@ -1,0 +1,39 @@
+<details class="question" id="q-lambda-004-lambda-vs-ec2-and-the-execution-model" data-group="lambda" data-sec="lambda-s005">
+  <summary>
+    <span class="q-title">Lambda vs EC2 and the execution model</span>
+    <span class="q-meta">
+      <span class="tag">AWS Lambda</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS Lambda › 1. What Lambda is › Lambda vs EC2 and the execution model</p>
+      <p><strong>Q1. What is AWS Lambda, and how does serverless compute differ from EC2?</strong> Lambda is a serverless, event-driven compute service that runs your code in response to events without you provisioning or managing servers. You upload code, define a trigger, and AWS handles the servers, scaling, patching and availability. With EC2 you rent and manage a server (OS, scaling, patching) and pay while it runs. With Lambda you pay only per request and per ms of execution, it scales to zero when idle, and it scales out automatically per request.</p>
+      <p><strong>Q3. Explain the concept of event-driven execution in Lambda.</strong> Lambda runs only when an event occurs: an HTTP call via API Gateway, an object uploaded to S3, a message in SQS, a DynamoDB stream record or a scheduled EventBridge rule. Each event reaches the handler as the <code>event</code> object. No event means no execution and no cost.</p>
+      <p><strong>Q4. What is the execution model of AWS Lambda (stateless compute)?</strong> Each invocation is stateless. Do not rely on in-memory data persisting across requests, because AWS may create a fresh execution environment at any time. Keep state in external stores (DynamoDB, S3, RDS, ElastiCache). The environment can be reused for warm invocations, so anything outside the handler (SDK clients, connections) can be cached opportunistically.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# WRONG: relying on in-memory state across requests
+counter = 0
+def lambda_handler(event, context):
+    global counter
+    counter += 1          # NOT reliable: new env resets this to 0
+    return counter
+
+# RIGHT: persist state externally (e.g., DynamoDB atomic counter)
+import boto3
+ddb = boto3.client("dynamodb")
+def lambda_handler(event, context):
+    r = ddb.update_item(
+        TableName="Counters", Key={"id": {"S": "hits"}},
+        UpdateExpression="ADD #c :one",
+        ExpressionAttributeNames={"#c": "count"},
+        ExpressionAttributeValues={":one": {"N": "1"}},
+        ReturnValues="UPDATED_NEW")
+    return r["Attributes"]["count"]["N"]
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-lambda-003-pricing-model">← Previous</a><span class="rev-pos">4 / 79</span><a href="#q-lambda-005-configuration-runtimes-and-limits">Next →</a></nav>
+    </section>
+  </div>
+</details>

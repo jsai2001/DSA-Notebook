@@ -1,0 +1,60 @@
+<details class="question" id="q-kubernetes-061-python-troubleshooting-scenarios" data-group="kubernetes" data-sec="kubernetes-s062">
+  <summary>
+    <span class="q-title">Python troubleshooting scenarios</span>
+    <span class="q-meta">
+      <span class="tag">Kubernetes</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Kubernetes › 17. Kubernetes with Python › Python troubleshooting scenarios</p>
+      <p><strong>Q. A Pod is failing because of a misconfigured ConfigMap. How do you diagnose and fix it with Python?</strong> Inspect the Pod status, read the ConfigMap, and update it if a key is missing.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from kubernetes import client, config
+
+def fix_configmap(namespace, pod_name, configmap_name):
+    config.load_kube_config()  # Or load_incluster_config() in a cluster
+    v1 = client.CoreV1Api()
+    pod = v1.read_namespaced_pod(pod_name, namespace)
+    if pod.status.phase != "Running":
+        print(f"Pod {pod_name} is not running: {pod.status.phase}")
+        for container_status in pod.status.container_statuses:
+            if container_status.state.terminated:
+                print(f"Exit code: {container_status.state.terminated.exit_code}")
+    configmap = v1.read_namespaced_config_map(configmap_name, namespace)
+    if "required_key" not in configmap.data:
+        configmap.data["required_key"] = "required_value"
+        v1.replace_namespaced_config_map(configmap_name, namespace, configmap)
+        print(f"Updated ConfigMap {configmap_name}")
+
+fix_configmap("default", "my-pod", "my-configmap")
+        </script>
+      </div>
+      <p><strong>Q. An Ansible playbook is failing on certain Kubernetes nodes because of network issues. How do you diagnose it with Python?</strong> Check node status with the <code>kubernetes</code> client and verify network configuration (VPC, security groups) with <code>boto3</code>. Restart or replace the problematic nodes.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from kubernetes import client, config
+import boto3
+
+def diagnose_k8s_nodes(namespace):
+    config.load_kube_config()
+    v1 = client.CoreV1Api()
+    nodes = v1.list_node()
+    for node in nodes.items:
+        for condition in node.status.conditions:
+            if condition.type == "NetworkUnavailable" and condition.status == "True":
+                print(f"Node {node.metadata.name} has network issues")
+                ec2 = boto3.client("ec2")
+                response = ec2.describe_instances(Filters=[{"Name": "private-dns-name", "Values": [node.metadata.name]}])
+                instance_id = response["Reservations"][0]["Instances"][0]["InstanceId"]
+                ec2.reboot_instances(InstanceIds=[instance_id])
+                print(f"Rebooted node {node.metadata.name}")
+
+diagnose_k8s_nodes("default")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-kubernetes-060-operators-and-custom-controllers">← Previous</a><span class="rev-pos">61 / 63</span><a href="#q-kubernetes-062-python-autoscaling-and-resource-analysis">Next →</a></nav>
+    </section>
+  </div>
+</details>
