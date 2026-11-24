@@ -1,0 +1,1 @@
+window.REV_FLIP_COUNTS={"bedrock":82,"boto3":85,"aws":213,"cloudwatch":21,"lambda":99,"terraform":115,"kubernetes":206,"docker":210,"ansible":155,"github-actions":149,"jenkins":99,"linux":50,"database-with-python":186};

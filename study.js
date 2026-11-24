@@ -227,6 +227,49 @@
   const deckView = el("div", "study-deck");
   root.append(picker, deckView);
 
+  // ---------- flip cards ----------
+  // Questions on the front, answers on the back. The data lives in flip/<course>.js (loaded on first use);
+  // flip/index.js says how many questions each course has. A flip deck is a "course" of its own, so it shares
+  // the progress, shuffle, Again and Undo code with the reading deck, saved under "<course>~flip".
+  let flipCounts = {};
+  const loadedScripts = {};
+  function loadScript(src, done) {
+    if (loadedScripts[src]) return done(loadedScripts[src] === "ok");
+    const tag = document.createElement("script");
+    tag.src = src;
+    tag.onload = () => ((loadedScripts[src] = "ok"), done(true));
+    tag.onerror = () => ((loadedScripts[src] = "fail"), done(false));
+    document.head.append(tag);
+  }
+  const flipCache = {};
+  function flipCourse(course) {
+    const data = (window.REV_FLIP || {})[course.id];
+    if (!data) return null;
+    if (!flipCache[course.id]) {
+      const cards = data.map((d) => ({ id: d.id, sec: d.sec, item: d, title: d.q }));
+      flipCache[course.id] = {
+        id: course.id + "~flip",
+        name: course.name,
+        title: course.name + " · Flip",
+        hint: course.hint,
+        flip: true,
+        cards,
+        byId: new Map(cards.map((c) => [c.id, c])),
+      };
+    }
+    return flipCache[course.id];
+  }
+  function openFlip(course) {
+    loadScript(`flip/${course.id}.js`, () => {
+      const fc = flipCourse(course);
+      if (fc) openCourse(fc);
+    });
+  }
+  const flipRead = (course) => {
+    const fs = saved[course.id + "~flip"];
+    return fs && fs.read ? Object.keys(fs.read).length : 0;
+  };
+
   function renderPicker() {
     picker.classList.toggle("is-phone", phone.matches);
     if (phone.matches) return renderPhonePicker();
@@ -254,6 +297,14 @@
       open.append(title, hint, bar, cap);
       open.addEventListener("click", () => openCourse(course));
       tile.append(open);
+      if (flipCounts[course.id]) {
+        const fr = flipRead(course);
+        const f = el("button", "study-tile-flip", `⇄ Flip · ${fr ? fr + " / " : ""}${flipCounts[course.id]}`);
+        f.type = "button";
+        f.title = "Flip cards: the question on the front, the answer on the back";
+        f.addEventListener("click", () => openFlip(course));
+        tile.append(f);
+      }
       if (read > 0 || st.started) {
         const again = el("button", "study-tile-restart", "↺");
         again.type = "button";
@@ -311,6 +362,13 @@
       setShuffle(course, !st.shuffle);
       renderPhonePicker();
     });
+    let flipRow = null;
+    if (flipCounts[course.id]) {
+      const fr = flipRead(course);
+      flipRow = el("button", "study-btn study-flip-row", `⇄ Flip cards · ${fr ? fr + " / " : ""}${flipCounts[course.id]}`);
+      flipRow.type = "button";
+      flipRow.addEventListener("click", () => openFlip(course));
+    }
     const actions = el("div", "study-course-actions");
     const started = read > 0 || st.started;
     const finished = st.pile.length === 0;
@@ -330,7 +388,9 @@
       openCourse(course);
     });
     actions.append(go);
-    card.append(chips, bar, titles, sw, actions);
+    card.append(chips, bar, titles, sw);
+    if (flipRow) card.append(flipRow);
+    card.append(actions);
     return card;
   }
   function renderPhonePicker() {
@@ -488,7 +548,7 @@
     const back = el("button", "study-back", "← Courses");
     back.type = "button";
     back.addEventListener("click", closeCourse);
-    const name = el("h2", "study-name", course.name);
+    const name = el("h2", "study-name", course.title || course.name);
     const sw = el("button", "study-shuffle");
     sw.type = "button";
     sw.setAttribute("role", "switch");
@@ -509,7 +569,7 @@
     fill.style.width = `${(read / total(course)) * 100}%`;
     bar.append(fill);
     const repeat = repeatCount(course);
-    const stat = el("span", "study-stat", `${read} / ${total(course)} read${repeat ? ` · ${repeat} to repeat` : ""}`);
+    const stat = el("span", "study-stat", `${read} / ${total(course)} ${course.flip ? "reviewed" : "read"}${repeat ? ` · ${repeat} to repeat` : ""}`);
     prog.append(bar, stat);
     deckView.append(head, prog);
 
@@ -525,9 +585,18 @@
     const card = course.byId.get(st.pile[0]);
     const top = el("article", "study-card is-entering");
     const cardHead = el("div", "study-card-head");
-    cardHead.append(el("span", "study-card-title", card.title));
+    const headTitle = el("span", "study-card-title", course.flip ? "Question" : card.title);
+    cardHead.append(headTitle);
     const mark = el("span", "study-mark");
-    top.append(cardHead, cardContent(card), mark);
+    let body;
+    if (course.flip) {
+      top.classList.add("is-flip");
+      body = el("div", "study-card-body flip-front");
+      body.append(flipFront(card.item));
+    } else {
+      body = cardContent(card);
+    }
+    top.append(cardHead, body, mark);
     stack.append(top);
     deckView.append(stack);
     if (window.DSACode) top.querySelectorAll(".code-tabs pre").forEach((pre) => window.DSACode.observe(pre));
@@ -547,22 +616,75 @@
       undo(course);
       renderDeck();
     });
-    bar2.append(again, undoBtn, got);
-    const keys = el("p", "study-keys", "← Again   ·   → Got it   ·   Backspace Undo   ·   S Shuffle   ·   Esc Courses");
+    if (course.flip) {
+      // Show the question first. Tap the card (or press Space) to turn it over; then Again / Got it appear.
+      const show = el("button", "study-btn is-show", "Show answer");
+      show.type = "button";
+      bar2.append(undoBtn, show);
+      const turn = () => {
+        if (top.classList.contains("is-back") || top.classList.contains("is-turning")) return;
+        top.classList.add("is-turning");
+        setTimeout(() => {
+          headTitle.textContent = "Answer";
+          body.className = "study-card-body flip-back";
+          body.replaceChildren(flipBack(card.item));
+          top.scrollTop = 0;
+          top.classList.remove("is-turning");
+          top.classList.add("is-back");
+          bar2.replaceChildren(again, undoBtn, got);
+          if (window.DSACode) top.querySelectorAll(".code-tabs pre").forEach((pre) => window.DSACode.observe(pre));
+        }, 140);
+      };
+      top._turn = turn;
+      show.addEventListener("click", turn);
+      top.addEventListener("click", (e) => {
+        if (top._dragged) return void (top._dragged = false);
+        if (e.target.closest("a, button, pre, .table-wrap")) return;
+        turn();
+      });
+    } else {
+      bar2.append(again, undoBtn, got);
+    }
+    const keys = el(
+      "p",
+      "study-keys",
+      course.flip
+        ? "Space Show answer   ·   ← Again   ·   → Got it   ·   Backspace Undo   ·   S Shuffle   ·   Esc Courses"
+        : "← Again   ·   → Got it   ·   Backspace Undo   ·   S Shuffle   ·   Esc Courses"
+    );
     deckView.append(bar2, keys);
+  }
+
+  // The two faces of a flip card.
+  function flipFront(item) {
+    const wrap = el("div", "flip-face");
+    const q = el("p", "flip-q");
+    q.innerHTML = item.q;
+    wrap.append(q);
+    return wrap;
+  }
+  function flipBack(item) {
+    const wrap = el("div", "flip-face");
+    const q = el("p", "flip-q is-small");
+    q.innerHTML = item.q;
+    const a = el("div", "flip-a");
+    a.innerHTML = item.a;
+    wrap.append(q, a);
+    return wrap;
   }
 
   function endScreen(course, st) {
     const box = el("div", "study-end");
     box.append(el("h3", "", "Pass complete"));
+    const unit = course.flip ? "questions" : "cards";
     const tricky = Object.keys(st.tricky).length;
     box.append(
       el(
         "p",
         "",
         tricky
-          ? `${total(course)} cards. ${tricky} of them needed an “Again” at least once.`
-          : `${total(course)} cards. None needed an “Again”.`
+          ? `${total(course)} ${unit}. ${tricky} of them needed an “Again” at least once.`
+          : `${total(course)} ${unit}. None needed an “Again”.`
       )
     );
     const row = el("div", "study-end-actions");
@@ -574,7 +696,7 @@
     });
     row.append(all);
     if (tricky) {
-      const only = el("button", "study-btn", `Only the ${tricky} tricky card${tricky === 1 ? "" : "s"}`);
+      const only = el("button", "study-btn", `Only the ${tricky} tricky ${course.flip ? "question" : "card"}${tricky === 1 ? "" : "s"}`);
       only.type = "button";
       only.addEventListener("click", () => {
         restart(course, "tricky");
@@ -590,6 +712,7 @@
   let busy = false;
   function commit(top, kind) {
     if (busy || !current) return;
+    if (current.flip && !top.classList.contains("is-back")) return;
     busy = true;
     const dir = kind === "got" ? 1 : -1;
     top.classList.add("is-leaving");
@@ -613,6 +736,7 @@
     let pointer = null;
     top.addEventListener("pointerdown", (e) => {
       if (busy || e.button > 0 || e.target.closest("pre, .table-wrap, a, button")) return;
+      if (top.classList.contains("is-flip") && !top.classList.contains("is-back")) return;
       pointer = e.pointerId;
       startX = e.clientX;
       startY = e.clientY;
@@ -626,6 +750,7 @@
       if (!dragging) {
         if (Math.abs(mx) < 12 || Math.abs(mx) < Math.abs(my) * 1.4) return;
         dragging = true;
+        top._dragged = true;
         top.setPointerCapture(pointer);
         top.classList.add("is-dragging");
       }
@@ -656,8 +781,15 @@
   // ---------- keyboard ----------
   document.addEventListener("keydown", (e) => {
     if (!document.body.classList.contains("study-on") || !current || deckView.hidden) return;
-    if (e.metaKey || e.ctrlKey || e.altKey || e.target.closest("input, textarea, select")) return;
+    const target = e.target && e.target.closest ? e.target : document.body;
+    if (e.metaKey || e.ctrlKey || e.altKey || target.closest("input, textarea, select")) return;
     const top = deckView.querySelector(".study-card");
+    if ((e.key === " " || e.key === "Enter" || e.key === "ArrowUp") && top && top._turn) {
+      if (target.closest("button") && e.key !== "ArrowUp") return; // the focused button handles it itself
+      e.preventDefault();
+      top._turn();
+      return;
+    }
     if (e.key === "ArrowRight" && top) commit(top, "got");
     else if (e.key === "ArrowLeft" && top) commit(top, "again");
     else if (e.key === "Backspace" || e.key === "u") {
@@ -674,6 +806,11 @@
 
   deckView.hidden = true;
   renderPicker();
+  loadScript("flip/index.js", (ok) => {
+    if (!ok) return;
+    flipCounts = window.REV_FLIP_COUNTS || {};
+    if (!current) renderPicker();
+  });
   if (phone.matches && /^#q-/.test(location.hash)) {
     const id = decodeURIComponent(location.hash.slice(1));
     const course = courses.find((c) => c.byId.has(id));

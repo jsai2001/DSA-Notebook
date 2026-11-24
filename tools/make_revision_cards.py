@@ -15,6 +15,16 @@ What it does:
       table of contents and the headings, which become card titles) appears in the cards
 
 Only the folders it creates inside revision/ are replaced; nothing else is touched.
+Flip cards (question on the front, answer on the back):
+    * every "**Q. question?** answer" paragraph in the notes becomes a flip card automatically
+      (the answer is the rest of that paragraph plus the blocks up to the next question)
+    * for the other cards, write questions by hand in <flips dir>/<Name>_Flip_Cards.md:
+          ## Card: <exact card title>
+          Q: question
+          A: answer (lists, tables and code blocks are fine)
+      Every command or code line in an answer must also appear in the course note.
+    * output goes to flip/<course>.js (loaded on demand) and flip/index.js (question counts)
+
 No third-party dependencies.
 """
 import argparse
@@ -418,6 +428,19 @@ def inline(text):
 # ----------------------------------------------------------------------------------------
 # Blocks -> HTML
 # ----------------------------------------------------------------------------------------
+CODE_AS_PRE = False
+
+
+def render_flip_blocks(blocks):
+    """HTML for a flip-card answer."""
+    global CODE_AS_PRE
+    CODE_AS_PRE = True
+    try:
+        return render_blocks(blocks, "")
+    finally:
+        CODE_AS_PRE = False
+
+
 def render_blocks(blocks, pad):
     return "\n".join(render_block(b, pad) for b in blocks)
 
@@ -464,6 +487,15 @@ def render_block(b, pad):
     if t == "code":
         label = LANG_LABELS.get(b["lang"], b["lang"].capitalize() or "Text")
         text = b["text"]
+        if CODE_AS_PRE:
+            # Flip-card answers are inserted by the page's script, which only builds the code tabs of
+            # the original cards, so the finished markup (tab label, Copy button, <pre>) is written here.
+            return (
+                f'{pad}<div class="code-tabs flip-code"><div class="tabbar"><div class="tablist">'
+                f'<button type="button" class="tab" aria-selected="true">{htmllib.escape(label)}</button></div>'
+                f'<button type="button" class="code-copy" title="Copy this code" aria-label="Copy this code">Copy</button></div>'
+                f"<pre><code>{htmllib.escape(text)}</code></pre></div>"
+            )
         esc = ""
         if re.search(r"<!--|<script|</script", text, re.I):
             if re.search(r"<\\(!--|script|/script)", text, re.I):
@@ -737,8 +769,12 @@ def card_html(course, number, idx, total, title, crumb, blocks, prev_id, next_id
     )
 
 
-def make_course(course, path, dropped=None):
-    """Plan the cards of one course. Sentences removed as 'about the notes' go to `dropped`."""
+Q_PARA = re.compile(r"^\*\*Q\w*[.:]\s*(.+?)\*\*\s*(.*)$", re.S)
+
+
+def make_course(course, path, dropped=None, flips=None):
+    """Plan the cards of one course. Sentences removed as 'about the notes' go to `dropped`;
+    every "**Q. ...**" question found goes to `flips` as {card, q, blocks}."""
     dropped = [] if dropped is None else dropped
     blocks = parse_blocks(path.read_text(encoding="utf-8").split("\n"))
     gname = course[2]
@@ -757,11 +793,98 @@ def make_course(course, path, dropped=None):
         base = plain(h3 or h2 or "Overview")
         crumb_parts = [gname] + [plain(x) for x in (h2, h3) if x]
         crumb = " › ".join(dict.fromkeys(crumb_parts)) if h2 or h3 else f"{gname} › Overview"
+        first_card = len(planned)
         parts = pack(sec_blocks)
         for k, part in enumerate(parts, 1):
             title = base if len(parts) == 1 else f"{base} ({k}/{len(parts)})"
             planned.append((title, crumb, part, sec_idx))
+        if flips is not None:
+            owner = {id(b): first_card + k for k, part in enumerate(parts) for b in part}
+            marks = [n for n, b in enumerate(sec_blocks) if b["t"] == "p" and Q_PARA.match(b["text"])]
+            for pos, n in enumerate(marks):
+                m = Q_PARA.match(sec_blocks[n]["text"])
+                end = marks[pos + 1] if pos + 1 < len(marks) else len(sec_blocks)
+                answer = ([{"t": "p", "text": m.group(2)}] if m.group(2).strip() else []) + sec_blocks[n + 1 : end]
+                if answer and id(sec_blocks[n]) in owner:
+                    flips.append({"card": owner[id(sec_blocks[n])], "q": m.group(1).strip(), "blocks": answer})
     return planned
+
+
+def parse_flip_file(path):
+    """Read a hand-written flip file: [{card, q, blocks}] in file order. Raises SystemExit on a malformed file."""
+    items, card, item, mode, fence = [], None, None, None, None
+    for number, line in enumerate(path.read_text(encoding="utf-8").split("\n"), 1):
+        if fence is None:
+            m = re.match(r"^##\s+Card:\s*(.+?)\s*$", line)
+            if m:
+                card, item, mode = m.group(1), None, None
+                continue
+            qm = re.match(r"^Q:\s?(.*)$", line)
+            am = re.match(r"^A:\s?(.*)$", line)
+            if qm:
+                if card is None:
+                    raise SystemExit(f"{path.name}:{number}: a question before any '## Card:' heading")
+                item = {"card": card, "q": [qm.group(1)], "a": [], "line": number}
+                items.append(item)
+                mode = "q"
+                continue
+            if am:
+                if item is None or mode != "q":
+                    raise SystemExit(f"{path.name}:{number}: an answer without a question")
+                mode = "a"
+                line = am.group(1)
+            elif line.startswith("# "):
+                continue
+        if item is None or mode is None:
+            if line.strip() and fence is None:
+                raise SystemExit(f"{path.name}:{number}: text outside a question or answer: {line[:60]!r}")
+            continue
+        # track fences so "Q:" or "A:" inside a code block is not mistaken for a new question
+        if fence is None:
+            fo = fence_open(line)
+            if fo:
+                fence = fo
+        elif fence_close(line, fence):
+            fence = None
+        item[mode].append(line)
+    if fence is not None:
+        raise SystemExit(f"{path.name}: a code block is never closed")
+    out = []
+    for it in items:
+        q = " ".join(x.strip() for x in it["q"]).strip()
+        if not q or not any(x.strip() for x in it["a"]):
+            raise SystemExit(f"{path.name}:{it['line']}: empty question or answer")
+        out.append({"card": it["card"], "q": q, "blocks": parse_blocks(it["a"]), "line": it["line"]})
+    return out
+
+
+def note_code_lines(path):
+    """Every non-empty stripped code line of a course note, to check hand-written answers against."""
+    lines = set()
+    for b in parse_blocks(path.read_text(encoding="utf-8").split("\n")):
+        stack = [b]
+        while stack:
+            x = stack.pop()
+            if x["t"] == "code":
+                lines.update(l.strip() for l in x["text"].split("\n") if l.strip())
+            elif x["t"] in ("ul", "ol"):
+                stack.extend(sub for item in x["items"] for sub in item)
+            elif x["t"] == "quote":
+                stack.extend(x["blocks"])
+    return lines
+
+
+def code_lines_of(blocks):
+    out = []
+    for x in blocks:
+        if x["t"] == "code":
+            out += [l.strip() for l in x["text"].split("\n") if l.strip()]
+        elif x["t"] in ("ul", "ol"):
+            for item in x["items"]:
+                out += code_lines_of(item)
+        elif x["t"] == "quote":
+            out += code_lines_of(x["blocks"])
+    return out
 
 
 def main():
@@ -769,8 +892,10 @@ def main():
     ap.add_argument("--source", required=True, help="folder with <Name>_Complete_Revision_Notes.md files")
     ap.add_argument("--courses", default="first", help="'first' (default, the first 13), 'all', or comma-separated names")
     ap.add_argument("--verify-only", action="store_true")
+    ap.add_argument("--flips", help="folder with <Name>_Flip_Cards.md files (default: <source>/../Flip_Cards)")
     args = ap.parse_args()
     source = Path(args.source).expanduser()
+    flips_dir = Path(args.flips).expanduser() if args.flips else source.parent / "Flip_Cards"
     if args.courses == "all":
         # every course that has a note file (a course whose note isn't written yet is skipped)
         wanted = [c[0] for c in COURSES if (source / f"{c[0]}_Complete_Revision_Notes.md").exists()]
@@ -797,9 +922,12 @@ def main():
     dropped = {}  # prefix -> [sentences left out on purpose]
     folders = []  # (folder name, html)
     sizes = []
+    flip_out = {}  # course group id -> [flip items]
+    flip_report = []  # (course name, cards, cards with a flip card, auto count, hand-written count)
     for course, (_, path) in zip(selected, course_files):
         dropped[course[0]] = []
-        planned = make_course(course, path, dropped[course[0]])
+        auto = []
+        planned = make_course(course, path, dropped[course[0]], auto)
         total = len(planned)
         ids = []
         names = []
@@ -818,10 +946,50 @@ def main():
             folders.append((names[k], html))
             sizes.append(weight(blocks))
         generated[course[0]] = htmls
+        # ---- flip cards: the questions in the notes, plus any hand-written file ----
+        titles = {}
+        for idx, (title, _c, _b, _s) in enumerate(planned):
+            titles.setdefault(title, []).append(idx)
+        rows = [(it["card"], 0, n, it["q"], it["blocks"], False) for n, it in enumerate(auto)]
+        hand = flips_dir / f"{course[0]}_Flip_Cards.md"
+        hand_items = parse_flip_file(hand) if hand.exists() else []
+        known_code = note_code_lines(path) if hand_items else set()
+        for n, it in enumerate(hand_items):
+            where = titles.get(it["card"])
+            if not where:
+                raise SystemExit(f"{hand.name}:{it['line']}: no card titled {it['card']!r} in {course[0]}")
+            if len(where) > 1:
+                raise SystemExit(f"{hand.name}:{it['line']}: the title {it['card']!r} is used by {len(where)} cards; add the (k/n) part")
+            missing = [l for l in code_lines_of(it["blocks"]) if l not in known_code]
+            if missing:
+                raise SystemExit(f"{hand.name}:{it['line']}: code not found in the note: {missing[0][:80]!r}")
+            rows.append((where[0], 1, n, it["q"], it["blocks"], True))
+        # auto items carry the card index already; hand-written ones were looked up above
+        rows = [((r[0] if isinstance(r[0], int) else titles[r[0]][0]), r[1], r[2], r[3], r[4], r[5]) for r in rows]
+        rows.sort(key=lambda r: (r[0], r[1], r[2]))
+        items = []
+        for n, (ci, _k, _n, q, blocks, hand_made) in enumerate(rows, 1):
+            items.append({
+                "id": f"{course[1]}-f{n:04d}",
+                "card": ids[ci],
+                "sec": f"{course[1]}-s{planned[ci][3]:03d}",
+                "q": inline(q),
+                "a": render_flip_blocks(blocks),
+                "hand": hand_made,
+            })
+        covered = len({r[0] for r in rows})
+        flip_report.append((course[0], total, covered, len(auto), len(hand_items)))
+        if items:
+            flip_out[course[1]] = items
         print(f"{course[0]:18} {total:4} cards")
     sizes.sort()
     if sizes:
         print(f"total {len(sizes)} cards | weight min {sizes[0]:.0f}, median {sizes[len(sizes) // 2]:.0f}, max {sizes[-1]:.0f}")
+    print("Flip cards (cards that have at least one question):")
+    for name, total_cards, covered, n_auto, n_hand in flip_report:
+        if n_auto or n_hand:
+            print(f"  {name:18} {covered:4} of {total_cards:4} cards | {n_auto:4} from the notes' questions, {n_hand:4} hand-written")
+    print(f"  total: {sum(len(v) for v in flip_out.values())} flip cards in {len(flip_out)} courses")
     print("Checking nothing was lost:")
     ok = verify(course_files, generated, dropped)
     for prefix, items in dropped.items():
@@ -841,9 +1009,23 @@ def main():
         d = OUT / name
         d.mkdir()
         (d / "problem.html").write_text(html, encoding="utf-8")
+    flip_dir = ROOT / "flip"
+    flip_dir.mkdir(exist_ok=True)
+    for old in flip_dir.glob("*.js"):
+        old.unlink()
+    counts = {}
+    for gid, items in flip_out.items():
+        body = json.dumps(items, ensure_ascii=False, separators=(",", ":"))
+        (flip_dir / f"{gid}.js").write_text(
+            f'window.REV_FLIP=window.REV_FLIP||{{}};window.REV_FLIP["{gid}"]={body};\n', encoding="utf-8"
+        )
+        counts[gid] = len(items)
+    (flip_dir / "index.js").write_text(
+        f'window.REV_FLIP_COUNTS={json.dumps(counts, separators=(",", ":"))};\n', encoding="utf-8"
+    )
     groups = [{"id": c[1], "name": c[2], "hint": c[3]} for c in selected]
     (OUT / "groups.json").write_text(json.dumps(groups, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"Wrote {len(folders)} cards to {OUT.relative_to(ROOT)}/. Now run: python3 build.py")
+    print(f"Wrote {len(folders)} cards to {OUT.relative_to(ROOT)}/ and {sum(counts.values())} flip cards to flip/. Now run: python3 build.py")
     return 0
 
 
