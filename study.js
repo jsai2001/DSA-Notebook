@@ -71,7 +71,7 @@
     let st = saved[course.id];
     const known = new Set(course.cards.map((c) => c.id));
     if (!st || !Array.isArray(st.pile)) {
-      st = saved[course.id] = { shuffle: false, pile: [], read: {}, got: {}, tricky: {}, hist: [], started: false };
+      st = saved[course.id] = { shuffle: false, pile: [], read: {}, got: {}, tricky: {}, flag: {}, hist: [], started: false };
       st.pile = orderIds(course, course.cards.map((c) => c.id), false);
       persist();
     }
@@ -80,12 +80,16 @@
       st.read = { ...st.got };
       Object.keys(st.tricky).forEach((id) => (st.read[id] = 1));
     }
+    if (!st.flag) st.flag = {}; // cards flagged during a marathon
     // The notes may have changed since the progress was saved: drop cards that are gone, add new ones.
     st.pile = st.pile.filter((id) => known.has(id));
+    Object.keys(st.flag).forEach((id) => !known.has(id) && delete st.flag[id]);
     Object.keys(st.read).forEach((id) => !known.has(id) && delete st.read[id]);
     Object.keys(st.got).forEach((id) => !known.has(id) && delete st.got[id]);
     Object.keys(st.tricky).forEach((id) => !known.has(id) && delete st.tricky[id]);
-    const seen = new Set([...st.pile, ...Object.keys(st.got)]);
+    // A card is "new" only if it is nowhere: not waiting in the pile, not marked, not read. (A marathon reads
+    // cards without marking them Got it, so "read" has to count here too.)
+    const seen = new Set([...st.pile, ...Object.keys(st.got), ...Object.keys(st.read)]);
     const fresh = course.cards.map((c) => c.id).filter((id) => !seen.has(id));
     if (fresh.length) st.pile.push(...fresh);
     return st;
@@ -154,13 +158,14 @@
   // mode: "all" starts over; "tricky" goes through only the cards that needed an "Again".
   function restart(course, mode) {
     const st = stateOf(course);
-    const ids = mode === "tricky" ? Object.keys(st.tricky) : course.cards.map((c) => c.id);
+    const ids = mode === "flag" ? Object.keys(st.flag) : mode === "tricky" ? Object.keys(st.tricky) : course.cards.map((c) => c.id);
     st.got = {};
     st.read = {};
     st.tricky = {};
+    st.flag = {};
     st.hist = [];
     st.started = false;
-    if (mode === "tricky") {
+    if (mode === "tricky" || mode === "flag") {
       // Cards outside this pass count as read, so the progress bar still makes sense.
       course.cards.forEach((c) => {
         if (!ids.includes(c.id)) st.got[c.id] = st.read[c.id] = 1;
@@ -208,6 +213,7 @@
   // content inside a card (or a course's title list) scrolls.
   // With a deck open, at any screen size, the deck is sized to the screen ("study-fit") and the page
   // does not scroll at all; the card (or the course's title list) is the only thing that scrolls.
+  let marathon = null; // the running marathon, or null (see the marathon section below)
   const syncScrollLock = () => {
     const html = document.documentElement.classList;
     const body = document.body.classList;
@@ -219,6 +225,7 @@
     const study = mode === "study";
     document.body.classList.toggle("study-on", study);
     syncScrollLock();
+    if (!study && marathon) pauseMarathon(); // a card must not run out while the deck is hidden
     studyBtn.setAttribute("aria-pressed", String(study));
     browseBtn.setAttribute("aria-pressed", String(!study));
     root.hidden = !study;
@@ -570,7 +577,17 @@
       setShuffle(course, !st.shuffle);
       renderDeck();
     });
-    head.append(back, name, sw);
+    if (!course.flip && st.pile.length) {
+      const mar = el("button", "study-marathon");
+      mar.type = "button";
+      mar.title = "Marathon: one timer per card. No going back, no skipping ahead.";
+      mar.setAttribute("aria-label", "Start a marathon");
+      mar.innerHTML = '<span aria-hidden="true">▶</span><span class="study-marathon-text"> Marathon</span>';
+      mar.addEventListener("click", () => marathonStart(course));
+      head.append(back, name, mar, sw);
+    } else {
+      head.append(back, name, sw);
+    }
 
     // progress
     const read = readCount(course);
@@ -720,6 +737,330 @@
     return box;
   }
 
+  // ---------- marathon (reading decks only) ----------
+  // One timer per card, and its length depends on how much the card has to read. When it runs out, the
+  // next card appears. There is no way back and no way ahead; Pause, Flag and Stop are the only controls.
+  // Every card that is shown counts as read. Cards you flag can be studied again afterwards.
+  const PACE_KEY = "revision-marathon-pace";
+  const PACES = [
+    { id: "relaxed", label: "Relaxed", factor: 1.5 },
+    { id: "normal", label: "Normal", factor: 1 },
+    { id: "fast", label: "Fast", factor: 0.75 },
+  ];
+  const paceOf = (id) => PACES.find((p) => p.id === id) || PACES[1];
+  function savedPace() {
+    try {
+      const v = localStorage.getItem(PACE_KEY);
+      if (PACES.some((p) => p.id === v)) return v;
+    } catch (e) {
+      /* storage unavailable */
+    }
+    return "normal";
+  }
+  const secondsCache = new Map();
+  // Normal pace: 5 s plus about 1 s for every 4.5 words (a code line counts as 3.5 words), kept between 15 and 90 s.
+  function cardSeconds(card) {
+    if (secondsCache.has(card.id)) return secondsCache.get(card.id);
+    let secs = 15;
+    const src = card.el.querySelector(".rev-sec");
+    if (src) {
+      const copy = src.cloneNode(true);
+      copy.querySelectorAll(".rev-crumb, .rev-nav").forEach((n) => n.remove());
+      let lines = 0;
+      copy.querySelectorAll(".code-tabs").forEach((tabs) => {
+        const pre = tabs.querySelector("pre");
+        if (pre) lines += pre.textContent.split("\n").length;
+        tabs.remove();
+      });
+      const words = (copy.textContent.match(/\S+/g) || []).length;
+      secs = Math.min(90, Math.max(15, 5 + (words + 3.5 * lines) / 4.5));
+    }
+    secondsCache.set(card.id, secs);
+    return secs;
+  }
+  const pileSeconds = (course) => stateOf(course).pile.reduce((sum, id) => sum + cardSeconds(course.byId.get(id)), 0);
+  const fmtMinutes = (min) => {
+    const m = Math.max(1, Math.round(min));
+    return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${m % 60} min`;
+  };
+  const clockText = (ms) => {
+    const s = Math.max(0, Math.ceil(ms / 1000));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  };
+
+  // The screen before the run: how long it will take at each pace.
+  function marathonStart(course) {
+    const st = stateOf(course);
+    deckView.replaceChildren();
+    const box = el("div", "study-end mar-start");
+    box.append(el("h3", "", "Marathon"));
+    box.append(
+      el(
+        "p",
+        "",
+        `${course.name}: ${st.pile.length} cards to go${st.shuffle ? " (sections shuffled)" : ""}. Every card gets its own time, based on how much there is to read. When the time is up the next card appears. You cannot go back and you cannot skip ahead.`
+      )
+    );
+    let pace = savedPace();
+    const base = pileSeconds(course);
+    const paces = el("div", "mar-paces");
+    paces.setAttribute("role", "radiogroup");
+    paces.setAttribute("aria-label", "Pace");
+    const estimate = el("p", "mar-estimate");
+    const buttons = PACES.map((p) => {
+      const b = el("button", "mar-pace", p.label);
+      b.type = "button";
+      b.setAttribute("role", "radio");
+      b.dataset.pace = p.id;
+      b.addEventListener("click", () => {
+        pace = p.id;
+        draw();
+      });
+      paces.append(b);
+      return b;
+    });
+    function draw() {
+      const f = paceOf(pace).factor;
+      buttons.forEach((b) => b.setAttribute("aria-checked", String(b.dataset.pace === pace)));
+      estimate.textContent = `About ${fmtMinutes((base * f) / 60)} in total. A card gets between ${Math.round(15 * f)} and ${Math.round(90 * f)} seconds.`;
+    }
+    draw();
+    const row = el("div", "study-end-actions");
+    const go = el("button", "study-btn is-got", "Start");
+    go.type = "button";
+    go.addEventListener("click", () => startMarathon(course, pace));
+    const cancel = el("button", "study-btn", "Cancel");
+    cancel.type = "button";
+    cancel.addEventListener("click", () => renderDeck());
+    row.append(go, cancel);
+    box.append(paces, estimate, row);
+    deckView.append(box);
+  }
+
+  function startMarathon(course, paceId) {
+    try {
+      localStorage.setItem(PACE_KEY, paceId);
+    } catch (e) {
+      /* ignore */
+    }
+    if (!stateOf(course).pile.length) return renderDeck();
+    marathon = {
+      course,
+      factor: paceOf(paceId).factor,
+      running: false,
+      remaining: 0,
+      total: 0,
+      last: 0,
+      activeMs: 0,
+      done: 0,
+      wake: null,
+      refs: {},
+      timer: setInterval(tick, 200),
+    };
+    document.body.classList.add("study-marathon-on");
+    nextMarathonCard();
+    requestWake();
+  }
+  function nextMarathonCard() {
+    const m = marathon;
+    const st = stateOf(m.course);
+    m.total = m.remaining = cardSeconds(m.course.byId.get(st.pile[0])) * 1000 * m.factor;
+    m.last = performance.now();
+    m.running = true;
+    renderMarathon();
+  }
+  // The clock decides, not the number of ticks, so a busy or slowed-down page cannot stretch a card.
+  function tick() {
+    const m = marathon;
+    if (!m || !m.running) return;
+    const t = performance.now();
+    const dt = t - m.last;
+    m.last = t;
+    m.remaining -= dt;
+    m.activeMs += dt;
+    if (m.remaining <= 0) return finishMarathonCard();
+    paintMarathonTimer();
+  }
+  function finishMarathonCard() {
+    const m = marathon;
+    const st = stateOf(m.course);
+    const id = st.pile.shift();
+    st.read[id] = 1;
+    st.started = true;
+    persist();
+    m.done += 1;
+    if (!st.pile.length) return endMarathon(true);
+    nextMarathonCard();
+  }
+  function pauseMarathon() {
+    const m = marathon;
+    if (!m || !m.running) return;
+    tick(); // count the time up to now
+    if (!marathon || !marathon.running) return;
+    m.running = false;
+    paintPause();
+  }
+  function resumeMarathon() {
+    const m = marathon;
+    if (!m || m.running) return;
+    m.last = performance.now();
+    m.running = true;
+    requestWake();
+    paintPause();
+  }
+  const pauseOrResume = () => {
+    if (marathon) (marathon.running ? pauseMarathon : resumeMarathon)();
+  };
+  function toggleFlag() {
+    const m = marathon;
+    if (!m) return;
+    const st = stateOf(m.course);
+    const id = st.pile[0];
+    if (st.flag[id]) delete st.flag[id];
+    else st.flag[id] = 1;
+    persist();
+    paintFlag();
+  }
+  function paintMarathonTimer() {
+    const m = marathon;
+    const r = m && m.refs;
+    if (!r || !r.fill) return;
+    r.fill.style.width = `${Math.max(0, (m.remaining / m.total) * 100)}%`;
+    r.secs.textContent = clockText(m.remaining);
+    r.timer.classList.toggle("is-low", m.remaining <= 3000);
+  }
+  function paintPause() {
+    const m = marathon;
+    const r = m && m.refs;
+    if (!r || !r.top) return;
+    r.top.classList.toggle("is-paused", !m.running);
+    r.pause.textContent = m.running ? "Pause" : "Resume";
+    if (!m.running) r.top.scrollTop = 0;
+  }
+  function paintFlag() {
+    const m = marathon;
+    const r = m && m.refs;
+    if (!r || !r.flag) return;
+    const st = stateOf(m.course);
+    const on = !!st.flag[st.pile[0]];
+    r.flag.classList.toggle("is-on", on);
+    r.flag.textContent = on ? "Flagged" : "Flag";
+    r.flag.setAttribute("aria-pressed", String(on));
+  }
+  async function requestWake() {
+    const m = marathon;
+    try {
+      if (m && !m.wake && "wakeLock" in navigator) {
+        m.wake = await navigator.wakeLock.request("screen");
+        m.wake.addEventListener("release", () => {
+          m.wake = null;
+        });
+      }
+    } catch (e) {
+      /* not available here: the screen may dim */
+    }
+  }
+  // A hidden tab pauses the run, so a card cannot run out unseen. You resume it yourself.
+  document.addEventListener("visibilitychange", () => {
+    if (marathon && document.hidden) pauseMarathon();
+  });
+
+  function renderMarathon() {
+    const m = marathon;
+    const course = m.course;
+    const st = stateOf(course);
+    deckView.replaceChildren();
+    const head = el("div", "study-head mar-head");
+    head.append(el("h2", "study-name", `${course.name} · Marathon`));
+    const read = readCount(course);
+    const prog = el("div", "study-progress");
+    const bar = el("span", "study-bar");
+    const fill = el("span", "study-bar-fill");
+    fill.style.width = `${(read / total(course)) * 100}%`;
+    bar.append(fill);
+    prog.append(bar, el("span", "study-stat", `${read} / ${total(course)} read`));
+    deckView.append(head, prog);
+
+    const card = course.byId.get(st.pile[0]);
+    const stack = el("div", "study-stack");
+    if (st.pile.length > 2) stack.append(el("div", "study-ghost g2"));
+    if (st.pile.length > 1) stack.append(el("div", "study-ghost g1"));
+    const top = el("article", "study-card mar-card is-entering");
+    const cardHead = el("div", "study-card-head");
+    const row = el("div", "mar-headrow");
+    const secs = el("span", "mar-secs", clockText(m.remaining));
+    row.append(el("span", "study-card-title", card.title), secs);
+    const timer = el("div", "mar-timer");
+    const tfill = el("span", "mar-fill");
+    timer.append(tfill);
+    cardHead.append(row, timer);
+    top.append(cardHead, cardContent(card), el("div", "mar-paused", "Paused"));
+    stack.append(top);
+    deckView.append(stack);
+    if (window.DSACode) top.querySelectorAll(".code-tabs pre").forEach((pre) => window.DSACode.observe(pre));
+    setTimeout(() => top.classList.remove("is-entering"), 400);
+
+    const acts = el("div", "study-actions mar-actions");
+    const pause = el("button", "study-btn is-pause", "Pause");
+    const flag = el("button", "study-btn is-flag", "Flag");
+    const stop = el("button", "study-btn is-stop", "Stop");
+    [pause, flag, stop].forEach((b) => (b.type = "button"));
+    pause.addEventListener("click", pauseOrResume);
+    flag.addEventListener("click", toggleFlag);
+    stop.addEventListener("click", () => endMarathon(false));
+    acts.append(pause, flag, stop);
+    deckView.append(acts, el("p", "study-keys", "P Pause   ·   F Flag"));
+    m.refs = { top, fill: tfill, secs, timer, pause, flag };
+    paintMarathonTimer();
+    paintFlag();
+    paintPause();
+  }
+
+  function endMarathon(finished) {
+    const m = marathon;
+    if (!m) return;
+    clearInterval(m.timer);
+    try {
+      if (m.wake) m.wake.release();
+    } catch (e) {
+      /* ignore */
+    }
+    marathon = null;
+    document.body.classList.remove("study-marathon-on");
+    const course = m.course;
+    const st = stateOf(course);
+    const flagged = Object.keys(st.flag).length;
+    deckView.replaceChildren();
+    const box = el("div", "study-end mar-summary");
+    box.append(el("h3", "", finished ? "Marathon complete" : "Marathon stopped"));
+    const lines = [`${m.done} card${m.done === 1 ? "" : "s"} in ${fmtMinutes(m.activeMs / 60000)}.`];
+    if (!finished) lines.push(`${st.pile.length} left. The course continues from the next card.`);
+    lines.push(flagged ? `${flagged} flagged.` : "Nothing flagged.");
+    box.append(el("p", "", lines.join(" ")));
+    const row = el("div", "study-end-actions");
+    if (flagged) {
+      const only = el("button", "study-btn is-got", `Study the ${flagged} flagged card${flagged === 1 ? "" : "s"}`);
+      only.type = "button";
+      only.addEventListener("click", () => {
+        restart(course, "flag");
+        renderDeck();
+      });
+      row.append(only);
+    }
+    if (!finished) {
+      const again = el("button", "study-btn", "Resume the marathon");
+      again.type = "button";
+      again.addEventListener("click", () => marathonStart(course));
+      row.append(again);
+    }
+    const back = el("button", "study-btn", finished ? "Open the deck" : "Back to the deck");
+    back.type = "button";
+    back.addEventListener("click", () => renderDeck());
+    row.append(back);
+    box.append(row);
+    deckView.append(box);
+  }
+
   // ---------- moving the top card away ----------
   let busy = false;
   function commit(top, kind) {
@@ -795,6 +1136,11 @@
     if (!document.body.classList.contains("study-on") || !current || deckView.hidden) return;
     const target = e.target && e.target.closest ? e.target : document.body;
     if (e.metaKey || e.ctrlKey || e.altKey || target.closest("input, textarea, select")) return;
+    if (marathon) {
+      if (e.key === "p" || e.key === "P") pauseOrResume();
+      else if (e.key === "f" || e.key === "F") toggleFlag();
+      return; // every key that moves between cards does nothing
+    }
     const top = deckView.querySelector(".study-card");
     if ((e.key === " " || e.key === "Enter" || e.key === "ArrowUp") && top && top._turn) {
       if (target.closest("button") && e.key !== "ArrowUp") return; // the focused button handles it itself
@@ -832,7 +1178,8 @@
   phone.addEventListener("change", () => {
     syncScrollLock();
     syncPhoneClass();
-    if (current) renderDeck();
+    if (marathon) renderMarathon();
+    else if (current) renderDeck();
     else renderPicker();
   });
 })();
