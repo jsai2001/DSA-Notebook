@@ -1,0 +1,87 @@
+<details class="question" id="q-rag-llamaindex-058-8-2-agentic-rag" data-group="rag-llamaindex" data-sec="rag-llamaindex-s044">
+  <summary>
+    <span class="q-title">8.2 Agentic RAG (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">RAG with LlamaIndex</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RAG with LlamaIndex › 8. Modular RAG › 8.2 Agentic RAG</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# The tool function: build filters from the LLM's choices, then hybrid-retrieve
+from llama_index.core.retrievers import VectorIndexRetriever
+from llama_index.core.vector_stores.types import MetadataFilter, FilterOperator, MetadataFilters
+
+top_k = 3
+
+def auto_retrieve_fn(query: str, filter_key_list: List[str], filter_value_list: List[str]):
+    """Auto retrieval function.
+    Performs auto-retrieval from a vector database, and then applies a set of filters.
+    """
+    query = query or "Query"
+    contains_filters = [
+        MetadataFilter(key=k, value=v, operator=FilterOperator.CONTAINS)
+        for k, v in zip(filter_key_list, filter_value_list)
+    ]
+    retriever = VectorIndexRetriever(
+        index,
+        vector_store_query_mode="hybrid",
+        alpha=0.65,
+        filters=MetadataFilters(filters=contains_filters),
+        top_k=top_k
+    )
+    query_engine = RetrieverQueryEngine.from_args(retriever, response_mode="compact", verbose=True)
+    response = query_engine.query(query)
+    return str(response)
+
+from llama_index.core.tools import FunctionTool
+
+description = f"""\
+Use this tool to answer the usery query by retrieving relevant information from the vector database.
+The vector database schema is given below, which you should use to find the right information to answer the user's query.:
+{vector_store_info.json()}
+"""
+auto_retrieve_tool = FunctionTool.from_defaults(
+    fn=auto_retrieve_fn,
+    name="words-of-senpai-info",
+    description=description,
+    fn_schema=AutoRetrieveModel
+)
+
+from llama_index.agent.openai import OpenAIAgent
+agent = OpenAIAgent.from_tools(tools=[auto_retrieve_tool], verbose=True)
+
+agent.chat("Building wealth and achieving happiness through developing specific knowledge, embracing accountability, playing long-term games, and understanding the power of compound interest in all areas of life.")  # filters on questions_this_excerpt_can_answer
+agent.chat("find text that mentions: specific knowledge, luck, success")          # filters on excerpt_keywords
+agent.chat("What would nassim taleb say about accountability and risk")           # filters on author
+agent.chat("What would Bruce Lee say about adaptability and self-expression")     # filters on author
+agent.chat("What kind of questions should I ask Balaji Srinivasan and Naval Ravikant?")  # multiple authors
+        </script>
+      </div>
+      <p>Behavior to note: a full question tends to filter on <code>questions_this_excerpt_can_answer</code>, a "find text that mentions…" prompt on <code>excerpt_keywords</code>, and a named thinker on <code>author</code>.</p>
+      <p><strong>Lower-level agent API</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Component</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td><code>AgentRunner</code></td><td>Orchestrator: manages state (conversation memory), creates and maintains tasks, runs steps, exposes the chat interface</td></tr>
+            <tr><td><code>AgentWorker</code></td><td>Controls step-wise execution: given an input step, produces the next step; holds no state itself</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from llama_index.core.agent import FunctionCallingAgentWorker, AgentRunner
+
+agent_worker = FunctionCallingAgentWorker.from_tools(
+    [auto_retrieve_tool], llm=Settings.llm, verbose=True)
+agent_runner = AgentRunner(agent_worker, verbose=True)
+agent_runner.chat("In what ways do Naval and Nassim think differently about the risk and accountability?")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-rag-llamaindex-057-8-2-agentic-rag">← Previous</a><span class="rev-pos">58 / 63</span><a href="#q-rag-llamaindex-059-8-3-ensemble-retrieval">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,124 @@
+<details class="question" id="q-fine-tuning-llm-071-16-multi-model-chatbot-with-flask" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s052">
+  <summary>
+    <span class="q-title">16. Multi-Model Chatbot with Flask (2/3)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 16. Multi-Model Chatbot with Flask</p>
+      <p><code>%%writefile</code> writes the cell to <code>chatbot.py</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+%%writefile chatbot.py
+
+# Step 1: Load the necessary libraries and models
+import tensorflow as tf
+from transformers import TFAutoModelForSequenceClassification, AutoTokenizer, pipeline, TFAutoModelForSeq2SeqLM
+from flask import Flask, request, jsonify
+import json
+
+# Load Sentiment Analysis Model
+sentiment_model = TFAutoModelForSequenceClassification.from_pretrained("distilbert/distilbert-base-uncased-finetuned-sst-2-english")
+sentiment_tokenizer = AutoTokenizer.from_pretrained("distilbert/distilbert-base-uncased-finetuned-sst-2-english")
+
+# Load Summarization Model
+summarization_model = TFAutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-large")
+summarization_tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-large")
+
+# Load Question Answering Model
+qa_model = TFAutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-large")
+qa_tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-large")
+
+# Load Generic Decoder-Only Model
+pipe = pipeline("text-generation", model="gpt2-large")
+
+
+# Initialize Flask App
+app = Flask(__name__)
+conversation_history = []
+conversation_summaries = []
+
+
+def summarize_conversation(conversation):
+    conversation_text = " ".join(conversation)
+    inputs = summarization_tokenizer(f'Summarize: {conversation_text}', return_tensors="tf", max_length=512, truncation=True, padding=True)
+    summary_ids = summarization_model.generate(inputs['input_ids'], max_length=500, num_beams=4, early_stopping=True)
+    summary = summarization_tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+    return summary
+
+def summarize_text(text):
+    inputs = summarization_tokenizer(f'Summarize: {text}', return_tensors="tf", max_length=512, truncation=True, padding=True)
+    summary_ids = summarization_model.generate(inputs['input_ids'], max_length=150, num_beams=4, early_stopping=True)
+    summary = summarization_tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+    return summary
+
+def answer_question(question):
+    inputs = qa_tokenizer(f'question: {question} answer: ', return_tensors="tf")
+    answer_ids = qa_model.generate(inputs['input_ids'])
+    answer = qa_tokenizer.decode(answer_ids[0], skip_special_tokens=True)
+    return answer
+
+def generate_response(message):
+    # context = " ".join(conversation_history)
+    sentiment = analyze_sentiment(message)
+    if sentiment == "negative":
+        prompt = f"The user is angry. Their message: {message}"
+    else:
+        prompt = message
+    response = pipe(prompt)[0]['generated_text']
+    return response
+
+def analyze_sentiment(text):
+    inputs = sentiment_tokenizer(text, return_tensors="tf", truncation=True)
+    outputs = sentiment_model(inputs)
+    sentiment_score = tf.nn.softmax(outputs.logits, axis=-1).numpy()
+    sentiment = "positive" if sentiment_score[0][1] > 0.5 else "negative"
+    return sentiment
+
+
+@app.route('/reset', methods=['POST'])
+def reset_conversation():
+    global conversation_history
+    global conversation_summaries
+    summary = summarize_conversation(conversation_history)
+    conversation_summaries.append(summary)
+    conversation_history = []
+    return jsonify({"message": "Conversation has been reset.", "summary": summary})
+
+@app.route('/greet', methods=['GET'])
+def greet_user():
+    return jsonify({"message": "Hello! How can I assist you today?"})
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    global conversation_history
+    user_message = request.json.get('message')
+    conversation_history.append(f'User: {user_message}')
+
+    # Determine the task based on the message
+    if "summarize" in user_message.lower():
+        print("summarize")
+        response = summarize_text(user_message)
+    elif "?" in user_message:
+        print("question")
+        response = answer_question(user_message)
+    else:
+        print("default")
+        response = generate_response(user_message)
+
+    sentiment = analyze_sentiment(user_message)
+    conversation_history.append(f'Agent: {response}')
+
+    return jsonify({"response": response})
+
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-070-16-multi-model-chatbot-with-flask">← Previous</a><span class="rev-pos">71 / 74</span><a href="#q-fine-tuning-llm-072-16-multi-model-chatbot-with-flask">Next →</a></nav>
+    </section>
+  </div>
+</details>

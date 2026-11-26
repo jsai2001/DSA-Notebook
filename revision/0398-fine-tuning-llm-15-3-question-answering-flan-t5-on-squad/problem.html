@@ -1,0 +1,49 @@
+<details class="question" id="q-fine-tuning-llm-069-15-3-question-answering-flan-t5-on-squad" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s051">
+  <summary>
+    <span class="q-title">15.3 Question answering, FLAN-T5 on SQuAD v2 (Chapter5_Solution2) (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 15. Chapter 5 Exercises › 15.3 Question answering, FLAN-T5 on SQuAD v2 (Chapter5_Solution2)</p>
+      <p>ROUGE-only evaluation (QA answers are short spans, so precision/recall of words matters more than BLEU's n-gram order; the notebook's print label still says "Translation"):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from rouge_score import rouge_scorer
+from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
+import nltk
+nltk.download('punkt')
+
+def answer(inputs):
+    outputs = model.generate(inputs[0]["input_ids"], max_length=128, num_beams=4, early_stopping=True)
+    return tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+
+# Function to calculate ROUGE and BLEU scores
+def calculate_scores(reference, hypothesis):
+    # Initialize scorers
+    rouge = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
+
+    # Calculate ROUGE scores
+    rouge_scores = rouge.score(reference, hypothesis)
+
+    return rouge_scores
+
+# Evaluate translations and calculate scores
+batch = next(iter(validation_dataset))
+answer = answer(batch)
+reference_text = tokenizer.decode(batch[1][0], skip_special_tokens=True)
+rouge_scores = calculate_scores(reference_text, answer)
+print(f"Reference: {reference_text}")
+print(f"Translation: {answer}")
+print(f"ROUGE Scores: {rouge_scores}")
+print()
+        </script>
+      </div>
+      <p>(Gotcha: <code>answer = answer(batch)</code> shadows the function with its result, so the cell cannot be re-run without restarting.)</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-068-15-3-question-answering-flan-t5-on-squad">← Previous</a><span class="rev-pos">69 / 74</span><a href="#q-fine-tuning-llm-070-16-multi-model-chatbot-with-flask">Next →</a></nav>
+    </section>
+  </div>
+</details>

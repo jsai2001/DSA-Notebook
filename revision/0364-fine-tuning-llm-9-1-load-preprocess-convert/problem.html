@@ -1,0 +1,90 @@
+<details class="question" id="q-fine-tuning-llm-035-9-1-load-preprocess-convert" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s026">
+  <summary>
+    <span class="q-title">9.1 Load, preprocess, convert</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 9. Transfer Learning on FLAN-T5 (en→es translation) › 9.1 Load, preprocess, convert</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+!pip install transformers tensorflow datasets
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from transformers import TFAutoModelForSeq2SeqLM, AutoTokenizer
+
+# Load the tokenizer and model
+tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-base")
+model = TFAutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-base")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from datasets import load_dataset
+
+# Load the Helsinki-NLP/opus-100 dataset
+dataset = load_dataset('Helsinki-NLP/opus-100', 'en-es')
+print(dataset['train'][0])
+        </script>
+      </div>
+      <p>Seq2seq preprocessing: prefix the task, tokenize inputs, tokenize targets as <code>labels</code>, and also supply <code>decoder_input_ids</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Preprocess the dataset for input into the model
+def preprocess_data(examples):
+    inputs = [f'Translate from English to Spanish: {example["en"]}' for example in examples['translation']]
+    targets = [example['es'] for example in examples['translation']]
+
+    # Tokenize inputs
+    model_inputs = tokenizer(inputs, max_length=128, truncation=True, padding="max_length")
+
+    # Tokenize targets
+    with tokenizer.as_target_tokenizer():
+        labels = tokenizer(targets, max_length=128, truncation=True, padding="max_length")
+
+    model_inputs["labels"] = labels["input_ids"]
+
+    # For decoder inputs
+    decoder_inputs = tokenizer(targets, max_length=128, truncation=True, padding="max_length")
+    model_inputs["decoder_input_ids"] = decoder_inputs["input_ids"]
+
+    return model_inputs
+
+# Apply preprocessing to the dataset
+train_dataset = dataset['train'].select(range(30000)).map(preprocess_data, batched=True)
+test_dataset = dataset['test'].map(preprocess_data, batched=True)
+
+print(train_dataset[0])
+        </script>
+      </div>
+      <p>Convert Hugging Face datasets to <code>tf.data</code> (<code>collate_fn=None</code> avoids problems with incomplete batches):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import tensorflow as tf
+
+# Convert Hugging Face datasets to TensorFlow datasets
+train_dataset = train_dataset.to_tf_dataset(
+    columns=['input_ids', 'attention_mask', 'decoder_input_ids'],
+    label_cols=['labels'],
+    shuffle=True,
+    batch_size=64,
+    collate_fn=None
+)
+
+test_dataset = test_dataset.to_tf_dataset(
+    columns=['input_ids', 'attention_mask', 'decoder_input_ids'],
+    label_cols=['labels'],
+    shuffle=False,
+    batch_size=64,
+    collate_fn=None
+)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-034-9-transfer-learning-on-flan-t5-en-es-tra">← Previous</a><span class="rev-pos">35 / 74</span><a href="#q-fine-tuning-llm-036-9-2-freeze-the-pre-trained-layers">Next →</a></nav>
+    </section>
+  </div>
+</details>

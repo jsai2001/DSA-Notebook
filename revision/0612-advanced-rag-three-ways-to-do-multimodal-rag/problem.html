@@ -1,0 +1,71 @@
+<details class="question" id="q-advanced-rag-029-three-ways-to-do-multimodal-rag" data-group="advanced-rag" data-sec="advanced-rag-s029">
+  <summary>
+    <span class="q-title">Three ways to do multimodal RAG</span>
+    <span class="q-meta">
+      <span class="tag">Advanced RAG</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Advanced RAG › 10. Multimodal RAG › Three ways to do multimodal RAG</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>Models</th><th>Vector stores</th><th>Complexity</th><th>Usage</th></tr></thead>
+          <tbody>
+            <tr><td><strong>1. Single multimodal model</strong> (canonical)</td><td>1</td><td>1</td><td>Low</td><td>Most common</td></tr>
+            <tr><td><strong>2. Multiple models</strong> (one per data type)</td><td>N</td><td>N</td><td>High</td><td>Rare, manual</td></tr>
+            <tr><td><strong>3. Multiple multimodal models</strong></td><td>N</td><td>N</td><td>Very high</td><td>Almost never</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Method 1</strong>: one model (e.g. CLIP for images + text), one embedding model, one vector store, same dimensionality, so images and text compare directly. LangChain/LlamaIndex route text vs image encoding for you; natively you call different encoders.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain_community.embeddings import OpenCLIPEmbeddings
+clip = OpenCLIPEmbeddings()
+
+text_embeddings = clip.embed_documents(["A cat sitting on a couch"])
+image_embeddings = clip.embed_image(["images/cat1.jpg"])
+
+print(f"Text embedding dims: {len(text_embeddings[0])}")    # 1024
+print(f"Image embedding dims: {len(image_embeddings[0])}")  # 1024
+# Same model, same dims: directly comparable, storable in ONE vector store
+        </script>
+      </div>
+      <p><strong>Method 2</strong>: separate store per model. Different models give different dimensionalities, and even when dimensions match, embeddings from different training contexts are not meaningfully comparable.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain_community.embeddings import HuggingFaceEmbeddings, OpenCLIPEmbeddings
+from langchain_community.vectorstores import FAISS
+
+text_model = HuggingFaceEmbeddings()   # 768 dims
+image_model = OpenCLIPEmbeddings()     # 1024 dims
+
+text_store = FAISS.from_documents(text_docs, embedding=text_model)
+image_store = FAISS.from_documents(image_docs, embedding=image_model)
+
+# Route queries to the right store by data type
+def multimodal_search(query, query_type="text"):
+    if query_type == "text":
+        return text_store.as_retriever().invoke(query)
+    elif query_type == "image":
+        return image_store.as_retriever().invoke(query)
+        </script>
+      </div>
+      <p><strong>Method 3</strong> reasons: (a) too many data types (video, audio, images, tables) for one model; (b) <strong>re-ranking</strong>, using models trained on different data as a "second opinion".</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Conceptual: route data to different models/stores by type or tag
+def route_and_embed(data, data_type, tag=None):
+    if data_type == "image_text":
+        return clip_model.embed(data)
+    elif data_type == "audio_text":
+        return whisper_clip_model.embed(data)
+    elif tag == "rerank":
+        return alternate_model.embed(data)  # second model for re-ranking
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-advanced-rag-028-10-multimodal-rag">← Previous</a><span class="rev-pos">29 / 33</span><a href="#q-advanced-rag-030-multimodal-embedding-models">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,90 @@
+<details class="question" id="q-fine-tuning-llm-030-8-2-lecture-examples-across-domains" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s022">
+  <summary>
+    <span class="q-title">8.2 Lecture examples across domains (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 8. Transfer Learning vs Fine-Tuning › 8.2 Lecture examples across domains</p>
+      <p><strong>Medical imaging, pneumonia detection (VGG-19, ImageNet features such as edges/textures transfer to small medical datasets; binary classification):</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import tensorflow as tf
+from tensorflow.keras.applications import VGG19
+
+# Load pre-trained VGG-19
+base_model = VGG19(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
+
+# Build transfer learning model
+model = tf.keras.Sequential([
+    base_model,
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(128, activation='relu'),
+    tf.keras.layers.Dense(1, activation='sigmoid')  # Binary classification
+])
+
+# Freeze base model
+base_model.trainable = False
+
+# Compile
+model.compile(
+    optimizer='adam',
+    loss='binary_crossentropy',
+    metrics=['accuracy']
+)
+        </script>
+      </div>
+      <p>A more regularised variant for medical classification (global pooling + dropout):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def create_medical_classifier(num_classes, input_shape=(224, 224, 3)):
+    base_model = VGG19(weights='imagenet', include_top=False, input_shape=input_shape)
+    base_model.trainable = False
+
+    model = tf.keras.Sequential([
+        base_model,
+        tf.keras.layers.GlobalAveragePooling2D(),
+        tf.keras.layers.Dropout(0.5),
+        tf.keras.layers.Dense(512, activation='relu'),
+        tf.keras.layers.Dropout(0.3),
+        tf.keras.layers.Dense(num_classes, activation='softmax')
+    ])
+
+    return model
+
+# Usage for pneumonia detection
+pneumonia_model = create_medical_classifier(num_classes=2)
+        </script>
+      </div>
+      <p><strong>NLP sentiment analysis (BERT pre-trained on a large corpus; good with limited review data):</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from transformers import BertTokenizer, TFBertForSequenceClassification
+
+# Load BERT for classification
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+model = TFBertForSequenceClassification.from_pretrained('bert-base-uncased', num_labels=2)
+
+# Tokenize input
+def tokenize_reviews(reviews, max_length=128):
+    return tokenizer(reviews, truncation=True, padding=True, 
+                    max_length=max_length, return_tensors='tf')
+
+# Usage example
+review = "This product is amazing!"
+inputs = tokenize_reviews([review])
+
+# Model is ready for fine-tuning or inference
+model.compile(
+    optimizer='adam',
+    loss='sparse_categorical_crossentropy',
+    metrics=['accuracy']
+)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-029-8-1-generic-freeze-the-base-pattern-kera">← Previous</a><span class="rev-pos">30 / 74</span><a href="#q-fine-tuning-llm-031-8-2-lecture-examples-across-domains">Next →</a></nav>
+    </section>
+  </div>
+</details>

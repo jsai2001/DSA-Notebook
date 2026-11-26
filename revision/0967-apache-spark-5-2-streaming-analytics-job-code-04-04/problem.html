@@ -1,0 +1,45 @@
+<details class="question" id="q-apache-spark-021-5-2-streaming-analytics-job-code-04-04" data-group="apache-spark" data-sec="apache-spark-s018">
+  <summary>
+    <span class="q-title">5.2 Streaming analytics job (code_04_04) (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">Apache Spark</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Apache Spark › 5. Real-Time Pipeline: Website Analytics › 5.2 Streaming analytics job (code_04_04)</p>
+      <p>Helper writers used with <code>foreach</code>. They open a connection per row. The notebook notes that production code should use a class instead (see the <code>DataStreamWriter.foreach</code> docs).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import redis
+import mariadb
+
+# Redis: increment country duration in a sorted set
+def write_to_redis(row):
+    stats_key = "last-action-stats"
+    redis_conn = redis.Redis(host="localhost", port=6379, decode_responses=True)
+    redis_conn.zincrby(stats_key, row["duration"], row["country"])
+    redis_conn.quit()
+
+# MariaDB: insert one 5-second summary row
+def write_to_mariadb(row):
+    summary_conn = mariadb.connect(
+        user="spark", password="spark",
+        host="127.0.0.1", port=3306,
+        database="website_stats", autocommit=True
+    )
+    summary_cursor = summary_conn.cursor()
+    summary_sql = f"""
+        INSERT INTO `website_stats`.`visit_stats`
+            (INTERVAL_TIMESTAMP, LAST_ACTION, DURATION)
+        VALUES('{row["window"]["start"]}',
+                '{row["last_action"]}',
+                '{row["duration"]}')
+    """
+    summary_cursor.execute(summary_sql)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-apache-spark-020-5-1-generate-a-visits-stream-code-04-03">← Previous</a><span class="rev-pos">21 / 31</span><a href="#q-apache-spark-022-5-2-streaming-analytics-job-code-04-04">Next →</a></nav>
+    </section>
+  </div>
+</details>

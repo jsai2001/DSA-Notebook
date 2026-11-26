@@ -1,0 +1,51 @@
+<details class="question" id="q-ml-foundations-010-4-preprocessing-the-cleanup-function" data-group="ml-foundations" data-sec="ml-foundations-s011">
+  <summary>
+    <span class="q-title">4. Preprocessing: the Cleanup Function</span>
+    <span class="q-meta">
+      <span class="tag">ML Foundations</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">ML Foundations › 4. Preprocessing: the Cleanup Function</p>
+      <p>Why preprocess: most algorithms need numeric input, features should be on a similar scale, and raw data has wrong types, placeholder values, or useless columns.</p>
+      <p>Two phases: (1) a cleanup function (fix types, bad values, select columns); (2) sklearn pipelines (scale, impute, encode), covered next.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def tweak_housing(df):
+    return (df
+            .with_columns(
+                zipcode=pl.col('zipcode').cast(pl.String).cast(pl.Categorical),
+                date=pl.date(pl.col('date_year'), pl.col('date_month'), pl.col('date_day')),
+                yr_renovated=pl.col('yr_renovated').replace(0, None),
+            )
+            .select(['id', 'price', 'bedrooms', 'bathrooms', 'sqft_living', 'sqft_lot',
+                     'floors', 'waterfront', 'view', 'condition', 'grade', 'sqft_above',
+                     'sqft_basement', 'yr_built', 'yr_renovated', 'zipcode', 'lat', 'long',
+                     'sqft_living15', 'sqft_lot15', 'date',
+                     ])
+    )
+tweak_housing(raw)
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>zipcode: int to String to Categorical</td><td>Zipcode is an identifier. Left numeric, algorithms infer a false ordering (higher/lower)</td></tr>
+            <tr><td>date: combine year/month/day</td><td>One proper date column. Models can't use raw dates, so extract features (month, weekday) later if needed</td></tr>
+            <tr><td>yr_renovated: replace 0 with None</td><td>0 means "never renovated," not "year 0." Null lets imputation handle it properly</td></tr>
+            <tr><td>explicit <code>.select([...])</code> at the end</td><td>Readable, maintainable, shows exactly which features are in play</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Practices:</p>
+      <ul>
+        <li>Keep raw data so predictions can be traced back for explainability.</li>
+        <li>Build the function incrementally, then move it to the top of the notebook (load raw, run cleanup, ready).</li>
+        <li>Preprocessing's job is to get data into a correct, honest state. Scaling and encoding happen in the pipeline.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ml-foundations-009-polars-vs-pandas">← Previous</a><span class="rev-pos">10 / 46</span><a href="#q-ml-foundations-011-5-scikit-learn-pipelines">Next →</a></nav>
+    </section>
+  </div>
+</details>

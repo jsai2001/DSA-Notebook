@@ -1,0 +1,80 @@
+<details class="question" id="q-fine-tuning-llm-001-2-1-ethical-considerations" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s003">
+  <summary>
+    <span class="q-title">2.1 Ethical considerations</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 2. LLM Ethics &amp; Architectures › 2.1 Ethical considerations</p>
+      <ul>
+        <li><strong>Bias in training data:</strong> LLMs reproduce biases in their data; mitigate with curation and bias detection.</li>
+        <li><strong>Transparency:</strong> be able to explain how the model decides.</li>
+        <li><strong>Regulation:</strong> guidelines and rules for responsible use.</li>
+      </ul>
+      <p>Bias detection with a toxicity classifier over training texts:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Example: Data curation and bias detection
+from transformers import pipeline
+import pandas as pd
+
+# Load bias detection pipeline
+bias_detector = pipeline("text-classification", 
+                        model="unitary/toxic-bert")
+
+def detect_bias_in_dataset(texts):
+    """Detect potential bias in training texts"""
+    results = []
+    for text in texts:
+        result = bias_detector(text)
+        results.append({
+            'text': text,
+            'bias_score': result[0]['score'],
+            'label': result[0]['label']
+        })
+    return pd.DataFrame(results)
+
+# Example usage
+sample_texts = [
+    "The engineer solved the problem efficiently",
+    "The nurse was very caring and gentle"
+]
+bias_analysis = detect_bias_in_dataset(sample_texts)
+print(bias_analysis)
+        </script>
+      </div>
+      <p>Transparency via input-gradient attribution (needs a classification model; token ids are not differentiable in practice, so treat as a sketch):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Example: Model explanation and interpretability
+from transformers import AutoTokenizer, AutoModel
+import torch
+
+def explain_model_decision(model, tokenizer, text, target_class):
+    """Provide basic explanation for model decisions"""
+    inputs = tokenizer(text, return_tensors="pt")
+
+    # Enable gradient computation
+    inputs['input_ids'].requires_grad_(True)
+
+    outputs = model(**inputs)
+
+    # Get gradients for input tokens
+    loss = outputs.logits[0, target_class]
+    loss.backward()
+
+    gradients = inputs['input_ids'].grad
+    tokens = tokenizer.convert_ids_to_tokens(inputs['input_ids'][0])
+
+    return list(zip(tokens, gradients[0].tolist()))
+
+# Usage example would require a classification model
+        </script>
+      </div>
+      <p><strong>Ethical-AI checklist:</strong> <em>data</em> (audit bias, diverse representation, remove PII, document sources); <em>transparency</em> (model docs, explain decisions, interpretability, regular bias tests); <em>deployment</em> (monitor across demographics, feedback loops, retraining, stated limits); <em>governance</em> (ethics committee, reviews, compliance, stakeholders).</p>
+    <nav class="rev-nav" aria-label="Move between cards"><span></span><span class="rev-pos">1 / 74</span><a href="#q-fine-tuning-llm-002-2-2-architecture-types-interview-staple">Next →</a></nav>
+    </section>
+  </div>
+</details>

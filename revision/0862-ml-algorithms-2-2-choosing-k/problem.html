@@ -1,0 +1,48 @@
+<details class="question" id="q-ml-algorithms-003-2-2-choosing-k" data-group="ml-algorithms" data-sec="ml-algorithms-s004">
+  <summary>
+    <span class="q-title">2.2 Choosing K (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">ML Algorithms</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">ML Algorithms › 2. Clustering: K-Means, Choosing K, Interpreting Clusters › 2.2 Choosing K</p>
+      <p><strong>Elbow method.</strong> Track <strong>inertia</strong> (sum of squared distances from each point to its nearest centroid) as <code>k</code> grows. Inertia always falls as <code>k</code> rises, so look for the bend where gains become small. Trick: slide an angled ruler along the curve; where it touches the corner is the elbow.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+inertias = []
+max_clusters = 20
+for i in range(max_clusters):
+    km = KMeans(n_clusters=i+1, n_init='auto', max_iter=300, random_state=42)
+    km.fit(X)
+    inertias.append(km.inertia_)
+fig, ax = plt.subplots(figsize=(8, 6))
+ax.plot(range(1, max_clusters+1), inertias, marker='o')
+ax.set_xlabel('Number of clusters')
+ax.set_ylabel('Inertia')
+ax.set_title('Elbow Method')
+        </script>
+      </div>
+      <p><strong>Silhouette coefficient.</strong> How similar a point is to its own cluster versus other clusters, from -1 to 1 (higher is better). 1 = near the cluster centre, 0 = on the boundary, -1 = far away or misassigned (likely outlier).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from yellowbrick.cluster import silhouette_visualizer
+for i in range(6):
+    km = KMeans(n_clusters=i+2, n_init='auto', max_iter=300, random_state=42)
+    fig, ax = plt.subplots(figsize=(8, 6))
+    viz = silhouette_visualizer(km, X, colors='yellowbrick', ax=ax, show=False)
+    ax.set_xlim([-0.1, .8])
+        </script>
+      </div>
+      <p><strong>Reading the silhouette plot:</strong></p>
+      <ul>
+        <li>Each cluster is a "blade"; each horizontal slice is one point, sorted by score. The red dashed line is the average score.</li>
+        <li>Good: blades bulge out (wide, rounded) and all poke past the average line.</li>
+        <li>Bad: pointy, narrow blades, a cluster that falls below the average, or negative scores at the bottom of a blade.</li>
+        <li>Iris: 2 clusters gives bulgy blades and the highest average; the average drops at 3, negatives appear at 4-5, and it recovers slightly at 6-7.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ml-algorithms-002-2-1-k-means">← Previous</a><span class="rev-pos">3 / 33</span><a href="#q-ml-algorithms-004-2-2-choosing-k">Next →</a></nav>
+    </section>
+  </div>
+</details>

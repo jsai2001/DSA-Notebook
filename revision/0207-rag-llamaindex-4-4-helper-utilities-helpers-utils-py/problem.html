@@ -1,0 +1,60 @@
+<details class="question" id="q-rag-llamaindex-021-4-4-helper-utilities-helpers-utils-py" data-group="rag-llamaindex" data-sec="rag-llamaindex-s019">
+  <summary>
+    <span class="q-title">4.4 Helper utilities (helpers/utils.py) (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">RAG with LlamaIndex</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RAG with LlamaIndex › 4. Introduction to RAG: Pipelines, Prompts, Data Prep › 4.4 Helper utilities (helpers/utils.py)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def setup_embed_model(provider, **kwargs):
+    if provider == "cohere":
+        Settings.embed_model = CohereEmbedding(model_name="embed-english-v3.0", **kwargs)
+    elif provider == "openai":
+        Settings.embed_model = OpenAIEmbedding(model_name="text-embedding-3-large", **kwargs)
+    elif provider == "fastembed":
+        Settings.embed_model = FastEmbedEmbedding(model_name="BAAI/bge-base-en-v1.5", **kwargs)
+    else:
+        raise ValueError(f"Invalid provider: {provider}. Pick one of 'cohere', 'fastembed', or 'openai'.")
+
+def create_index(from_where, embed_model=Settings.embed_model, **kwargs):
+    if from_where == "vector_store":
+        return VectorStoreIndex.from_vector_store(embed_model=embed_model, **kwargs)
+    elif from_where == "docs":
+        return VectorStoreIndex.from_documents(embed_model=embed_model, **kwargs)
+    else:
+        raise ValueError(f"Invalid option: {from_where}. Pick one of 'vector_store', or 'docs'.")
+
+def create_query_pipeline(chain, verbose=True):
+    return QueryPipeline(chain=chain, verbose=verbose)
+
+def display_prompt_dict(prompts_dict):
+    markdown_output = " "
+    for k, p in prompts_dict.items():
+        markdown_output += f"**Prompt Key**: {k}\n**Text:**\n" + p.get_template() + "\n\n"   # source wraps the text in a markdown code fence
+    display(Markdown(markdown_output))
+        </script>
+      </div>
+      <p>Typical notebook setup with the helpers:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import sys
+sys.path.append('../helpers')
+from utils import setup_llm, setup_embed_model, setup_vector_store, create_index
+
+setup_llm(provider="cohere", model="command-r-plus", api_key=CO_API_KEY)
+setup_embed_model(provider="openai", api_key=OPENAI_API_KEY)
+
+COLLECTION_NAME = "it_can_be_done"
+vector_store = setup_vector_store(QDRANT_URL, QDRANT_API_KEY, COLLECTION_NAME)
+storage_context = StorageContext.from_defaults(vector_store=vector_store)
+index = create_index(from_where="vector_store", vector_store=vector_store, storage_context=storage_context)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-rag-llamaindex-020-4-4-helper-utilities-helpers-utils-py">← Previous</a><span class="rev-pos">21 / 63</span><a href="#q-rag-llamaindex-022-4-5-prompt-engineering-for-rag">Next →</a></nav>
+    </section>
+  </div>
+</details>

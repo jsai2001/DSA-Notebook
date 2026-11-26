@@ -1,0 +1,76 @@
+<details class="question" id="q-az-900-040-authentication-methods" data-group="az-900" data-sec="az-900-s034">
+  <summary>
+    <span class="q-title">Authentication methods</span>
+    <span class="q-meta">
+      <span class="tag">AZ-900</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AZ-900 › 8. Identity, access and security › Authentication methods</p>
+      <p><strong>Single sign-on (SSO)</strong>: authenticate once and reuse for all resources. <strong>Azure AD Connect</strong> extends SSO to on-prem. Two methods:</p>
+      <ul>
+        <li><strong>Password Hash Synchronization</strong>: the password is hashed, the hash is stored in Azure AD, and logins compare hashes.</li>
+        <li><strong>Pass-Through Authentication</strong>: credentials go to an on-prem agent and are validated against on-prem AD, and the result goes back to Azure AD via AD Connect.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Install Azure AD Connect (PowerShell — run on on-premises server)
+# Download from: https://www.microsoft.com/en-us/download/details.aspx?id=47594
+# After installation, configure SSO:
+Set-MsolDomainAuthentication \
+  -DomainName "<tenant-domain>.onmicrosoft.com" \
+  -Authentication Managed
+        </script>
+      </div>
+      <p><strong>Multi-factor authentication (MFA)</strong>: factors are something you <strong>know</strong> (password, PIN), <strong>have</strong> (phone, security key) and <strong>are</strong> (fingerprint, face, retina).</p>
+      <ul>
+        <li>Two-factor = two factors. Three-factor = all three. Azure MFA uses <strong>two-factor</strong>.</li>
+        <li>Needs <strong>Azure AD Premium</strong> (not the free tier).</li>
+        <li>Enabled <strong>per user</strong>.</li>
+        <li>Guest users need a <strong>conditional access policy</strong> for MFA.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Check if a user has MFA enabled (Microsoft Graph API via CLI)
+az rest --method GET \
+  --uri "https://graph.microsoft.com/v1.0/users/<user-id>/authentication/methods" \
+  --headers "Content-Type=application/json"
+
+# Enable MFA via Azure Portal:
+# Azure AD → Users → All Users → Per-user MFA → Select user → Enable
+        </script>
+      </div>
+      <p><strong>Passwordless</strong> replaces "something you know":</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>How</th></tr></thead>
+          <tbody>
+            <tr><td>FIDO2 security key</td><td>Cryptographic keys on a phone or USB key</td></tr>
+            <tr><td>Microsoft Authenticator app</td><td>Push notification, enter the shown number, confirm with biometrics/PIN</td></tr>
+            <tr><td>Text message (SMS)</td><td>Code sent by text, entered on the computer</td></tr>
+            <tr><td>Temporary Access Pass (TAP)</td><td>Time-limited string for initial setup or a lost device</td></tr>
+            <tr><td>Certificate-based</td><td>Digital certificate</td></tr>
+            <tr><td>Windows Hello for Business</td><td>Face biometrics on Windows devices</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Enable FIDO2 security key method for the tenant (Microsoft Graph API)
+az rest --method PATCH \
+  --uri "https://graph.microsoft.com/v1.0/policies/authenticationMethodsPolicy/authenticationMethodConfigurations/fido2" \
+  --headers "Content-Type=application/json" \
+  --body '{"state": "enabled"}'
+
+# Create a Temporary Access Pass for a user
+az rest --method POST \
+  --uri "https://graph.microsoft.com/v1.0/users/<user-id>/authentication/temporaryAccessPassMethods" \
+  --headers "Content-Type=application/json" \
+  --body '{"lifetimeInMinutes": 60, "isUsableOnce": true}'
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-az-900-039-directory-services">← Previous</a><span class="rev-pos">40 / 66</span><a href="#q-az-900-041-conditional-access">Next →</a></nav>
+    </section>
+  </div>
+</details>

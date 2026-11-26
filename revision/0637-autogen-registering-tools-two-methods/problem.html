@@ -1,0 +1,67 @@
+<details class="question" id="q-autogen-021-registering-tools-two-methods" data-group="autogen" data-sec="autogen-s020">
+  <summary>
+    <span class="q-title">Registering tools: two methods</span>
+    <span class="q-meta">
+      <span class="tag">AutoGen</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AutoGen › 7. Tool Use and Web Search › Registering tools: two methods</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Method 1: direct (explicit control; two calls)
+assistant.register_for_llm(
+    name="calculator",
+    description="Performs basic arithmetic operations",
+)(calculator)
+
+user_proxy.register_for_execution(
+    name="calculator"
+)(calculator)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Method 2: utility function (recommended; one call, less error-prone)
+from autogen import register_function
+
+register_function(
+    calculator,
+    caller=assistant,
+    executor=user_proxy,
+    name="calculator",
+    description="Performs basic arithmetic operations"
+)
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Aspect</th><th>Direct registration</th><th><code>register_function</code></th></tr></thead>
+          <tbody>
+            <tr><td>Calls</td><td>2 separate</td><td>1</td></tr>
+            <tr><td>Error proneness</td><td>Higher</td><td>Lower</td></tr>
+            <tr><td>Best for</td><td>Advanced customization</td><td>Standard use</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+user_proxy.initiate_chat(
+    assistant,
+    message="What is (5 + 3) * (10 - 2) / 4?"
+)
+# Assistant breaks the expression into calculator calls; proxy executes each; assistant aggregates -> 16
+        </script>
+      </div>
+      <p>Multiple tools on one agent:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+register_function(calculator, caller=assistant, executor=user_proxy, name="calculator", description="Math operations")
+register_function(search_tool, caller=assistant, executor=user_proxy, name="search", description="Web search")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-autogen-020-calculator-tool">← Previous</a><span class="rev-pos">21 / 34</span><a href="#q-autogen-022-web-search-with-tavily">Next →</a></nav>
+    </section>
+  </div>
+</details>

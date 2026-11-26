@@ -1,0 +1,58 @@
+<details class="question" id="q-cloudformation-050-fix-add-a-bucket-policy-by-updating-the" data-group="cloudformation" data-sec="cloudformation-s051">
+  <summary>
+    <span class="q-title">Fix: add a bucket policy by updating the stack</span>
+    <span class="q-meta">
+      <span class="tag">AWS CloudFormation</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS CloudFormation › 8. S3 Static Website Template (JSON) › Fix: add a bucket policy by updating the stack</p>
+      <p>Select the stack, Update, Replace current template, and upload <code>S3_website.template</code>. The review shows a new <code>mybucketpolicy</code> resource being added. Click Update Stack.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JSON">
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "S3 Website Bucket with Retain on Delete and public read bucket policy.",
+  "Resources": {
+    "S3Bucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "AccessControl": "PublicRead",
+        "WebsiteConfiguration": {
+          "IndexDocument": "index.html",
+          "ErrorDocument": "error.html"
+        }
+      },
+      "DeletionPolicy": "Retain"
+    },
+    "mybucketpolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [{
+            "Sid": "PublicReadGetObject",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": ["s3:GetObject"],
+            "Resource": { "Fn::Join": ["", ["arn:aws:s3:::", { "Ref": "S3Bucket" }, "/*"]] }
+          }]
+        },
+        "Bucket": { "Ref": "S3Bucket" }
+      }
+    }
+  },
+  "Outputs": {
+    "WebsiteURL": {
+      "Value": { "Fn::GetAtt": ["S3Bucket", "WebsiteURL"] },
+      "Description": "URL for website hosted on S3"
+    }
+  }
+}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-cloudformation-049-bug-the-website-returns-404">← Previous</a><span class="rev-pos">50 / 72</span><a href="#q-cloudformation-051-what-the-bucket-policy-does">Next →</a></nav>
+    </section>
+  </div>
+</details>

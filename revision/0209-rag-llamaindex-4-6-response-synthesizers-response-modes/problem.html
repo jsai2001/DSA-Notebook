@@ -1,0 +1,43 @@
+<details class="question" id="q-rag-llamaindex-023-4-6-response-synthesizers-response-modes" data-group="rag-llamaindex" data-sec="rag-llamaindex-s021">
+  <summary>
+    <span class="q-title">4.6 Response synthesizers / response modes</span>
+    <span class="q-meta">
+      <span class="tag">RAG with LlamaIndex</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RAG with LlamaIndex › 4. Introduction to RAG: Pipelines, Prompts, Data Prep › 4.6 Response synthesizers / response modes</p>
+      <p>Control how retrieved chunks are combined and sent to the LLM. Listed by <code>dir(ResponseMode)</code>.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Mode</th><th>Behavior</th><th>Trade-off / use</th></tr></thead>
+          <tbody>
+            <tr><td><code>refine</code></td><td>Answer from node 1, then refine through nodes 2..N with one LLM call per node</td><td>Detailed answers, most LLM calls</td></tr>
+            <tr><td><code>compact</code></td><td>Pack chunks into larger ones that fill the context window, then refine</td><td>Fewer calls than refine (default-style choice)</td></tr>
+            <tr><td><code>simple_summarize</code></td><td>Merge all chunks into one call</td><td>Fast; fails if merged text exceeds context window; may truncate</td></tr>
+            <tr><td><code>tree_summarize</code></td><td>Build a summary tree bottom-up, return the root</td><td>Best for comprehensive multi-document summaries</td></tr>
+            <tr><td><code>generation</code></td><td>Ignore context, LLM only</td><td>Open-ended generation</td></tr>
+            <tr><td><code>no_text</code></td><td>Retrieval only; inspect <code>response.source_nodes</code></td><td>Debugging retrieval</td></tr>
+            <tr><td><code>accumulate</code></td><td>Run the query against each chunk, concatenate answers</td><td>Same question per chunk</td></tr>
+            <tr><td><code>compact_accumulate</code></td><td>Pack chunks first, then accumulate</td><td>Faster than accumulate</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from llama_index.core import get_response_synthesizer
+
+response_synthesizer = get_response_synthesizer(response_mode="compact")
+query_engine = create_query_engine(index, mode="query", response_synthesizer=response_synthesizer)
+
+input_component = InputComponent()
+chain = [input_component, query_engine, Settings.llm]
+query_pipeline = create_query_pipeline(chain)
+query_pipeline.run(input="What do the poems teach about one should think about success and failure?")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-rag-llamaindex-022-4-5-prompt-engineering-for-rag">← Previous</a><span class="rev-pos">23 / 63</span><a href="#q-rag-llamaindex-024-4-7-data-preparation-for-rag">Next →</a></nav>
+    </section>
+  </div>
+</details>

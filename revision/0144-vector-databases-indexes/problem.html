@@ -1,0 +1,80 @@
+<details class="question" id="q-vector-databases-027-indexes" data-group="vector-databases" data-sec="vector-databases-s028">
+  <summary>
+    <span class="q-title">Indexes</span>
+    <span class="q-meta">
+      <span class="tag">Vector Databases</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Vector Databases › 6. Partitions and indexes › Indexes</p>
+      <ul>
+        <li>Speed up retrieval. <strong>One index per field; no composite indexes.</strong> Scalar indexes (RDBMS-like) and vector indexes (ANN).</li>
+        <li>A <strong>vector index must exist and the collection must be loaded</strong> before vector search.</li>
+      </ul>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Index</th><th>Dataset</th><th>Recall</th><th>Speed</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>FLAT</td><td>small (&lt;10K)</td><td>100%</td><td>slow</td><td>brute force, exact</td></tr>
+            <tr><td>IVF_FLAT</td><td>large</td><td>high (not 100%)</td><td>fast</td><td><strong>most popular</strong>, balanced</td></tr>
+            <tr><td>IVF_SQ8</td><td>large</td><td>high</td><td>faster</td><td>less memory</td></tr>
+            <tr><td>HNSW</td><td>large</td><td>very high</td><td>very fast</td><td>higher memory</td></tr>
+            <tr><td>GPU_IVF_FLAT</td><td>large</td><td>high</td><td>very fast</td><td>needs GPU deployment</td></tr>
+            <tr><td>IVF_PQ</td><td>very large (&gt;1M, per Best Practices lesson)</td><td></td><td></td><td>compressed</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# IVF_FLAT (most common). nlist = number of clusters; nprobe = clusters searched at query time
+index_params = {"metric_type": "L2", "index_type": "IVF_FLAT", "params": {"nlist": 1024}}
+collection.create_index(field_name="desc_embedding", index_params=index_params)
+search_params = {"metric_type": "L2", "params": {"nprobe": 10}}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# FLAT (exact)
+{"metric_type": "L2", "index_type": "FLAT", "params": {}}
+
+# HNSW: M = max connections per layer, efConstruction = build-time depth, ef = search-time depth
+{"metric_type": "COSINE", "index_type": "HNSW", "params": {"M": 16, "efConstruction": 200}}
+{"metric_type": "COSINE", "params": {"ef": 64}}           # search params
+
+# GPU
+{"metric_type": "L2", "index_type": "GPU_IVF_FLAT", "params": {"nlist": 1024}}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Scalar indexes
+collection.create_index(field_name="title", index_params={"index_type": "TRIE"})          # strings
+collection.create_index(field_name="course_id", index_params={"index_type": "STL_SORT"})  # numerics
+        </script>
+      </div>
+      <p><strong>nlist / nprobe trade-off</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Setting</th><th>Effect</th></tr></thead>
+          <tbody>
+            <tr><td>Higher nlist</td><td>faster search, lower recall (use for large datasets: 4096+)</td></tr>
+            <tr><td>Lower nlist</td><td>slower, higher recall (small datasets: 128-512); 1024-2048 general</td></tr>
+            <tr><td>Higher nprobe</td><td>better recall, slower (5 = fast, 10 = balanced, 20 = higher recall)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Same <code>metric_type</code> must be used for the index and the search.</p>
+      <p><strong>Pre-search checklist</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+collection.create_index("embedding", index_params)
+utility.index_building_progress("collection_name")   # {'total_rows': 5, 'indexed_rows': 5, 'pending_index_rows': 0}
+collection.load()
+results = collection.search(...)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-vector-databases-026-partitions">← Previous</a><span class="rev-pos">27 / 69</span><a href="#q-vector-databases-028-7-data-operations">Next →</a></nav>
+    </section>
+  </div>
+</details>

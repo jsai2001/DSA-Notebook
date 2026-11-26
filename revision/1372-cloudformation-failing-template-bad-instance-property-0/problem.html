@@ -1,0 +1,69 @@
+<details class="question" id="q-cloudformation-045-failing-template-bad-instance-property-0" data-group="cloudformation" data-sec="cloudformation-s046">
+  <summary>
+    <span class="q-title">Failing template: bad instance property (03_04)</span>
+    <span class="q-meta">
+      <span class="tag">AWS CloudFormation</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AWS CloudFormation › 7. Multiple Related Resources › Failing template: bad instance property (03_04)</p>
+      <p>This version drops the EIP and association and adds <code>AssociatePublicIpAddress: true</code> directly on the instance. That property is not valid at that level, so stack creation fails and demonstrates rollback.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="YAML">
+AWSTemplateFormatVersion: 2010-09-09
+Description: |
+  This template creates a single EC2 instance with a security group allowing HTTP traffic,
+  installs and starts Nginx via UserData, and outputs the public IP address.
+Parameters:
+  MyInstanceType:
+    Description: Choose from a few t3 instance types
+    Type: String
+    Default: t3.micro
+    AllowedValues:
+      - t3.micro
+      - t3.small
+      - t3.medium
+      - t3.large
+  MyImageId:
+    Description: Enter the value of the base AMI for this instance.
+    Type: String
+    Default: ami-05b10e08d247fb927
+Resources:
+  MyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref MyImageId
+      InstanceType: !Ref MyInstanceType
+      SecurityGroupIds:
+        - !Ref MySecurityGroup
+      AssociatePublicIpAddress: true
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          yum update -y
+          yum install -y nginx
+          systemctl enable nginx
+          systemctl start nginx
+      Tags:
+        - Key: Name
+          Value: MyNginxServer
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow HTTP traffic from world
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+Outputs:
+  PublicIP:
+    Description: Public IP of the EC2 instance
+    Value: !GetAtt MyInstance.PublicIp
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-cloudformation-044-update-second-instance-and-https-03-03">← Previous</a><span class="rev-pos">45 / 72</span><a href="#q-cloudformation-046-s3-website-bucket-template">Next →</a></nav>
+    </section>
+  </div>
+</details>

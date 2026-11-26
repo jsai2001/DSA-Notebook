@@ -1,0 +1,72 @@
+<details class="question" id="q-advanced-rag-005-three-chunking-parameters" data-group="advanced-rag" data-sec="advanced-rag-s005">
+  <summary>
+    <span class="q-title">Three chunking parameters</span>
+    <span class="q-meta">
+      <span class="tag">Advanced RAG</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Advanced RAG › 2. Preprocessing: Chunking, Embeddings, Metadata › Three chunking parameters</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Parameter</th><th>Meaning</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Chunk size</strong></td><td>Characters per chunk</td><td>Depends on data structure. Start at ~100 words / ~500 chars (a paragraph). May be a hard limit or a guideline depending on the method.</td></tr>
+            <tr><td><strong>Chunk overlap</strong></td><td>Characters repeated between consecutive chunks</td><td>Carries context across chunks (last sentence of the previous chunk)</td></tr>
+            <tr><td><strong>Special characters (separators)</strong></td><td>Characters to split on (periods, newlines)</td><td>Relax size limits so chunks end at natural boundaries</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+document = """Retrieval Augmented Generation (RAG) is a technique that combines 
+information retrieval with text generation. It allows LLMs to access external 
+knowledge bases to provide more accurate and up-to-date responses.
+
+RAG works by first converting documents into vector embeddings. When a user 
+asks a question, the question is also converted into an embedding. The vector 
+database finds the most similar document chunks and passes them as context 
+to the LLM.
+
+This approach solves the knowledge cutoff problem of LLMs and reduces 
+hallucinations by grounding responses in actual data."""
+
+# Chunk size: 200 chars, Overlap: 50 chars
+# Special characters: split on paragraphs first, then sentences
+splitter = RecursiveCharacterTextSplitter(
+    chunk_size=200,
+    chunk_overlap=50,
+    separators=["\n\n", "\n", ". ", " ", ""]
+)
+chunks = splitter.split_text(document)
+for i, chunk in enumerate(chunks):
+    print(f"Chunk {i} ({len(chunk)} chars): {chunk[:80]}...")
+        </script>
+      </div>
+      <p><strong>How separators work</strong>: the list is a priority order.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+separators = [
+    "\n\n",  # First try: split on double newlines (paragraphs)
+    "\n",    # Then: single newlines
+    ". ",    # Then: sentence boundaries
+    " ",     # Then: word boundaries
+    ""       # Last resort: character-level split
+]
+        </script>
+      </div>
+      <p>If a chunk exceeds <code>chunk_size</code> without hitting a separator, the splitter relaxes the size limit and continues to the next separator. Result: more coherent chunks, slightly larger.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Example: chunk_size=500, but paragraph is 520 chars
+# With separators=["\n\n", ". "], it keeps the full paragraph
+# instead of cutting at exactly 500 characters mid-sentence
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-advanced-rag-004-chunking-considerations-the-three-c-s">← Previous</a><span class="rev-pos">5 / 33</span><a href="#q-advanced-rag-006-3-1-document-data-papers-reports-docs-bl">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,101 @@
+<details class="question" id="q-az-900-021-resources-resource-groups-management-gro" data-group="az-900" data-sec="az-900-s018">
+  <summary>
+    <span class="q-title">Resources, resource groups, management groups</span>
+    <span class="q-meta">
+      <span class="tag">AZ-900</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AZ-900 › 5. Core architecture: regions, zones, resources › Resources, resource groups, management groups</p>
+      <ul>
+        <li><strong>Resource</strong>: any entity you create (VM, web app, database, storage).</li>
+        <li><strong>Resource group (RG)</strong>: a logical container. Every resource is in <strong>exactly one</strong> RG.
+          <ul>
+            <li>Benefits: per-group cost view, delete the group to delete everything, tag the group and filter invoices by tag, export as an ARM template to redeploy elsewhere.</li>
+          </ul>
+        </li>
+        <li><strong>Management group</strong>: organizes <strong>subscriptions</strong>. It can contain subscriptions and other (nested) management groups, but not resource groups or resources.</li>
+      </ul>
+      <p>Hierarchy: Management groups → Subscriptions → Resource groups → Resources. Organize by department, project or environment as you like.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Create a resource group
+az group create --name myProjectRG --location eastus
+
+# Create resources inside it
+az vm create --resource-group myProjectRG --name myVM --image Ubuntu2204 --size Standard_B2s --generate-ssh-keys
+az storage account create --name mystorage123 --resource-group myProjectRG --location eastus --sku Standard_LRS
+
+# Tag a resource group for billing
+az group update --name myProjectRG --tags Department=Training Project=AZ900
+
+# List all resources in a group
+az resource list --resource-group myProjectRG --output table
+
+# Delete EVERYTHING in one step — resource group + all resources inside
+az group delete --name myProjectRG --yes --no-wait
+
+# Export as ARM template for redeployment
+az group export --name myProjectRG > myProjectRG-template.json
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Python SDK — manage resource groups
+from azure.identity import DefaultAzureCredential
+from azure.mgmt.resource import ResourceManagementClient
+
+credential = DefaultAzureCredential()
+client = ResourceManagementClient(credential, "<subscription-id>")
+
+# Create
+client.resource_groups.create_or_update("myProjectRG", {"location": "eastus", "tags": {"Department": "Training"}})
+
+# List all resource groups
+for rg in client.resource_groups.list():
+    print(f"{rg.name} ({rg.location}) - Tags: {rg.tags}")
+
+# Delete
+client.resource_groups.begin_delete("myProjectRG")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Text">
+Root Management Group
+├── Sales Management Group
+│   ├── Sales Subscription 1
+│   └── Sales Subscription 2
+├── IT Management Group
+│   ├── IT Subscription 1
+│   └── Dev Management Group        ← nested management group
+│       ├── Dev Subscription 1
+│       └── Dev Subscription 2
+└── Training Management Group
+    └── Training Subscription 1
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Create a management group
+az account management-group create --name SalesDept --display-name "Sales Department"
+
+# Create a nested management group
+az account management-group create --name DevTeam --display-name "Dev Team" --parent SalesDept
+
+# Move a subscription into a management group
+az account management-group subscription add \
+  --name SalesDept \
+  --subscription "<subscription-id>"
+
+# List management groups
+az account management-group list --output table
+
+# Show hierarchy
+az account management-group show --name SalesDept --expand --recurse
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-az-900-020-data-centers">← Previous</a><span class="rev-pos">21 / 66</span><a href="#q-az-900-022-6-compute-and-networking">Next →</a></nav>
+    </section>
+  </div>
+</details>

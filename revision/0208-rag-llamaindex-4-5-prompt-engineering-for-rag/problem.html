@@ -1,0 +1,51 @@
+<details class="question" id="q-rag-llamaindex-022-4-5-prompt-engineering-for-rag" data-group="rag-llamaindex" data-sec="rag-llamaindex-s020">
+  <summary>
+    <span class="q-title">4.5 Prompt engineering for RAG</span>
+    <span class="q-meta">
+      <span class="tag">RAG with LlamaIndex</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RAG with LlamaIndex › 4. Introduction to RAG: Pipelines, Prompts, Data Prep › 4.5 Prompt engineering for RAG</p>
+      <p>Every query engine has default prompt templates; inspect them with <code>get_prompts()</code>, replace one with <code>update_prompts()</code>. The key that controls the answer-generation prompt is <code>response_synthesizer:text_qa_template</code>, with placeholders <code>{context_str}</code> and <code>{query_str}</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from utils import display_prompt_dict, create_query_engine
+
+query_engine = create_query_engine(index=index, similarity_top_k=3, mode="query", return_sources=True)
+display_prompt_dict(query_engine.get_prompts())      # view default prompts
+
+from llama_index.core.prompts import PromptTemplate
+
+custom_prompt = """You are an assistant for question-answering tasks related to \
+motivational poetry. Your must reponse with an original Haiku style poem.
+
+Use the following pieces of retrieved context to answer the user's query:
+
+---------------------\n
+{context_str}\n
+---------------------\n
+
+Query: {query_str}
+"""
+custom_prompt_template = PromptTemplate(custom_prompt)
+
+query_engine.update_prompts(
+    {"response_synthesizer:text_qa_template": custom_prompt_template}
+)
+
+# Plug the engine into a query pipeline
+from utils import create_query_pipeline
+from llama_index.core.query_pipeline import InputComponent
+
+input_component = InputComponent()
+chain = [input_component, query_engine]
+query_pipeline = create_query_pipeline(chain)
+response = query_pipeline.run(input="If you keep your head when all around you are losing their cool and blaming it on you")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-rag-llamaindex-021-4-4-helper-utilities-helpers-utils-py">← Previous</a><span class="rev-pos">22 / 63</span><a href="#q-rag-llamaindex-023-4-6-response-synthesizers-response-modes">Next →</a></nav>
+    </section>
+  </div>
+</details>

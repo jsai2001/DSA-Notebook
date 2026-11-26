@@ -1,0 +1,56 @@
+<details class="question" id="q-autogen-014-agents" data-group="autogen" data-sec="autogen-s014">
+  <summary>
+    <span class="q-title">Agents</span>
+    <span class="q-meta">
+      <span class="tag">AutoGen</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AutoGen › 6. Nested Chats (Reflection pattern) › Agents</p>
+      <p><code>AssistantAgent</code> is used (LLM assistant customized via system message).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import autogen
+from autogen import AssistantAgent
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+llm_config = {"model": "gpt-4o", "api_key": os.getenv("OPENAI_API_KEY")}
+
+writer = AssistantAgent(
+    name="writer",
+    system_message="""You are a professional content writer.
+    Your role is to create engaging, well-structured content
+    based on the given topic.""",
+    llm_config=llm_config
+)
+
+task = """Write a concise but engaging blog post about GPUs."""
+
+# Test writer alone
+reply = writer.generate_reply(messages=[{"content": task, "role": "user"}])
+print(reply)
+
+reviewer = AssistantAgent(
+    name="reviewer",
+    system_message="""You are a content reviewer.
+    Provide constructive feedback on writing quality,
+    clarity, and engagement.""",
+    llm_config=llm_config,
+    is_termination_msg=lambda msg: "TERMINATE" in msg.get("content", "")
+)
+
+# Simple (non-nested) interaction: reviewer asks writer, then gives feedback
+reviewer.initiate_chat(
+    recipient=writer,
+    message=task,
+    summary_method="last_msg"
+)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-autogen-013-6-nested-chats-reflection-pattern">← Previous</a><span class="rev-pos">14 / 34</span><a href="#q-autogen-015-specialized-reviewers">Next →</a></nav>
+    </section>
+  </div>
+</details>

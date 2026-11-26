@@ -1,0 +1,41 @@
+<details class="question" id="q-vector-databases-066-langchain-vector-store-abstraction-and-r" data-group="vector-databases" data-sec="vector-databases-s065">
+  <summary>
+    <span class="q-title">LangChain: vector store abstraction and RetrievalQA</span>
+    <span class="q-meta">
+      <span class="tag">Vector Databases</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Vector Databases › 13. Ecosystem, frameworks and next steps › LangChain: vector store abstraction and RetrievalQA</p>
+      <p>LangChain gives one interface across stores (and simplifies chains, retrievers, orchestration).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain.vectorstores import Milvus, Pinecone, Chroma
+from langchain.embeddings import OpenAIEmbeddings
+
+embeddings = OpenAIEmbeddings()
+vector_stores = {
+    "milvus": Milvus(embeddings, connection_args={"host": "localhost", "port": "19530"}),
+    "chroma": Chroma(embedding_function=embeddings),
+    "pinecone": Pinecone.from_existing_index("index-name", embeddings)
+}
+def search_documents(query, store_name="milvus"):
+    return vector_stores[store_name].similarity_search(query, k=3)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain.chains import RetrievalQA
+from langchain.llms import OpenAI
+
+llm = OpenAI(temperature=0)
+retriever = vector_stores["milvus"].as_retriever(search_kwargs={"k": 3})
+qa_chain = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever)
+response = qa_chain.run("What is the main topic?")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-vector-databases-065-alternative-vector-dbs">← Previous</a><span class="rev-pos">66 / 69</span><a href="#q-vector-databases-067-llamaindex">Next →</a></nav>
+    </section>
+  </div>
+</details>

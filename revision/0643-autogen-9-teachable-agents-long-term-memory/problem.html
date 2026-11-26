@@ -1,0 +1,85 @@
+<details class="question" id="q-autogen-027-9-teachable-agents-long-term-memory" data-group="autogen" data-sec="autogen-s026">
+  <summary>
+    <span class="q-title">9. Teachable Agents (Long-term Memory) (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">AutoGen</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AutoGen › 9. Teachable Agents (Long-term Memory)</p>
+      <p><strong>Problem with standard LLM assistants:</strong> memory is lost when the chat ends, in-context learning is not persistent, context windows fill up, and users repeat instructions every session.</p>
+      <p><strong>Teachable agent:</strong> learns from user interaction and keeps <strong>memos</strong> in a <strong>vector database (ChromaDB)</strong> that survives restarts. A <code>Teachability</code> capability object is added to a <code>ConversableAgent</code>. Flow: teach (fact/preference/skill) → memo embedded and stored → later query is vectorized → similarity search retrieves relevant memos → response uses them.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Learnable type</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td>Facts</td><td>"My birthday is June 15"</td></tr>
+            <tr><td>Preferences</td><td>"I prefer bullet point summaries"</td></tr>
+            <tr><td>Skills</td><td>"Always validate input before processing"</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Feature</th><th>Standard agent</th><th>Teachable agent</th></tr></thead>
+          <tbody>
+            <tr><td>Memory</td><td>Single session</td><td>Persistent</td></tr>
+            <tr><td>Personalization</td><td>None</td><td>Grows over time</td></tr>
+            <tr><td>Instruction repetition</td><td>Every session</td><td>One-time teaching</td></tr>
+            <tr><td>Context</td><td>Limited window</td><td>Extended via DB</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+pip install "pyautogen[teachable]"
+        </script>
+      </div>
+      <p>(installs AutoGen, ChromaDB, and teachability dependencies)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from autogen import ConversableAgent, UserProxyAgent
+from autogen.agentchat.contrib.capabilities import Teachability
+
+teachable_agent = ConversableAgent(
+    name="teachable_agent",
+    llm_config=llm_config
+)
+
+teachability = Teachability(
+    reset_db=False,                              # True: clear all memory; False: load existing
+    path_to_db_dir="./tmp/teachable_agent_db"    # database location
+)
+
+teachability.add_to_agent(teachable_agent)
+
+user = UserProxyAgent(
+    name="user",
+    human_input_mode="ALWAYS",       # interactive chat
+    code_execution_config=False
+)
+
+teachable_agent.initiate_chat(
+    user,
+    message="Hi, I am a teachable user assistant. What's on your mind?"
+)
+        </script>
+      </div>
+      <p>Teaching a fact: <em>"My name is Harshit and I like miso ramen."</em> → agent stores name and preference.</p>
+      <p>Memory across sessions:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Session 1 (teaching)
+teachability = Teachability(reset_db=True)   # start fresh
+# User teaches: "My name is Harshit"
+
+# Session 2 (retrieval)
+teachability = Teachability(reset_db=False)  # prints "Loading memory from disk"
+# User: "What's my name?"  -> "Hello, Harshit! How can I assist you today?"
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-autogen-026-custom-functions-reduce-hallucination-re">← Previous</a><span class="rev-pos">27 / 34</span><a href="#q-autogen-028-9-teachable-agents-long-term-memory">Next →</a></nav>
+    </section>
+  </div>
+</details>

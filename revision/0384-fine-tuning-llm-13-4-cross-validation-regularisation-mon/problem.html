@@ -1,0 +1,98 @@
+<details class="question" id="q-fine-tuning-llm-055-13-4-cross-validation-regularisation-mon" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s041">
+  <summary>
+    <span class="q-title">13.4 Cross-validation, regularisation, monitoring (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 13. Tuning LoRA: Rank, Overfitting, Hyperparameters › 13.4 Cross-validation, regularisation, monitoring</p>
+      <p>K-fold CV over candidate ranks:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def cross_validate_lora(model, dataset, k_folds=5, rank_candidates=[4, 8, 16]):
+    """Cross-validate LoRA configurations"""
+    from sklearn.model_selection import KFold
+
+    results = {}
+
+    # Split dataset
+    kfold = KFold(n_splits=k_folds, shuffle=True, random_state=42)
+
+    for rank in rank_candidates:
+        fold_scores = []
+
+        for fold, (train_idx, val_idx) in enumerate(kfold.split(dataset)):
+            print(f"Rank {rank}, Fold {fold+1}/{k_folds}")
+
+            # Create fold datasets
+            train_fold = dataset.select(train_idx)
+            val_fold = dataset.select(val_idx)
+
+            # Configure LoRA
+            lora_config = LoraConfig(r=rank, lora_alpha=rank*2)
+            lora_model = get_peft_model(model, lora_config)
+
+            # Train and evaluate
+            train_model(lora_model, train_fold, epochs=3)
+            score = evaluate_model(lora_model, val_fold)
+            fold_scores.append(score)
+
+        results[rank] = {
+            'mean_score': np.mean(fold_scores),
+            'std_score': np.std(fold_scores),
+            'fold_scores': fold_scores
+        }
+
+    # Find best rank
+    best_rank = max(results.keys(), key=lambda r: results[r]['mean_score'])
+
+    return {
+        'results': results,
+        'best_rank': best_rank,
+        'best_score': results[best_rank]['mean_score']
+    }
+        </script>
+      </div>
+      <p>L1/L2 penalties applied only to the LoRA matrices:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def apply_lora_regularization(model, l1_lambda=0.01, l2_lambda=0.001):
+    """Apply regularization specifically to LoRA parameters"""
+
+    def lora_regularization_loss():
+        l1_loss = 0
+        l2_loss = 0
+
+        for name, param in model.named_parameters():
+            if 'lora_A' in name or 'lora_B' in name:
+                l1_loss += torch.sum(torch.abs(param))
+                l2_loss += torch.sum(param ** 2)
+
+        return l1_lambda * l1_loss + l2_lambda * l2_loss
+
+    return lora_regularization_loss
+
+# Usage in training loop
+def train_with_regularization(model, train_data, regularization_fn):
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
+
+    for batch in train_data:
+        optimizer.zero_grad()
+
+        outputs = model(**batch)
+        base_loss = outputs.loss
+        reg_loss = regularization_fn()
+
+        total_loss = base_loss + reg_loss
+        total_loss.backward()
+        optimizer.step()
+
+        print(f"Base Loss: {base_loss:.4f}, Reg Loss: {reg_loss:.4f}")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-054-13-3-learning-rate-batch-size-epochs">← Previous</a><span class="rev-pos">55 / 74</span><a href="#q-fine-tuning-llm-056-13-4-cross-validation-regularisation-mon">Next →</a></nav>
+    </section>
+  </div>
+</details>

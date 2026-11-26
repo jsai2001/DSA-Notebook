@@ -1,0 +1,87 @@
+<details class="question" id="q-langgraph-027-4-6-extras-from-the-lesson-file" data-group="langgraph" data-sec="langgraph-s018">
+  <summary>
+    <span class="q-title">4.6 Extras from the lesson file (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 4. Product Q&amp;A Chatbot (function tool + retriever tool + memory) › 4.6 Extras from the lesson file</p>
+      <p>Manual context injection (history stuffed into the prompt), the pre-checkpointer way to support follow-ups:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def contextual_chat(self, user_question: str) -> str:
+    """Chat with conversation context"""
+    # Add recent conversation context
+    context = ""
+    if len(self.conversation_history) > 0:
+        recent_history = self.conversation_history[-4:]  # Last 2 exchanges
+        context = f"Recent conversation: {recent_history}\n\n"
+
+    enhanced_question = f"{context}Current question: {user_question}"
+
+    inputs = {"messages": [HumanMessage(content=enhanced_question)]}
+    result = self.agent.invoke(inputs)
+
+    response = result["messages"][-1].content
+
+    # Update history
+    self.conversation_history.append({"role": "user", "content": user_question})
+    self.conversation_history.append({"role": "assistant", "content": response})
+
+    return response
+        </script>
+      </div>
+      <p>Tool-level timing decorator:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import time
+
+def monitored_tool_execution(tool_func):
+    """Decorator to monitor tool performance"""
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = tool_func(*args, **kwargs)
+        end_time = time.time()
+
+        print(f"Tool {tool_func.__name__} executed in {end_time - start_time:.2f}s")
+        return result
+
+    return wrapper
+
+# Apply to tools
+@monitored_tool_execution
+@tool
+def monitored_get_laptop_price(laptop_name: str) -> str:
+    """Monitored version of price lookup tool"""
+    # Same implementation as get_laptop_price
+    matches = laptop_pricing_df[
+        laptop_pricing_df['laptop_name'].str.contains(laptop_name, case=False, na=False)
+    ]
+    return str(matches.iloc[0]['price']) if not matches.empty else "-1"
+        </script>
+      </div>
+      <p>Test tools alone first; retriever tools take <code>.invoke({"query": ...})</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def test_tools():
+    """Test individual tools"""
+    print("=== Testing Tools ===")
+
+    # Test price tool
+    price_result = get_laptop_price("MacRight")
+    print(f"Price lookup test: {price_result}")
+
+    # Test retriever tool
+    feature_result = get_product_features.invoke({"query": "MacRight specifications"})
+    print(f"Feature retrieval test: {len(feature_result)} results found")
+
+# Run tests
+test_tools()
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-026-4-5-execution-streaming-vs-request-respo">← Previous</a><span class="rev-pos">27 / 55</span><a href="#q-langgraph-028-4-6-extras-from-the-lesson-file">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,64 @@
+<details class="question" id="q-flask-023-update-and-delete" data-group="flask" data-sec="flask-s024">
+  <summary>
+    <span class="q-title">Update and Delete</span>
+    <span class="q-meta">
+      <span class="tag">Flask</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Flask › 6. Database Operations with Flask-SQLAlchemy (CRUD) › Update and Delete</p>
+      <p>Update flow: form with a hidden record-ID field -&gt; route finds the record -&gt; modify fields -&gt; commit. Delete flow: button form carries the ID -&gt; route finds the record -&gt; <code>delete</code> -&gt; commit.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+@app.route("/users", methods=["GET", "POST"])
+def users():
+    if request.method == "POST":
+        user_id = request.form.get("user_id")
+        new_email = request.form.get("email")
+        user = User.query.get(user_id)
+        if user:
+            user.email = new_email
+            db.session.commit()
+    all_users = User.query.all()
+    return render_template("users.html", users=all_users)
+
+@app.route("/delete_user/<int:user_id>", methods=["POST"])
+def delete_user(user_id):
+    user = User.query.get(user_id)
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+    return redirect(url_for("users"))
+        </script>
+      </div>
+      <p><code>templates/users.html</code> with inline update and delete forms:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="HTML" data-esc="1">
+<h1>Registered Users</h1>
+{% for user in users %}
+<div>
+    <p>{{ user.username }} — {{ user.email }}</p>
+    <\!-- Update Form -->
+    <form method="POST" action="{{ url_for('users') }}">
+        <input type="hidden" name="user_id" value="{{ user.id }}">
+        <input type="email" name="email" placeholder="New email">
+        <button type="submit">Update</button>
+    </form>
+    <\!-- Delete Form -->
+    <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}">
+        <button type="submit">Delete</button>
+    </form>
+</div>
+{% endfor %}
+        </script>
+      </div>
+      <ul>
+        <li>Update needs no <code>db.session.add()</code>: SQLAlchemy tracks changes on already-loaded objects.</li>
+        <li>Hidden inputs pass the record ID without showing it. Delete takes the ID from the URL.</li>
+        <li>Data-modifying routes use <code>methods=["POST"]</code>, never GET.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-flask-022-read">← Previous</a><span class="rev-pos">23 / 30</span><a href="#q-flask-024-project-healthdata-model-and-create-read">Next →</a></nav>
+    </section>
+  </div>
+</details>

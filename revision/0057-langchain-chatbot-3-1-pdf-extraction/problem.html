@@ -1,0 +1,77 @@
+<details class="question" id="q-langchain-chatbot-003-3-1-pdf-extraction" data-group="langchain-chatbot" data-sec="langchain-chatbot-s004">
+  <summary>
+    <span class="q-title">3.1 PDF extraction</span>
+    <span class="q-meta">
+      <span class="tag">LangChain Chatbot</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangChain Chatbot › 3. Data collection (PDF, website) › 3.1 PDF extraction</p>
+      <p><strong>PyMuPDF (<code>fitz</code>)</strong> is the course choice: open, loop pages with <code>load_page</code> and <code>get_text("text")</code>, concatenate, close, save to a text file.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import fitz  # PyMuPDF library
+
+def extract_text_from_pdf(pdf_file_path):
+    """Extract text content from PDF file using PyMuPDF"""
+    try:
+        # Open the PDF document
+        doc = fitz.open(pdf_file_path)
+        pdf_text = ""
+        # Iterate through all pages
+        for page_num in range(doc.page_count):
+            page = doc.load_page(page_num)
+            pdf_text += page.get_text("text")
+        # Close the document
+        doc.close()
+        return pdf_text
+    except Exception as e:
+        return f"Error extracting text: {e}"
+
+# Usage example
+pdf_path = "Landon-Hotel.pdf"
+extracted_text = extract_text_from_pdf(pdf_path)
+
+# Save extracted text to file
+with open("pdf_text", "w", encoding='utf-8') as file:
+    file.write(extracted_text)
+print("PDF text extraction completed")
+        </script>
+      </div>
+      <p>(Exercise <code>01_02.py</code> is the same function.) Alternatives: PyPDF2 and LangChain <code>PyPDFLoader</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# PDF processing with PyPDF2
+import PyPDF2
+from typing import List
+
+def extract_text_from_pdf(pdf_path: str) -> str:
+    """Extract text content from PDF file"""
+    text = ""
+    with open(pdf_path, 'rb') as file:
+        pdf_reader = PyPDF2.PdfReader(file)
+        for page in pdf_reader.pages:
+            text += page.extract_text() + "\n"
+    return text.strip()
+
+# Alternative with LangChain
+from langchain_community.document_loaders import PyPDFLoader
+
+def load_pdf_with_langchain(pdf_path: str):
+    """Load PDF using LangChain loader"""
+    loader = PyPDFLoader(pdf_path)
+    documents = loader.load()
+    # Combine all pages
+    full_text = "\n".join([doc.page_content for doc in documents])
+    return full_text
+
+# Usage
+pdf_text = extract_text_from_pdf("data/document.pdf")
+print(f"Extracted {len(pdf_text)} characters from PDF")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langchain-chatbot-002-2-environment-and-api-setup">← Previous</a><span class="rev-pos">3 / 28</span><a href="#q-langchain-chatbot-004-3-2-website-extraction-web-scraping">Next →</a></nav>
+    </section>
+  </div>
+</details>

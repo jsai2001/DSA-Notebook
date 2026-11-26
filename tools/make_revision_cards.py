@@ -28,6 +28,7 @@ Flip cards (question on the front, answer on the back):
 No third-party dependencies.
 """
 import argparse
+import ast
 import html as htmllib
 import json
 import re
@@ -123,6 +124,43 @@ META_SENTENCES = [
     r"`\.gcloudignore` is gcloud",
 ]
 META_RE = re.compile(r"^[*_]*(?:" + "|".join(META_SENTENCES) + ")")
+# Cards that do not help you revise: course maps, scope and prerequisites, "next steps", resource lists,
+# career notes, one-line course overviews. They are dropped whole (card title as shown in the deck).
+# The dropped text still counts in the lost-content check, so nothing else can disappear unnoticed.
+DROP_CARDS = {
+    "Angular": ["1. Course App, Prerequisites and Project Structure"],
+    "LangChainChatbot": ["11. Next steps and deployment options"],
+    "VectorDatabases": ["Overview", "1. Course scope and prerequisites", "Learning path and project ideas", "14. Source notes and caveats"],
+    "RAG_LlamaIndex": ["Overview"],
+    "LangGraph": ["Overview", "1. Setup & Course Scope"],
+    "HuggingFace": ["Overview"],
+    "FineTuningLLM": ["Overview", "1. Course Map & Core Stack"],
+    "MCP": ["Path forward"],
+    "MLOps": ["Overview"],
+    "AdvancedRAG": ["Overview", "12. Resources"],
+    "AutoGen": ["Overview", "Career notes"],
+    "CrewAI": ["Overview", "12. Skills Mapping and Further Learning"],
+    "GCP": ["Overview", "10. Next Steps"],
+    "GCP_ML": ["13. Learning Path and Resources"],
+    "AZ900": ["Overview"],
+    "MLFoundations": ["Overview"],
+    "MLAlgorithms": ["Overview"],
+    "PyTorchHandsOn": ["Overview", "11. Next Steps"],
+    "ApacheSpark": ["8. Next Steps"],
+    "Django": ["Overview", "11. Where to Go Next"],
+    "Flask": ["Overview", "9. Next Steps"],
+    "RestfulAPI": ["Overview"],
+    "GraphQL": ["Overview", "11. Next Steps"],
+    "CloudFormation": ["What to learn next"],
+    "AgenticAI": ["Recommended next steps"],
+}
+# Sentences about the instructor or the course's own follow-ups. Removed wherever they appear.
+GLOBAL_META_RE = re.compile(
+    r"^[*_\-\s]*(?:Instructors?\b|Course flow:|Course arc:|Next steps? from the (?:course|instructor)|"
+    r"Suggested next steps from the course|Recommended LinkedIn Learning|Next step from the course)",
+    re.I,
+)
+
 # Whole sections that only say something about the notes (heading text as written in the notes).
 META_SECTIONS = {
     "LangChainLevelUp": ["9. LLM Fine-Tuning with OpenAI Tools and Functions"],
@@ -130,31 +168,47 @@ META_SECTIONS = {
 SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+(?=[A-Z`*(\[\"“])")
 
 
-def drop_meta(blocks, dropped):
+def drop_meta(blocks, dropped, rx=None):
     """Return blocks without the meta sentences; the removed text is appended to `dropped`."""
+    rx = rx or META_RE
     out = []
     for b in blocks:
         t = b["t"]
         if t == "p":
             kept = []
             for sent in SENTENCE_SPLIT.split(b["text"]):
-                (dropped if META_RE.match(sent.strip()) else kept).append(sent)
+                (dropped if rx.match(sent.strip()) else kept).append(sent)
             if kept:
                 out.append({"t": "p", "text": " ".join(kept)})
         elif t in ("ul", "ol"):
             items = []
             for item in b["items"]:
-                inner = drop_meta(item, dropped)
+                inner = drop_meta(item, dropped, rx)
                 if inner:
                     items.append(inner)
             if items:
                 out.append({**b, "items": items})
         elif t == "quote":
-            inner = drop_meta(b["blocks"], dropped)
+            inner = drop_meta(b["blocks"], dropped, rx)
             if inner:
                 out.append({"t": "quote", "blocks": inner})
         else:
             out.append(b)
+    return out
+
+
+def code_blocks_in(blocks):
+    """Every code block (as normalised text) in some blocks, including inside lists and quotes."""
+    out = []
+    for b in blocks:
+        t = b["t"]
+        if t == "code":
+            out.append(normalise(b["text"]))
+        elif t in ("ul", "ol"):
+            for item in b["items"]:
+                out += code_blocks_in(item)
+        elif t == "quote":
+            out += code_blocks_in(b["blocks"])
     return out
 
 
@@ -708,7 +762,7 @@ def card_actual(card_html):
     return toks, [normalise(s) for s in scripts]
 
 
-def verify(course_files, generated, dropped):
+def verify(course_files, generated, dropped, dropped_code=None):
     ok = True
     for prefix, path in course_files:
         expected, expected_codes = raw_expected(path)
@@ -724,6 +778,7 @@ def verify(course_files, generated, dropped):
             actual_codes += codes
         missing = expected - actual
         extra = actual - expected
+        expected_codes = list((Counter(expected_codes) - Counter((dropped_code or {}).get(prefix, []))).elements())
         code_missing = Counter(expected_codes) - Counter(actual_codes)
         code_extra = Counter(actual_codes) - Counter(expected_codes)
         status = "ok" if not (missing or extra or code_missing or code_extra) else "MISMATCH"
@@ -772,25 +827,33 @@ def card_html(course, number, idx, total, title, crumb, blocks, prev_id, next_id
 Q_PARA = re.compile(r"^\*\*Q\w*[.:]\s*(.+?)\*\*\s*(.*)$", re.S)
 
 
-def make_course(course, path, dropped=None, flips=None):
+def make_course(course, path, dropped=None, flips=None, dropped_code=None, dropped_titles=None):
     """Plan the cards of one course. Sentences removed as 'about the notes' go to `dropped`;
     every "**Q. ...**" question found goes to `flips` as {card, q, blocks}."""
     dropped = [] if dropped is None else dropped
+    dropped_code = [] if dropped_code is None else dropped_code
+    dropped_titles = set() if dropped_titles is None else dropped_titles
     blocks = parse_blocks(path.read_text(encoding="utf-8").split("\n"))
     gname = course[2]
     sections = build_sections(blocks)
     last_h2 = sections[-1][0] if sections else None
     skip = set(META_SECTIONS.get(course[0], []))
+    drop_cards = set(DROP_CARDS.get(course[0], []))
     planned = []  # (title, crumb, blocks, section number)
     for sec_idx, (h2, h3, sec_blocks) in enumerate(sections, 1):
-        if h2 in skip:
+        base = plain(h3 or h2 or "Overview")
+        if h2 in skip or base in drop_cards:
             dropped.append(flat_text(sec_blocks))
+            dropped_code += code_blocks_in(sec_blocks)
+            dropped_titles.add(base)
             continue
         if h2 is None or h2 == last_h2:
             sec_blocks = drop_meta(sec_blocks, dropped)
             if not sec_blocks:
                 continue
-        base = plain(h3 or h2 or "Overview")
+        sec_blocks = drop_meta(sec_blocks, dropped, GLOBAL_META_RE)
+        if not sec_blocks:
+            continue
         crumb_parts = [gname] + [plain(x) for x in (h2, h3) if x]
         crumb = " › ".join(dict.fromkeys(crumb_parts)) if h2 or h3 else f"{gname} › Overview"
         first_card = len(planned)
@@ -851,11 +914,39 @@ def parse_flip_file(path):
         raise SystemExit(f"{path.name}: a code block is never closed")
     out = []
     for it in items:
-        q = " ".join(x.strip() for x in it["q"]).strip()
+        qb = parse_blocks(it["q"])
+        lead = []
+        while qb and qb[0]["t"] == "p":
+            lead.append(qb.pop(0)["text"])
+        q = " ".join(lead).strip()
         if not q or not any(x.strip() for x in it["a"]):
             raise SystemExit(f"{path.name}:{it['line']}: empty question or answer")
-        out.append({"card": it["card"], "q": q, "blocks": parse_blocks(it["a"]), "line": it["line"]})
+        if any(b["t"] != "code" for b in qb):
+            raise SystemExit(f"{path.name}:{it['line']}: a question is a sentence, optionally followed by code blocks (nothing else)")
+        out.append({"card": it["card"], "q": q, "qblocks": qb, "blocks": parse_blocks(it["a"]), "line": it["line"]})
     return out
+
+
+def python_problems(blocks):
+    """Syntax errors in python code blocks. A block with a line that is only '...' (a cut excerpt) is not checked."""
+    bad = []
+    stack = list(blocks)
+    while stack:
+        b = stack.pop(0)
+        t = b["t"]
+        if t == "code" and b["lang"] in ("python", "py"):
+            text = textwrap.dedent(b["text"])
+            if any(l.strip() in ("...", "# ...") for l in text.split("\n")):
+                continue
+            try:
+                ast.parse(text)
+            except SyntaxError as e:
+                bad.append(f"{e.msg} (line {e.lineno}): {(e.text or '').strip()[:60]}")
+        elif t in ("ul", "ol"):
+            stack += [sub for item in b["items"] for sub in item]
+        elif t == "quote":
+            stack += b["blocks"]
+    return bad
 
 
 def note_code_lines(path):
@@ -920,14 +1011,19 @@ def main():
     number = 0
     generated = {}  # prefix -> [card html]
     dropped = {}  # prefix -> [sentences left out on purpose]
+    dropped_code = {}  # prefix -> [code blocks of cards dropped on purpose]
+    dropped_titles = {}  # prefix -> {titles of cards dropped on purpose}
     folders = []  # (folder name, html)
     sizes = []
     flip_out = {}  # course group id -> [flip items]
+    syntax_warnings = []  # python blocks in flip questions or answers that do not parse
     flip_report = []  # (course name, cards, cards with a flip card, auto count, hand-written count)
     for course, (_, path) in zip(selected, course_files):
         dropped[course[0]] = []
+        dropped_code[course[0]] = []
+        dropped_titles[course[0]] = set()
         auto = []
-        planned = make_course(course, path, dropped[course[0]], auto)
+        planned = make_course(course, path, dropped[course[0]], auto, dropped_code[course[0]], dropped_titles[course[0]])
         total = len(planned)
         ids = []
         names = []
@@ -950,13 +1046,18 @@ def main():
         titles = {}
         for idx, (title, _c, _b, _s) in enumerate(planned):
             titles.setdefault(title, []).append(idx)
-        rows = [(it["card"], 0, n, it["q"], it["blocks"], False) for n, it in enumerate(auto)]
+        rows = [(it["card"], 0, n, it["q"], it["blocks"], False, []) for n, it in enumerate(auto)]
+        knowledge_code = 0
+        skipped_flips = 0
         hand_files = sorted(flips_dir.glob(f"{course[0]}_Flip_Cards*.md"))
         hand_items = [dict(it, file=f.name) for f in hand_files for it in parse_flip_file(f)]
         hand = hand_files[0] if hand_files else flips_dir / f"{course[0]}_Flip_Cards.md"
         known_code = note_code_lines(path) if hand_items else set()
         for n, it in enumerate(hand_items):
             where = titles.get(it["card"])
+            if not where and re.sub(r"\s*(\(\d+/\d+\)|\[\d+\])$", "", it["card"]) in dropped_titles[course[0]]:
+                skipped_flips += 1  # a question written for a card that is no longer in the deck
+                continue
             nth = re.match(r"^(.*?)\s*\[(\d+)\]$", it["card"])
             if not where and nth:
                 same = titles.get(nth.group(1)) or []
@@ -966,23 +1067,42 @@ def main():
                 raise SystemExit(f"{it.get('file', hand.name)}:{it['line']}: no card titled {it['card']!r} in {course[0]}")
             if len(where) > 1:
                 raise SystemExit(f"{it.get('file', hand.name)}:{it['line']}: the title {it['card']!r} is used by {len(where)} cards; write it as '## Card: {it['card']} [1]' (or [2], ...)")
-            missing = [l for l in code_lines_of(it["blocks"]) if l not in known_code]
-            if missing:
-                raise SystemExit(f"{it.get('file', hand.name)}:{it['line']}: code not found in the note: {missing[0][:80]!r}")
-            rows.append((where[0], 1, n, it["q"], it["blocks"], True))
+            # Code in a question or an answer may be written from general knowledge, so it is no longer limited to the
+            # note. It must at least parse (python). Code that is not in the note is only counted, for the reviewer.
+            bad = python_problems(it["blocks"] + it["qblocks"])
+            if bad:
+                syntax_warnings.append(f"{it.get('file', hand.name)}:{it['line']}: python code does not parse: {bad[0]}")
+            if any(l not in known_code for l in code_lines_of(it["blocks"] + it["qblocks"])):
+                knowledge_code += 1
+            rows.append((where[0], 1, n, it["q"], it["blocks"], True, it["qblocks"]))
         # auto items carry the card index already; hand-written ones were looked up above
-        rows = [((r[0] if isinstance(r[0], int) else titles[r[0]][0]), r[1], r[2], r[3], r[4], r[5]) for r in rows]
+        rows = [((r[0] if isinstance(r[0], int) else titles[r[0]][0]),) + tuple(r[1:]) for r in rows]
         rows.sort(key=lambda r: (r[0], r[1], r[2]))
         items = []
-        for n, (ci, _k, _n, q, blocks, hand_made) in enumerate(rows, 1):
-            items.append({
+        for n, (ci, _k, _n, q, blocks, hand_made, qblocks) in enumerate(rows, 1):
+            item = {
                 "id": f"{course[1]}-f{n:04d}",
                 "card": ids[ci],
                 "sec": f"{course[1]}-s{planned[ci][3]:03d}",
                 "q": inline(q),
                 "a": render_flip_blocks(blocks),
                 "hand": hand_made,
-            })
+            }
+            if qblocks:
+                item["qc"] = render_flip_blocks(qblocks)
+            items.append(item)
+        # the same question asked from two cards counts once: report exact repeats for the reviewer
+        seen_q, repeats = {}, []
+        for it in items:
+            key = re.sub(r"[^a-z0-9]+", " ", re.sub(r"<[^>]+>", "", it["q"]).lower()).strip()
+            if key in seen_q:
+                repeats.append((seen_q[key], it["id"], key[:70]))
+            else:
+                seen_q[key] = it["id"]
+        if repeats:
+            print(f"  {course[0]}: {len(repeats)} repeated question(s), e.g. {repeats[0][0]} and {repeats[0][1]}: {repeats[0][2]!r}")
+        if knowledge_code:
+            print(f"  {course[0]}: {knowledge_code} question(s) have code that is not in the note (general knowledge; reviewer checks it)")
         covered = len({r[0] for r in rows})
         flip_report.append((course[0], total, covered, len(auto), len(hand_items)))
         if items:
@@ -991,13 +1111,17 @@ def main():
     sizes.sort()
     if sizes:
         print(f"total {len(sizes)} cards | weight min {sizes[0]:.0f}, median {sizes[len(sizes) // 2]:.0f}, max {sizes[-1]:.0f}")
+    if syntax_warnings:
+        print(f"WARNING: {len(syntax_warnings)} python block(s) in flip cards do not parse (fix them, or mark a cut excerpt with a line that is only '...'):")
+        for w in syntax_warnings[:25]:
+            print("  " + w)
     print("Flip cards (cards that have at least one question):")
     for name, total_cards, covered, n_auto, n_hand in flip_report:
         if n_auto or n_hand:
             print(f"  {name:18} {covered:4} of {total_cards:4} cards | {n_auto:4} from the notes' questions, {n_hand:4} hand-written")
     print(f"  total: {sum(len(v) for v in flip_out.values())} flip cards in {len(flip_out)} courses")
     print("Checking nothing was lost:")
-    ok = verify(course_files, generated, dropped)
+    ok = verify(course_files, generated, dropped, dropped_code)
     for prefix, items in dropped.items():
         for text in items:
             print(f"  left out ({prefix}): {text[:150]}")

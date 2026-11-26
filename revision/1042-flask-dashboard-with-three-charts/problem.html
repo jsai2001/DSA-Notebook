@@ -1,0 +1,78 @@
+<details class="question" id="q-flask-028-dashboard-with-three-charts" data-group="flask" data-sec="flask-s029">
+  <summary>
+    <span class="q-title">Dashboard with three charts</span>
+    <span class="q-meta">
+      <span class="tag">Flask</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Flask › 7. Data Visualization with Chart.js › Dashboard with three charts</p>
+      <p>Route:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+@app.route("/dashboard")
+def dashboard():
+    all_data = HealthData.query.all()
+    dates = [d.date.strftime("%Y-%m-%d") for d in all_data]
+    exercise = [d.exercise for d in all_data]
+    meditation = [d.meditation for d in all_data]
+    sleep = [d.sleep for d in all_data]
+    return render_template("dashboard.html",
+                           dates=dates, exercise=exercise,
+                           meditation=meditation, sleep=sleep)
+        </script>
+      </div>
+      <p><code>dashboard.html</code>: one canvas per chart (unique ID), one <code>getContext</code> per canvas, one <code>new Chart</code> per canvas.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="HTML" data-esc="1">
+{% extends "base.html" %}
+{% block content %}
+<h1>Your Health Dashboard</h1>
+<canvas id="exerciseChart"></canvas>
+<canvas id="meditationChart"></canvas>
+<canvas id="sleepChart"></canvas>
+<\script>
+    const dates = {{ dates | tojson }};
+    const exerciseData = {{ exercise | tojson }};
+    const meditationData = {{ meditation | tojson }};
+    const sleepData = {{ sleep | tojson }};
+
+    const ctxExercise = document.getElementById('exerciseChart').getContext('2d');
+    const ctxMeditation = document.getElementById('meditationChart').getContext('2d');
+    const ctxSleep = document.getElementById('sleepChart').getContext('2d');
+
+    new Chart(ctxExercise, {
+        type: 'bar',
+        data: {
+            labels: dates,
+            datasets: [{
+                label: 'Exercise (minutes)',
+                data: exerciseData,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: { scales: { y: { beginAtZero: true } } }
+    });
+    // Meditation and Sleep charts: same config, different ctx/data/label/color (below)
+<\/script>
+{% endblock %}
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Chart</th><th>Canvas ID</th><th>Data</th><th>Label</th><th>Color (rgba)</th></tr></thead>
+          <tbody>
+            <tr><td>Exercise</td><td><code>exerciseChart</code></td><td><code>exerciseData</code></td><td>Exercise (minutes)</td><td>Teal <code>75, 192, 192</code></td></tr>
+            <tr><td>Meditation</td><td><code>meditationChart</code></td><td><code>meditationData</code></td><td>Meditation (minutes)</td><td>Purple <code>153, 102, 255</code></td></tr>
+            <tr><td>Sleep</td><td><code>sleepChart</code></td><td><code>sleepData</code></td><td>Sleep (hours)</td><td>Orange <code>255, 159, 64</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Fill uses alpha 0.2 and border uses alpha 1.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-flask-027-charting-database-data-single-chart">← Previous</a><span class="rev-pos">28 / 30</span><a href="#q-flask-029-8-deployment-to-vercel">Next →</a></nav>
+    </section>
+  </div>
+</details>

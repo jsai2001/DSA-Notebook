@@ -1,0 +1,41 @@
+<details class="question" id="q-hugging-face-015-5-3-model-architecture-and-freezing" data-group="hugging-face" data-sec="hugging-face-s016">
+  <summary>
+    <span class="q-title">5.3 Model architecture and freezing</span>
+    <span class="q-meta">
+      <span class="tag">Hugging Face Transformers</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Hugging Face Transformers › 5. Transfer Learning (Sentiment Model) › 5.3 Model architecture and freezing</p>
+      <p>Loading a base checkpoint copies its architecture, hyperparameters, and weights, so nothing is built from scratch. <code>num_labels</code> sets the size of the new classification head.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from transformers import TFAutoModelForSequenceClassification
+sentiment_model = TFAutoModelForSequenceClassification.from_pretrained(
+    model_name, num_labels=num_labels)
+# Print config to inspect: layers=6, attention_heads=12, dropout=0.1
+# Architecture: DistilBertForMaskedLM
+sentiment_model.get_config()
+        </script>
+      </div>
+      <p><strong>Freezing</strong> a layer means its weights are not updated in backpropagation, which keeps what the base model already learned.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Freeze first layer — base model weights won't update during training
+sentiment_model.layers[0].trainable = False
+print(sentiment_model.summary())  # First layer params shown as non-trainable
+# Unfreeze — all parameters become trainable
+sentiment_model.layers[0].trainable = True
+print(sentiment_model.summary())
+# distilbert (TFDistilBertMainLayer)  — 66,362,880 params
+# pre_classifier (Dense)              —    590,592 params
+# classifier (Dense)                  —      3,076 params
+# Total: 66,956,548 params (255.42 MB)
+        </script>
+      </div>
+      <p>Layer 0 is the DistilBERT encoder (most parameters), then <code>pre_classifier</code> and <code>classifier</code> (Dense). Layers can also be added, inserted, or removed through the <code>layers</code> object.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-hugging-face-014-5-2-tokenize-and-encode">← Previous</a><span class="rev-pos">15 / 25</span><a href="#q-hugging-face-016-5-4-train">Next →</a></nav>
+    </section>
+  </div>
+</details>

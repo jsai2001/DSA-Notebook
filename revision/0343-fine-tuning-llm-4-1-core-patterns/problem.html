@@ -1,0 +1,117 @@
+<details class="question" id="q-fine-tuning-llm-014-4-1-core-patterns" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s013">
+  <summary>
+    <span class="q-title">4.1 Core patterns</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 4. Prompt Engineering Patterns › 4.1 Core patterns</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Pattern</th><th>Idea</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Few-shot</strong></td><td>Give worked examples before the real task</td></tr>
+            <tr><td><strong>Cognitive verifier</strong></td><td>Model first asks clarifying questions, then answers using all your replies</td></tr>
+            <tr><td><strong>Question refinement</strong></td><td>Model suggests a better version of your question and asks if you want to use it</td></tr>
+            <tr><td><strong>Gameplay</strong></td><td>Turn learning into a game with rules</td></tr>
+            <tr><td><strong>Chain of thought</strong></td><td>Ask for step-by-step reasoning</td></tr>
+            <tr><td><strong>Role-based</strong></td><td>"You are a {role}..."</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def few_shot_prompt(examples, new_task):
+    prompt = ""
+    for example in examples:
+        prompt += f"Input: {example['input']}\nOutput: {example['output']}\n\n"
+    prompt += f"Input: {new_task}\nOutput:"
+    return prompt
+
+# Example usage
+examples = [
+    {"input": "The fox is quick", "output": "fox"},
+    {"input": "A dog barks loudly", "output": "dog"}
+]
+prompt = few_shot_prompt(examples, "The cat sleeps peacefully")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def cognitive_verifier_prompt(question):
+    system_prompt = """Whenever I ask a question, only ask me for additional 
+    information to clarify what I'm asking before providing a final answer. 
+    Please combine all my responses."""
+
+    return f"{system_prompt}\n\nQuestion: {question}"
+
+# Usage
+prompt = cognitive_verifier_prompt("How do I set up a CI/CD pipeline?")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def question_refinement_prompt(question):
+    system_prompt = """When I ask a question, suggest a better question 
+    and ask me if I would like to use it instead."""
+
+    return f"{system_prompt}\n\nQuestion: {question}"
+
+# Usage
+prompt = question_refinement_prompt("How can I improve my Python skills?")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def gameplay_prompt(topic):
+    return f"Create a game for me around {topic}. Give fundamental rules of the game."
+
+# Usage
+game_prompt = gameplay_prompt("Python programming")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def chain_of_thought_prompt(problem):
+    return f"""Solve this step by step:
+
+    Problem: {problem}
+
+    Let's think through this step by step:
+    1."""
+
+# Usage
+cot_prompt = chain_of_thought_prompt("What is 15% of 240?")
+        </script>
+      </div>
+      <ul>
+        <li>FLAN-T5 flavour of CoT is just <code>f"solve step by step: {problem}"</code> with <code>max_length=200</code>.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def role_based_prompt(role, task):
+    return f"You are a {role}. {task}"
+
+# Usage
+expert_prompt = role_based_prompt("Python expert", "Explain list comprehensions")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def combine_patterns(primary_pattern, secondary_pattern, content):
+    if primary_pattern == "few_shot" and secondary_pattern == "cot":
+        return f"{few_shot_prompt([], content)}\nLet's think step by step:"
+    elif primary_pattern == "cognitive_verifier" and secondary_pattern == "role":
+        return f"As an expert, {cognitive_verifier_prompt(content)}"
+    return content
+
+# Usage
+combined = combine_patterns("few_shot", "cot", "Solve this math problem")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-013-4-prompt-engineering-patterns">← Previous</a><span class="rev-pos">14 / 74</span><a href="#q-fine-tuning-llm-015-4-2-templates-and-context-management">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,90 @@
+<details class="question" id="q-fine-tuning-llm-018-5-2-generic-few-shot-tooling" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s017">
+  <summary>
+    <span class="q-title">5.2 Generic few-shot tooling (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 5. Few-Shot &amp; In-Context Learning › 5.2 Generic few-shot tooling</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def create_few_shot_prompt(task_type, examples, new_input):
+    # Build examples string
+    example_str = ""
+    for ex in examples:
+        example_str += f"{task_type}: {ex['input']}\n{ex['output']}\n\n"
+
+    # Add new input
+    full_prompt = f"{example_str}{task_type}: {new_input}"
+
+    return full_prompt
+
+# Usage for different tasks
+summarization_examples = [
+    {"input": "Short text here.", "output": "Brief summary."},
+    {"input": "Another text.", "output": "Another summary."}
+]
+
+prompt = create_few_shot_prompt("summarize", summarization_examples, "New text to summarize")
+        </script>
+      </div>
+      <p>Dynamic example selection (pick the most relevant examples; the lecture's stub just slices, "in practice use similarity metrics"):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def select_best_examples(task_type, new_input, example_pool, num_examples=2):
+    # Simple similarity-based selection (simplified)
+    selected = example_pool[:num_examples]  # In practice, use similarity metrics
+    return create_few_shot_prompt(task_type, selected, new_input)
+
+# Usage
+example_pool = [
+    {"input": "Text about animals", "output": "Animal summary"},
+    {"input": "Text about technology", "output": "Tech summary"},
+    {"input": "Text about food", "output": "Food summary"}
+]
+
+prompt = select_best_examples("summarize", "New food article", example_pool)
+        </script>
+      </div>
+      <p>Example hygiene and prompt-length control (reduce examples when the estimate exceeds the budget; ~4 characters ≈ 1 token):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def validate_examples(examples, task_type):
+    valid_examples = []
+    for ex in examples:
+        if len(ex['input']) > 10 and len(ex['output']) > 0:
+            if task_type == "summarize" and len(ex['output']) < len(ex['input']):
+                valid_examples.append(ex)
+            elif task_type == "translate" and ex['output'] != ex['input']:
+                valid_examples.append(ex)
+            else:
+                valid_examples.append(ex)
+
+    return valid_examples[:3]  # Limit to 3 best examples
+
+# Usage
+clean_examples = validate_examples(raw_examples, "summarize")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def optimize_prompt_length(examples, new_input, max_tokens=400):
+    prompt = create_few_shot_prompt("summarize", examples, new_input)
+
+    # Rough token estimation (4 chars ≈ 1 token)
+    estimated_tokens = len(prompt) // 4
+
+    if estimated_tokens > max_tokens:
+        # Reduce examples
+        reduced_examples = examples[:1]  # Keep only best example
+        prompt = create_few_shot_prompt("summarize", reduced_examples, new_input)
+
+    return prompt
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-017-5-1-notebook-few-shot-summarisation-tran">← Previous</a><span class="rev-pos">18 / 74</span><a href="#q-fine-tuning-llm-019-5-2-generic-few-shot-tooling">Next →</a></nav>
+    </section>
+  </div>
+</details>

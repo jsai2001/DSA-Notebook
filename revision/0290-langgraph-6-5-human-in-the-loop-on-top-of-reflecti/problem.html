@@ -1,0 +1,75 @@
+<details class="question" id="q-langgraph-041-6-5-human-in-the-loop-on-top-of-reflecti" data-group="langgraph" data-sec="langgraph-s027">
+  <summary>
+    <span class="q-title">6.5 Human-in-the-loop on top of reflection</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 6. Reflection: Summarizer with Reviewer › 6.5 Human-in-the-loop on top of reflection</p>
+      <p>The thread keeps memory, so later user messages act as critique and re-enter the same loop. Each turn triggers several LLM calls, so it is slow.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+#Take user feedback on the summary through a chatbot
+summary_chatbot = SummaryAgent(model, 
+                               summarizer_prompt, 
+                               reviewer_prompt,
+                               debug=False)
+user_inputs = [
+    source_content,
+    "Can you rewrite the review by focusing more on the specifications?",
+    "Can you remove details about the touchscreen?"
+]
+#Create a new thread
+config = {"configurable": {"thread_id": "thread-summarizer"}}
+#Given the number of iterations, this will take a long time.
+for input in user_inputs:
+    print(f"----------------------------------------\nUSER : {input}")
+    #Format the user message
+    user_message = {"messages":[HumanMessage(input)]}
+    #Get response from the agent
+    ai_response = summary_chatbot.summary_agent_graph.invoke(user_message,config=config)
+    #Print the response
+    print(f"\nAGENT : {ai_response['messages'][-1].content}")
+        </script>
+      </div>
+      <p>Quality check (compression ratio plus LLM rating):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def analyze_summary_quality(original_text: str, summary: str):
+    """Analyze summary quality metrics"""
+
+    # Basic metrics
+    compression_ratio = len(summary) / len(original_text)
+    word_count = len(summary.split())
+
+    # Quality assessment prompt
+    quality_prompt = f"""
+    Evaluate this summary quality on a scale of 1-10:
+
+    Original: {original_text[:500]}...
+    Summary: {summary}
+
+    Rate: Accuracy, Completeness, Clarity, Conciseness
+    Provide scores and brief explanation.
+    """
+
+    quality_assessment = llm.invoke(quality_prompt).content
+
+    return {
+        "compression_ratio": compression_ratio,
+        "word_count": word_count,
+        "quality_assessment": quality_assessment
+    }
+
+# Analyze quality
+quality_metrics = analyze_summary_quality(input_text, final_summary)
+print(f"Quality Metrics: {quality_metrics}")
+        </script>
+      </div>
+      <p>Omitted repeats: <code>InteractiveSummaryAgent</code>, <code>execute_with_feedback_loop</code>, <code>batch_summarize</code>, <code>robust_summary_execution</code>.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-040-6-4-run-it">← Previous</a><span class="rev-pos">41 / 55</span><a href="#q-langgraph-042-7-1-design">Next →</a></nav>
+    </section>
+  </div>
+</details>

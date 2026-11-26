@@ -685,20 +685,33 @@
   }
 
   // The two faces of a flip card.
+  // A question is a sentence, and sometimes a code block under it. The same code is shown again on the back.
   function flipFront(item) {
     const wrap = el("div", "flip-face");
     const q = el("p", "flip-q");
     q.innerHTML = item.q;
     wrap.append(q);
+    if (item.qc) {
+      wrap.classList.add("has-code");
+      const c = el("div", "flip-qc");
+      c.innerHTML = item.qc;
+      wrap.append(c);
+    }
     return wrap;
   }
   function flipBack(item) {
     const wrap = el("div", "flip-face");
     const q = el("p", "flip-q is-small");
     q.innerHTML = item.q;
+    wrap.append(q);
+    if (item.qc) {
+      const c = el("div", "flip-qc");
+      c.innerHTML = item.qc;
+      wrap.append(c);
+    }
     const a = el("div", "flip-a");
     a.innerHTML = item.a;
-    wrap.append(q, a);
+    wrap.append(a);
     return wrap;
   }
 

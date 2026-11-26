@@ -1,0 +1,60 @@
+<details class="question" id="q-langgraph-018-3-4-react-built-by-hand-what-the-prebuil" data-group="langgraph" data-sec="langgraph-s011">
+  <summary>
+    <span class="q-title">3.4 ReAct built by hand (what the prebuilt agent does for you) (4/4)</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 3. ReAct Agent (prebuilt and from scratch) › 3.4 ReAct built by hand (what the prebuilt agent does for you)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+class AdvancedReActState(ReActState):
+    steps_completed: List[str]
+    remaining_steps: List[str]
+
+def multi_step_thought_node(self, state: AdvancedReActState) -> Dict:
+    """Handle multi-step problems"""
+    if not state.get("remaining_steps"):
+        # Initial planning
+        plan = self.create_execution_plan(state["messages"][-1])
+        return {
+            "thought": f"Created plan: {plan}",
+            "remaining_steps": plan,
+            "steps_completed": []
+        }
+
+    # Continue with next step
+    next_step = state["remaining_steps"][0]
+    return {"thought": f"Executing step: {next_step}"}
+        </script>
+      </div>
+      <p>Node-level error handling (a failed action becomes a retry signal). The other <code>safe_*</code> / <code>robust_*</code> wrappers in the lessons are the same try/except and are omitted.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def robust_observation_node(self, state: ReActState) -> Dict:
+    """Observation with error handling"""
+    try:
+        action_result = state["action"]
+
+        if "error" in action_result.lower():
+            return {
+                "observation": "Action failed, need to try different approach",
+                "thought": "Previous action failed, reconsidering approach"
+            }
+
+        # Normal observation logic
+        return self.observation_node(state)
+
+    except Exception as e:
+        return {
+            "observation": f"Error occurred: {str(e)}",
+            "final_answer": "Unable to complete task due to error"
+        }
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-017-3-4-react-built-by-hand-what-the-prebuil">← Previous</a><span class="rev-pos">18 / 55</span><a href="#q-langgraph-019-3-5-extending-batching-monitoring">Next →</a></nav>
+    </section>
+  </div>
+</details>

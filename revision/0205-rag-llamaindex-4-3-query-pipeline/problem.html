@@ -1,0 +1,67 @@
+<details class="question" id="q-rag-llamaindex-019-4-3-query-pipeline" data-group="rag-llamaindex" data-sec="rag-llamaindex-s018">
+  <summary>
+    <span class="q-title">4.3 Query Pipeline</span>
+    <span class="q-meta">
+      <span class="tag">RAG with LlamaIndex</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RAG with LlamaIndex › 4. Introduction to RAG: Pipelines, Prompts, Data Prep › 4.3 Query Pipeline</p>
+      <p>A declarative API to chain LLMs, prompts, retrievers, rerankers, and other pipelines, either as a <strong>sequential chain</strong> or a <strong>DAG</strong>. Fewer lines, better readability.</p>
+      <p><strong>Pattern 1: chain.</strong> Use when each module takes one input. Here two prompts wrap a retriever.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from llama_index.core.query_pipeline import QueryPipeline
+from llama_index.core import PromptTemplate, VectorStoreIndex
+
+index = VectorStoreIndex.from_vector_store(
+    vector_store=vector_store, embed_model=Settings.embed_model)
+
+prompt_tmpl1 = PromptTemplate("Retrieve context about the following topic: {topic}")
+prompt_tmpl2 = PromptTemplate("""Syntesize the context provided into an answer using modern slang, while still quoting the sources.
+Context:
+{query_str}
+Syntesized response:
+""")
+retriever = index.as_retriever(similarity_top_k=5)
+
+p = QueryPipeline(
+    chain=[prompt_tmpl1, retriever, prompt_tmpl2, Settings.llm],
+    verbose=True
+)
+response = p.run(topic="Working hard to achieve your goals even when you doubt yourself and your chances of success")
+
+# Debug: inputs/outputs of every step
+output, intermediates = p.run_with_intermediates(topic="Working hard to achieve your goals ...")
+        </script>
+      </div>
+      <p><strong>Pattern 2: explicit modules and links.</strong> Needed when one input feeds several modules (use <code>InputComponent</code>) or for DAGs.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from llama_index.core.response_synthesizers import TreeSummarize
+from llama_index.core.query_pipeline import InputComponent
+from llama_index.llms.openai import OpenAI
+
+input = InputComponent()
+retriever = index.as_retriever(similarity_top_k=5)
+llm = OpenAI(model="gpt-4o")
+tree_summarizer = TreeSummarize(llm=llm)
+
+p = QueryPipeline(verbose=True, show_progress=True)
+p.add_modules({
+    "input": input,
+    "retriever": retriever,
+    "tree_summarizer": tree_summarizer,
+})
+p.add_link("input", "retriever")
+p.add_link("input", "tree_summarizer", dest_key="query_str")
+p.add_link("retriever", "tree_summarizer", dest_key="nodes")
+
+response = p.run(input="Working hard to achieve your goals even when you doubt yourself and your chances of success")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-rag-llamaindex-018-4-2-ingestion-pipeline">← Previous</a><span class="rev-pos">19 / 63</span><a href="#q-rag-llamaindex-020-4-4-helper-utilities-helpers-utils-py">Next →</a></nav>
+    </section>
+  </div>
+</details>

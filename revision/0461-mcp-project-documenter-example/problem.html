@@ -1,0 +1,52 @@
+<details class="question" id="q-mcp-058-project-documenter-example" data-group="mcp" data-sec="mcp-s059">
+  <summary>
+    <span class="q-title">Project Documenter example</span>
+    <span class="q-meta">
+      <span class="tag">Model Context Protocol</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Model Context Protocol › 10. Using MCP in Cursor and the Documenter Workflow › Project Documenter example</p>
+      <p>Automates documentation: read project files, summarize them into <code>project.md</code>, generate/update <code>README.md</code>, and assess README quality. Real implementation: <code>mcp-server-examples/projectDocumenter</code> (TypeScript, SDK <code>^1.7.0</code>, <code>zod</code>, <code>fs/promises</code>).</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Kind</th><th>Name</th><th>Behavior</th></tr></thead>
+          <tbody>
+            <tr><td>Tool</td><td><code>generate-project-md</code></td><td>Collect project code into <code>project.md</code>, respecting <code>.gitignore</code> (adds <code>project.md</code> to it)</td></tr>
+            <tr><td>Tool</td><td><code>document-project</code></td><td>Generate <code>project.md</code> and a README; <code>updateExisting</code> boolean defaults to true</td></tr>
+            <tr><td>Tool</td><td><code>update-readme</code></td><td>Write given <code>content</code> to <code>README.md</code></td></tr>
+            <tr><td>Tool</td><td><code>assess-readme-quality</code></td><td>Review the README against modern documentation standards</td></tr>
+            <tr><td>Resources</td><td><code>project-md://{projectPath}</code>, <code>readme://{projectPath}</code></td><td>Read the files, or return a "not found" text</td></tr>
+            <tr><td>Prompts</td><td><code>generate-readme</code>, <code>assess-readme</code></td><td>Instruct the model to read <code>project.md</code> first, then write or evaluate the README (criteria: comprehensiveness, clarity, structure, accuracy, usefulness)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Pattern shared by every tool: validate that <code>projectPath</code> is a directory (<code>fs.stat</code>), return <code>isError: true</code> with a message on failure, and wrap the work in try/catch.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="TypeScript">
+server.tool(
+  "update-readme",
+  "Update or create a README.md file with given content",
+  {
+    projectPath: z.string().describe("Absolute path to the project directory"),
+    content: z.string().describe("Content for the README.md file")
+  },
+  async ({ projectPath, content }) => {
+    const stats = await fs.stat(projectPath);
+    if (!stats.isDirectory()) {
+      return { content: [{ type: "text", text: `Error: The provided path is not a directory: ${projectPath}` }], isError: true };
+    }
+    await fs.writeFile(path.join(projectPath, 'README.md'), content);
+    return { content: [{ type: "text", text: `Successfully updated README.md` }] };
+  }
+);
+        </script>
+      </div>
+      <p>(Condensed from the exercise file, which wraps each step in nested try/catch.) The server starts with <code>new StdioServerTransport()</code> inside an async <code>main()</code> that logs to <code>console.error</code> (stdout is reserved for the protocol) and exits with code 1 on failure.</p>
+      <p><code>test-server.sh</code> builds with <code>npm run build</code>, creates a temp project with sample files (or uses a path you pass), and launches <code>npx @modelcontextprotocol/inspector node dist/index.js</code> so you can try the <code>generate-readme</code> prompt/tools.</p>
+      <p>Development workflow for such an MCP: identify a repetitive task (README creation, 30-60 minutes per project), design the tools (read, write, validate), implement with least privilege (read-only where possible, validated paths, limited directories, sanitized inputs), test extensively (normal use, traversal, invalid input, edge cases, adversarial prompts), deploy and monitor (log operations, review unexpected behavior).</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-mcp-057-summary">← Previous</a><span class="rev-pos">58 / 64</span><a href="#q-mcp-059-installing-mcp-servers-in-cursor">Next →</a></nav>
+    </section>
+  </div>
+</details>

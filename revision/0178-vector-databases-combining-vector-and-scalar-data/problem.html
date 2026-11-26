@@ -1,0 +1,42 @@
+<details class="question" id="q-vector-databases-061-combining-vector-and-scalar-data" data-group="vector-databases" data-sec="vector-databases-s060">
+  <summary>
+    <span class="q-title">Combining vector and scalar data</span>
+    <span class="q-meta">
+      <span class="tag">Vector Databases</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Vector Databases › 12. Best practices › Combining vector and scalar data</p>
+      <ul>
+        <li><strong>Single store</strong>: vector DB with scalar fields and filtered search.</li>
+        <li><strong>Separate stores</strong>: vector search first (get IDs), then look up metadata in a scalar DB.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+hybrid_schema = CollectionSchema(
+    fields=[
+        FieldSchema(name="id", dtype=DataType.INT64, is_primary=True),
+        FieldSchema(name="text", dtype=DataType.VARCHAR, max_length=2048),
+        FieldSchema(name="category", dtype=DataType.VARCHAR, max_length=100),   # scalar
+        FieldSchema(name="timestamp", dtype=DataType.INT64),                    # scalar
+        FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=1536)
+    ],
+    enable_dynamic_field=True
+)
+results = collection.search(data=[query_embedding], anns_field="embedding", param=search_params, limit=10,
+                            expr="category == 'technical' and timestamp > 1640995200")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Separate storage: vector search first, then scalar lookup by ID
+vector_results = vector_collection.search(data=[embedding], anns_field="embedding", limit=100)
+ids = [result.id for result in vector_results[0]]
+scalar_query = f"SELECT * FROM metadata WHERE id IN ({','.join(map(str, ids))})"
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-vector-databases-060-choosing-a-vector-database">← Previous</a><span class="rev-pos">61 / 69</span><a href="#q-vector-databases-062-distance-measure-tuning">Next →</a></nav>
+    </section>
+  </div>
+</details>

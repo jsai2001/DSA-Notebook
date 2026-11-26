@@ -1,0 +1,51 @@
+<details class="question" id="q-pytorch-hands-on-018-lab-image-captioning-blip-and-embeddings" data-group="pytorch-hands-on" data-sec="pytorch-hands-on-s019">
+  <summary>
+    <span class="q-title">Lab: image captioning (BLIP) and embeddings (CLIP)</span>
+    <span class="q-meta">
+      <span class="tag">PyTorch Hands-On</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">PyTorch Hands-On › 8. TorchVision › Lab: image captioning (BLIP) and embeddings (CLIP)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import torch
+from torchvision import transforms
+from PIL import Image
+
+image = Image.open("pottery1.jpeg").convert("RGB")
+preprocess = transforms.Compose([
+    transforms.Resize((224, 224)),
+    transforms.ToTensor(),
+])
+image_tensor = preprocess(image).unsqueeze(0)  # add batch dimension
+
+# BLIP caption
+from transformers import BlipProcessor, BlipForConditionalGeneration
+processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
+
+inputs = processor(images=image, return_tensors="pt")
+with torch.no_grad():
+    generated_ids = model.generate(**inputs)
+    caption = processor.decode(generated_ids[0], skip_special_tokens=True)
+print("Generated Caption:", caption)
+# "a large, brown, and white vase with geometric designs"
+
+# CLIP image embeddings
+from transformers import CLIPProcessor, CLIPModel
+clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
+
+inputs = clip_processor(images=image, return_tensors="pt")
+with torch.no_grad():
+    image_features = clip_model.get_image_features(**inputs)
+print(image_features)
+        </script>
+      </div>
+      <p>BLIP = caption generation. CLIP embeddings feed content-understanding models or similar-image retrieval via nearest-neighbor search.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-pytorch-hands-on-017-8-torchvision">← Previous</a><span class="rev-pos">18 / 25</span><a href="#q-pytorch-hands-on-019-lab-image-transforms">Next →</a></nav>
+    </section>
+  </div>
+</details>

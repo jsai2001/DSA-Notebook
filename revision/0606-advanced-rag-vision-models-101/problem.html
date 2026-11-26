@@ -1,0 +1,65 @@
+<details class="question" id="q-advanced-rag-023-vision-models-101" data-group="advanced-rag" data-sec="advanced-rag-s023">
+  <summary>
+    <span class="q-title">Vision models 101</span>
+    <span class="q-meta">
+      <span class="tag">Advanced RAG</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Advanced RAG › 8. Image Embeddings and Vision Models › Vision models 101</p>
+      <p>Deep neural networks for computer vision tasks (classification, segmentation, object detection).</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Era</th><th>Model type</th><th>Key innovation</th></tr></thead>
+          <tbody>
+            <tr><td>1960s</td><td>Simple neural networks</td><td>Fully connected layers</td></tr>
+            <tr><td>1993</td><td><strong>CNNs</strong></td><td>Convolution + max pooling; dominated ~30 years</td></tr>
+            <tr><td>2019</td><td><strong>Vision Transformers (ViT)</strong></td><td>Attention mechanism applied to vision</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>CNN</strong> = convolutional layer + pooling layer.</p>
+      <ul>
+        <li><strong>Convolution</strong>: slide a <strong>learnable</strong> filter (e.g. 3×3) over regions of the image; each output cell = element-wise multiply the window with the filter, then sum. Extracts local context.</li>
+        <li><strong>Max pooling</strong>: compress the convolution output by taking the max of each region (e.g. max(12, 20, 8, 12) = 20).</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import torch.nn as nn
+conv_layer = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, padding=1)
+pool_layer = nn.MaxPool2d(kernel_size=2, stride=2)
+# input: (batch, 3, 224, 224)
+# after conv: (batch, 16, 224, 224)
+# after pool: (batch, 16, 112, 112) — halved spatial dimensions
+        </script>
+      </div>
+      <p><strong>Vision Transformer (ViT)</strong>: takes attention from language transformers and applies it to images.</p>
+      <ul>
+        <li>Pipeline: image → split into N×N <strong>patches</strong> (like words) → patch embeddings → add <strong>[CLS] token</strong> + <strong>positional encoding</strong> → transformer encoder (attention) → MLP head (classification, segmentation, etc.).</li>
+        <li><strong>[CLS] token</strong>: special token whose output represents the whole image (the image embedding).</li>
+        <li><strong>Positional encoding</strong>: tells the model where each patch sits.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from transformers import ViTModel, ViTFeatureExtractor
+from PIL import Image
+
+feature_extractor = ViTFeatureExtractor.from_pretrained("google/vit-base-patch16-224")
+model = ViTModel.from_pretrained("google/vit-base-patch16-224")
+
+img = Image.open("example.jpg")
+inputs = feature_extractor(images=img, return_tensors="pt")
+
+with torch.no_grad():
+    outputs = model(**inputs)
+
+# [CLS] token embedding: semantic representation of the entire image
+image_embedding = outputs.last_hidden_state[:, 0, :].squeeze().numpy()
+print(f"ViT embedding dimensions: {len(image_embedding)}")  # 768
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-advanced-rag-022-two-types-of-image-vectors">← Previous</a><span class="rev-pos">23 / 33</span><a href="#q-advanced-rag-024-get-semantic-vectors-openclip-via-langch">Next →</a></nav>
+    </section>
+  </div>
+</details>

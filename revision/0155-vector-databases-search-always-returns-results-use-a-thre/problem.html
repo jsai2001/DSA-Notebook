@@ -1,0 +1,39 @@
+<details class="question" id="q-vector-databases-038-search-always-returns-results-use-a-thre" data-group="vector-databases" data-sec="vector-databases-s039">
+  <summary>
+    <span class="q-title">Search always returns results: use a threshold</span>
+    <span class="q-meta">
+      <span class="tag">Vector Databases</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Vector Databases › 8. Query vs Search › Search always returns results: use a threshold</p>
+      <p>Even an unrelated query returns Top-K. Demo: "machine learning" gave distances 0.33-0.50; "best movies of the year" gave 0.62-0.65. So pick a similarity threshold from observed distances, or push it into the search with <code>radius</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Filter after search
+relevant = [hit for hit in s_results[0] if hit.distance < 0.5]
+
+# Or inside the search params
+search_params = {"metric_type": "L2",
+                 "params": {"nprobe": 10, "radius": 0.5, "range_filter": 0.0}}   # radius = max distance
+        </script>
+      </div>
+      <p>Ideas for choosing it dynamically (source): percentile of distances, mean minus std, or fixed per metric (L2 ~0.5, COSINE ~0.8). A "fallback" pattern: if nothing passes the threshold, show the top 3 anyway.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import numpy as np
+distances = [hit.distance for hit in s_results[0]]
+threshold = np.percentile(distances, 50)                      # median
+threshold = np.mean(distances) - np.std(distances)            # mean - std
+threshold = 0.5 if search_params["metric_type"] == "L2" else 0.8   # fixed per metric
+
+relevant = [h for h in s_results[0] if h.distance < threshold]
+if not relevant:
+    relevant = s_results[0][:3]                               # fallback: closest matches anyway
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-vector-databases-037-search">← Previous</a><span class="rev-pos">38 / 69</span><a href="#q-vector-databases-039-hybrid-search-vector-scalar-filter">Next →</a></nav>
+    </section>
+  </div>
+</details>

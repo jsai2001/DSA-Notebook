@@ -1,0 +1,89 @@
+<details class="question" id="q-az-900-066-will-pricing-performance-protection" data-group="az-900" data-sec="az-900-s058">
+  <summary>
+    <span class="q-title">Will: pricing, performance, protection (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">AZ-900</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AZ-900 › 13. Scenario walkthroughs from the course › Will: pricing, performance, protection</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# 1. Estimate costs: Use the Pricing Calculator (web tool)
+# https://azure.microsoft.com/en-us/pricing/calculator/
+# Add: App Service (per region), Storage, Networking
+
+# 2. Deploy identical web apps using ARM template
+cat <<'EOF' > webapp-template.json
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appName": { "type": "string" },
+    "location": { "type": "string" },
+    "skuName": { "type": "string", "defaultValue": "S1" }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-09-01",
+      "name": "[concat(parameters('appName'), '-plan')]",
+      "location": "[parameters('location')]",
+      "sku": { "name": "[parameters('skuName')]" }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-09-01",
+      "name": "[parameters('appName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": ["[concat(parameters('appName'), '-plan')]"],
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', concat(parameters('appName'), '-plan'))]"
+      }
+    }
+  ]
+}
+EOF
+
+# Deploy to multiple regions (identical every time)
+az deployment group create --resource-group WillApp-EastUS \
+  --template-file webapp-template.json \
+  --parameters appName=willapp-eastus location=eastus
+
+az deployment group create --resource-group WillApp-WestEU \
+  --template-file webapp-template.json \
+  --parameters appName=willapp-westeu location=westeurope
+
+az deployment group create --resource-group WillApp-SEAsia \
+  --template-file webapp-template.json \
+  --parameters appName=willapp-seasia location=southeastasia
+
+# 3. Protect with Do Not Delete locks
+az lock create --name "DoNotDelete" --lock-type CanNotDelete \
+  --resource-group WillApp-EastUS --resource-name willapp-eastus \
+  --resource-type Microsoft.Web/sites
+
+az lock create --name "DoNotDelete" --lock-type CanNotDelete \
+  --resource-group WillApp-WestEU --resource-name willapp-westeu \
+  --resource-type Microsoft.Web/sites
+
+az lock create --name "DoNotDelete" --lock-type CanNotDelete \
+  --resource-group WillApp-SEAsia --resource-name willapp-seasia \
+  --resource-type Microsoft.Web/sites
+
+# 4. Monitor with Application Insights + alerts
+az monitor app-insights component create \
+  --app willapp-insights --location eastus --resource-group WillApp-EastUS
+
+az monitor metrics alert create \
+  --name "HighResponseTime" --resource-group WillApp-EastUS \
+  --scopes "/subscriptions/<sub-id>/resourceGroups/WillApp-EastUS/providers/Microsoft.Web/sites/willapp-eastus" \
+  --condition "avg HttpResponseTime > 5" \
+  --description "Alert when response time exceeds 5 seconds"
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-az-900-065-will-pricing-performance-protection">← Previous</a><span class="rev-pos">66 / 66</span><span></span></nav>
+    </section>
+  </div>
+</details>

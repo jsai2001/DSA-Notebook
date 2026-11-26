@@ -1,0 +1,68 @@
+<details class="question" id="q-flask-016-project-health-data-form" data-group="flask" data-sec="flask-s017">
+  <summary>
+    <span class="q-title">Project: Health Data form</span>
+    <span class="q-meta">
+      <span class="tag">Flask</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Flask › 5. Forms with Flask-WTF › Project: Health Data form</p>
+      <p><code>forms.py</code> (validators included; the version without validators is identical minus <code>validators=</code>):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from flask_wtf import FlaskForm
+from wtforms import IntegerField, DateField, SubmitField
+from wtforms.validators import InputRequired, NumberRange
+
+class HealthDataForm(FlaskForm):
+    date = DateField("Date")
+    exercise = IntegerField("Exercise (minutes)", validators=[InputRequired(), NumberRange(min=0)])
+    meditation = IntegerField("Meditation (minutes)", validators=[InputRequired(), NumberRange(min=0)])
+    sleep = IntegerField("Sleep (hours)", validators=[InputRequired(), NumberRange(min=0, max=24)])
+    submit = SubmitField("Submit")
+        </script>
+      </div>
+      <p><code>IntegerField</code> enforces numeric input; <code>DateField</code> handles dates. Sleep is limited to 0-24.</p>
+      <p><code>app.py</code> route (extract data, then store it in the DB in Section 6):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from flask import Flask, render_template, request, redirect, url_for
+from forms import HealthDataForm
+
+@app.route("/form", methods=["GET", "POST"])
+def form():
+    form = HealthDataForm()
+    if form.validate_on_submit():
+        date = form.date.data
+        exercise = form.exercise.data
+        meditation = form.meditation.data
+        sleep = form.sleep.data
+        # Store in database (next step)
+        return redirect(url_for("dashboard"))
+    return render_template("form.html", form=form)
+        </script>
+      </div>
+      <p><code>templates/form.html</code> with Bootstrap classes and per-field errors (repeat the <code>mb-3</code> block for <code>date</code>, <code>meditation</code>, <code>sleep</code>):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="HTML">
+{% extends "base.html" %}
+{% block content %}
+<form method="POST">
+    {{ form.hidden_tag() }}
+    <div class="mb-3">
+        {{ form.exercise.label(class="form-label") }}
+        {{ form.exercise(class="form-control") }}
+        {% for error in form.exercise.errors %}
+            <span class="text-danger">{{ error }}</span>
+        {% endfor %}
+    </div>
+    {{ form.submit(class="btn btn-primary") }}
+</form>
+{% endblock %}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-flask-015-common-validators">← Previous</a><span class="rev-pos">16 / 30</span><a href="#q-flask-017-6-database-operations-with-flask-sqlalch">Next →</a></nav>
+    </section>
+  </div>
+</details>

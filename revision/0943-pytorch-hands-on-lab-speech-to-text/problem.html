@@ -1,0 +1,33 @@
+<details class="question" id="q-pytorch-hands-on-022-lab-speech-to-text" data-group="pytorch-hands-on" data-sec="pytorch-hands-on-s022">
+  <summary>
+    <span class="q-title">Lab: speech-to-text (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">PyTorch Hands-On</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">PyTorch Hands-On › 9. TorchAudio › Lab: speech-to-text</p>
+      <p><strong>Alternative: OpenAI Whisper</strong> (LLM-based; expects 16 kHz mono audio):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from transformers import WhisperProcessor, WhisperForConditionalGeneration
+processor = WhisperProcessor.from_pretrained("openai/whisper-base")
+model = WhisperForConditionalGeneration.from_pretrained("openai/whisper-base")
+
+waveform = torchaudio.functional.resample(waveform, orig_freq=sample_rate, new_freq=16000)
+waveform = waveform.mean(dim=0, keepdim=True)  # to mono
+sample_rate = 16000
+
+inputs = processor(waveform.squeeze().numpy(), sampling_rate=sample_rate, return_tensors="pt")
+with torch.no_grad():
+    predicted_ids = model.generate(inputs["input_features"])
+transcription = processor.batch_decode(predicted_ids, skip_special_tokens=True)[0]
+print("Transcription:", transcription)
+        </script>
+      </div>
+      <p>Always resample to the model's expected rate before inference.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-pytorch-hands-on-021-lab-speech-to-text">← Previous</a><span class="rev-pos">22 / 25</span><a href="#q-pytorch-hands-on-023-10-torchtext">Next →</a></nav>
+    </section>
+  </div>
+</details>

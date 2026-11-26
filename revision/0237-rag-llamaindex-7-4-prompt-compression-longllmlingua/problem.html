@@ -1,0 +1,41 @@
+<details class="question" id="q-rag-llamaindex-051-7-4-prompt-compression-longllmlingua" data-group="rag-llamaindex" data-sec="rag-llamaindex-s040">
+  <summary>
+    <span class="q-title">7.4 Prompt compression (LongLLMLingua)</span>
+    <span class="q-meta">
+      <span class="tag">RAG with LlamaIndex</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RAG with LlamaIndex › 7. Advanced RAG: Post-Retrieval &amp; Other Techniques › 7.4 Prompt compression (LongLLMLingua)</p>
+      <p>Shorten the prompt while keeping the relevant information: faster, cheaper, and counters "lost in the middle". Reported gain: up to 21.4 points at 4x compression in RAG settings. Components:</p>
+      <ol>
+        <li><strong>Question-aware coarse-grained compression</strong>: relevance of each context to the question based on perplexity.</li>
+        <li><strong>Question-aware fine-grained compression</strong>: contrastive perplexity to keep key tokens (not implemented in LlamaIndex).</li>
+        <li><strong>Adaptive granular control</strong>: different compression ratios per document, driven by the coarse-grained ranking.</li>
+        <li><strong>Subsequence recovery</strong>: maps response subsequences back to the original prompt content.</li>
+      </ol>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from llama_index.postprocessor.longllmlingua import LongLLMLinguaPostprocessor
+
+node_postprocessor = LongLLMLinguaPostprocessor(
+    instruction_str="Given the context, please answer the final question",
+    target_token=300,
+    rank_method="longllmlingua",
+    additional_compress_kwargs={
+        "condition_compare": True,
+        "condition_in_question": "after",
+        "context_budget": "+100",
+        "reorder_context": "sort",                 # enable document reorder
+        "dynamic_context_compression_ratio": 0.4,  # enable dynamic compression ratio
+    },
+)
+# Used like any node postprocessor: index.as_query_engine(node_postprocessors=[node_postprocessor])
+        </script>
+      </div>
+      <p>Requires a GPU: <code>model_name</code> defaults to <code>NousResearch/Llama-2-7b-hf</code>, <code>device_map</code> defaults to <code>"cuda"</code>. Other arguments: <code>model_config</code>, <code>open_api_config</code>, <code>metadata_mode</code>.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-rag-llamaindex-050-7-3-flare-forward-looking-active-retriev">← Previous</a><span class="rev-pos">51 / 63</span><a href="#q-rag-llamaindex-052-7-5-self-correcting-rag">Next →</a></nav>
+    </section>
+  </div>
+</details>

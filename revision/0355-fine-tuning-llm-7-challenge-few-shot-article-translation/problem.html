@@ -1,0 +1,76 @@
+<details class="question" id="q-fine-tuning-llm-026-7-challenge-few-shot-article-translation" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s019">
+  <summary>
+    <span class="q-title">7. Challenge: Few-Shot Article Translation (3/4)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 7. Challenge: Few-Shot Article Translation</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def few_shot_translate(text, examples, max_length=500):
+    # Create few-shot prompt
+    prompt = create_translation_prompt(examples, text)
+
+    # Tokenize and generate
+    inputs = tokenizer(prompt, return_tensors="tf", max_length=512, 
+                      truncation=True, padding=True)
+
+    outputs = model.generate(
+        inputs["input_ids"], 
+        max_length=max_length,
+        num_beams=5, 
+        early_stopping=True
+    )
+
+    return tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+# Test translation
+test_article = "The Palestinian Authority announced new policies regarding economic development in the region."
+translation = few_shot_translate(test_article, examples)
+print(f"Original: {test_article}")
+print(f"Translation: {translation}")
+        </script>
+      </div>
+      <p>Context-aware variant (each example carries a note on the tone to preserve):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def context_aware_translation_prompt(context, dialogue, examples):
+    prompt = f"""translate dialogues from English to Spanish, preserving context and nuances:
+
+Context: {context}
+
+Examples:
+"""
+
+    for example in examples:
+        prompt += f"English: {example['english']}\n"
+        prompt += f"Spanish: {example['spanish']}\n"
+        prompt += f"Context preserved: {example['context_note']}\n\n"
+
+    prompt += f"English: {dialogue}\n"
+    prompt += "Spanish:"
+
+    return prompt
+
+# Enhanced examples with context
+enhanced_examples = [
+    {
+        'english': "I'll see you tomorrow at the meeting.",
+        'spanish': "Te veré mañana en la reunión.",
+        'context_note': "Formal business context maintained"
+    },
+    {
+        'english': "Hey, what's up?",
+        'spanish': "Oye, ¿qué tal?",
+        'context_note': "Casual tone preserved"
+    }
+]
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-025-7-challenge-few-shot-article-translation">← Previous</a><span class="rev-pos">26 / 74</span><a href="#q-fine-tuning-llm-027-7-challenge-few-shot-article-translation">Next →</a></nav>
+    </section>
+  </div>
+</details>

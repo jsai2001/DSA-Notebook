@@ -1,0 +1,46 @@
+<details class="question" id="q-mcp-026-exercise-server-text-assist-plain-python" data-group="mcp" data-sec="mcp-s027">
+  <summary>
+    <span class="q-title">Exercise server: Text Assist (plain Python functions wrapped as tools)</span>
+    <span class="q-meta">
+      <span class="tag">Model Context Protocol</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Model Context Protocol › 5. Building a Python MCP Server (FastMCP) › Exercise server: Text Assist (plain Python functions wrapped as tools)</p>
+      <p><code>text-assist/server.py</code> shows that MCP tools are ordinary Python functions in an MCP wrapper. Tools: <code>count_total_characters</code>, <code>count_characters_without_spaces</code>, <code>count_words</code>, <code>count_specific_letters</code>, <code>full_text_analysis</code>. It uses <code>mcp.run()</code> with the default transport. Representative pieces:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+mcp = FastMCP("Text Assist")
+
+@mcp.tool()
+def count_words(text: str) -> int:
+    """Count the number of words in the provided text."""
+    words = [word for word in re.split(r'\s+', text) if word]
+    return len(words)
+
+@mcp.tool()
+def count_specific_letters(text: str, letters: str) -> Dict[str, int]:
+    """Count occurrences of specific letters in the provided text."""
+    text_lower = text.lower()
+    return {letter: text_lower.count(letter) for letter in letters.lower()}
+
+@mcp.tool()
+def full_text_analysis(text: str) -> Dict[str, any]:
+    """Complete analysis: calls the other tool functions directly."""
+    total_chars = count_total_characters(text)
+    chars_no_spaces = count_characters_without_spaces(text)
+    return {
+        "total_characters": total_chars,
+        "characters_without_spaces": chars_no_spaces,
+        "word_count": count_words(text),
+        "spaces": total_chars - chars_no_spaces,
+        "character_frequency": dict(Counter(text.lower()))
+    }
+        </script>
+      </div>
+      <p>This is the fix for LLM weaknesses such as counting letters ("how many n's in bananas").</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-mcp-025-claude-desktop-integration">← Previous</a><span class="rev-pos">26 / 64</span><a href="#q-mcp-027-error-handling-pattern-structured-succes">Next →</a></nav>
+    </section>
+  </div>
+</details>

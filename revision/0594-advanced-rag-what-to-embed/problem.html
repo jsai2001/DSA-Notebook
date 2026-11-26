@@ -1,0 +1,71 @@
+<details class="question" id="q-advanced-rag-011-what-to-embed" data-group="advanced-rag" data-sec="advanced-rag-s011">
+  <summary>
+    <span class="q-title">What to embed</span>
+    <span class="q-meta">
+      <span class="tag">Advanced RAG</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Advanced RAG › 4. Embeddings: Model Choice, What to Embed, Distance Metrics › What to embed</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Strategy</th><th>Embedded</th><th>Stored in metadata</th></tr></thead>
+          <tbody>
+            <tr><td>Embed the chunk</td><td>The chunk text</td><td>Standard metadata</td></tr>
+            <tr><td><strong>Small-to-big</strong></td><td>Individual sentences</td><td>Large paragraph</td></tr>
+            <tr><td><strong>Big-to-small</strong></td><td>Large paragraphs</td><td>Individual sentences</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>These techniques improve retrieval even when chunks are already good.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Basic: embed the chunk as-is (fine for basic tasks, not enough for production RAG)
+chunk = "RAG combines retrieval with generation for grounded responses."
+embedding = model.encode(chunk).tolist()
+        </script>
+      </div>
+      <p><strong>Small-to-big</strong>: embed a sentence, store the whole paragraph. Use when sentences are very short; retrieving the paragraph adds context and coherence.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+paragraph = "RAG combines retrieval with generation. It allows LLMs to access external data. This reduces hallucinations significantly."
+sentences = paragraph.split(". ")
+for sentence in sentences:
+    data_point = {
+        "embedding": model.encode(sentence).tolist(),  # embed the sentence
+        "metadata": {
+            "sentence": sentence,
+            "full_paragraph": paragraph,  # store the whole paragraph
+        }
+    }
+        </script>
+      </div>
+      <p><strong>Big-to-small</strong>: embed the paragraph, store sentences. Use when sentences alone don't make sense (e.g. a period after "Mr." breaks sentence splitting); retrieving sentences separately allows post-processing before the LLM.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+paragraph = "Mr. Smith went to Washington. He met with the committee. The discussion lasted three hours."
+sentences = paragraph.split(". ")
+data_point = {
+    "embedding": model.encode(paragraph).tolist(),  # embed the paragraph
+    "metadata": {
+        "full_text": paragraph,
+        "sentences": sentences,  # store individual sentences
+    }
+}
+        </script>
+      </div>
+      <p><strong>Non-English data</strong> needs a model trained on that language:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Option</th><th>Examples</th><th>Trade-off</th></tr></thead>
+          <tbody>
+            <tr><td>Multilingual LLM</td><td>GPT-3.5+, Mixtral, Qwen</td><td>Easy but less compute-friendly</td></tr>
+            <tr><td>Language-specific model</td><td>Search MTEB for French, Polish, Chinese, etc.</td><td>More efficient, better results</td></tr>
+          </tbody>
+        </table>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-advanced-rag-010-picking-a-model">← Previous</a><span class="rev-pos">11 / 33</span><a href="#q-advanced-rag-012-distance-metrics-for-dense-vectors">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,81 @@
+<details class="question" id="q-fine-tuning-llm-010-3-4-reusable-helpers" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s010">
+  <summary>
+    <span class="q-title">3.4 Reusable helpers (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 3. FLAN-T5 &amp; the 4-Step Prompting Workflow › 3.4 Reusable helpers</p>
+      <p>Generic generator, a task router, and a parameterised version:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def flan_t5_generate(prompt, max_length=150):
+    inputs = tokenizer(prompt, return_tensors="tf", max_length=512, 
+                      truncation=True, padding=True)
+    outputs = model.generate(inputs["input_ids"], max_length=max_length, 
+                           num_beams=5, early_stopping=True)
+    return tokenizer.decode(outputs[0], skip_special_tokens=True)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def route_task(task_type, content, **kwargs):
+    task_prompts = {
+        "summarize": f"summarize: {content}",
+        "translate": f"translate English to {kwargs.get('target', 'French')}: {content}",
+        "question": f"{kwargs.get('context', '')} question: {content}",
+        "classify": f"classify sentiment: {content}",
+        "generate": f"complete: {content}"
+    }
+
+    prompt = task_prompts.get(task_type, content)
+    return flan_t5_generate(prompt)
+
+# Usage examples
+summary = route_task("summarize", "Long text here...")
+translation = route_task("translate", "Hello", target="Spanish")
+answer = route_task("question", "What is AI?", context="AI is artificial intelligence.")
+        </script>
+      </div>
+      <ul>
+        <li>Demo variant <code>handle_task</code> hard-codes Spanish. Per-task configs: summarize <code>max_length 150</code>, translate 40, question 50 (all <code>num_beams 5</code>); default 100/3.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def generate_with_params(prompt, num_beams=5, max_length=150, temperature=0.7):
+    inputs = tokenizer(prompt, return_tensors="tf", max_length=512, truncation=True)
+    outputs = model.generate(
+        inputs["input_ids"],
+        max_length=max_length,
+        num_beams=num_beams,
+        early_stopping=True,
+        temperature=temperature,
+        do_sample=True if temperature > 0 else False
+    )
+    return tokenizer.decode(outputs[0], skip_special_tokens=True)
+        </script>
+      </div>
+      <p>Multi-language translation loop:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def translate_text(text, source_lang="English", target_lang="French"):
+    prompt = f"translate {source_lang} to {target_lang}: {text}"
+    return flan_t5_generate(prompt, max_length=40)
+
+def multi_translate(text, translations):
+    results = {}
+    for source, target in translations:
+        results[f"{source}-{target}"] = translate_text(text, source, target)
+    return results
+
+# Usage
+translations = [("English", "Spanish"), ("English", "German")]
+results = multi_translate("Hello world", translations)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-009-3-3-the-four-steps-every-task-uses-the-s">← Previous</a><span class="rev-pos">10 / 74</span><a href="#q-fine-tuning-llm-011-3-4-reusable-helpers">Next →</a></nav>
+    </section>
+  </div>
+</details>

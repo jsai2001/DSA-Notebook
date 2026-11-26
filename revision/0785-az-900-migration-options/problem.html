@@ -1,0 +1,83 @@
+<details class="question" id="q-az-900-038-migration-options" data-group="az-900" data-sec="az-900-s032">
+  <summary>
+    <span class="q-title">Migration options</span>
+    <span class="q-meta">
+      <span class="tag">AZ-900</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AZ-900 › 7. Storage and data migration › Migration options</p>
+      <p><strong>Azure Migrate</strong> moves servers, databases and web apps (from on-prem or other clouds) in three steps:</p>
+      <ol>
+        <li><strong>Discovery</strong>: the Azure Migrate Appliance (on a dedicated Windows server) collects metadata and performance data and sends it to Azure. About 1 hour for up to 500 servers.</li>
+        <li><strong>Assessment</strong>: group resources. Azure recommends VM sizes and disk types from the performance data.</li>
+        <li><strong>Migration</strong>: automated, with <strong>test migrations</strong> to catch problems first.</li>
+      </ol>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Create an Azure Migrate project
+az migrate project create \
+  --name myMigrateProject \
+  --resource-group AZ900 \
+  --location centralus
+
+# List discovered servers (after appliance setup)
+az migrate assessment list \
+  --project-name myMigrateProject \
+  --resource-group AZ900 \
+  --output table
+        </script>
+      </div>
+      <p><strong>Azure Data Box</strong> moves massive data into Azure Storage, especially with limited connectivity:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Offering</th><th>Capacity</th><th>Encryption</th><th>Storage accounts</th><th>Form</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Data Box Disk</strong></td><td>Up to 5 SSDs × ~7 TB (~35 TB)</td><td>AES 128-bit</td><td>1</td><td>SSDs in tamper-resistant enclosure</td></tr>
+            <tr><td><strong>Data Box</strong></td><td>Up to 80 TB</td><td>AES 256-bit</td><td>Up to 10</td><td>Ruggedized appliance</td></tr>
+            <tr><td><strong>Data Box Heavy</strong></td><td>Up to 1 PB (~770 TB usable)</td><td>AES 256-bit</td><td>Up to 10</td><td>Freight-shipped, on wheeled cart. Has a local web UI</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Process: order in the portal → Microsoft ships the device → connect and copy data → ship back → data imported → disks wiped to <strong>NIST 800-88 R1</strong>. Devices are tamper-resistant, with AES encryption.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Create a Data Box order
+az databox job create \
+  --resource-group AZ900 \
+  --name myDataBoxOrder \
+  --location centralus \
+  --sku DataBox \
+  --contact-name "<name>" \
+  --phone "<phone>" \
+  --email-list "<email>" \
+  --street-address1 "<address>" \
+  --city "<city>" \
+  --state-or-province "<state>" \
+  --country "US" \
+  --postal-code "<zip>" \
+  --storage-account az900storage
+
+# Check order status
+az databox job show --resource-group AZ900 --name myDataBoxOrder --query "status" -o tsv
+        </script>
+      </div>
+      <p><strong>Which tool?</strong></p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Scenario</th><th>Tool</th></tr></thead>
+          <tbody>
+            <tr><td>Servers, databases, web apps</td><td>Azure Migrate</td></tr>
+            <tr><td>Files via script/CLI</td><td>AzCopy</td></tr>
+            <tr><td>Files via GUI</td><td>Storage Explorer</td></tr>
+            <tr><td>~35 TB, limited connectivity</td><td>Data Box Disk</td></tr>
+            <tr><td>Up to 80 TB</td><td>Data Box</td></tr>
+            <tr><td>Hundreds of TB, up to 1 PB</td><td>Data Box Heavy</td></tr>
+          </tbody>
+        </table>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-az-900-037-moving-files">← Previous</a><span class="rev-pos">38 / 66</span><a href="#q-az-900-039-directory-services">Next →</a></nav>
+    </section>
+  </div>
+</details>

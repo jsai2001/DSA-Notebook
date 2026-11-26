@@ -1,0 +1,99 @@
+<details class="question" id="q-apache-spark-018-4-3-aggregate-across-warehouses" data-group="apache-spark" data-sec="apache-spark-s015">
+  <summary>
+    <span class="q-title">4.3 Aggregate across warehouses</span>
+    <span class="q-meta">
+      <span class="tag">Apache Spark</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Apache Spark › 4. Batch Pipeline: Warehouse Stock Aggregation › 4.3 Aggregate across warehouses</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Connect to global_stock database
+global_db_conn = mariadb.connect(
+    user="spark", password="spark",
+    host="127.0.0.1", port=3306,
+    database="global_stock", autocommit=True
+)
+global_cursor = global_db_conn.cursor()
+
+# Spark session: same builder as local_spark, appName "GlobalAggregatorJob"
+global_spark = SparkSession\
+    .builder\
+    .appName("GlobalAggregatorJob")\
+    .config("spark.sql.shuffle.partitions", 2)\
+    .config("spark.default.parallelism", 2)\
+    .config("spark.sql.streaming.forceDeleteTempCheckpointLocation", True)\
+    .config("spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version","2")\
+    .config("spark.jars", "jars/mysql-connector-j-8.4.0.jar") \
+    .config("spark.driver.extraClassPath","jars/mysql-connector-j-8.4.0.jar") \
+    .master("local[2]")\
+    .getOrCreate()
+global_spark.sparkContext.setLogLevel("WARN")
+
+# Reinitialize if needed
+global_cursor.execute("DELETE FROM global_stock.item_stock")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Reads files for all dates; can read one date at a time by appending the date directory to the path
+global_stock_df = global_spark.read.parquet("raw_data/")
+
+# Temp view for Spark SQL
+global_stock_df.createOrReplaceTempView("GLOBAL_STOCK")
+
+summary_df = global_spark.sql("""
+                    SELECT STOCK_DATE, ITEM_NAME,
+                            COUNT(*) as TOTAL_REC,
+                            SUM(OPENING_STOCK) as OPENING_STOCK,
+                            SUM(RECEIPTS) as RECEIPTS,
+                            SUM(ISSUES) as ISSUES,
+                            SUM( OPENING_STOCK + RECEIPTS - ISSUES) as CLOSING_STOCK,
+                            SUM( (OPENING_STOCK + RECEIPTS - ISSUES) * UNIT_VALUE ) as CLOSING_VALUE
+                            FROM GLOBAL_STOCK
+                            GROUP BY STOCK_DATE, ITEM_NAME
+                        """)
+summary_df.show(5)
+
+# Write summary to MariaDB
+summary_df.write\
+    .mode("append")\
+    .format("jdbc")\
+    .option("url", "jdbc:mysql://localhost:3306/global_stock")\
+    .option("dbtable", "global_stock.item_stock")\
+    .option("user", "spark")\
+    .option("password", "spark")\
+    .save()
+# Pruning: after processing is over, delete the files in raw_data
+        </script>
+      </div>
+      <p>Verify the aggregate against the local databases (one item/date):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+local_check_cursor=local_db_conn.cursor()
+local_check_cursor.execute(
+    f"""SELECT `WAREHOUSE_ID`, `OPENING_STOCK`,`RECEIPTS`,`ISSUES`
+        FROM `warehouse_stock`.`item_stock`
+        WHERE `ITEM_NAME` = 'Pencil Box'
+            AND STOCK_DATE = '{start_date}'
+        """ )
+for warehouse_id, opening_stock, receipts, issues in local_check_cursor:
+    print(warehouse_id, opening_stock, receipts, issues)
+
+global_check_cursor=global_db_conn.cursor()
+global_check_cursor.execute(
+    f"""SELECT `OPENING_STOCK`,`RECEIPTS`,`ISSUES`
+        FROM `global_stock`.`item_stock`
+        WHERE `ITEM_NAME` = 'Pencil Box'
+            AND STOCK_DATE = '{start_date}'
+        """ )
+for opening_stock, receipts, issues in global_check_cursor:
+    print( opening_stock, receipts, issues)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-apache-spark-017-4-2-upload-stock-to-the-central-store-pa">← Previous</a><span class="rev-pos">18 / 31</span><a href="#q-apache-spark-019-5-real-time-pipeline-website-analytics">Next →</a></nav>
+    </section>
+  </div>
+</details>

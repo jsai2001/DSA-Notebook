@@ -1,0 +1,93 @@
+<details class="question" id="q-autogen-026-custom-functions-reduce-hallucination-re" data-group="autogen" data-sec="autogen-s025">
+  <summary>
+    <span class="q-title">Custom functions (reduce hallucination, reusable logic)</span>
+    <span class="q-meta">
+      <span class="tag">AutoGen</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AutoGen › 8. Coding Copilot (Code Execution) › Custom functions (reduce hallucination, reusable logic)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import yfinance as yf
+import matplotlib.pyplot as plt
+
+def get_stock_prices(ticker: str, start_date: str, end_date: str):
+    """Fetch stock data using yfinance"""
+    return yf.download(ticker, start=start_date, end=end_date)
+
+def plot_stock_prices(data, filename: str):
+    """Create and save stock price plot"""
+    plt.figure(figsize=(10, 6))
+    plt.plot(data['Close'])
+    plt.savefig(filename)
+    plt.close()
+
+# Functions become available inside the execution environment
+executor = LocalCommandLineCodeExecutor(
+    timeout=60,
+    work_dir="coding",
+    functions=[get_stock_prices, plot_stock_prices]
+)
+        </script>
+      </div>
+      <p><code>format_functions_for_prompt</code> extracts signatures and docstrings and appends them to the writer's system message so it knows to call them.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+code_writer_system_message = """
+You are a helpful AI assistant.
+Solve tasks for coding and language skills.
+"""
+
+from autogen.coding import format_functions_for_prompt
+
+updated_message = code_writer_system_message + "\n" + format_functions_for_prompt(
+    executor.functions
+)
+
+code_writer_agent = AssistantAgent(
+    name="code_writer_agent",
+    llm_config=llm_config,
+    system_message=updated_message,
+    code_execution_config=False,
+    human_input_mode="NEVER"
+)
+        </script>
+      </div>
+      <p>The executor agent is recreated with the same config as before (<code>llm_config=False</code>, <code>code_execution_config={"executor": executor}</code>, <code>human_input_mode="ALWAYS"</code>) so it links to the new executor.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+instruction = """
+Download and plot stock prices for NVDA and TSLA.
+Save the plot as stock_prices.png.
+"""
+
+code_executor_agent.initiate_chat(
+    code_writer_agent,
+    message=instruction
+)
+
+# Generated code now calls the user functions instead of writing from scratch:
+nvda_data = get_stock_prices('NVDA', '2024-01-01', '2024-12-31')
+plot_stock_prices(nvda_data, 'coding/stock_prices.png')
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Step</th><th>Agent</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Executor</td><td>Sends task to writer</td></tr>
+            <tr><td>2</td><td>Writer</td><td>Generates code (using custom functions if given)</td></tr>
+            <tr><td>3</td><td>Writer</td><td>Saves code to <code>.py</code></td></tr>
+            <tr><td>4</td><td>Executor</td><td>Requests human approval</td></tr>
+            <tr><td>5</td><td>Executor</td><td>Runs code in isolated work dir</td></tr>
+            <tr><td>6</td><td>Writer</td><td>Confirms success or debugs</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Safety/gotchas:</strong> keep <code>human_input_mode="ALWAYS"</code> on the executor and review code before execution; set sensible <code>timeout</code>; use an isolated <code>work_dir</code>. Custom functions need docstrings and type hints; if they are ignored, check <code>format_functions_for_prompt</code> was applied and that the functions were passed to the executor. Failed runs: check timeout, work dir exists, required libraries installed.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-autogen-025-running-a-task">← Previous</a><span class="rev-pos">26 / 34</span><a href="#q-autogen-027-9-teachable-agents-long-term-memory">Next →</a></nav>
+    </section>
+  </div>
+</details>

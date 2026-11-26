@@ -1,0 +1,78 @@
+<details class="question" id="q-ml-foundations-040-9-4-grid-search" data-group="ml-foundations" data-sec="ml-foundations-s039">
+  <summary>
+    <span class="q-title">9.4 Grid search</span>
+    <span class="q-meta">
+      <span class="tag">ML Foundations</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">ML Foundations › 9. Model Tuning › 9.4 Grid search</p>
+      <p>Validation curves tune one hyperparameter. <strong>GridSearchCV</strong> brute-forces every combination with cross-validation.</p>
+      <p>Baseline decision tree: same as Section 7.3 (R² ≈ 0.73).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sklearn.model_selection import GridSearchCV
+
+param_grid = {
+    'dt__max_depth': [3, 6, 9],
+    'dt__min_samples_split': [10, 20, 100],
+    'dt__min_samples_leaf': [10, 20, 100],
+}
+
+grid_search = GridSearchCV(dt_pipe, param_grid, cv=5)
+grid_search.fit(X_train, y_train)
+        </script>
+      </div>
+      <ul>
+        <li>3 x 3 x 3 = 27 combinations x 5 folds = 135 fits. Each added 3-value parameter multiplies the total by 3 (81 combinations, 405 fits).</li>
+        <li>Pass <strong>only training data</strong>; grid search makes its own 5 folds internally (train 80%, validate 20%, rotate), tracking mean and std per combination.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+grid_search.best_params_
+# {'dt__max_depth': 9, 'dt__min_samples_split': 10, 'dt__min_samples_leaf': 10}
+        </script>
+      </div>
+      <p>Attributes ending in <code>_</code> are learned from fitting (sklearn convention). Apply with <code>**</code> unpacking:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+dt = DecisionTreeRegressor()
+dt_pipe = Pipeline(steps=[
+    ('tweak', tweak_transformer),
+    ('zip_avg_price', ZipAvgPriceAdder()),
+    ('to_pandas', pandas_transformer),
+    ('preprocessor', preprocessor),
+    ('dt', dt),
+])
+
+dt_pipe.set_params(**grid_search.best_params_)
+dt_pipe.fit(X_train, y_train)
+dt_pipe.score(X_test, y_test)  # ≈ 0.79
+        </script>
+      </div>
+      <p>Default for comparison: identical pipeline but <code>dt = DecisionTreeRegressor(random_state=42)</code> and no <code>set_params</code>, giving R² ≈ 0.74. Tuning gained +0.05 (0.74 to 0.79).</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Pros</th><th>Cons</th></tr></thead>
+          <tbody>
+            <tr><td>Simple API, built-in CV</td><td>Slow, tries every combination; time grows multiplicatively per parameter</td></tr>
+            <tr><td>Exhaustive within the grid</td><td>Only tests values you list, may miss the optimum</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Smarter alternatives:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tool</th><th>Approach</th></tr></thead>
+          <tbody>
+            <tr><td>Hyperopt</td><td>Bayesian optimization; you give distributions, it exploits good regions and explores to avoid local minima</td></tr>
+            <tr><td><code>RandomizedSearchCV</code></td><td>Samples random combinations, faster on large grids</td></tr>
+            <tr><td>Optuna</td><td>Tree-structured Parzen estimator, similar to Hyperopt</td></tr>
+          </tbody>
+        </table>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ml-foundations-039-9-3-catboost">← Previous</a><span class="rev-pos">40 / 46</span><a href="#q-ml-foundations-041-9-5-challenge-grid-search-on-random-fore">Next →</a></nav>
+    </section>
+  </div>
+</details>

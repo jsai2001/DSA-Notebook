@@ -1,0 +1,40 @@
+<details class="question" id="q-ml-algorithms-032-7-4-challenge-decision-tree-on-titanic-f" data-group="ml-algorithms" data-sec="ml-algorithms-s031">
+  <summary>
+    <span class="q-title">7.4 Challenge: decision tree on Titanic (find the best depth)</span>
+    <span class="q-meta">
+      <span class="tag">ML Algorithms</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">ML Algorithms › 7. Decision Trees, Random Forest, XGBoost › 7.4 Challenge: decision tree on Titanic (find the best depth)</p>
+      <p>Trees don't need standardization.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+titanic_X = (raw
+    .loc[:, ['pclass', 'age', 'sibsp', 'parch', 'fare']]
+    .dropna()
+)
+titanic_y = raw['survived'].loc[titanic_X.index]
+X_train, X_test, y_train, y_test = train_test_split(titanic_X, titanic_y, random_state=43)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+test_scores = []
+train_scores = []
+for i in range(1, 20):
+    dt = DecisionTreeClassifier(max_depth=i)
+    dt.fit(X_train, y_train)
+    test_scores.append(dt.score(X_test, y_test))
+    train_scores.append(dt.score(X_train, y_train))
+pd.DataFrame({'train': train_scores, 'test': test_scores}).plot.line(figsize=(8, 6))
+        </script>
+      </div>
+      <p>The test score peaks at <strong>depth 3</strong>, the best choice: simple, no overfitting, good on unseen data. The test curve is jagged because the split matters (changing <code>random_state</code> changes it). For a more stable estimate use <strong>k-fold cross validation</strong>: split into k chunks (typically 5), hold out each in turn, train on the rest, and average the scores. This is a concept only here; the course shows no code for it.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ml-algorithms-031-7-3-random-forest-bagging-and-xgboost-bo">← Previous</a><span class="rev-pos">32 / 33</span><a href="#q-ml-algorithms-033-8-summary-table-cheat-sheet-key-lessons">Next →</a></nav>
+    </section>
+  </div>
+</details>

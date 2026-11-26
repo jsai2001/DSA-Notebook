@@ -1,0 +1,95 @@
+<details class="question" id="q-langgraph-016-3-4-react-built-by-hand-what-the-prebuil" data-group="langgraph" data-sec="langgraph-s011">
+  <summary>
+    <span class="q-title">3.4 ReAct built by hand (what the prebuilt agent does for you) (2/4)</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 3. ReAct Agent (prebuilt and from scratch) › 3.4 ReAct built by hand (what the prebuilt agent does for you)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain_openai import ChatOpenAI
+
+class ReActAgent:
+    def __init__(self):
+        self.llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+        self.tools = {tool.name: tool for tool in math_tools}
+        self.max_iterations = 5
+
+    def thought_node(self, state: ReActState) -> Dict:
+        """Reasoning step - analyze input and plan action"""
+        user_input = state["messages"][-1]
+        previous_context = f"Previous thought: {state.get('thought', '')}\nPrevious observation: {state.get('observation', '')}"
+
+        prompt = f"""
+        Analyze this request: {user_input}
+        {previous_context if state.get('iteration', 0) > 0 else ''}
+
+        What action should be taken next? Available tools: {list(self.tools.keys())}
+        Think step by step about what needs to be done.
+        """
+
+        thought = self.llm.invoke(prompt).content
+        return {"thought": thought, "iteration": state.get("iteration", 0) + 1}
+
+    def action_node(self, state: ReActState) -> Dict:
+        """Action step - execute tools based on thought"""
+        thought = state["thought"]
+
+        # Extract tool and parameters (simplified)
+        if "sum" in thought.lower() or "add" in thought.lower():
+            # Extract numbers from original message
+            numbers = self.extract_numbers(state["messages"][-1])
+            if len(numbers) >= 2:
+                result = self.tools["find_sum"].func(numbers[0], numbers[1])
+                return {"action": f"find_sum({numbers[0]}, {numbers[1]}) = {result}"}
+
+        elif "product" in thought.lower() or "multiply" in thought.lower():
+            numbers = self.extract_numbers(state["messages"][-1])
+            if len(numbers) >= 2:
+                result = self.tools["find_product"].func(numbers[0], numbers[1])
+                return {"action": f"find_product({numbers[0]}, {numbers[1]}) = {result}"}
+
+        return {"action": "No suitable tool found"}
+
+    def observation_node(self, state: ReActState) -> Dict:
+        """Observation step - validate results and decide next steps"""
+        action_result = state["action"]
+        original_question = state["messages"][-1]
+
+        prompt = f"""
+        Original question: {original_question}
+        Action taken: {action_result}
+
+        Does this action result answer the original question completely?
+        If yes, provide the final answer. If no, what else needs to be done?
+        """
+
+        observation = self.llm.invoke(prompt).content
+
+        # Check if we have a complete answer
+        if "final answer" in observation.lower() or "complete" in observation.lower():
+            final_answer = self.extract_final_answer(action_result)
+            return {"observation": observation, "final_answer": final_answer}
+
+        return {"observation": observation}
+
+    def extract_numbers(self, text: str) -> List[int]:
+        """Extract numbers from text"""
+        import re
+        numbers = re.findall(r'\d+', text)
+        return [int(n) for n in numbers]
+
+    def extract_final_answer(self, action_result: str) -> str:
+        """Extract final answer from action result"""
+        if "=" in action_result:
+            return action_result.split("=")[-1].strip()
+        return action_result
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-015-3-4-react-built-by-hand-what-the-prebuil">← Previous</a><span class="rev-pos">16 / 55</span><a href="#q-langgraph-017-3-4-react-built-by-hand-what-the-prebuil">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,87 @@
+<details class="question" id="q-fine-tuning-llm-052-13-2-choosing-the-rank" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s039">
+  <summary>
+    <span class="q-title">13.2 Choosing the rank (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 13. Tuning LoRA: Rank, Overfitting, Hyperparameters › 13.2 Choosing the rank</p>
+      <p>Higher rank = more capacity and parameters (and overfitting risk); <strong>higher is not always better</strong>. Start low (1–4) and increase while validation improves.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def analyze_rank_impact(base_dim, ranks=[1, 2, 4, 8, 16, 32]):
+    """Analyze parameter count and capacity for different ranks"""
+    analysis = {}
+
+    for rank in ranks:
+        params = 2 * base_dim * rank  # A and B matrices
+        capacity_ratio = rank / base_dim
+
+        analysis[rank] = {
+            'parameters': params,
+            'capacity_ratio': capacity_ratio,
+            'memory_mb': params * 4 / 1e6,  # Float32
+            'recommendation': get_rank_recommendation(rank, base_dim)
+        }
+
+    return analysis
+
+def get_rank_recommendation(rank, base_dim):
+    ratio = rank / base_dim
+    if ratio < 0.01:
+        return "Very efficient, may underfit"
+    elif ratio < 0.05:
+        return "Good balance for most tasks"
+    elif ratio < 0.1:
+        return "Higher capacity, watch for overfitting"
+    else:
+        return "High capacity, likely to overfit"
+
+# Example analysis
+rank_analysis = analyze_rank_impact(base_dim=512)
+for rank, info in rank_analysis.items():
+    print(f"Rank {rank}: {info['parameters']} params - {info['recommendation']}")
+        </script>
+      </div>
+      <p>Progressive search (double the rank until the score degrades):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def progressive_rank_selection(model, train_data, val_data, start_rank=1, max_rank=32):
+    """Progressively increase rank until optimal performance"""
+    best_rank = start_rank
+    best_score = 0
+
+    current_rank = start_rank
+
+    while current_rank <= max_rank:
+        # Configure LoRA with current rank
+        lora_config = LoraConfig(r=current_rank, lora_alpha=current_rank*2)
+        lora_model = get_peft_model(model, lora_config)
+
+        # Train and evaluate
+        train_model(lora_model, train_data, epochs=3)
+        score = evaluate_model(lora_model, val_data)
+
+        print(f"Rank {current_rank}: Score = {score:.3f}")
+
+        if score > best_score:
+            best_score = score
+            best_rank = current_rank
+        elif score < best_score * 0.95:  # Performance degraded
+            break
+
+        current_rank *= 2
+
+    return {
+        'optimal_rank': best_rank,
+        'best_score': best_score,
+        'parameters': 2 * model.config.hidden_size * best_rank
+    }
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-051-13-1-overfitting-vs-generalisability">← Previous</a><span class="rev-pos">52 / 74</span><a href="#q-fine-tuning-llm-053-13-2-choosing-the-rank">Next →</a></nav>
+    </section>
+  </div>
+</details>

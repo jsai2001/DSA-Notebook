@@ -1,0 +1,66 @@
+<details class="question" id="q-ml-foundations-023-7-3-decision-tree" data-group="ml-foundations" data-sec="ml-foundations-s024">
+  <summary>
+    <span class="q-title">7.3 Decision tree</span>
+    <span class="q-meta">
+      <span class="tag">ML Foundations</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">ML Foundations › 7. Model Creation › 7.3 Decision tree</p>
+      <p>Splits each feature at the best value to minimize error.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Property</th><th>Linear regression</th><th>Decision tree</th></tr></thead>
+          <tbody>
+            <tr><td>Needs standardized data</td><td>Yes</td><td>No (value-based splits)</td></tr>
+            <tr><td>Categorical features</td><td>Needs encoding</td><td>Some implementations handle them</td></tr>
+            <tr><td>Missing data</td><td>No</td><td>Some implementations handle it</td></tr>
+            <tr><td>Non-linear relationships</td><td>No</td><td>Yes (can re-split the same column)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from sklearn.tree import DecisionTreeRegressor
+
+dt = DecisionTreeRegressor()
+dt_pipe = Pipeline(steps=[
+    ('tweak', tweak_transformer),
+    ('zip_avg_price', ZipAvgPriceAdder()),
+    ('preprocessor', preprocessor),
+    ('dt', dt),
+])
+dt_pipe.fit(X_train, y_train)
+dt_pipe.score(X_test, y_test)  # ≈ 0.73
+        </script>
+      </div>
+      <p>R² ≈ 0.73, <strong>worse</strong> than linear regression. Cause: sklearn trees are unbounded by default, splitting until each leaf holds one row, so they memorize noise (<strong>overfitting</strong>). Pruning with <code>max_depth</code> fixes it:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>max_depth</th><th>R²</th><th>State</th></tr></thead>
+          <tbody>
+            <tr><td><code>None</code></td><td>≈ 0.73</td><td>Overfit</td></tr>
+            <tr><td>1 (decision stump)</td><td>≈ 0.3</td><td>Underfit</td></tr>
+            <tr><td>9</td><td>&gt; 0.73</td><td>Good balance</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Decision stump - too simple
+dt_pipe.set_params(dt__max_depth=1)
+dt_pipe.fit(X_train, y_train)
+dt_pipe.score(X_test, y_test)  # ≈ 0.3
+
+# Pruned tree - better generalization
+dt_pipe.set_params(dt__max_depth=9)
+dt_pipe.fit(X_train, y_train)
+dt_pipe.score(X_test, y_test)  # > 0.73
+        </script>
+      </div>
+      <p>Simplifying the tree <em>improves</em> test performance. This is counterintuitive and fundamental.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ml-foundations-022-7-2-linear-regression">← Previous</a><span class="rev-pos">23 / 46</span><a href="#q-ml-foundations-024-7-4-catboost-gradient-boosting">Next →</a></nav>
+    </section>
+  </div>
+</details>

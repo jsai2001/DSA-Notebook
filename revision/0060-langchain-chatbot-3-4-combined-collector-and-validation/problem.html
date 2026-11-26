@@ -1,0 +1,87 @@
+<details class="question" id="q-langchain-chatbot-006-3-4-combined-collector-and-validation" data-group="langchain-chatbot" data-sec="langchain-chatbot-s007">
+  <summary>
+    <span class="q-title">3.4 Combined collector and validation (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">LangChain Chatbot</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangChain Chatbot › 3. Data collection (PDF, website) › 3.4 Combined collector and validation</p>
+      <p>PDF first, website as fallback; then validate (non-empty, long enough) and normalise whitespace. Write files as UTF-8.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import fitz
+import requests
+from bs4 import BeautifulSoup
+import os
+
+class DataCollector:
+    def __init__(self):
+        self.pdf_text = ""
+        self.website_text = ""
+
+    def collect_pdf_data(self, pdf_path):
+        """Collect data from PDF source"""
+        if os.path.exists(pdf_path):
+            try:
+                doc = fitz.open(pdf_path)
+                for page_num in range(doc.page_count):
+                    page = doc.load_page(page_num)
+                    self.pdf_text += page.get_text("text")
+                doc.close()
+                # Save to file
+                with open("pdf_text.txt", "w", encoding='utf-8') as f:
+                    f.write(self.pdf_text)
+                return True
+            except Exception as e:
+                print(f"PDF extraction error: {e}")
+                return False
+        else:
+            print(f"PDF file not found: {pdf_path}")
+            return False
+
+    def collect_website_data(self, url):
+        """Collect data from website source"""
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.content, 'html.parser')
+                for paragraph in soup.find_all('p'):
+                    self.website_text += paragraph.get_text() + " "
+                # Save to file
+                with open('website_text.txt', 'w') as f:
+                    f.write(self.website_text)
+                return True
+            else:
+                print(f"Website request failed: {response.status_code}")
+                return False
+        except Exception as e:
+            print(f"Website extraction error: {e}")
+            return False
+
+    def get_collected_data(self):
+        """Return collected data for chatbot use"""
+        if self.pdf_text:
+            return self.pdf_text
+        elif self.website_text:
+            return self.website_text
+        else:
+            return "No data collected"
+
+# Usage example
+collector = DataCollector()
+
+# Try PDF first, fallback to website
+if not collector.collect_pdf_data("Landon-Hotel.pdf"):
+    collector.collect_website_data("https://www.landonhotel.com")
+
+# Get data for chatbot
+chatbot_data = collector.get_collected_data()
+print(f"Collected {len(chatbot_data)} characters for chatbot")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langchain-chatbot-005-3-3-choosing-a-data-source">← Previous</a><span class="rev-pos">6 / 28</span><a href="#q-langchain-chatbot-007-3-4-combined-collector-and-validation">Next →</a></nav>
+    </section>
+  </div>
+</details>

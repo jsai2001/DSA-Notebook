@@ -1,0 +1,45 @@
+<details class="question" id="q-rag-llamaindex-027-4-8-putting-it-together-naive-rag" data-group="rag-llamaindex" data-sec="rag-llamaindex-s023">
+  <summary>
+    <span class="q-title">4.8 Putting it together: Naive RAG</span>
+    <span class="q-meta">
+      <span class="tag">RAG with LlamaIndex</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RAG with LlamaIndex › 4. Introduction to RAG: Pipelines, Prompts, Data Prep › 4.8 Putting it together: Naive RAG</p>
+      <p>"Naive" = default settings, no optimization. Flow: load persisted docs → chunk (<code>SentenceSplitter</code>, default <code>DEFAULT_CHUNK_SIZE</code> = 1024) → embed → ingest into Qdrant → index over the vector store → query engine → query pipeline.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+COLLECTION_NAME = "words-of-the-senpai-naive"
+
+setup_llm(provider="cohere", model="command-r-plus", api_key=CO_API_KEY)
+setup_embed_model(provider="openai", model_name="text-embedding-3-large", api_key=OPENAI_API_KEY)
+vector_store = setup_vector_store(QDRANT_URL, QDRANT_API_KEY, COLLECTION_NAME)
+
+documents = get_documents_from_docstore("../data/words-of-the-senpais")
+
+from llama_index.core.constants import DEFAULT_CHUNK_SIZE
+from llama_index.core.node_parser.text import SentenceSplitter
+from utils import ingest
+
+tranforms = [SentenceSplitter(chunk_size=DEFAULT_CHUNK_SIZE), Settings.embed_model]
+nodes = ingest(documents=documents, transformations=tranforms, vector_store=vector_store)
+
+index = create_index(from_where="vector_store", embed_model=Settings.embed_model, vector_store=vector_store)
+query_engine = create_query_engine(index=index, mode="query")   # llm resolves to Settings.llm when omitted
+
+input_component = InputComponent()
+chain = [input_component, query_engine]
+query_pipeline = create_query_pipeline(chain)
+
+response_1 = query_pipeline.run(input="What mental models, principles or philosophies are most valuable for making important life decisions and navigating an uncertain world?")
+print(response_1)
+response_1.source_nodes[0].__dict__
+        </script>
+      </div>
+      <p>Other test queries: the essence of a life well-lived; the role of luck in outsized success; commonalities between Naval and Taleb on luck (same call, different <code>input</code>).</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-rag-llamaindex-026-4-7-data-preparation-for-rag">← Previous</a><span class="rev-pos">27 / 63</span><a href="#q-rag-llamaindex-028-4-9-drawbacks-of-naive-rag-interview-fav">Next →</a></nav>
+    </section>
+  </div>
+</details>

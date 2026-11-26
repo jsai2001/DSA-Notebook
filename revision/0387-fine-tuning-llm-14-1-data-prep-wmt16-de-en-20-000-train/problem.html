@@ -1,0 +1,60 @@
+<details class="question" id="q-fine-tuning-llm-058-14-1-data-prep-wmt16-de-en-20-000-train" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s043">
+  <summary>
+    <span class="q-title">14.1 Data prep (WMT16 de-en, 20,000 train / 1,000 test, batch 128)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 14. LoRA in TensorFlow: Implementation &amp; Experiments › 14.1 Data prep (WMT16 de-en, 20,000 train / 1,000 test, batch 128)</p>
+      <p>Same preprocessing as Section 11, with a smaller subset and larger batch. (Demo 1 mistakenly loads <code>abisee/cnn_dailymail</code> while its preprocessing expects a <code>translation</code> field, and the markdown intro says "sentiment analysis"; both are copy-paste slips. Use WMT16 as in Demo 2 / Solution.)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+!pip install transformers tensorflow datasets tensorflow_addons
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import tensorflow as tf
+from transformers import AutoTokenizer
+
+# Load the tokenizer
+tokenizer = AutoTokenizer.from_pretrained('google/flan-t5-base')
+
+# Preprocess the dataset for input into the model
+def preprocess_data(examples):
+    inputs = [f'Translate English to German: {example["en"]}' for example in examples['translation']]
+    targets = [example['de'] for example in examples['translation']]
+    model_inputs = tokenizer(inputs, max_length=128, truncation=True, padding='max_length', return_tensors='tf')
+    labels = tokenizer(targets, max_length=128, truncation=True, padding='max_length', return_tensors='tf').input_ids
+    model_inputs['labels'] = labels
+    decoder_inputs = tokenizer(targets, max_length=128, truncation=True, padding="max_length")
+    model_inputs["decoder_input_ids"] = decoder_inputs["input_ids"]
+    return model_inputs
+
+
+train_dataset = dataset['train'].select(range(20000)).map(preprocess_data, batched=True)
+test_dataset = dataset['test'].select(range(1000)).map(preprocess_data, batched=True)
+
+train_dataset = train_dataset.to_tf_dataset(
+    columns=['input_ids', 'attention_mask', 'decoder_input_ids'],
+    label_cols=['labels'],
+    shuffle=True,
+    batch_size=128,
+    collate_fn=None
+)
+
+test_dataset = test_dataset.to_tf_dataset(
+    columns=['input_ids', 'attention_mask', 'decoder_input_ids'],
+    label_cols=['labels'],
+    shuffle=False,
+    batch_size=128,
+    collate_fn=None
+)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-057-14-lora-in-tensorflow-implementation-exp">← Previous</a><span class="rev-pos">58 / 74</span><a href="#q-fine-tuning-llm-059-14-2-the-keras-loralayer">Next →</a></nav>
+    </section>
+  </div>
+</details>

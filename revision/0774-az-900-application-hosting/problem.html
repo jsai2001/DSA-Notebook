@@ -1,0 +1,88 @@
+<details class="question" id="q-az-900-027-application-hosting" data-group="az-900" data-sec="az-900-s024">
+  <summary>
+    <span class="q-title">Application hosting (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">AZ-900</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AZ-900 › 6. Compute and networking › Application hosting</p>
+      <p><strong>App Service (PaaS)</strong>: web apps in the cloud.</p>
+      <ul>
+        <li>Apps run on VMs in an <strong>App Service Plan</strong>, the unit of scaling. All apps in the plan share the same VMs.</li>
+        <li>Lower plan tiers cost less with fewer features. Higher tiers add power and features.</li>
+        <li>App names must be <strong>globally unique</strong> (<code>&lt;app-name&gt;.azurewebsites.net</code>).</li>
+        <li>Scaling applies to the whole plan: <strong>scale up</strong> (bigger VM), <strong>scale out</strong> (more instances) or <strong>autoscale</strong> by metric (CPU, traffic).</li>
+        <li>Turnkey authentication: add Microsoft, Apple, Facebook, GitHub or Google sign-in with no auth code.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Create a resource group
+az group create --name AZ900 --location centralus
+
+# Create an App Service Plan
+az appservice plan create \
+  --name JonesASP \
+  --resource-group AZ900 \
+  --sku S1
+
+# Create a web app
+az webapp create \
+  --name az900wa \
+  --resource-group AZ900 \
+  --plan JonesASP \
+  --runtime "DOTNET|4.8"
+
+# Browse the app
+echo "Visit: https://az900wa.azurewebsites.net"
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Scale up to S2 tier
+az appservice plan update --name JonesASP --resource-group AZ900 --sku S2
+
+# Scale back down to S1
+az appservice plan update --name JonesASP --resource-group AZ900 --sku S1
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Scale out to 3 instances
+az webapp scale --name az900wa --resource-group AZ900 --instance-count 3
+
+# Scale back to 1 instance
+az webapp scale --name az900wa --resource-group AZ900 --instance-count 1
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Enable autoscale on the App Service Plan
+az monitor autoscale create \
+  --resource-group AZ900 \
+  --resource JonesASP \
+  --resource-type Microsoft.Web/serverfarms \
+  --min-count 1 \
+  --max-count 5 \
+  --count 1
+
+# Scale out when CPU > 70%
+az monitor autoscale rule create \
+  --resource-group AZ900 \
+  --autoscale-name autoscale \
+  --condition "CpuPercentage > 70 avg 5m" \
+  --scale out 1
+
+# Scale in when CPU < 30%
+az monitor autoscale rule create \
+  --resource-group AZ900 \
+  --autoscale-name autoscale \
+  --condition "CpuPercentage < 30 avg 5m" \
+  --scale in 1
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-az-900-026-resources-created-with-a-vm">← Previous</a><span class="rev-pos">27 / 66</span><a href="#q-az-900-028-application-hosting">Next →</a></nav>
+    </section>
+  </div>
+</details>

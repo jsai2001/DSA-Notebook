@@ -1,0 +1,102 @@
+<details class="question" id="q-langgraph-053-8-3-production-shape-config-logging-metr" data-group="langgraph" data-sec="langgraph-s036">
+  <summary>
+    <span class="q-title">8.3 Production shape: config, logging, metrics, API (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 8. Beyond LangGraph: Other Frameworks, Tools, Deployment › 8.3 Production shape: config, logging, metrics, API</p>
+      <p>Agent wrapper with config, logging, counters and error handling:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Enterprise agent template
+from dataclasses import dataclass
+from typing import List, Dict, Optional
+import logging
+from datetime import datetime
+
+@dataclass
+class AgentConfig:
+    name: str
+    description: str
+    tools: List[str]
+    max_iterations: int = 10
+    timeout_seconds: int = 300
+    log_level: str = "INFO"
+
+class EnterpriseAgent:
+    def __init__(self, config: AgentConfig):
+        self.config = config
+        self.logger = self.setup_logging()
+        self.metrics = {
+            "requests_processed": 0,
+            "errors_encountered": 0,
+            "average_response_time": 0
+        }
+        self.setup_agent()
+
+    def setup_logging(self):
+        """Setup structured logging"""
+        logger = logging.getLogger(self.config.name)
+        logger.setLevel(getattr(logging, self.config.log_level))
+
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+
+        return logger
+
+    def setup_agent(self):
+        """Initialize agent with enterprise features"""
+        # Load tools based on configuration
+        self.tools = self.load_tools(self.config.tools)
+
+        # Setup monitoring
+        self.setup_monitoring()
+
+        # Create LangGraph agent
+        self.agent = self.create_langgraph_agent()
+
+    def process_request(self, request: str, user_id: str) -> Dict[str, Any]:
+        """Process request with full enterprise features"""
+        start_time = datetime.now()
+
+        try:
+            self.logger.info(f"Processing request from user {user_id}")
+
+            # Execute agent
+            result = self.agent.invoke({"messages": [request]})
+
+            # Update metrics
+            self.metrics["requests_processed"] += 1
+            response_time = (datetime.now() - start_time).total_seconds()
+
+            self.logger.info(f"Request processed successfully in {response_time}s")
+
+            return {
+                "success": True,
+                "response": result,
+                "response_time": response_time,
+                "user_id": user_id
+            }
+
+        except Exception as e:
+            self.metrics["errors_encountered"] += 1
+            self.logger.error(f"Error processing request: {str(e)}")
+
+            return {
+                "success": False,
+                "error": str(e),
+                "user_id": user_id
+            }
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-052-8-2-advanced-tools">← Previous</a><span class="rev-pos">53 / 55</span><a href="#q-langgraph-054-8-3-production-shape-config-logging-metr">Next →</a></nav>
+    </section>
+  </div>
+</details>

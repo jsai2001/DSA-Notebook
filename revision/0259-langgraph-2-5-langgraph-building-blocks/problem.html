@@ -1,0 +1,80 @@
+<details class="question" id="q-langgraph-010-2-5-langgraph-building-blocks" data-group="langgraph" data-sec="langgraph-s007">
+  <summary>
+    <span class="q-title">2.5 LangGraph building blocks (3/3)</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 2. Concepts: Chatbots, Agentic AI, State vs Memory, LangGraph › 2.5 LangGraph building blocks</p>
+      <p>A LangChain retriever as a node, then a router → planner → executor/reflector chatbot:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain.tools import Tool
+from langchain.retrievers import VectorStoreRetriever
+
+def integrate_langchain_components():
+    # LangChain retriever as LangGraph tool
+    retriever = VectorStoreRetriever()  # Configured elsewhere
+
+    def retrieval_node(state: WorkflowState):
+        query = state["messages"][-1]
+        docs = retriever.get_relevant_documents(query)
+        return {"retrieved_docs": [doc.page_content for doc in docs]}
+
+    # Add to LangGraph workflow
+    workflow = StateGraph(WorkflowState)
+    workflow.add_node("retriever", retrieval_node)
+
+    return workflow
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+class LangGraphAgenticChatbot:
+    def __init__(self):
+        self.conversation_memory = ChatbotMemory()
+        self.workflow = self.create_workflow()
+
+    def create_workflow(self):
+        workflow = StateGraph(WorkflowState)
+
+        # Add nodes for different agent capabilities
+        workflow.add_node("router", self.router_node)
+        workflow.add_node("planner", self.planner_node)
+        workflow.add_node("executor", self.executor_node)
+        workflow.add_node("reflector", self.reflector_node)
+
+        # Define workflow edges
+        workflow.add_edge("router", "planner")
+        workflow.add_conditional_edges("planner", self.should_execute, 
+                                     {"execute": "executor", "reflect": "reflector"})
+
+        workflow.set_entry_point("router")
+        return workflow.compile()
+
+    def chat(self, user_input: str) -> str:
+        # Prepare initial state
+        initial_state = {
+            "messages": [user_input],
+            "current_step": "start",
+            "agent_outputs": {},
+            "conversation_context": self.conversation_memory.get_context_for_agent()
+        }
+
+        # Execute workflow
+        result = self.workflow.invoke(initial_state)
+
+        # Update conversation memory
+        final_response = result["agent_outputs"].get("final_response", "No response")
+        self.conversation_memory.add_interaction(user_input, final_response, 0.5)
+
+        return final_response
+        </script>
+      </div>
+      <p>(A second <code>WorkflowState</code> graph with a <code>should_use_tool</code> conditional repeats the skeleton and is omitted.)</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-009-2-5-langgraph-building-blocks">← Previous</a><span class="rev-pos">10 / 55</span><a href="#q-langgraph-011-3-1-what-react-is">Next →</a></nav>
+    </section>
+  </div>
+</details>

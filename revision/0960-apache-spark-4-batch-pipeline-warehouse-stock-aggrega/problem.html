@@ -1,0 +1,23 @@
+<details class="question" id="q-apache-spark-014-4-batch-pipeline-warehouse-stock-aggrega" data-group="apache-spark" data-sec="apache-spark-s012">
+  <summary>
+    <span class="q-title">4. Batch Pipeline: Warehouse Stock Aggregation</span>
+    <span class="q-meta">
+      <span class="tag">Apache Spark</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Apache Spark › 4. Batch Pipeline: Warehouse Stock Aggregation</p>
+      <p><strong>Use case:</strong> An enterprise has warehouses worldwide, each with its own stock app and local MariaDB (<code>warehouse_stock.item_stock</code>: opening stock, receipts, issues per item per day). Goal: a consolidated central stock database, collected daily, scalable to hundreds of warehouses.</p>
+      <p><strong>Architecture:</strong></p>
+      <ul>
+        <li>Each warehouse runs a Stock Upload Job daily on its local Spark cluster. It reads the local MariaDB and writes Parquet to the central file system (HDFS/S3; local <code>raw_data/</code> is the proxy).</li>
+        <li>Parquet is columnar and efficient for parallel reads. The folder structure is partitioned by <code>STOCK_DATE</code> then <code>WAREHOUSE_ID</code>.</li>
+        <li>After uploads complete, the Stock Aggregator Job on the central Spark cluster reads all Parquet, aggregates with Spark SQL, and writes to the <code>global_stock</code> MariaDB.</li>
+        <li>Flow: Acquire (local MariaDB) -&gt; Transport (Parquet to central FS) -&gt; Consolidate (Spark SQL GROUP BY) -&gt; Persist (global MariaDB). Prune <code>raw_data/</code> after processing.</li>
+      </ul>
+      <p>Notebook: <code>code_03_XX_Spark_BDE_Batch_Data_Engg.ipynb</code>.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-apache-spark-013-3-environment-setup">← Previous</a><span class="rev-pos">14 / 31</span><a href="#q-apache-spark-015-4-1-local-db-connection-and-sample-data">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,103 @@
+<details class="question" id="q-graphql-016-7-crud-resolvers-with-mongodb" data-group="graphql" data-sec="graphql-s014">
+  <summary>
+    <span class="q-title">7. CRUD Resolvers with MongoDB (2/3)</span>
+    <span class="q-meta">
+      <span class="tag">GraphQL</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GraphQL › 7. CRUD Resolvers with MongoDB</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="GraphQL">
+mutation {
+    createProduct(input: {
+        name: "Shovel 2"
+        description: "A sturdy garden shovel"
+        price: 14.99
+        soldout: ONSALE
+        inventory: 30
+        stores: [
+            { store: "Pasadena" },
+            { store: "Los Angeles" }
+        ]
+    }) {
+        id
+        name
+        price
+        description
+        inventory
+        soldout
+    }
+}
+        </script>
+      </div>
+      <p><strong>Update</strong> (reuses <code>ProductInput</code>; its <code>id</code> locates the document):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+updateProduct: async ({ input }) => {
+    try {
+        const updateWidget = await Widgets.findOneAndUpdate(
+            { _id: input.id },   // filter
+            input,               // new field values
+            { new: true }        // return the updated doc, not the old one
+        );
+        return updateWidget;
+    } catch (error) {
+        throw new Error(error);
+    }
+}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="GraphQL">
+mutation {
+    updateProduct(input: {
+        id: "<paste-id-from-create>"
+        price: 50.99
+        stores: [
+            { store: "Orlando" },
+            { store: "Los Angeles" }
+        ]
+    }) {
+        name
+        price
+    }
+}
+        </script>
+      </div>
+      <p>Only the supplied fields change (name unchanged, price updated). Every new resolver must also be declared in the schema, then refresh GraphiQL so it shows in the docs:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="GraphQL">
+type Mutation {
+    createProduct(input: ProductInput): Product
+    updateProduct(input: ProductInput): Product
+}
+        </script>
+      </div>
+      <p><strong>Delete</strong> takes <code>id</code> directly (not <code>input</code>) and returns a confirmation string, since there is no document left to return:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+deleteProduct: async ({ id }) => {
+    try {
+        await Widgets.deleteOne({ _id: id });
+        return 'Successfully deleted widget';
+    } catch (error) {
+        throw new Error(error);
+    }
+}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="GraphQL">
+type Mutation {
+    createProduct(input: ProductInput): Product
+    updateProduct(input: ProductInput): Product
+    deleteProduct(id: ID!): String
+}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-graphql-015-7-crud-resolvers-with-mongodb">← Previous</a><span class="rev-pos">16 / 23</span><a href="#q-graphql-017-7-crud-resolvers-with-mongodb">Next →</a></nav>
+    </section>
+  </div>
+</details>

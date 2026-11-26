@@ -1,0 +1,91 @@
+<details class="question" id="q-fine-tuning-llm-038-10-evaluation-metrics-rouge-bleu" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s029">
+  <summary>
+    <span class="q-title">10. Evaluation Metrics: ROUGE &amp; BLEU (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 10. Evaluation Metrics: ROUGE &amp; BLEU</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th></th><th><strong>ROUGE</strong></th><th><strong>BLEU</strong></th></tr></thead>
+          <tbody>
+            <tr><td>Question answered</td><td>How much of the <em>reference</em> content did the output capture?</td><td>How much of the <em>output</em> appears in the reference?</td></tr>
+            <tr><td>Orientation</td><td><strong>Recall</strong>-oriented</td><td><strong>Precision</strong>-oriented (exact phrase match and order, 1–4-grams)</td></tr>
+            <tr><td>Analogy</td><td>Overlap of recipe ingredients</td><td>Comparing finished dishes</td></tr>
+            <tr><td>Variants</td><td>ROUGE-1 (unigrams), ROUGE-2 (bigrams), ROUGE-L (longest common subsequence)</td><td>BLEU-1 … BLEU-4, geometric mean with brevity penalty</td></tr>
+            <tr><td>Typical tasks</td><td>Summarisation</td><td>Translation</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Use both: they are complementary, and the metric should match the task.</p>
+      <p>Library calls (lecture notes; <code>load_metric</code> is deprecated, see Section 1):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from datasets import load_metric
+
+# Load ROUGE metric
+rouge = load_metric("rouge")
+
+# Example texts
+predictions = ["The cat sat on the mat."]
+references = ["The cat is sitting on the mat."]
+
+# Calculate ROUGE scores
+rouge_scores = rouge.compute(predictions=predictions, references=references)
+
+print(f"ROUGE-1: {rouge_scores['rouge1']}")  # Unigram overlap
+print(f"ROUGE-2: {rouge_scores['rouge2']}")  # Bigram overlap  
+print(f"ROUGE-L: {rouge_scores['rougeL']}")  # Longest common subsequence
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Load BLEU metric
+bleu = load_metric("bleu")
+
+# Calculate BLEU scores
+bleu_scores = bleu.compute(predictions=predictions, references=references)
+
+print(f"BLEU: {bleu_scores['bleu']}")
+print(f"Precisions: {bleu_scores['precisions']}")  # 1-gram to 4-gram
+        </script>
+      </div>
+      <p>Hand calculation of the unigram versions:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def calculate_rouge_1_manual(generated, reference):
+    gen_words = generated.lower().split()
+    ref_words = reference.lower().split()
+
+    overlap = len(set(gen_words) & set(ref_words))
+    rouge_1 = overlap / len(ref_words)  # Recall-based
+
+    return rouge_1
+
+# Example: "The cat sat on the mat" vs "The cat is sitting on the mat"
+# Overlap: ["the", "cat", "on", "the", "mat"] = 5 words
+# ROUGE-1 = 5/6 = 83%
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def calculate_bleu_1_manual(generated, reference):
+    gen_words = generated.lower().split()
+    ref_words = reference.lower().split()
+
+    overlap = len(set(gen_words) & set(ref_words))
+    bleu_1 = overlap / len(gen_words)  # Precision-based
+
+    return bleu_1
+
+# Example: Same texts as above
+# BLEU-1 = 5/5 = 100% (all generated words appear in reference)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-037-9-3-train-and-translate">← Previous</a><span class="rev-pos">38 / 74</span><a href="#q-fine-tuning-llm-039-10-evaluation-metrics-rouge-bleu">Next →</a></nav>
+    </section>
+  </div>
+</details>

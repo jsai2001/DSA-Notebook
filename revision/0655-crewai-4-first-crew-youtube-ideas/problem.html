@@ -1,0 +1,75 @@
+<details class="question" id="q-crewai-005-4-first-crew-youtube-ideas" data-group="crewai" data-sec="crewai-s006">
+  <summary>
+    <span class="q-title">4. First Crew: YouTube Ideas</span>
+    <span class="q-meta">
+      <span class="tag">CrewAI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">CrewAI › 4. First Crew: YouTube Ideas</p>
+      <p>Two agents (idea generator, idea filter), two tasks, sequential process. Task 1 output feeds Task 2. Default LLM is OpenAI GPT-4, so set the key first.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+export OPENAI_API_KEY=sk-xxxxxxxx
+python youtube_crew.py
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from crewai import Agent, Task, Crew, Process
+
+# --- Agents ---
+idea_generator_agent = Agent(
+    role="Generator of creative ideas for YouTube",
+    goal="Generate a diverse and extensive list of ideas for YouTube videos "
+         "without any initial judgment.",
+    backstory="You are free-thinking creative with an endless world of ideas, "
+              "specifically tuned into the dynamics of YouTube..."
+)
+
+idea_filter_agent = Agent(
+    role="The analytical evaluator who sifts through the generated YouTube "
+         "video ideas, accessing their relevance, feasibility, and potential "
+         "impact specifically for a YouTube audience.",
+    goal="Select the most promising and actionable video ideas from the list "
+         "based on predefined criteria relevant to YouTube.",
+    backstory="..."
+)
+
+# --- Tasks ---
+idea_generation_task = Task(
+    description="Brainstorm ideas for YouTube videos on the topic: {topic}",
+    expected_output="A bullet list of ideas. Example:\n- Idea 1\n- Idea 2",
+    agent=idea_generator_agent
+)
+
+idea_filtering_task = Task(
+    description="Review the brainstormed ideas based on YouTube viability...",
+    expected_output="Top 3-5 ideas with reasoning. Format:\n"
+                    "- Idea: <idea>\n  Reasoning: <why selected>",
+    agent=idea_filter_agent
+)
+
+# --- Crew ---
+idea_generation_crew = Crew(
+    agents=[idea_generator_agent, idea_filter_agent],
+    tasks=[idea_generation_task, idea_filtering_task],
+    process=Process.sequential,
+    verbose=True
+)
+
+# --- Run ---
+idea_generation_crew.kickoff(inputs={"topic": "Foundational Models"})
+        </script>
+      </div>
+      <ul>
+        <li>The four core imports: <code>Agent</code>, <code>Task</code>, <code>Crew</code>, <code>Process</code>.</li>
+        <li><code>{topic}</code> is a dynamic variable. <code>kickoff(inputs={...})</code> fills it, which makes tasks reusable.</li>
+        <li><code>verbose=True</code> shows each agent's reasoning.</li>
+        <li>Output: 3-5 filtered ideas, each with reasoning.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-crewai-004-3-api-keys">← Previous</a><span class="rev-pos">5 / 30</span><a href="#q-crewai-006-5-agents">Next →</a></nav>
+    </section>
+  </div>
+</details>

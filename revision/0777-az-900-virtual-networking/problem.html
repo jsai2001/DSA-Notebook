@@ -1,0 +1,74 @@
+<details class="question" id="q-az-900-030-virtual-networking" data-group="az-900" data-sec="az-900-s025">
+  <summary>
+    <span class="q-title">Virtual networking (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">AZ-900</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AZ-900 › 6. Compute and networking › Virtual networking</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Create a public DNS zone
+az network dns zone create --resource-group AZ900 --name example.com
+
+# Add an A record
+az network dns record-set a add-record \
+  --resource-group AZ900 --zone-name example.com \
+  --record-set-name www --ipv4-address 10.0.1.4
+
+# Create a private DNS zone
+az network private-dns zone create --resource-group AZ900 --name private.example.com
+
+# Link private zone to a VNet
+az network private-dns link vnet create \
+  --resource-group AZ900 --zone-name private.example.com \
+  --name myLink --virtual-network myVNet --registration-enabled true
+        </script>
+      </div>
+      <p><strong>VPN Gateway</strong>: encrypted connections between Azure VNets and other networks. Azure creates a managed gateway subnet with 2+ VMs (not accessible to you). Max <strong>1.25 Gbps</strong>, and encryption adds overhead.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Connection type</th><th>Connects</th></tr></thead>
+          <tbody>
+            <tr><td>VNet-to-VNet</td><td>Two Azure VNets</td></tr>
+            <tr><td>Site-to-Site</td><td>Azure VNet and an on-prem network</td></tr>
+            <tr><td>Point-to-Site</td><td>One device (phone, laptop) and an Azure VNet</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Create a gateway subnet
+az network vnet subnet create \
+  --resource-group AZ900 --vnet-name myVNet \
+  --name GatewaySubnet --address-prefix 10.0.255.0/27
+
+# Create a public IP for the gateway
+az network public-ip create \
+  --resource-group AZ900 --name myGatewayIP --allocation-method Static
+
+# Create a VPN gateway (takes ~30 min)
+az network vnet-gateway create \
+  --resource-group AZ900 --name myVPNGateway \
+  --vnet myVNet --public-ip-addresses myGatewayIP \
+  --gateway-type Vpn --vpn-type RouteBased --sku VpnGw1
+        </script>
+      </div>
+      <p>VPN Gateway vs peering: for two Azure VNets, peering is faster (no encryption overhead, no 1.25 Gbps cap). Use VPN Gateway when you need encryption or a non-Azure network.</p>
+      <p><strong>ExpressRoute</strong>: dedicated private connectivity from on-prem to Azure. <strong>Traffic never crosses the internet.</strong> The connection is a <strong>circuit</strong>: you → third-party provider (usually an ISP) → Microsoft Enterprise Edge (MSEE) → Azure.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th></th><th>VPN Gateway</th><th>ExpressRoute</th></tr></thead>
+          <tbody>
+            <tr><td>Speed</td><td>Up to 1.25 Gbps</td><td>Up to 10 Gbps (100 Gbps with ExpressRoute Direct)</td></tr>
+            <tr><td>Path</td><td>Internet, encrypted</td><td>Dedicated fiber via MSEE</td></tr>
+            <tr><td>Provider</td><td>None</td><td>Third-party provider</td></tr>
+          </tbody>
+        </table>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-az-900-029-virtual-networking">← Previous</a><span class="rev-pos">30 / 66</span><a href="#q-az-900-031-public-vs-private-endpoints">Next →</a></nav>
+    </section>
+  </div>
+</details>

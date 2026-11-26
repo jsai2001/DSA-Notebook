@@ -1,0 +1,74 @@
+<details class="question" id="q-langgraph-054-8-3-production-shape-config-logging-metr" data-group="langgraph" data-sec="langgraph-s036">
+  <summary>
+    <span class="q-title">8.3 Production shape: config, logging, metrics, API (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 8. Beyond LangGraph: Other Frameworks, Tools, Deployment › 8.3 Production shape: config, logging, metrics, API</p>
+      <p>Serving over HTTP with FastAPI (<code>/chat</code>, <code>/metrics</code>):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Agent deployment with FastAPI
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import uvicorn
+
+app = FastAPI(title="Enterprise AI Agent API")
+
+class ChatRequest(BaseModel):
+    message: str
+    user_id: str
+    session_id: Optional[str] = None
+
+class ChatResponse(BaseModel):
+    response: str
+    session_id: str
+    processing_time: float
+
+# Initialize enterprise agent
+agent_config = AgentConfig(
+    name="CustomerServiceAgent",
+    description="Handles customer inquiries and support requests",
+    tools=["database_query", "email_sender", "knowledge_base_search"],
+    max_iterations=5
+)
+
+enterprise_agent = EnterpriseAgent(agent_config)
+
+@app.post("/chat", response_model=ChatResponse)
+async def chat_endpoint(request: ChatRequest):
+    """Chat endpoint for enterprise agent"""
+    try:
+        result = enterprise_agent.process_request(request.message, request.user_id)
+
+        if result["success"]:
+            return ChatResponse(
+                response=result["response"],
+                session_id=request.session_id or "new_session",
+                processing_time=result["response_time"]
+            )
+        else:
+            raise HTTPException(status_code=500, detail=result["error"])
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/metrics")
+async def get_metrics():
+    """Get agent performance metrics"""
+    return enterprise_agent.metrics
+
+# Run server
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+        </script>
+      </div>
+      <p>Enterprise readiness checklist: <strong>security</strong> (authN/authZ, encryption, audit logging), <strong>scalability</strong> (load balancing, DB optimization, caching), <strong>monitoring</strong> (metrics, error alerting, usage analytics), <strong>integration</strong> (legacy systems, third-party APIs, data pipelines).</p>
+      <p>Next steps named by the course: LlamaIndex, AutoGen, CrewAI, then RAG/API tools, then production agents; later topics include multi-modal agents, agent safety, evaluation metrics.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-053-8-3-production-shape-config-logging-metr">← Previous</a><span class="rev-pos">54 / 55</span><a href="#q-langgraph-055-9-gotchas-version-notes">Next →</a></nav>
+    </section>
+  </div>
+</details>

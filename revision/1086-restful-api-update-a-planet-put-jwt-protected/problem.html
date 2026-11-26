@@ -1,0 +1,39 @@
+<details class="question" id="q-restful-api-016-update-a-planet-put-jwt-protected" data-group="restful-api" data-sec="restful-api-s017">
+  <summary>
+    <span class="q-title">Update a planet (PUT, JWT-protected)</span>
+    <span class="q-meta">
+      <span class="tag">RESTful API</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RESTful API › 6. CRUD Endpoints › Update a planet (PUT, JWT-protected)</p>
+      <p>Read <code>planet_id</code> from the form, find the row, assign new attribute values, commit. No <code>add()</code> is needed because the object is already tracked by the session. Success returns 202, a missing planet returns 404.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+@app.route('/update_planet', methods=['PUT'])
+@jwt_required
+def update_planet():
+    planet_id = int(request.form['planet_id'])
+    planet = Planet.query.filter_by(planet_id=planet_id).first()
+    if planet:
+        planet.planet_name = request.form['planet_name']
+        planet.planet_type = request.form['planet_type']
+        planet.home_star = request.form['home_star']
+        planet.mass = float(request.form['mass'])
+        planet.radius = float(request.form['radius'])
+        planet.distance = float(request.form['distance'])
+        db.session.commit()
+        return jsonify({"message": "You updated a planet"}), 202
+    return jsonify({"message": "that planet does not exist"}), 404
+        </script>
+      </div>
+      <ul>
+        <li>PUT is the standard update verb, but some teams use POST. Supporting both is an option.</li>
+        <li>A typo in a form key (<code>home_start</code> vs <code>home_star</code>) causes an error.</li>
+        <li>An expired token returns <code>Token has expired</code>. Log in again via <code>/login</code>.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-restful-api-015-create-a-planet-post-jwt-protected">← Previous</a><span class="rev-pos">16 / 23</span><a href="#q-restful-api-017-delete-a-planet-delete-jwt-protected">Next →</a></nav>
+    </section>
+  </div>
+</details>

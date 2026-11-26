@@ -1,0 +1,121 @@
+<details class="question" id="q-fine-tuning-llm-067-15-2-sentiment-analysis-transfer-learnin" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s050">
+  <summary>
+    <span class="q-title">15.2 Sentiment analysis, transfer learning (DistilBERT on SST-2: Chapter5_Solution1)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 15. Chapter 5 Exercises › 15.2 Sentiment analysis, transfer learning (DistilBERT on SST-2: Chapter5_Solution1)</p>
+      <p>Encoder-only model, <strong>sequence classification</strong> head with 2 labels; freeze the DistilBERT body (<code>model.layers[0]</code>) so only the classifier trains; use <code>from_logits=True</code> plus accuracy; evaluate and save.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+!pip install transformers datasets tensorflow
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import tensorflow as tf
+from transformers import TFAutoModelForSequenceClassification, AutoTokenizer
+from datasets import load_dataset
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Load the SST2 dataset
+dataset = load_dataset("stanfordnlp/sst2")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Load the DistilBERT tokenizer
+tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Tokenize the dataset
+def tokenize_function(examples):
+    return tokenizer(examples["sentence"], padding='max_length', truncation=True, max_length=128, return_tensors='tf')
+
+tokenized_datasets = dataset.map(tokenize_function, batched=True)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Convert the tokenized dataset to a TensorFlow dataset
+train_dataset = tokenized_datasets["train"].to_tf_dataset(
+    columns=["input_ids", "attention_mask"],
+    label_cols="label",
+    shuffle=True,
+    batch_size=64
+)
+
+validation_dataset = tokenized_datasets["validation"].to_tf_dataset(
+    columns=["input_ids", "attention_mask"],
+    label_cols="label",
+    shuffle=False,
+    batch_size=64
+)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+for batch in train_dataset.take(1):
+    print(batch[0]['input_ids'].shape)
+    print(batch[0]['attention_mask'].shape)
+    print(batch[1].shape)
+    break
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Load the pre-trained DistilBERT model
+model = TFAutoModelForSequenceClassification.from_pretrained("distilbert-base-uncased", num_labels=2)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Freeze the DistilBERT layers
+model.layers[0].trainable = False
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Compile the model
+model.compile(
+    optimizer=tf.keras.optimizers.Adam(learning_rate=5e-5),
+    loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+    metrics=tf.metrics.SparseCategoricalAccuracy(),
+)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Train the model
+model.fit(
+    train_dataset,
+    validation_data=validation_dataset,
+    epochs=3
+)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Save the model
+model.save_pretrained("./distilbert-sst2")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+results = model.evaluate(validation_dataset)
+print(f"Test loss: {results[0]}")
+print(f"Test accuracy: {results[1]}")
+        </script>
+      </div>
+      <p>(The notebook evaluates on the <em>validation</em> split but labels it "test".)</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-066-15-1-summarisation-with-lora-chapter5-so">← Previous</a><span class="rev-pos">67 / 74</span><a href="#q-fine-tuning-llm-068-15-3-question-answering-flan-t5-on-squad">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,102 @@
+<details class="question" id="q-gcp-ml-019-challenge-solution-feature-store-with-th" data-group="gcp-ml" data-sec="gcp-ml-s019">
+  <summary>
+    <span class="q-title">Challenge solution: Feature Store with the Penguins dataset</span>
+    <span class="q-meta">
+      <span class="tag">GCP for Machine Learning</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GCP for Machine Learning › 9. Feature Store › Challenge solution: Feature Store with the Penguins dataset</p>
+      <p>Run in an Instance-type notebook.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# 1. Install and initialize
+# !pip install google-cloud-aiplatform
+from google.cloud import aiplatform
+from google.cloud import bigquery
+import pandas as pd
+aiplatform.init(project="<your-project-id>", location="us-central1")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# 2. Prepare data (public Penguins dataset)
+bq_client = bigquery.Client(project="<your-project-id>")
+query = """
+SELECT *
+FROM `bigquery-public-data.ml_datasets.penguins`
+WHERE body_mass_g IS NOT NULL
+"""
+df = bq_client.query(query).to_dataframe()
+df = df.dropna()
+# Format: entity_id, feature columns
+df['entity_id'] = df.index.astype(str)
+print(f"Rows: {len(df)}")
+print(df.head())
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# 3. Create the Feature Store (~15 minutes)
+featurestore = aiplatform.Featurestore.create(
+    featurestore_id="penguins_featurestore",
+    online_store_fixed_node_count=1
+)
+print(f"Feature Store created: {featurestore.resource_name}")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# 4. Entity type (groups semantically related features) and features
+entity_type = featurestore.create_entity_type(
+    entity_type_id="penguins",
+    description="Penguin measurements"
+)
+features = [
+    {"feature_id": "species", "value_type": "STRING"},
+    {"feature_id": "island", "value_type": "STRING"},
+    {"feature_id": "culmen_length_mm", "value_type": "DOUBLE"},
+    {"feature_id": "culmen_depth_mm", "value_type": "DOUBLE"},
+    {"feature_id": "flipper_length_mm", "value_type": "DOUBLE"},
+    {"feature_id": "body_mass_g", "value_type": "DOUBLE"},
+    {"feature_id": "sex", "value_type": "STRING"},
+]
+entity_type.batch_create_features(feature_configs={
+    f["feature_id"]: {"value_type": f["value_type"]} for f in features
+})
+print("Features created successfully")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# 5. Write features from the DataFrame
+entity_type.ingest_from_df(
+    feature_ids=[f["feature_id"] for f in features],
+    feature_time="feature_timestamp",
+    df_source=df,
+    entity_id_field="entity_id"
+)
+print("Features ingested successfully")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# 6. Read features back
+entity_ids = ["0", "1", "2"]
+result = entity_type.read(entity_ids=entity_ids)
+print(result)
+        </script>
+      </div>
+      <p>Console (Vertex AI → Feature Store): view feature info/properties/metrics, enable <strong>feature monitoring</strong> (drift), configure <strong>streaming ingestion</strong> or batch serving.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+gcloud ai featurestores list --region=us-central1 --format=table
+gcloud ai featurestores describe penguins_featurestore --region=us-central1
+gcloud ai featurestores delete penguins_featurestore --region=us-central1 --force
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-gcp-ml-018-9-feature-store">← Previous</a><span class="rev-pos">19 / 25</span><a href="#q-gcp-ml-020-10-model-registry">Next →</a></nav>
+    </section>
+  </div>
+</details>

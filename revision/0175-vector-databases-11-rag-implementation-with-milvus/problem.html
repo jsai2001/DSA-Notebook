@@ -1,0 +1,81 @@
+<details class="question" id="q-vector-databases-058-11-rag-implementation-with-milvus" data-group="vector-databases" data-sec="vector-databases-s058">
+  <summary>
+    <span class="q-title">11. RAG implementation with Milvus (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">Vector Databases</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Vector Databases › 11. RAG implementation with Milvus</p>
+      <p>Course demo: PDF "Large Language Models.pdf" -&gt; 512-char chunks -&gt; OpenAI embeddings -&gt; Milvus -&gt; question "What is gender bias?" (notebook <code>code_06</code>).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# 1. Connection + database
+from pymilvus import connections, db, Collection, utility, CollectionSchema, FieldSchema, DataType
+
+connections.add_connection(
+    rag_conn={"host": "localhost", "port": "19530", "username": "username", "password": "password"})
+conn_name = "rag_conn"
+db_name = "rag_db"
+connections.connect(conn_name)
+
+if db_name not in db.list_database(using=conn_name):
+    db.create_database(db_name, using=conn_name)
+db.using_database(db_name, using=conn_name)
+
+# 2. Schema + collection
+chunk_id_field = FieldSchema(name="chunk_id", dtype=DataType.INT64, is_primary=True, max_length=32)
+rag_text_field = FieldSchema(name="rag_text", dtype=DataType.VARCHAR, max_length=2048)
+rag_embedding_field = FieldSchema(name="rag_embedding", dtype=DataType.FLOAT_VECTOR, dim=1536)
+
+rag_schema = CollectionSchema(
+    fields=[chunk_id_field, rag_text_field, rag_embedding_field],
+    description="RAG Schema",
+    enable_dynamic_field=True)
+collection_name = "rag_collection"
+rag_collection = Collection(name=collection_name, schema=rag_schema, using=conn_name, shard_num=2)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# 3. Knowledge curation: load PDF, chunk, embed
+from langchain.document_loaders import PDFMinerLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.embeddings import OpenAIEmbeddings
+
+loader = PDFMinerLoader("Large Language Models.pdf")
+pdf_docs = loader.load()
+
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=512,          # characters
+    chunk_overlap=32,        # allowed overlap across chunks
+    length_function=len      # measure size in characters
+)
+pdf_docs = text_splitter.split_documents(pdf_docs)
+
+rag_text = [doc.page_content for doc in pdf_docs]
+print("Total chunks :", len(rag_text))
+
+embeddings_model = OpenAIEmbeddings()
+rag_embedding = [embeddings_model.embed_query(t) for t in rag_text]
+record_ids = [i for i in range(len(rag_text))]            # manual chunk IDs (no auto_id)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# 4. Populate + index
+insert_data = [record_ids, rag_text, rag_embedding]
+i_collection = Collection(collection_name, using=conn_name)
+mr = i_collection.insert(insert_data)
+i_collection.flush()
+
+index_params = {"metric_type": "L2", "index_type": "IVF_FLAT", "params": {"nlist": 1024}}
+i_collection.create_index(field_name="rag_embedding", index_params=index_params)
+utility.index_building_progress(collection_name, using=conn_name)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-vector-databases-057-quality-metrics-and-troubleshooting">← Previous</a><span class="rev-pos">58 / 69</span><a href="#q-vector-databases-059-11-rag-implementation-with-milvus">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,65 @@
+<details class="question" id="q-advanced-rag-033-11-anomalies-in-embeddings" data-group="advanced-rag" data-sec="advanced-rag-s033">
+  <summary>
+    <span class="q-title">11. Anomalies in Embeddings</span>
+    <span class="q-meta">
+      <span class="tag">Advanced RAG</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Advanced RAG › 11. Anomalies in Embeddings</p>
+      <p>Garbage in, garbage out. Text queries sometimes return the wrong image.</p>
+      <p><strong>Causes</strong>: bad data quality; limits of OpenCLIP and its training data.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Fix</th><th>When</th></tr></thead>
+          <tbody>
+            <tr><td>Fine-tune the embedding model</td><td>You have labeled pairs of your own data</td></tr>
+            <tr><td>Improve data quality</td><td>Remove bad/mislabeled images, add diverse examples</td></tr>
+            <tr><td>Use rerankers</td><td>A second model re-scores and reorders retrieved results</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Debug tip: bypass the LLM and query the retriever directly.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+retriever = vector_store.as_retriever()
+
+def show_results(query, query_type="text"):
+    """Query the retriever and display results."""
+    if query_type == "image":
+        encoded = encode_image(query)
+        results = retriever.invoke(encoded)
+    else:
+        results = retriever.invoke(query)
+    print(f"Query: {query}")
+    for i, doc in enumerate(results):
+        print(f"  Result {i+1}: {doc.metadata['image_path']}")
+    print()
+        </script>
+      </div>
+      <p>Good results:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+show_results("rottweiler")                          # Result 1: images/dog_5.jpg  (correct)
+show_results("images/cat_1.jpg", query_type="image")  # Result 1: images/cat_1.jpg (same image)
+show_results("golden retriever playing with an orange ball")  # Result 1: images/dog_2.jpg (correct)
+        </script>
+      </div>
+      <p>Anomalies:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Should find cat_2, gets dog_5 (a rottweiler) instead
+show_results("gray cat with long hair in a field")
+#   Result 1: images/dog_5.jpg  <- WRONG
+
+# Should find dog_4, gets cat_3 (gray cat on a laptop); dog_4 not in results
+show_results("golden retriever in a field with a sunny blurred background")
+#   Result 1: images/cat_3.jpg  <- WRONG
+        </script>
+      </div>
+      <p>The OpenCLIP embedding space doesn't separate these specific descriptions well, because of its training data.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-advanced-rag-032-demo-query-images-with-text">← Previous</a><span class="rev-pos">33 / 33</span><span></span></nav>
+    </section>
+  </div>
+</details>

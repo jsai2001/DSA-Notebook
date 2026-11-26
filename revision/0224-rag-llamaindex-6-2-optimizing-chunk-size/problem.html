@@ -1,0 +1,49 @@
+<details class="question" id="q-rag-llamaindex-038-6-2-optimizing-chunk-size" data-group="rag-llamaindex" data-sec="rag-llamaindex-s030">
+  <summary>
+    <span class="q-title">6.2 Optimizing chunk size (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">RAG with LlamaIndex</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RAG with LlamaIndex › 6. Advanced RAG: Pre-Retrieval &amp; Indexing › 6.2 Optimizing chunk size</p>
+      <p>End-to-end with 256-token sentence chunks, MMR, and compact synthesis:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from utils import ingest, create_index, create_query_engine
+
+COLLECTION_NAME = "wots_sentence_split_chunk_size_256"
+vector_store = setup_vector_store(QDRANT_URL, QDRANT_API_KEY, COLLECTION_NAME)
+
+sent_splitter = SentenceSplitter(chunk_size=256, chunk_overlap=16)
+split_nodes = ingest(
+    documents=senpai_documents,
+    transformations=[sent_splitter, Settings.embed_model],
+    vector_store=vector_store
+)
+
+index = create_index(from_where="vector_store", embed_model=Settings.embed_model, vector_store=vector_store)
+
+query_engine = create_query_engine(
+    index=index,
+    mode="query",
+    response_mode="compact",           # default is "refine" (one LLM call per chunk)
+    similiarty_top_k=5,                # (sic) spelled this way in the course notebooks
+    vector_store_query_mode="mmr",
+    vector_store_kwargs={"mmr_threshold": 0.42}
+)
+
+from prompts import ANSWER_GEN_PROMPT
+from llama_index.core import PromptTemplate
+query_engine.update_prompts({'response_synthesizer:text_qa_template': PromptTemplate(ANSWER_GEN_PROMPT)})
+        </script>
+      </div>
+      <p>Gotcha: the notebooks spell it <code>similiarty_top_k</code>. The correct retriever argument is <code>similarity_top_k</code>; the misspelled keyword is silently passed through as a kwarg, so the default (2) may be what actually applies. The default <code>similarity_top_k</code> is 2.</p>
+      <p><strong>MMR (Maximal Marginal Relevance)</strong> balances relevance and diversity: iteratively pick items that are relevant to the query but different from already-selected items.</p>
+      <p><code>MMR = argmax [ λ · Relevance(item, query) − (1 − λ) · max Similarity(item, selected) ]</code></p>
+      <p>λ near 1 favors relevance, near 0 favors diversity (<code>mmr_threshold</code> is λ). It depends on embeddings, so chunk size affects it. Enable with <code>vector_store_query_mode="mmr"</code>.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-rag-llamaindex-037-6-2-optimizing-chunk-size">← Previous</a><span class="rev-pos">38 / 63</span><a href="#q-rag-llamaindex-039-6-3-small-to-big-retrieval-recursive-ret">Next →</a></nav>
+    </section>
+  </div>
+</details>

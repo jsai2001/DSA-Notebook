@@ -1,0 +1,85 @@
+<details class="question" id="q-crewai-022-9-crews-and-process" data-group="crewai" data-sec="crewai-s022">
+  <summary>
+    <span class="q-title">9. Crews and Process</span>
+    <span class="q-meta">
+      <span class="tag">CrewAI</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">CrewAI › 9. Crews and Process</p>
+      <p>A crew is the central orchestrator: defines the objective (through its tasks), supplies agents and tasks, determines order, runs execution, collects the final result.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Parameter</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>agents</code></td><td>List of agents</td></tr>
+            <tr><td><code>tasks</code></td><td>List of tasks. For sequential, list order is execution order.</td></tr>
+            <tr><td><code>process</code></td><td><code>Process.sequential</code> or <code>Process.hierarchical</code></td></tr>
+            <tr><td><code>verbose</code></td><td>Default <code>False</code>. Detailed logs. Recommended during development.</td></tr>
+            <tr><td><code>memory</code></td><td>Default <code>False</code>. Shared memory across agents.</td></tr>
+            <tr><td><code>manager_llm</code></td><td>LLM for the manager agent. Required for hierarchical only.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Process</th><th>Behavior</th></tr></thead>
+          <tbody>
+            <tr><td><code>Process.sequential</code></td><td>Tasks run one after another in list order. Output passes automatically. Best for linear workflows.</td></tr>
+            <tr><td><code>Process.hierarchical</code></td><td>A manager agent (LLM) breaks the goal into subtasks and assigns them to agents autonomously. Supports branching and complex paths. Needs <code>manager_llm</code>.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from crewai import Agent, Task, Crew, Process
+from crewai_tools import SerperDevTool
+
+browse_tool = SerperDevTool()
+
+destination_researcher = Agent(
+    role="Travel destination researcher",
+    goal="Find interesting places and activities.",
+    backstory="...",
+    tools=[browse_tool]
+)
+itinerary_planner = Agent(
+    role="Itinerary planner",
+    goal="Create a feasible one-day itinerary.",
+    backstory="..."
+)
+
+travel_research_task = Task(
+    description="Search for attractions and activities in {location}.",
+    expected_output="A list of places with names and categories.",
+    agent=destination_researcher
+)
+itinerary_planning_task = Task(
+    description="Structure the research into a one-day itinerary.",
+    expected_output="A chronological one-day plan with activities.",
+    agent=itinerary_planner
+)
+
+traveling_crew = Crew(
+    agents=[destination_researcher, itinerary_planner],
+    tasks=[travel_research_task, itinerary_planning_task],
+    process=Process.sequential,
+    verbose=True,
+    memory=True       # optional
+)
+
+# Hierarchical variant
+hier_crew = Crew(
+    agents=[...],
+    tasks=[...],
+    process=Process.hierarchical,
+    manager_llm="gpt-4o",
+    verbose=True
+)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-crewai-021-async-execution">← Previous</a><span class="rev-pos">22 / 30</span><a href="#q-crewai-023-10-running-crews-and-reading-output">Next →</a></nav>
+    </section>
+  </div>
+</details>

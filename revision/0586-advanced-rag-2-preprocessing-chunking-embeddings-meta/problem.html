@@ -1,0 +1,72 @@
+<details class="question" id="q-advanced-rag-003-2-preprocessing-chunking-embeddings-meta" data-group="advanced-rag" data-sec="advanced-rag-s003">
+  <summary>
+    <span class="q-title">2. Preprocessing: Chunking, Embeddings, Metadata</span>
+    <span class="q-meta">
+      <span class="tag">Advanced RAG</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Advanced RAG › 2. Preprocessing: Chunking, Embeddings, Metadata</p>
+      <p>Three components of RAG data preprocessing:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Component</th><th>What it is</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Chunking</strong></td><td>Breaking big text into smaller blocks</td></tr>
+            <tr><td><strong>Embeddings</strong></td><td>Vectors from embedding models; semantic meaning in quantifiable form</td></tr>
+            <tr><td><strong>Metadata</strong></td><td>Data stored alongside embeddings; critical for customizable RAG apps</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Why chunk</strong>: humans read one coherent sentence or paragraph at a time, and LLMs work the same way. The <strong>context window</strong> (max tokens an LLM handles at once; GPT-4 Turbo ~128k) is a cap, not the ideal amount.</p>
+      <p><strong>Dense vs sparse embeddings</strong> (RAG mostly uses dense):</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Type</th><th>Description</th><th>Created by</th></tr></thead>
+          <tbody>
+            <tr><td>Dense</td><td>Few values are zero</td><td>ML models</td></tr>
+            <tr><td>Sparse</td><td>Many values (&gt;50%) are zero</td><td>Algorithms (TF-IDF, BM25)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import numpy as np
+dense_embedding = model.encode("Retrieval augmented generation improves LLM accuracy")
+zeros = np.count_nonzero(dense_embedding == 0)
+print(f"Dimensions: {len(dense_embedding)}")           # 384
+print(f"Zero values: {zeros}/{len(dense_embedding)}")  # very few zeros
+        </script>
+      </div>
+      <p><strong>Metadata basics</strong>: it must include the <strong>original text</strong>, because vector DBs retrieve by similarity and an LLM cannot turn embeddings back into text. Its main use is <strong>filtering</strong> searches before similarity comparison.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Type</th><th>Examples</th></tr></thead>
+          <tbody>
+            <tr><td>Processing metadata</td><td>Section title, paragraph number, chunk location</td></tr>
+            <tr><td>Data metadata</td><td>Embedded text itself, publication date, author</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+data_point = {
+    "id": "doc1_chunk3",
+    "text": "RAG combines retrieval with generation for accurate answers.",
+    "embedding": model.encode("RAG combines retrieval with generation for accurate answers.").tolist(),
+    "metadata": {
+        "source": "rag_handbook.pdf",
+        "author": "Yujian Tang",
+        "page": 12,
+        "section": "Introduction",
+        "chunk_index": 3,
+        "publication_date": "2024-01-15"
+    }
+}
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-advanced-rag-002-1-core-concepts-and-rag-pipeline">← Previous</a><span class="rev-pos">3 / 33</span><a href="#q-advanced-rag-004-chunking-considerations-the-three-c-s">Next →</a></nav>
+    </section>
+  </div>
+</details>

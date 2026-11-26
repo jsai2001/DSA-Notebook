@@ -1,0 +1,56 @@
+<details class="question" id="q-mcp-044-tool-compare-models" data-group="mcp" data-sec="mcp-s045">
+  <summary>
+    <span class="q-title">Tool: compare_models</span>
+    <span class="q-meta">
+      <span class="tag">Model Context Protocol</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Model Context Protocol › 8. Building a TypeScript MCP Server › Tool: compare_models</p>
+      <p>Registration signature: name, LLM description, Zod parameter schema, async handler. The <code>describe()</code> text on each parameter is read by the LLM. Errors are returned as JSON content (not thrown) and include the valid model IDs so the model can retry. Results are raw JSON for the LLM to process.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="TypeScript">
+server.tool(
+  "compare_models",
+  "Compare responses from different models for the same prompt",
+  {
+    prompt: z.string().describe("The prompt to send to all models"),
+    models: z.array(z.string())
+      .default(["gpt-4", "claude-3"])
+      .describe("List of model IDs to compare")
+  },
+  async ({ prompt, models }: CompareModelsParams) => {
+    const availableModels = await getModelsData();
+    const validModels = models.filter((id: string) =>
+      availableModels.some(model => model.id === id)
+    );
+    if (validModels.length === 0) {
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            error: "No valid models specified",
+            available_models: availableModels.map(m => m.id)
+          }, null, 2)
+        }]
+      };
+    }
+    const responses = await compareModels(prompt, validModels);
+    return {
+      content: [{
+        type: "text",
+        text: JSON.stringify({
+          results: responses,
+          summary: { models_compared: validModels, prompt }
+        }, null, 2)
+      }]
+    };
+  }
+);
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-mcp-043-resource-models-available">← Previous</a><span class="rev-pos">44 / 64</span><a href="#q-mcp-045-prompt-compare-models-prompt">Next →</a></nav>
+    </section>
+  </div>
+</details>

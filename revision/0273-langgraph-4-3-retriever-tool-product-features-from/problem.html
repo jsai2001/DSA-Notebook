@@ -1,0 +1,48 @@
+<details class="question" id="q-langgraph-024-4-3-retriever-tool-product-features-from" data-group="langgraph" data-sec="langgraph-s015">
+  <summary>
+    <span class="q-title">4.3 Retriever tool: product features from a PDF (RAG as a tool)</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 4. Product Q&amp;A Chatbot (function tool + retriever tool + memory) › 4.3 Retriever tool: product features from a PDF (RAG as a tool)</p>
+      <p>Load PDF → chunk → embed into Chroma → wrap with <code>create_retriever_tool</code>. The <strong>description</strong> tells the agent what the store holds. The <code>pysqlite3</code> swap gives Chroma a new enough SQLite.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+from langchain.tools.retriever import create_retriever_tool
+from langchain_chroma import Chroma 
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_openai import OpenAIEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+# Load, chunk and index the contents of the product featuers document.
+loader=PyPDFLoader("./data/Laptop product descriptions.pdf")
+docs = loader.load()
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=256)
+splits = text_splitter.split_documents(docs)
+#Create a vector store with Chroma
+prod_feature_store = Chroma.from_documents(
+    documents=splits, 
+    embedding=embedding
+)
+get_product_features = create_retriever_tool(
+    prod_feature_store.as_retriever(search_kwargs={"k": 1}),
+    name="Get_Product_Features",
+    description="""
+    This store contains details about Laptops. It lists the available laptops
+    and their features including CPU, memory, storage, design and advantages
+    """
+)
+#Test the product feature store
+#print(prod_feature_store.as_retriever().invoke("Tell me about the AlphaBook Pro") )
+        </script>
+      </div>
+      <p>Lesson variant: <code>chunk_overlap=100</code>, <code>k=3</code>, explicit <code>collection_name</code>.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-023-4-2-function-tool-price-lookup">← Previous</a><span class="rev-pos">24 / 55</span><a href="#q-langgraph-025-4-4-agent-with-conversation-memory">Next →</a></nav>
+    </section>
+  </div>
+</details>

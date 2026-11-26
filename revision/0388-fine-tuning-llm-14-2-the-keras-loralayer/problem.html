@@ -1,0 +1,65 @@
+<details class="question" id="q-fine-tuning-llm-059-14-2-the-keras-loralayer" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s044">
+  <summary>
+    <span class="q-title">14.2 The Keras LoRALayer (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 14. LoRA in TensorFlow: Implementation &amp; Experiments › 14.2 The Keras LoRALayer</p>
+      <p><code>output = dense(x) + (x @ A) @ B</code>: <code>A</code> is (input_dim × rank), <code>B</code> is (rank × units), both trainable; the wrapped dense layer is frozen. <code>rank</code> is the bottleneck width (default 4).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from transformers import TFAutoModelForSeq2SeqLM, AutoTokenizer
+import tensorflow_addons as tfa
+from tensorflow.keras.layers import Dense
+
+# Load the model
+model = TFAutoModelForSeq2SeqLM.from_pretrained('google/flan-t5-base')
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Replace the dense layers with LoRA layers
+class LoRALayer(tf.keras.layers.Layer):
+    def __init__(self, dense, rank=4):
+        super().__init__()
+        self.dense = dense
+        self.rank = rank
+
+    def build(self, input_shape):
+        self.w_a = self.add_weight(shape=(input_shape[-1], self.rank),
+                                   initializer='random_normal',
+                                   trainable=True, name='w_a')
+        self.w_b = self.add_weight(shape=(self.rank, self.dense.units),
+                                   initializer='random_normal',
+                                   trainable=True, name='w_b')
+
+    def call(self, inputs):
+        original_output = self.dense(inputs)
+        lora_output = tf.matmul(tf.matmul(inputs, self.w_a), self.w_b)
+        self.dense.trainable = False
+        return original_output + lora_output
+        </script>
+      </div>
+      <ul>
+        <li><code>inputs @ A @ B</code> is the low-rank update; <code>original_output + lora_output</code> is <code>W·x + A·B·x</code>; the original weights stay non-trainable.</li>
+        <li>Note: unlike the PyTorch version in Section 12.3, both matrices use <code>random_normal</code> here (no zero-init for B) and there is no <code>alpha/rank</code> scaling.</li>
+        <li>Lecture sketches (<code>explore_model_layers</code>, <code>apply_lora_to_model</code>, <code>recursive_lora_replacement</code>) say in their own comments that real layer replacement "requires more complex model reconstruction"; the notebook approach below is the working version.</li>
+      </ul>
+      <p>Find the dense layers, then freeze everything but LoRA. Inspect the structure first:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+model.summary()
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+[layer for layer in model.decoder._flatten_layers()]
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-058-14-1-data-prep-wmt16-de-en-20-000-train">← Previous</a><span class="rev-pos">59 / 74</span><a href="#q-fine-tuning-llm-060-14-2-the-keras-loralayer">Next →</a></nav>
+    </section>
+  </div>
+</details>

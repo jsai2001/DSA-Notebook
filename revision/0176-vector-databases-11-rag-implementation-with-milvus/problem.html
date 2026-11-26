@@ -1,0 +1,51 @@
+<details class="question" id="q-vector-databases-059-11-rag-implementation-with-milvus" data-group="vector-databases" data-sec="vector-databases-s058">
+  <summary>
+    <span class="q-title">11. RAG implementation with Milvus (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">Vector Databases</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Vector Databases › 11. RAG implementation with Milvus</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# 5. Retrieval (radius caps distance so unrelated chunks are not returned)
+search_params = {"metric_type": "L2", "offset": 0, "ignore_growing": False,
+                 "params": {"nprobe": 20, "radius": 0.5}}
+
+query = "What is gender bias?"
+search_embed = embeddings_model.embed_query(query)
+
+q_collection = Collection(collection_name, using=conn_name)
+q_collection.load()
+results = q_collection.search(
+    data=[search_embed],
+    anns_field="rag_embedding",
+    param=search_params,
+    limit=3,                       # top 3 chunks
+    expr=None,
+    output_fields=["rag_text"],
+    consistency_level="Strong"
+)
+
+# 6. Augment prompt and generate
+context = [results[0][i].entity.get("rag_text") for i in range(len(results[0]))]
+prompt = ("Based on only the context provided, answer the query below: "
+          + " Context: " + str(context)
+          + "\n\n Query: " + query)
+
+from langchain.llms import OpenAI
+llm = OpenAI(temperature=0., model="text-davinci-003")
+completion = llm(prompt)
+print(completion)
+        </script>
+      </div>
+      <ul>
+        <li>The same Milvus instance can host both the RAG DB and the cache DB; for caching inside a RAG app, reuse the <code>cache_collection</code> schema and <code>get_response()</code> from section 9 (the lesson repeats it verbatim, using <code>len(cache_results[0]) &gt; 0</code> as the hit test).</li>
+        <li>Practical notes: create the index after inserting; flush periodically for large loads; combine several chunks for complete answers; use similarity threshold/<code>radius</code> to avoid grounding the LLM on irrelevant chunks.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-vector-databases-058-11-rag-implementation-with-milvus">← Previous</a><span class="rev-pos">59 / 69</span><a href="#q-vector-databases-060-choosing-a-vector-database">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,71 @@
+<details class="question" id="q-fine-tuning-llm-048-12-5-one-base-model-many-task-adapters" data-group="fine-tuning-llm" data-sec="fine-tuning-llm-s036">
+  <summary>
+    <span class="q-title">12.5 One base model, many task adapters (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">Fine-Tuning LLMs</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Fine-Tuning LLMs › 12. PEFT &amp; LoRA Concepts › 12.5 One base model, many task adapters</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+class MultiTaskPEFT:
+    def __init__(self, base_model):
+        self.base_model = base_model
+        self.task_adapters = {}
+
+    def add_task_adapter(self, task_name, lora_config):
+        """Add LoRA adapter for specific task"""
+        adapter_model = get_peft_model(self.base_model, lora_config)
+        self.task_adapters[task_name] = adapter_model
+        return adapter_model
+
+    def switch_task(self, task_name):
+        """Switch to specific task adapter"""
+        if task_name in self.task_adapters:
+            return self.task_adapters[task_name]
+        else:
+            raise ValueError(f"Task {task_name} not found")
+
+    def get_storage_efficiency(self):
+        """Calculate storage savings vs full fine-tuning"""
+        base_size = sum(p.numel() for p in self.base_model.parameters())
+        adapter_size = sum(
+            sum(p.numel() for p in adapter.parameters() if p.requires_grad)
+            for adapter in self.task_adapters.values()
+        )
+
+        return {
+            'base_model_params': base_size,
+            'total_adapter_params': adapter_size,
+            'storage_efficiency': adapter_size / (base_size * len(self.task_adapters))
+        }
+
+# Usage
+multi_task = MultiTaskPEFT(base_model)
+translation_adapter = multi_task.add_task_adapter('translation', lora_config)
+summarization_adapter = multi_task.add_task_adapter('summarization', lora_config)
+        </script>
+      </div>
+      <p>Caution: calling <code>get_peft_model</code> repeatedly on the <em>same</em> <code>base_model</code> injects adapters into it in place. In real code, load the base model once and use <code>peft</code>'s multi-adapter API (<code>add_adapter</code> / <code>set_adapter</code> / <code>load_adapter</code>) or reload the base per adapter.</p>
+      <p>Parameter efficiency measured from a model:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def calculate_parameter_efficiency(base_model, peft_model):
+    """Calculate parameter efficiency of PEFT"""
+    base_params = sum(p.numel() for p in base_model.parameters())
+    trainable_params = sum(p.numel() for p in peft_model.parameters() if p.requires_grad)
+
+    return {
+        'total_parameters': base_params,
+        'trainable_parameters': trainable_params,
+        'efficiency_ratio': trainable_params / base_params,
+        'reduction_factor': base_params / trainable_params
+    }
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-fine-tuning-llm-047-12-4-lora-with-the-hugging-face-peft-lib">← Previous</a><span class="rev-pos">48 / 74</span><a href="#q-fine-tuning-llm-049-12-5-one-base-model-many-task-adapters">Next →</a></nav>
+    </section>
+  </div>
+</details>

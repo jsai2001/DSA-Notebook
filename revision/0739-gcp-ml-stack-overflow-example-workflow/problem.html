@@ -1,0 +1,127 @@
+<details class="question" id="q-gcp-ml-017-stack-overflow-example-workflow" data-group="gcp-ml" data-sec="gcp-ml-s017">
+  <summary>
+    <span class="q-title">Stack Overflow example workflow</span>
+    <span class="q-meta">
+      <span class="tag">GCP for Machine Learning</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GCP for Machine Learning › 8. Vector Search (Embeddings, ANN, RAG) › Stack Overflow example workflow</p>
+      <ol>
+        <li>Load Stack Overflow Q&amp;A from the BigQuery public dataset.</li>
+        <li>Generate embeddings with the Vertex AI Text Embeddings API.</li>
+        <li>Upload embeddings to a GCS bucket.</li>
+        <li>Create an ANN index.</li>
+        <li>Create an index endpoint.</li>
+        <li>Deploy the index to the endpoint.</li>
+        <li>Query: encode the query text, find nearest neighbors.</li>
+      </ol>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# 1. Prepare data from BigQuery (in chunks; too large for memory)
+from google.cloud import bigquery
+client = bigquery.Client(project="<your-project-id>")
+query = """
+SELECT id, title, body, tags
+FROM `bigquery-public-data.stackoverflow.posts_questions`
+WHERE tags LIKE '%tensorflow%'
+LIMIT 10000
+"""
+def query_bigquery_chunks(query, chunk_size=1000):
+    df = client.query(query).to_dataframe()
+    for i in range(0, len(df), chunk_size):
+        yield df[i:i + chunk_size]
+# Combine title and body for richer embeddings
+for chunk in query_bigquery_chunks(query):
+    chunk['title_with_body'] = chunk['title'] + ' ' + chunk['body']
+    print(f"Processed chunk: {len(chunk)} rows")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# 2. Generate text embeddings
+from vertexai.language_models import TextEmbeddingModel
+model = TextEmbeddingModel.from_pretrained("textembedding-gecko")
+texts = ["How to install GPU for TensorFlow", "Python memory error fix"]
+embeddings = model.get_embeddings(texts)
+for text, embedding in zip(texts, embeddings):
+    print(f"Text: {text}")
+    print(f"Embedding dimensions: {len(embedding.values)}")  # 768 dimensions
+    print(f"First 5 values: {embedding.values[:5]}")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# 3. Upload embeddings to GCS
+gsutil mb -l us-central1 gs://<your-bucket>-embeddings
+gsutil cp embeddings.json gs://<your-bucket>-embeddings/
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# 4. Create a tree-AH ANN index
+index = aiplatform.MatchingEngineIndex.create_tree_ah_index(
+    display_name="stackoverflow-index",
+    contents_delta_uri="gs://<your-bucket>-embeddings/",
+    dimensions=768,
+    approximate_neighbors_count=10
+)
+print(f"Index created: {index.resource_name}")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# 5. Create the index endpoint
+index_endpoint = aiplatform.MatchingEngineIndexEndpoint.create(
+    display_name="stackoverflow-endpoint",
+    public_endpoint_enabled=True
+)
+print(f"Endpoint created: {index_endpoint.resource_name}")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# 6. Deploy the index to the endpoint
+index_endpoint.deploy_index(
+    index=index,
+    deployed_index_id="stackoverflow_deployed",
+    display_name="stackoverflow-deployed-index"
+)
+print("Index deployed successfully")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# 7. Query: encode the text, then find nearest neighbors
+query_text = "installed GPU for TensorFlow"
+query_embedding = model.get_embeddings([query_text])[0].values
+response = index_endpoint.find_neighbors(
+    deployed_index_id="stackoverflow_deployed",
+    queries=[query_embedding],
+    num_neighbors=5
+)
+for neighbor in response[0]:
+    print(f"ID: {neighbor.id}, Distance: {neighbor.distance:.4f}")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Verify: deployed vector count should match the embeddings count
+deployed_indexes = index_endpoint.deployed_indexes
+for di in deployed_indexes:
+    print(f"Deployed index: {di.id}")
+    print(f"Vector count: {index.index_stats.vectors_count}")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Console: Vertex AI → Vector Search → Indexes (vector count, algorithm, dimensions, endpoints)
+gcloud logging read "resource.type=aiplatform.googleapis.com/IndexEndpoint" --limit=10
+        </script>
+      </div>
+      <p>The notebook is resource-intensive and can take <strong>1.5+ hours</strong>; embedding generation and index creation are the slowest steps.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-gcp-ml-016-8-vector-search-embeddings-ann-rag">← Previous</a><span class="rev-pos">17 / 25</span><a href="#q-gcp-ml-018-9-feature-store">Next →</a></nav>
+    </section>
+  </div>
+</details>

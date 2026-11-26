@@ -1,0 +1,79 @@
+<details class="question" id="q-az-900-063-azure-monitor" data-group="az-900" data-sec="az-900-s056">
+  <summary>
+    <span class="q-title">Azure Monitor</span>
+    <span class="q-meta">
+      <span class="tag">AZ-900</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">AZ-900 › 12. Monitoring tools › Azure Monitor</p>
+      <ul>
+        <li><strong>Metrics</strong>: real-time performance data (CPU, disk, network). Choose a scope, combine metrics that share a unit, pick a chart type (line, area, bar), pin to a dashboard.</li>
+        <li><strong>Application Insights</strong>: automatic instrumentation for web apps, Functions and VMs. Tracks failed requests, response times, availability and page views. Available as soon as you create a web app, and supports on-prem VMs through the Application Insights Agent.</li>
+        <li><strong>Log Analytics</strong>: historical analysis with <strong>Kusto Query Language (KQL)</strong>.</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# View VM metrics (CPU percentage, last hour)
+az monitor metrics list \
+  --resource "/subscriptions/<sub-id>/resourceGroups/AZ900/providers/Microsoft.Compute/virtualMachines/VM1" \
+  --metric "Percentage CPU" \
+  --interval PT1H \
+  --output table
+
+# View VM disk read/write bytes
+az monitor metrics list \
+  --resource "/subscriptions/<sub-id>/resourceGroups/AZ900/providers/Microsoft.Compute/virtualMachines/VM1" \
+  --metric "Disk Read Bytes" "Disk Write Bytes" \
+  --interval PT1H \
+  --output table
+
+# Create a metric alert (alert when CPU > 80%)
+az monitor metrics alert create \
+  --name "HighCPUAlert" \
+  --resource-group AZ900 \
+  --scopes "/subscriptions/<sub-id>/resourceGroups/AZ900/providers/Microsoft.Compute/virtualMachines/VM1" \
+  --condition "avg Percentage CPU > 80" \
+  --description "Alert when CPU exceeds 80%"
+
+# Enable Application Insights on a web app
+az monitor app-insights component create \
+  --app az900appinsights \
+  --location centralus \
+  --resource-group AZ900
+
+az webapp config appsettings set \
+  --name az900wa --resource-group AZ900 \
+  --settings APPINSIGHTS_INSTRUMENTATIONKEY="<instrumentation-key>"
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="KQL">
+// Query CPU usage over the last 24 hours
+Perf
+| where ObjectName == "Processor" and CounterName == "% Processor Time"
+| where TimeGenerated > ago(24h)
+| summarize AvgCPU = avg(CounterValue) by bin(TimeGenerated, 1h)
+| render timechart
+
+// Query failed requests in Application Insights
+requests
+| where success == false
+| where timestamp > ago(24h)
+| summarize FailedCount = count() by bin(timestamp, 1h), name
+| order by FailedCount desc
+
+// Query disk read/write operations
+Perf
+| where ObjectName == "LogicalDisk"
+| where CounterName in ("Disk Reads/sec", "Disk Writes/sec")
+| where TimeGenerated > ago(48h)
+| summarize avg(CounterValue) by CounterName, bin(TimeGenerated, 1h)
+| render timechart
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-az-900-062-azure-service-health">← Previous</a><span class="rev-pos">63 / 66</span><a href="#q-az-900-064-dan-storage-identity-availability">Next →</a></nav>
+    </section>
+  </div>
+</details>

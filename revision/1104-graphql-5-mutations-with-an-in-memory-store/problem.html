@@ -1,0 +1,88 @@
+<details class="question" id="q-graphql-011-5-mutations-with-an-in-memory-store" data-group="graphql" data-sec="graphql-s011">
+  <summary>
+    <span class="q-title">5. Mutations with an In-Memory Store (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">GraphQL</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GraphQL › 5. Mutations with an In-Memory Store</p>
+      <p>Product class plus a plain object as a database (lost on every restart):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+class Product {
+    constructor(id, { name, description, price, soldout, stores }) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.soldout = soldout;
+        this.stores = stores;
+    }
+}
+
+const productDatabase = {};   // in-memory store
+        </script>
+      </div>
+      <p>Resolvers (extracted into <code>data/resolvers.js</code>, CH02/02_03):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+const resolvers = {
+    getProduct: ({ id }) => {
+        return new Product(id, productDatabase[id]);
+    },
+    createProduct: ({ input }) => {
+        let id = require('crypto').randomBytes(10).toString('hex');
+        productDatabase[id] = input;
+        return new Product(id, input);
+    }
+};
+
+export default resolvers;
+        </script>
+      </div>
+      <ul>
+        <li><code>{ input }</code> destructures the <code>input</code> argument.</li>
+        <li><code>crypto.randomBytes(10).toString('hex')</code> generates a unique ID.</li>
+        <li>Course bug before the refactor: the inline resolver was misspelled <code>creatProduct</code>, and the query was named <code>product</code>. After extraction they became <code>createProduct</code> / <code>getProduct</code>, matching the schema names.</li>
+      </ul>
+      <p>Why extract resolvers: keeps <code>index.js</code> small and separates concerns (inline <code>root</code> is fine only for tiny prototypes). Clean <code>index.js</code> passes <code>resolvers</code> as <code>rootValue</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="JavaScript">
+import express from 'express';
+import { graphqlHTTP } from 'express-graphql';
+import schema from './data/schema';
+import resolvers from './data/resolvers';
+
+const PORT = 8080;
+const app = express();
+
+app.get('/', (req, res) => {
+    res.send('GraphQL is amazing!');
+});
+
+app.use('/graphql', graphqlHTTP({
+    schema: schema,
+    rootValue: resolvers,
+    graphiql: true,
+}));
+
+app.listen(PORT, () => console.log(`Running server on localhost:${PORT}/graphql`));
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Text">
+GraphQL/
+├── data/
+│   ├── schema.js       types, queries, mutations
+│   └── resolvers.js    Product class + database + resolver functions
+├── .babelrc
+├── index.js            Express server
+└── package.json
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-graphql-010-enums">← Previous</a><span class="rev-pos">11 / 23</span><a href="#q-graphql-012-5-mutations-with-an-in-memory-store">Next →</a></nav>
+    </section>
+  </div>
+</details>

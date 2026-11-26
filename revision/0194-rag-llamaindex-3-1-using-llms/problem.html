@@ -1,0 +1,106 @@
+<details class="question" id="q-rag-llamaindex-008-3-1-using-llms" data-group="rag-llamaindex" data-sec="rag-llamaindex-s009">
+  <summary>
+    <span class="q-title">3.1 Using LLMs</span>
+    <span class="q-meta">
+      <span class="tag">RAG with LlamaIndex</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RAG with LlamaIndex › 3. LlamaIndex Fundamentals › 3.1 Using LLMs</p>
+      <p>LLMs are used at two stages: <strong>indexing</strong> (judge relevance, summarize) and <strong>querying</strong> (retrieval: fetch data, choose a source, use tools; then response synthesis).</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Notebook setup used by every notebook (repeated imports omitted elsewhere)
+import os
+from getpass import getpass
+import nest_asyncio
+from dotenv import load_dotenv
+
+nest_asyncio.apply()
+load_dotenv()
+CO_API_KEY = os.environ['CO_API_KEY'] or getpass("Enter your Cohere API key: ")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from llama_index.llms.cohere import Cohere
+
+llm = Cohere(model="command-r-plus", temperature=0.2)
+response = llm.complete("Alexander the Great was a")   # single completion
+print(response)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Prompt template
+from llama_index.core import PromptTemplate
+
+template = """Write a song about {thing} in the style of {style}."""
+prompt = template.format(thing="a broken xylophone", style="parody rap")
+response = llm.complete(prompt)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Chat messages (role + content)
+from llama_index.core.llms import ChatMessage
+
+messages = [
+    ChatMessage(role="system", content="You're a hella punk bot from South Sacramento"),
+    ChatMessage(role="user", content="Hey, what's up dude."),
+]
+response = llm.chat(messages)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Chat prompt template
+from llama_index.core.llms import ChatMessage, MessageRole
+from llama_index.core import ChatPromptTemplate
+
+chat_template = [
+    ChatMessage(role=MessageRole.SYSTEM, content="You always answers questions with as much detail as possible."),
+    ChatMessage(role=MessageRole.USER, content="{question}")
+]
+chat_prompt = ChatPromptTemplate(chat_template)
+response = llm.complete(chat_prompt.format(question="How far did Alexander the Great go in his conquests?"))
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Streaming: better UX, tokens arrive as generated
+messages = [
+    ChatMessage(role=MessageRole.SYSTEM, content="You're a great historian bot."),
+    ChatMessage(role=MessageRole.USER, content="When did Alexander the Great arrive in China?")
+]
+response = llm.stream_chat(messages)
+for r in response:
+    print(r.delta, end="")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Simple chat engine (no retrieval) with interactive REPL
+from llama_index.core.chat_engine import SimpleChatEngine
+
+chat_engine = SimpleChatEngine.from_defaults(llm=llm)
+chat_engine.chat_repl()
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>Use</th></tr></thead>
+          <tbody>
+            <tr><td><code>llm.complete(prompt)</code></td><td>Single text completion</td></tr>
+            <tr><td><code>llm.chat(messages)</code></td><td>Chat with message history</td></tr>
+            <tr><td><code>llm.stream_chat(messages)</code></td><td>Streaming chat</td></tr>
+            <tr><td><code>chat_engine.chat(msg)</code> / <code>.chat_repl()</code> / <code>.streaming_chat_repl()</code></td><td>Conversational interface / REPL / streaming REPL</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Tip: <code>dir(obj)</code> lists available methods on any LlamaIndex object.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-rag-llamaindex-007-3-llamaindex-fundamentals">← Previous</a><span class="rev-pos">8 / 63</span><a href="#q-rag-llamaindex-009-3-2-loading-data">Next →</a></nav>
+    </section>
+  </div>
+</details>

@@ -1,0 +1,78 @@
+<details class="question" id="q-gcp-ml-012-comparison" data-group="gcp-ml" data-sec="gcp-ml-s013">
+  <summary>
+    <span class="q-title">Comparison (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">GCP for Machine Learning</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">GCP for Machine Learning › 7. Notebook Types and GPU Scaling › Comparison</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Type</th><th>Control</th><th>Environment</th><th>VM/SSH</th><th>Patching</th><th>Best for</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Colab Enterprise</strong></td><td>Low</td><td>Pre-configured</td><td>No</td><td>Google</td><td>Trying open-source libraries, migrating from public Colab</td></tr>
+            <tr><td><strong>Managed Notebooks</strong></td><td>Medium (PaaS)</td><td>Pre-built Python containers</td><td>No</td><td>Google, auto-versioned</td><td>Resource monitoring, GPU testing</td></tr>
+            <tr><td><strong>User-Managed Notebooks</strong></td><td>High (IaaS)</td><td>TensorFlow, PyTorch, custom</td><td>Yes (SSH)</td><td>You</td><td>Full OS control, custom libraries</td></tr>
+            <tr><td><strong>Instances (new, recommended)</strong></td><td>High</td><td>JupyterLab 3, GPU-ready frameworks</td><td>Yes</td><td>Google</td><td>Production notebook work</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul>
+        <li><strong>Colab Enterprise:</strong> upload notebooks from local or public Colab; configure resources with <strong>runtime templates</strong>.</li>
+        <li><strong>User-managed (legacy DLVMs):</strong> JupyterLab 3 plus GPU frameworks, customizable OS/networking, SSH to the VM. Full control means full responsibility.</li>
+        <li><strong>Managed:</strong> no VM access, built-in CPU/memory/GPU meters, <strong>executions and schedules</strong> for recurring runs, optional custom container via gcloud.</li>
+        <li><strong>Instances:</strong> combine both. Google recommends them and encourages migration off managed and user-managed.</li>
+      </ul>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Feature</th><th>User-Managed</th><th>Managed</th><th><strong>Instances</strong></th></tr></thead>
+          <tbody>
+            <tr><td>VM/SSH access</td><td>✅</td><td>❌</td><td>✅</td></tr>
+            <tr><td>Dynamic GPU attach</td><td>❌ (recreate instance)</td><td>✅</td><td>✅</td></tr>
+            <tr><td>UI resource meters</td><td>❌ (terminal only)</td><td>✅</td><td>✅</td></tr>
+            <tr><td>JupyterLab 3</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>GPU-enabled ML frameworks</td><td>✅</td><td>Limited</td><td>✅</td></tr>
+            <tr><td>Google-managed patching</td><td>❌</td><td>✅</td><td>✅</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# User-managed notebook
+gcloud notebooks instances create mnist-user \
+  --location=us-central1-a \
+  --vm-image-project=deeplearning-platform-release \
+  --vm-image-family=tf-latest-gpu \
+  --machine-type=n1-standard-4
+# SSH into the notebook VM
+gcloud compute ssh mnist-user --zone=us-central1-a
+# Get the JupyterLab URL
+gcloud notebooks instances describe mnist-user \
+  --location=us-central1-a \
+  --format="value(proxyUri)"
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+# Managed notebook
+gcloud notebooks instances create mnist-managed \
+  --location=us-central1-a \
+  --kernel=python3 \
+  --machine-type=n1-standard-4
+# List all notebook instances
+gcloud notebooks instances list --location=us-central1-a --format=table
+# Schedule a notebook execution
+gcloud notebooks executions create \
+  --display-name="mnist-daily-run" \
+  --location=us-central1-a \
+  --notebook-instance=mnist-managed \
+  --input-notebook-file="gs://<your-bucket>/notebooks/mnist.ipynb" \
+  --output-notebook-folder="gs://<your-bucket>/outputs/"
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-gcp-ml-011-6-tensorflow-and-mnist-on-vertex-ai">← Previous</a><span class="rev-pos">12 / 25</span><a href="#q-gcp-ml-013-comparison">Next →</a></nav>
+    </section>
+  </div>
+</details>

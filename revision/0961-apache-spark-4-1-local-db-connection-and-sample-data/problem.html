@@ -1,0 +1,81 @@
+<details class="question" id="q-apache-spark-015-4-1-local-db-connection-and-sample-data" data-group="apache-spark" data-sec="apache-spark-s013">
+  <summary>
+    <span class="q-title">4.1 Local DB connection and sample data</span>
+    <span class="q-meta">
+      <span class="tag">Apache Spark</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Apache Spark › 4. Batch Pipeline: Warehouse Stock Aggregation › 4.1 Local DB connection and sample data</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import mariadb
+local_db_conn = mariadb.connect(
+    user="spark",
+    password="spark",
+    host="127.0.0.1",
+    port=3306,
+    database="warehouse_stock",
+    autocommit=True
+)
+local_cursor = local_db_conn.cursor()
+# Delete existing data if needed (reinitialize)
+local_cursor.execute("DELETE FROM warehouse_stock.item_stock")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import random
+import datetime
+def generate_data(generate_dates, warehouse_id):
+    # Sample list of products and their unit values
+    item_list = {
+        "Tape Dispenser" : 5.99,
+        "Pencil Sharpener" : 10.00,
+        "Labeling Machine" : 25.00,
+        "Calculator" : 14.99,
+        "Scissors" : 7.99,
+        "Sticky Notes" : 2.00,
+        "Notebook" : 2.50,
+        "Clipboard" : 12.00,
+        "Folder" : 1.00,
+        "Pencil Box" : 2.99
+    }
+    for gen_date in generate_dates:
+        for item, unit_value in item_list.items():
+            # Random values for opening stock, receipts and issues
+            opening_stock = random.randint(1,100)
+            receipts=random.randint(1,50)
+            issues=random.randint(1, opening_stock+receipts)
+            insert_sql = f"""
+                INSERT INTO `warehouse_stock`.`item_stock`
+                (`STOCK_DATE`, `WAREHOUSE_ID`,`ITEM_NAME`,
+                    `OPENING_STOCK`,`RECEIPTS`,`ISSUES`,`UNIT_VALUE` )
+                VALUES ( '{gen_date}','{warehouse_id}','{item}',
+                    {opening_stock},{receipts},{issues},{unit_value} )
+            """
+            local_cursor.execute(insert_sql)
+
+# Last 3 dates
+generate_dates = [
+    (datetime.datetime.today()-datetime.timedelta(2)).strftime("%Y-%m-%d"),
+    (datetime.datetime.today()-datetime.timedelta(1)).strftime("%Y-%m-%d"),
+    datetime.datetime.today().strftime("%Y-%m-%d")
+    ]
+generate_data(generate_dates,"NewYork")
+generate_data(generate_dates,"LosAngeles")
+generate_data(generate_dates,"London")
+
+# Count of records per warehouse
+local_cursor.execute("""SELECT `WAREHOUSE_ID`, count(*) AS RECS
+                        FROM `warehouse_stock`.`item_stock`
+                        GROUP BY `WAREHOUSE_ID`""")
+for warehouse_id, recs in local_cursor:
+    print( warehouse_id, " : ", recs)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-apache-spark-014-4-batch-pipeline-warehouse-stock-aggrega">← Previous</a><span class="rev-pos">15 / 31</span><a href="#q-apache-spark-016-4-2-upload-stock-to-the-central-store-pa">Next →</a></nav>
+    </section>
+  </div>
+</details>

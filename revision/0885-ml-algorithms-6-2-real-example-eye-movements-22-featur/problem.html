@@ -1,0 +1,42 @@
+<details class="question" id="q-ml-algorithms-026-6-2-real-example-eye-movements-22-featur" data-group="ml-algorithms" data-sec="ml-algorithms-s025">
+  <summary>
+    <span class="q-title">6.2 Real example: eye movements (22 features, 3 classes)</span>
+    <span class="q-meta">
+      <span class="tag">ML Algorithms</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">ML Algorithms › 6. Logistic Regression › 6.2 Real example: eye movements (22 features, 3 classes)</p>
+      <p>Standardize first, since curve-fitting algorithms need same-scale data.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from datasets import load_dataset
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+eye = load_dataset('inria-soda/tabular-benchmark', data_files='clf_num/eye_movements.csv')
+eye_df = eye['train'].to_pandas()
+X = eye_df.drop(columns=['label'])
+y = eye_df['label']
+# Standardize — curve-fitting algorithms need same-scale data
+std = StandardScaler()
+X_scaled = std.fit_transform(X)
+eye_log = LogisticRegression()
+eye_log.fit(X_scaled, y)
+eye_log.score(X_scaled, y)  # 0.56 accuracy
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+pd.Series(eye_log.coef_[0], index=X.columns).sort_values().plot.barh(figsize=(8, 6))
+        </script>
+      </div>
+      <ul>
+        <li><code>.score()</code> is <strong>R²</strong> for regression and <strong>accuracy</strong> (% correct) for classification.</li>
+        <li>A positive coefficient pushes toward the positive class, a negative one away from it, and larger magnitude means more impact.</li>
+        <li><strong>Accuracy trap:</strong> if fraud is 0.1% of transactions, predicting "not fraud" always gets 99.9% accuracy and is useless. Tie accuracy to business metrics.</li>
+      </ul>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ml-algorithms-025-6-1-basic-1d-example">← Previous</a><span class="rev-pos">26 / 33</span><a href="#q-ml-algorithms-027-6-3-challenge-predict-titanic-survival-w">Next →</a></nav>
+    </section>
+  </div>
+</details>

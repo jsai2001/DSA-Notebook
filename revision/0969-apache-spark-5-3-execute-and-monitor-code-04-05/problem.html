@@ -1,0 +1,66 @@
+<details class="question" id="q-apache-spark-023-5-3-execute-and-monitor-code-04-05" data-group="apache-spark" data-sec="apache-spark-s019">
+  <summary>
+    <span class="q-title">5.3 Execute and monitor (code_04_05)</span>
+    <span class="q-meta">
+      <span class="tag">Apache Spark</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Apache Spark › 5. Real-Time Pipeline: Website Analytics › 5.3 Execute and monitor (code_04_05)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from kafka import KafkaConsumer
+import redis
+import time
+import mariadb
+
+def string_deserializer(value):
+    return value.decode('utf-8')
+
+# Kafka consumer for abandoned carts
+visits_topic = "spark.streaming.carts.abandoned"
+visits_consumer = KafkaConsumer(
+    bootstrap_servers=["localhost:9092"],
+    group_id=None,
+    value_deserializer=string_deserializer,
+    auto_offset_reset="latest"
+)
+visits_consumer.subscribe(visits_topic)
+
+redis_conn = redis.Redis(host="localhost", port=6379, decode_responses=True)
+
+summary_conn = mariadb.connect(
+    user="spark", password="spark",
+    host="127.0.0.1", port=3306,
+    database="website_stats", autocommit=True
+)
+summary_cursor = summary_conn.cursor()
+summary_stats_sql = f"""
+    SELECT last_action, SUM(duration) as duration
+    FROM `website_stats`.`visit_stats`
+    GROUP BY last_action
+"""
+
+while(True):
+    # Abandoned carts from Kafka
+    messages = visits_consumer.poll()
+    for partition, records in messages.items():
+        for record in records:
+            print(record.value)
+    # Country stats from Redis (sorted set, highest first)
+    scores = redis_conn.zrevrangebyscore("last-action-stats", 99999, 0, withscores=True)
+    for score in scores:
+        print(score[0], " = ", score[1])
+    # Last action stats from MariaDB
+    summary_cursor.execute(summary_stats_sql)
+    for last_action, duration in summary_cursor:
+        print(last_action, " = ", duration)
+    time.sleep(5)
+        </script>
+      </div>
+      <p>Run order: (1) <code>code_04_05</code> monitor first, (2) <code>code_04_04</code> analytics job, (3) <code>code_04_03</code> stream generator. Expected: the abandoned-carts topic receives only ShoppingCart records, Redis country totals climb, and MariaDB last-action sums grow per 5-second window.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-apache-spark-022-5-2-streaming-analytics-job-code-04-04">← Previous</a><span class="rev-pos">23 / 31</span><a href="#q-apache-spark-024-scaling-processing">Next →</a></nav>
+    </section>
+  </div>
+</details>

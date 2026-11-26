@@ -1,0 +1,54 @@
+<details class="question" id="q-django-033-public-private-toggle" data-group="django" data-sec="django-s034">
+  <summary>
+    <span class="q-title">Public/private toggle</span>
+    <span class="q-meta">
+      <span class="tag">Django</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Django › 9. User-Specific Data › Public/private toggle</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+is_public = models.BooleanField(default=False)
+        </script>
+      </div>
+      <p>(Run <code>makemigrations</code> and <code>migrate</code>.) Name boolean fields as yes/no questions: <code>is_public</code> is clearer than <code>public</code>.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def change_visibility_view(request, pk):
+    if request.method == 'POST':
+        note = get_object_or_404(Notes, pk=pk)
+        note.is_public = not note.is_public   # flip
+        note.save()
+        return HttpResponseRedirect(reverse('notes.detail', args=(pk,)))
+    raise Http404
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+path('notes/<int:pk>/change-visibility', views.change_visibility_view, name='notes.change-visibility'),
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="HTML">
+<h1 class="my-5">
+  {{ note.title }}
+  {% if note.is_public %}
+    <span class="badge bg-secondary">Public</span>
+  {% endif %}
+</h1>
+<form method="POST" action="{% url 'notes.change-visibility' pk=note.id %}" class="d-inline">
+  {% csrf_token %}
+  {% if note.is_public %}
+    <button type="submit" class="btn btn-secondary">Make Private</button>
+  {% else %}
+    <button type="submit" class="btn btn-secondary">Make Public</button>
+  {% endif %}
+</form>
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-django-032-assign-the-user-on-create-form-valid">← Previous</a><span class="rev-pos">33 / 37</span><a href="#q-django-034-10-login-logout-signup-public-share">Next →</a></nav>
+    </section>
+  </div>
+</details>

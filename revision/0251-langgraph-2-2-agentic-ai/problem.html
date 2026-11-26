@@ -1,0 +1,100 @@
+<details class="question" id="q-langgraph-002-2-2-agentic-ai" data-group="langgraph" data-sec="langgraph-s004">
+  <summary>
+    <span class="q-title">2.2 Agentic AI (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 2. Concepts: Chatbots, Agentic AI, State vs Memory, LangGraph › 2.2 Agentic AI</p>
+      <p><strong>Agentic AI</strong> is generative AI that decides and acts autonomously toward a goal with minimal human intervention.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Pattern</th><th>What it does</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td>Planning</td><td>Breaks a goal into steps</td><td>"Create a marketing campaign" becomes ordered steps</td></tr>
+            <tr><td>Tool Use</td><td>Picks and calls a function/API</td><td>calculator, search, DB lookup</td></tr>
+            <tr><td>Routing</td><td>Sends a request to the right handler</td><td>technical vs billing vs general</td></tr>
+            <tr><td>Reflection</td><td>Reviews output and suggests improvements</td><td>summary reviewer</td></tr>
+            <tr><td>Multi-agent</td><td>Specialist agents cooperate</td><td>researcher, analyzer, writer</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Each pattern as a LangGraph node:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Planning agent node
+def planning_node(state: AgentState):
+    task = state["messages"][-1]
+
+    plan = llm.invoke(f"""
+    Break down this task into steps: {task}
+    Return as numbered list.
+    """)
+
+    return {"current_step": "planning", "result": plan.content}
+
+# Add to graph
+graph.add_node("planner", planning_node)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from langchain.tools import DuckDuckGoSearchRun
+
+# Tool integration
+search_tool = DuckDuckGoSearchRun()
+
+def tool_use_node(state: AgentState):
+    query = extract_search_query(state["messages"][-1])
+    result = search_tool.run(query)
+
+    return {"result": result, "current_step": "tool_executed"}
+
+graph.add_node("search", tool_use_node)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def reflection_node(state: AgentState):
+    previous_result = state["result"]
+
+    reflection = llm.invoke(f"""
+    Evaluate this result: {previous_result}
+    Is it accurate and complete? Suggest improvements.
+    """)
+
+    return {"current_step": "reflection", "result": reflection.content}
+
+graph.add_node("reflect", reflection_node)
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def routing_condition(state: AgentState):
+    message = state["messages"][-1]
+
+    if "search" in message.lower():
+        return "search"
+    elif "calculate" in message.lower():
+        return "calculator"
+    else:
+        return "general"
+
+# Conditional routing
+graph.add_conditional_edges(
+    "router",
+    routing_condition,
+    {
+        "search": "search",
+        "calculator": "calculator", 
+        "general": "general_agent"
+    }
+)
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-001-2-1-conversational-ai-and-chatbots">← Previous</a><span class="rev-pos">2 / 55</span><a href="#q-langgraph-003-2-2-agentic-ai">Next →</a></nav>
+    </section>
+  </div>
+</details>

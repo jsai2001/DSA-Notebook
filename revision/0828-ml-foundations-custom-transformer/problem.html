@@ -1,0 +1,34 @@
+<details class="question" id="q-ml-foundations-015-custom-transformer" data-group="ml-foundations" data-sec="ml-foundations-s016">
+  <summary>
+    <span class="q-title">Custom transformer</span>
+    <span class="q-meta">
+      <span class="tag">ML Foundations</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">ML Foundations › 5. Scikit-Learn Pipelines › Custom transformer</p>
+      <p>Subclass <code>BaseEstimator</code> + <code>TransformerMixin</code>, implement <code>fit</code> and <code>transform</code>. <code>fit</code> learns the average price per zipcode from training data; <code>transform</code> joins it onto any DataFrame as a new <code>zip_mean</code> feature.</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+class ZipAvgPriceAdder(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        pass
+    def fit(self, X, y=None):
+        self.zip_avg_price = (X
+            .group_by('zipcode')
+            .agg(zip_mean=pl.col('price').mean())
+        )
+        return self
+    def transform(self, X, y=None):
+        return X.join(self.zip_avg_price, on='zipcode')
+
+zip_adder = ZipAvgPriceAdder()
+zip_adder.fit_transform(raw.select(['zipcode', 'price']))
+        </script>
+      </div>
+      <p>Because it learns from <code>X</code> in <code>fit</code>, it must be fit on training data only. (The deployment version adds <code>pl.StringCache()</code> in <code>transform</code>, see Section 10.)</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ml-foundations-014-columntransformer-numeric-categorical-to">← Previous</a><span class="rev-pos">15 / 46</span><a href="#q-ml-foundations-016-full-preprocessing-pipeline">Next →</a></nav>
+    </section>
+  </div>
+</details>

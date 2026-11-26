@@ -1,0 +1,68 @@
+<details class="question" id="q-mcp-055-secure-development-patterns" data-group="mcp" data-sec="mcp-s056">
+  <summary>
+    <span class="q-title">Secure development patterns</span>
+    <span class="q-meta">
+      <span class="tag">Model Context Protocol</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Model Context Protocol › 9. Security › Secure development patterns</p>
+      <p><strong>1. Path validation</strong> (blocks traversal such as <code>../../etc/passwd</code>)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+SAFE_BASE_PATH = "/allowed/directory"
+
+def validate_path(user_path: str) -> bool:
+    full_path = os.path.abspath(os.path.join(SAFE_BASE_PATH, user_path))
+    return full_path.startswith(SAFE_BASE_PATH)
+
+@server.tool("safe-read")
+def safe_read(filename: str):
+    if not validate_path(filename):
+        return "Access denied"
+    with open(os.path.join(SAFE_BASE_PATH, filename), 'r') as f:
+        return f.read()
+        </script>
+      </div>
+      <p><strong>2. Action allowlisting</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+ALLOWED_ACTIONS = ["read", "list", "summarize"]
+
+@server.tool("controlled-action")
+def controlled_action(action: str, target: str):
+    if action not in ALLOWED_ACTIONS:
+        return f"Action '{action}' not allowed"
+    if action == "read":
+        return read_file(target)
+    elif action == "list":
+        return list_files(target)
+    elif action == "summarize":
+        return summarize_content(target)
+        </script>
+      </div>
+      <p><strong>3. Input sanitization</strong> (strip shell metacharacters)</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def sanitize_input(user_input: str) -> str:
+    dangerous_chars = [';', '&', '|', '`', '$', '(', ')', '<', '>']
+    sanitized = user_input
+    for char in dangerous_chars:
+        sanitized = sanitized.replace(char, '')
+    return sanitized
+        </script>
+      </div>
+      <p><strong>4. Credentials from environment variables, never hardcoded</strong></p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+load_dotenv()
+API_KEY = os.getenv("API_KEY")
+headers = {"Authorization": f"Bearer {API_KEY}"}
+# Bad: API_KEY = "sk-1234567890"
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-mcp-054-least-privilege">← Previous</a><span class="rev-pos">55 / 64</span><a href="#q-mcp-056-testing-for-security">Next →</a></nav>
+    </section>
+  </div>
+</details>

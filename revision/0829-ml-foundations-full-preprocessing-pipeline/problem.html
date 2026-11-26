@@ -1,0 +1,46 @@
+<details class="question" id="q-ml-foundations-016-full-preprocessing-pipeline" data-group="ml-foundations" data-sec="ml-foundations-s017">
+  <summary>
+    <span class="q-title">Full preprocessing pipeline</span>
+    <span class="q-meta">
+      <span class="tag">ML Foundations</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">ML Foundations › 5. Scikit-Learn Pipelines › Full preprocessing pipeline</p>
+      <p><code>numeric_features</code> for the full model includes the engineered <code>zip_mean</code>:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+numeric_features = ['bedrooms', 'bathrooms', 'sqft_living', 'sqft_lot', 'floors', 'waterfront', 'view',
+                    'condition', 'grade', 'sqft_above', 'sqft_basement', 'yr_built', 'yr_renovated',
+                    'lat', 'long', 'sqft_living15', 'sqft_lot15', 'zip_mean']
+numeric_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='median')),
+    ('scaler', StandardScaler())])
+categorical_features = ['zipcode']
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', numeric_transformer, numeric_features),
+        ('cat', OneHotEncoder(handle_unknown='ignore',
+                              sparse_output=False), categorical_features)])
+tweak_transformer = FunctionTransformer(tweak_housing)  # function -> transformer
+
+pipe = Pipeline(steps=[
+    ('tweak', tweak_transformer),
+    ('zip_avg_price', ZipAvgPriceAdder()),
+    ('preprocessor', preprocessor),
+])
+
+X = raw
+y = raw.select('price')  # must be a DataFrame, not a Series (Polars requirement)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+pipe.fit_transform(raw, raw.select('price'))
+        </script>
+      </div>
+      <p>Flow: <code>raw -&gt; tweak_housing (cleanup) -&gt; ZipAvgPriceAdder (feature) -&gt; ColumnTransformer (scale + encode)</code></p>
+      <p><strong>Polars gotcha:</strong> sklearn wants <code>y</code> as a single-column Polars DataFrame. <code>raw.select('price')</code> works; <code>raw['price']</code> (a Series) errors.</p>
+      <p>Interview points: pipelines give one fit-once, predict-anywhere object and prevent train/test leakage in preprocessing; ColumnTransformer routes column groups; <code>set_params(step__param=value)</code> changes any hyperparameter after creation.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-ml-foundations-015-custom-transformer">← Previous</a><span class="rev-pos">16 / 46</span><a href="#q-ml-foundations-017-6-challenge-bedrooms-vs-price-plot">Next →</a></nav>
+    </section>
+  </div>
+</details>

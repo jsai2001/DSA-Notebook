@@ -1,0 +1,75 @@
+<details class="question" id="q-langgraph-028-4-6-extras-from-the-lesson-file" data-group="langgraph" data-sec="langgraph-s018">
+  <summary>
+    <span class="q-title">4.6 Extras from the lesson file (2/2)</span>
+    <span class="q-meta">
+      <span class="tag">LangGraph</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">LangGraph › 4. Product Q&amp;A Chatbot (function tool + retriever tool + memory) › 4.6 Extras from the lesson file</p>
+      <p>Multi-user session service (session ID mapped to its own <code>thread_id</code>):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+import uuid
+from datetime import datetime
+
+class ProductChatbotService:
+    def __init__(self):
+        self.chatbot = product_chatbot
+        self.sessions = {}
+
+    def create_session(self, user_id: str = None) -> str:
+        """Create new chat session"""
+        session_id = str(uuid.uuid4())
+        thread_id = f"thread_{session_id}"
+
+        self.sessions[session_id] = {
+            "user_id": user_id,
+            "thread_id": thread_id,
+            "created_at": datetime.now(),
+            "message_count": 0
+        }
+
+        return session_id
+
+    def chat(self, session_id: str, message: str) -> dict:
+        """Process chat message"""
+        if session_id not in self.sessions:
+            return {"error": "Invalid session"}
+
+        session = self.sessions[session_id]
+        config = create_config(session["thread_id"])
+
+        try:
+            inputs = {"messages": [HumanMessage(content=message)]}
+            result = self.chatbot.invoke(inputs, config)
+
+            response = result["messages"][-1].content
+            session["message_count"] += 1
+
+            return {
+                "response": response,
+                "session_id": session_id,
+                "message_count": session["message_count"]
+            }
+
+        except Exception as e:
+            return {"error": f"Chat processing failed: {str(e)}"}
+
+    def get_session_info(self, session_id: str) -> dict:
+        """Get session information"""
+        return self.sessions.get(session_id, {"error": "Session not found"})
+
+# Service usage
+service = ProductChatbotService()
+session_id = service.create_session("user123")
+response = service.chat(session_id, "Hello, I need help with laptops")
+        </script>
+      </div>
+      <p>(<code>create_config(thread_id)</code> returns <code>{"configurable": {"thread_id": thread_id}}</code>.)</p>
+      <p>Omitted repeats: <code>ProductQAChatbot</code>, <code>safe_chat</code> variants, conversation-test loops, <code>ProductChatbotManager</code>, and <code>analyze_conversation</code> (working version in 5.4).</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-langgraph-027-4-6-extras-from-the-lesson-file">← Previous</a><span class="rev-pos">28 / 55</span><a href="#q-langgraph-029-5-1-when-to-build-a-custom-graph">Next →</a></nav>
+    </section>
+  </div>
+</details>

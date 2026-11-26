@@ -1,0 +1,94 @@
+<details class="question" id="q-angular-020-custom-pipes" data-group="angular" data-sec="angular-s022">
+  <summary>
+    <span class="q-title">Custom pipes</span>
+    <span class="q-meta">
+      <span class="tag">Angular</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Angular › 7. Pipes › Custom pipes</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Bash">
+ng generate pipe pipe-name
+        </script>
+      </div>
+      <p>A pipe is a class decorated with <code>@Pipe</code> that implements <code>PipeTransform</code>, ends in <code>Pipe</code>, and has a <code>transform</code> method (build error if missing). The first argument is the template value, extra arguments are pipe arguments, and it must return a value.</p>
+      <p><code>@Pipe</code> properties:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Property</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><code>name</code></td><td>camelCase, no hyphens (build error)</td></tr>
+            <tr><td><code>pure</code></td><td>default <code>true</code>: runs only when the input reference changes (fast). <code>false</code> runs on every change detection cycle, so use sparingly</td></tr>
+            <tr><td><code>standalone</code></td><td><code>true</code> for standalone architecture, <code>false</code> for module architecture</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Module-based pipe:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="TypeScript">
+@Pipe({ name: 'sortByScore', pure: true, standalone: false })
+export class SortByScorePipe implements PipeTransform {
+  transform(players: Player[]): Player[] {
+    return players.sort((a, b) => b.score - a.score);
+  }
+}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="TypeScript">
+@NgModule({
+  declarations: [SortByScorePipe],
+  imports: [CommonModule],
+  exports: [SortByScorePipe]          // export so other modules can use it
+})
+export class SortByScoreModule { }
+        </script>
+      </div>
+      <p>Consumers import <code>SortByScoreModule</code> (in a module or a standalone component's <code>imports</code>).</p>
+      <p>Standalone pipe with a default argument:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="TypeScript">
+@Pipe({ name: 'join', standalone: true })
+export class JoinPipe implements PipeTransform {
+  transform<T extends unknown[]>(value: T, separator = ', '): string {
+    return value.join(separator);
+  }
+}
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="HTML">
+{{ player.gems | join }}
+{{ player.gems | join : ' - ' }}
+        </script>
+      </div>
+      <p>Generic signature, and a pipe with explicit arguments:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="TypeScript">
+transform(value: any, ...args: any[]): any { return transformedValue; }
+
+transform(value: Player[], start: number, end: number): Player[] {
+  return value.slice(start, end);
+}
+        </script>
+      </div>
+      <p>Template combining pipes:</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="HTML" data-esc="1">
+<\!-- most-gems.component.html -->
+<ul *ngIf="players$ | async as players; else loading" class="my-4">
+  <li *ngFor="let player of players | sortByGemCount | slice : 0 : 5" [appOnlineStatus]="player.online">
+    <a [routerLink]="['/profile', player.id]">{{ player.name }}</a>
+    <span class="lead">{{ player.gems.length | number }}</span>
+  </li>
+</ul>
+        </script>
+      </div>
+      <p>The same pattern with <code>sortByScore</code> and <code>percent</code> appears in <code>high-scores.component.html</code>.</p>
+      <p>Design: one job per pipe, easy to test and chain, one pipe per file.</p>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-angular-019-built-in-pipes">← Previous</a><span class="rev-pos">20 / 54</span><a href="#q-angular-021-8-services">Next →</a></nav>
+    </section>
+  </div>
+</details>

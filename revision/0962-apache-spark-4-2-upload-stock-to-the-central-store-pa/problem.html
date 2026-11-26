@@ -1,0 +1,80 @@
+<details class="question" id="q-apache-spark-016-4-2-upload-stock-to-the-central-store-pa" data-group="apache-spark" data-sec="apache-spark-s014">
+  <summary>
+    <span class="q-title">4.2 Upload stock to the central store (Parquet) (1/2)</span>
+    <span class="q-meta">
+      <span class="tag">Apache Spark</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">Apache Spark › 4. Batch Pipeline: Warehouse Stock Aggregation › 4.2 Upload stock to the central store (Parquet)</p>
+      <p>Spark session (the same builder is reused with a different <code>appName</code> in later jobs; the streaming jobs add Kafka jars, see Section 5):</p>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from pyspark.sql import SparkSession
+local_spark = SparkSession\
+    .builder\
+    .appName("StockUploaderJob")\
+    .config("spark.sql.shuffle.partitions", 2)\
+    .config("spark.default.parallelism", 2)\
+    .config("spark.sql.streaming.forceDeleteTempCheckpointLocation", True)\
+    .config("spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version","2")\
+    .config("spark.jars", "jars/mysql-connector-j-8.4.0.jar") \
+    .config("spark.driver.extraClassPath","jars/mysql-connector-j-8.4.0.jar") \
+    .master("local[2]")\
+    .getOrCreate()
+local_spark.sparkContext.setLogLevel("WARN")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+def upload_stock(start_date,end_date,warehouse_id):
+    # Find min and max ID bounds for the parallel DB query
+    local_cursor.execute(f"""
+        SELECT min(`ID`) as MIN_ID, max(`ID`) as MAX_ID
+        FROM `warehouse_stock`.`item_stock`
+        WHERE `STOCK_DATE` BETWEEN '{start_date}' AND '{end_date}'
+            AND `WAREHOUSE_ID` = '{warehouse_id}'
+    """)
+    min_bounds=0
+    max_bounds=0
+    for min_id, max_id in local_cursor:
+        min_bounds=min_id
+        max_bounds=max_id
+    stock_query=f"""
+        SELECT `ID`, date_format(`STOCK_DATE`,'%Y-%m-%d') as STOCK_DATE, `WAREHOUSE_ID`,
+            `ITEM_NAME`, `OPENING_STOCK`, `RECEIPTS`, `ISSUES`, `UNIT_VALUE`
+        FROM `warehouse_stock`.`item_stock`
+        WHERE `STOCK_DATE` BETWEEN '{start_date}' AND '{end_date}'
+            AND `WAREHOUSE_ID` = '{warehouse_id}'
+    """
+    # "mysql" in the URL: workaround for a mariadb connector bug in Spark (SPARK-25013)
+    stock_df = local_spark.read\
+        .format("jdbc")\
+        .option("url", "jdbc:mysql://localhost:3306/warehouse_stock")\
+        .option("dbtable", "( " + stock_query + " ) as tmpStock")\
+        .option("user", "spark")\
+        .option("password", "spark")\
+        .option("partitionColumn","ID")\
+        .option("lowerBound", min_bounds)\
+        .option("upperBound",max_bounds + 1)\
+        .option("numPartitions",2)\
+        .load()
+    stock_df.show(3)
+    # Save to the central distributed file system, partitioned by date and warehouse
+    stock_df.write\
+        .mode("append")\
+        .partitionBy("STOCK_DATE","WAREHOUSE_ID")\
+        .parquet("raw_data/")
+
+start_date = generate_dates[0]
+end_date = generate_dates[2]
+upload_stock(start_date,end_date,"NewYork")
+upload_stock(start_date,end_date,"LosAngeles")
+upload_stock(start_date,end_date,"London")
+        </script>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-apache-spark-015-4-1-local-db-connection-and-sample-data">← Previous</a><span class="rev-pos">16 / 31</span><a href="#q-apache-spark-017-4-2-upload-stock-to-the-central-store-pa">Next →</a></nav>
+    </section>
+  </div>
+</details>

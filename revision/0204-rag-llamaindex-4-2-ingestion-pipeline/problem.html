@@ -1,0 +1,79 @@
+<details class="question" id="q-rag-llamaindex-018-4-2-ingestion-pipeline" data-group="rag-llamaindex" data-sec="rag-llamaindex-s017">
+  <summary>
+    <span class="q-title">4.2 Ingestion Pipeline</span>
+    <span class="q-meta">
+      <span class="tag">RAG with LlamaIndex</span>
+    </span>
+  </summary>
+  <div class="q-body rev-card">
+    <section class="q-section rev-sec">
+    <p class="rev-crumb">RAG with LlamaIndex › 4. Introduction to RAG: Pipelines, Prompts, Data Prep › 4.2 Ingestion Pipeline</p>
+      <p>A higher-level abstraction over the low-level load/parse/index APIs: applies <strong>transformations</strong> (split, embed, extract metadata), returns nodes or inserts them into a vector store.</p>
+      <ul>
+        <li><strong>Caching:</strong> each (node, transformation) pair is hashed and cached; identical later runs reuse results.</li>
+        <li><strong>Docstore attached = document management:</strong> tracks <code>doc_id → document_hash</code>. Same id + changed hash → reprocess; same id + same hash → skip. Without a vector store it can only detect/remove duplicate inputs; with a vector store it handles <strong>upserts</strong> of updated documents.</li>
+        <li><strong>Persistence:</strong> <code>pipeline.persist()</code> saves the cache and docstore (default <code>./pipeline_storage</code>).</li>
+      </ul>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+# Global defaults used by every LlamaIndex component
+from llama_index.core.settings import Settings
+from llama_index.llms.cohere import Cohere
+from llama_index.embeddings.openai import OpenAIEmbedding
+
+Settings.llm = Cohere(model="command-r-plus", api_key=CO_API_KEY)
+Settings.embed_model = OpenAIEmbedding(model_name="text-embedding-3-small")
+        </script>
+      </div>
+      <div class="code-tabs">
+        <script type="text/plain" data-lang="Python">
+from llama_index.core import SimpleDirectoryReader, StorageContext, VectorStoreIndex
+from llama_index.core.ingestion import IngestionCache, IngestionPipeline
+from llama_index.core.node_parser import TokenTextSplitter
+from llama_index.core.storage.docstore import SimpleDocumentStore
+from llama_index.vector_stores.qdrant import QdrantVectorStore
+from qdrant_client import QdrantClient
+
+documents = SimpleDirectoryReader(
+    input_files=["../02_Fundamental_Concepts_in_LlamaIndex/data/pg10763.txt"],
+    filename_as_id=True).load_data()          # stable doc ids enable duplicate detection
+
+client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+vector_store = QdrantVectorStore(client=client, collection_name="it_can_be_done")
+ingest_cache = IngestionCache(collection="it_can_be_done")
+
+pipeline = IngestionPipeline(
+    transformations=[
+        TokenTextSplitter(chunk_size=256, chunk_overlap=16),
+        Settings.embed_model          # embedding is a transformation too
+    ],
+    docstore=SimpleDocumentStore(),
+    vector_store=vector_store,
+    cache=ingest_cache,
+)
+nodes = pipeline.run(documents=documents)
+nodes[0].__dict__.keys()
+
+# Build an index over what was ingested and retrieve
+index = VectorStoreIndex.from_vector_store(vector_store=vector_store)
+retriever = index.as_retriever(similarity_top_k=7, return_sources=True)
+retrieved_nodes = retriever.retrieve("Poems about starting where you stand, and not making dreams your master")
+print(retrieved_nodes[0].get_text())
+print(retrieved_nodes[0].get_score())
+
+pipeline.persist('./pipeline_storage')    # writes docstore.json + cache.json
+        </script>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th></th><th>Low-level API</th><th>Ingestion pipeline</th></tr></thead>
+          <tbody>
+            <tr><td>Pros</td><td>Full control per step</td><td>Less boilerplate, caching, dedupe/upserts</td></tr>
+            <tr><td>Cons</td><td>More code</td><td>Less granular control</td></tr>
+          </tbody>
+        </table>
+      </div>
+    <nav class="rev-nav" aria-label="Move between cards"><a href="#q-rag-llamaindex-017-4-1-components-and-subsystems">← Previous</a><span class="rev-pos">18 / 63</span><a href="#q-rag-llamaindex-019-4-3-query-pipeline">Next →</a></nav>
+    </section>
+  </div>
+</details>
